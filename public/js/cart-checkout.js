@@ -9,6 +9,12 @@
     const totalEl = document.querySelector('[data-role="total"]');
     const grandTotalEl = document.querySelector('[data-role="grand-total"]');
     const shippingTotalEl = document.querySelector('[data-role="shipping-total"]');
+    const discountTotalEl = document.querySelector('[data-role="discount-total"]');
+    const discountRow = document.querySelector('[data-discount-row]');
+    const discountCodeInput = document.querySelector('[data-discount-code]');
+    const discountApplyButton = document.querySelector('[data-discount-apply]');
+    const discountMessage = document.querySelector('[data-discount-message]');
+    const discountCodeLabel = document.querySelector('[data-discount-code-label]');
     const shippingOptions = Array.from(document.querySelectorAll('[data-shipping-option]'));
     const departmentSelect = document.querySelector('[data-department-select]');
     const cityInput = document.querySelector('[data-city-input]');
@@ -22,6 +28,7 @@
     const updateErrorText = page.dataset.feedbackUpdateError || 'No se pudo actualizar el carrito.';
     const emptyErrorText = page.dataset.feedbackEmptyError || 'No se pudo vaciar el carrito.';
     const storeSlug = page.dataset.storeSlug || '';
+    const couponPreviewUrl = page.dataset.couponPreviewUrl || '';
     const freeShippingMinimum = Number(page.dataset.freeShippingMinimum || 0);
     const localDeliveryEnabled = page.dataset.localDeliveryEnabled === '1';
     const localDeliveryArea = page.dataset.localDeliveryArea || '';
@@ -29,10 +36,13 @@
     const localDeliveryCost = Number(page.dataset.localDeliveryCost || 0);
     const outsideDeliveryCost = Number(page.dataset.outsideDeliveryCost || 0);
     let subtotal = Number(page.dataset.cartSubtotal || 0);
+    let discountAmount = Number(page.dataset.cartDiscount || 0);
     let feedbackTimer;
+    let lastTermsTrigger = null;
 
     const money = (value) => `$ ${new Intl.NumberFormat('es-CO').format(value || 0)}`;
-    const freeShippingApplies = () => freeShippingMinimum > 0 && subtotal >= freeShippingMinimum;
+    const discountedSubtotal = () => Math.max(0, subtotal - discountAmount);
+    const freeShippingApplies = () => freeShippingMinimum > 0 && discountedSubtotal() >= freeShippingMinimum;
     const normalizeArea = (value) => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -148,8 +158,10 @@
 
         updateShippingLabels();
         if (totalEl) totalEl.textContent = money(subtotal);
+        if (discountTotalEl) discountTotalEl.textContent = `- ${money(discountAmount)}`;
+        if (discountRow) discountRow.classList.toggle('is-hidden', discountAmount <= 0);
         if (shippingTotalEl) shippingTotalEl.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
-        if (grandTotalEl) grandTotalEl.textContent = money(subtotal + (awaitingCity ? 0 : cost));
+        if (grandTotalEl) grandTotalEl.textContent = money(discountedSubtotal() + (awaitingCity ? 0 : cost));
     };
 
     const updateItemQuantity = (item, quantity) => {
@@ -185,6 +197,114 @@
 
         return data;
     };
+
+    const openTermsModal = (modal, trigger = null) => {
+        if (!modal) {
+            return;
+        }
+
+        lastTermsTrigger = trigger;
+        modal.hidden = false;
+        document.body.classList.add('has-checkout-modal');
+        modal.querySelector('.checkout-terms-modal-panel')?.focus();
+    };
+
+    const closeTermsModal = (modal) => {
+        if (!modal) {
+            return;
+        }
+
+        modal.hidden = true;
+        document.body.classList.remove('has-checkout-modal');
+
+        if (lastTermsTrigger && document.contains(lastTermsTrigger)) {
+            lastTermsTrigger.focus();
+        }
+
+        lastTermsTrigger = null;
+    };
+
+    page.addEventListener('click', (event) => {
+        const openButton = event.target.closest('[data-terms-open]');
+
+        if (openButton) {
+            event.preventDefault();
+            openTermsModal(document.getElementById(openButton.dataset.termsOpen), openButton);
+            return;
+        }
+
+        const closeButton = event.target.closest('[data-terms-close]');
+
+        if (closeButton) {
+            event.preventDefault();
+            closeTermsModal(closeButton.closest('.checkout-terms-modal'));
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        closeTermsModal(document.querySelector('.checkout-terms-modal:not([hidden])'));
+    });
+
+    const setDiscountMessage = (message = '', isError = false) => {
+        if (!discountMessage) {
+            return;
+        }
+
+        discountMessage.textContent = message;
+        discountMessage.classList.toggle('is-error', isError);
+    };
+
+    const previewDiscount = async () => {
+        if (!couponPreviewUrl || !discountCodeInput || !discountApplyButton) {
+            return;
+        }
+
+        const code = discountCodeInput.value.trim();
+
+        try {
+            discountApplyButton.disabled = true;
+            setDiscountMessage('');
+
+            const data = await sendCartRequest(couponPreviewUrl, 'POST', JSON.stringify({
+                store: storeSlug,
+                discount_code: code,
+            }));
+
+            discountAmount = Number(data.discount_amount || 0);
+            page.dataset.cartDiscount = String(discountAmount);
+
+            if (discountCodeLabel) {
+                discountCodeLabel.textContent = data.discount_code || '';
+            }
+
+            setDiscountMessage(data.message || (discountAmount > 0 ? 'Cupon aplicado.' : 'Cupon removido.'));
+            updateSummary();
+        } catch (error) {
+            discountAmount = 0;
+            page.dataset.cartDiscount = '0';
+
+            if (discountCodeLabel) {
+                discountCodeLabel.textContent = '';
+            }
+
+            setDiscountMessage(error.message || 'No se pudo aplicar el cupon.', true);
+            updateSummary();
+        } finally {
+            discountApplyButton.disabled = false;
+        }
+    };
+
+    discountApplyButton?.addEventListener('click', previewDiscount);
+    discountCodeInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            previewDiscount();
+        }
+    });
 
     page.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-action]');
@@ -229,6 +349,9 @@
             }
 
             updateSummary(data);
+            if (discountCodeInput?.value.trim()) {
+                await previewDiscount();
+            }
             showFeedback(data.message || updatedText);
 
             if (data.cart_is_empty) {

@@ -11,24 +11,30 @@ use App\Models\ColombiaLocation;
 use App\Services\AdminUpdateService;
 use App\Services\CartService;
 use App\Services\CheckoutService;
+use App\Services\DiscountCouponService;
 use App\Services\MercadoPagoCheckoutService;
 use App\Services\MercadoPagoOAuthService;
+use App\Services\StoreNotificationService;
 use App\Services\StorefrontUrlService;
 use App\Services\WompiCheckoutService;
 use App\Services\WhatsAppOrderMessageBuilder;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
     public function __construct(
         private CartService $cartService,
         private CheckoutService $checkoutService,
+        private DiscountCouponService $discountCouponService,
         private WhatsAppOrderMessageBuilder $whatsAppOrderMessageBuilder,
         private AdminUpdateService $adminUpdateService,
+        private StoreNotificationService $storeNotificationService,
         private MercadoPagoCheckoutService $mercadoPagoCheckoutService,
         private MercadoPagoOAuthService $mercadoPagoOAuthService,
         private WompiCheckoutService $wompiCheckoutService,
@@ -100,8 +106,48 @@ class CartController extends Controller
         $wompiAccount = $store?->wompiAccount()->first();
         $wompiAvailable = ($store?->allowsOnlinePayments() ?? false)
             && ($wompiAccount?->isWompiReady() ?? false);
+        $discount = $this->discountPreviewForView($store, old('discount_code'), $total);
 
-        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'mercadoPagoAvailable', 'wompiAvailable'));
+        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'mercadoPagoAvailable', 'wompiAvailable', 'discount'));
+    }
+
+    public function previewCoupon(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'store' => ['nullable', 'string', 'max:255'],
+            'discount_code' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $store = $this->cartService->storeForRequest($request);
+        $cart = $this->cartService->cartForStore($store);
+        $subtotal = $this->cartService->total($cart);
+
+        if (empty($cart) || ! $store) {
+            return response([
+                'message' => 'El carrito esta vacio.',
+                'discount_amount' => 0,
+                'discount_code' => null,
+                'subtotal' => $subtotal,
+            ], 422);
+        }
+
+        try {
+            $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal);
+        } catch (ValidationException $exception) {
+            return response([
+                'message' => collect($exception->errors())->flatten()->first() ?: 'No se pudo aplicar el cupon.',
+                'discount_amount' => 0,
+                'discount_code' => null,
+                'subtotal' => $subtotal,
+            ], 422);
+        }
+
+        return response([
+            'message' => $discount['code'] ? 'Cupon aplicado.' : 'Cupon removido.',
+            'discount_amount' => (float) $discount['amount'],
+            'discount_code' => $discount['code'],
+            'subtotal' => $subtotal,
+        ]);
     }
 
     public function updateItem(Request $request, $id)
@@ -163,6 +209,7 @@ class CartController extends Controller
             'pedido',
             '/admin/orders'
         );
+        $this->storeNotificationService->notifyNewOrder($order);
 
         $url = $this->whatsAppOrderMessageBuilder->url($order);
 
@@ -229,6 +276,7 @@ class CartController extends Controller
             'payment_provider_reference' => $preference['id'],
             'payment_preference_id' => $preference['id'],
         ]);
+        $this->storeNotificationService->notifyNewOrder($order);
 
         $this->cartService->forgetCartForStore($store);
 
@@ -291,6 +339,7 @@ class CartController extends Controller
             'payment_provider_reference' => $order->admin_token,
             'payment_preference_id' => $order->admin_token,
         ]);
+        $this->storeNotificationService->notifyNewOrder($order);
 
         $this->cartService->forgetCartForStore($store);
 
@@ -567,6 +616,19 @@ class CartController extends Controller
         $redirect = $redirect->with('error', $message ?: 'No se pudo procesar el carrito. Intenta de nuevo.');
 
         return $withInput ? $redirect->withInput() : $redirect;
+    }
+
+    private function discountPreviewForView(?Store $store, mixed $code, float $subtotal): array
+    {
+        if (! $store || ! is_string($code) || trim($code) === '') {
+            return ['code' => null, 'amount' => 0];
+        }
+
+        try {
+            return $this->discountCouponService->preview($store, $code, $subtotal);
+        } catch (ValidationException) {
+            return ['code' => null, 'amount' => 0];
+        }
     }
 
     private function hasValidMercadoPagoSignature(Request $request): bool

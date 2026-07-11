@@ -1,9 +1,18 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="header">
-    <h2>Banners / Noticias</h2>
-    <a href="/admin/banners/create" class="btn">Crear banner</a>
+<div class="admin-brand-hero">
+    <div class="admin-brand-copy">
+        <span class="admin-brand-mark"><img src="{{ asset('images/vendly-logo.svg') }}" alt=""></span>
+        <div>
+            <p class="admin-brand-eyebrow">Contenido</p>
+            <h2 class="admin-brand-title">Banners / Noticias</h2>
+            <p class="admin-brand-text">Destaca mensajes, promociones y anuncios visibles para las tiendas.</p>
+        </div>
+    </div>
+    <div class="admin-brand-actions">
+        <a href="/admin/banners/create" class="btn">Crear banner</a>
+    </div>
 </div>
 
 @if (session('success'))

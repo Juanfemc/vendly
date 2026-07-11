@@ -63,6 +63,7 @@ class CheckoutRequest extends FormRequest
             'region' => ['nullable', 'string', 'max:255'],
             'document' => ['required', 'string', 'max:255'],
             'shipping_method' => ['nullable', 'string', 'max:20'],
+            'discount_code' => ['nullable', 'string', 'max:60'],
             ...self::reservationRules($isReservationStore),
             'notes' => ['nullable', 'string', 'max:1000'],
             'terms_acceptance' => [$requiresTermsAcceptance ? 'accepted' : 'nullable'],

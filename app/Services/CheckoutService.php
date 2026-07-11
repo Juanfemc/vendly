@@ -17,6 +17,7 @@ class CheckoutService
         private CartService $cartService,
         private MercadoPagoCheckoutService $mercadoPagoCheckoutService,
         private MercadoPagoOAuthService $mercadoPagoOAuthService,
+        private DiscountCouponService $discountCouponService,
     ) {
     }
 
@@ -32,9 +33,10 @@ class CheckoutService
         $notes = $this->notes($customerData);
         $subtotal = $this->cartService->total($cart);
         $shipping = $this->shipping($store, $customerData, $subtotal);
-        $total = $subtotal + $shipping['cost'];
 
-        return DB::transaction(function () use ($fullName, $customerData, $fullAddress, $notes, $total, $shipping, $store, $cart, $paymentData) {
+        return DB::transaction(function () use ($fullName, $customerData, $fullAddress, $notes, $subtotal, $shipping, $store, $cart, $paymentData) {
+            $discount = $this->discountCouponService->redeem($store, $customerData['discount_code'] ?? null, $subtotal);
+            $total = max(0, $subtotal - (float) $discount['amount']) + $shipping['cost'];
             $orderData = array_merge([
                 'customer_name' => $fullName,
                 'customer_phone' => $customerData['phone'],
@@ -53,6 +55,13 @@ class CheckoutService
             if (Order::supportsShippingColumns()) {
                 $orderData['shipping_method'] = $shipping['name'];
                 $orderData['shipping_cost'] = $shipping['cost'];
+            }
+
+            if (Order::supportsDiscountColumns() && (float) $discount['amount'] > 0) {
+                $orderData['discount_coupon_id'] = $discount['coupon']?->id;
+                $orderData['discount_code'] = $discount['code'];
+                $orderData['discount_amount'] = $discount['amount'];
+                $orderData['discount_snapshot'] = $discount['snapshot'];
             }
 
             if (Order::supportsTermsAcceptanceColumns() && $store->requiresTermsAcceptance()) {

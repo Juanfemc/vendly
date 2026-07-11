@@ -2,6 +2,7 @@
     $subtotal = (float) $total;
     $tax = 0;
     $cartItems = collect($cart);
+    $discountAmount = (float) ($discount['amount'] ?? 0);
 @endphp
 
 <section class="fashion-checkout">
@@ -246,6 +247,19 @@
                 <textarea name="notes" placeholder="Add delivery notes or product details">{{ old('notes') }}</textarea>
             </label>
 
+            @if($store?->allowsDiscountCoupons())
+                <section class="fashion-checkout-section">
+                    <h2>Discount code</h2>
+                    <div class="checkout-coupon">
+                        <div class="checkout-coupon-row">
+                            <input type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Enter code" data-discount-code>
+                            <button type="button" data-discount-apply>Apply</button>
+                        </div>
+                        <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Discount applied.' : '' }}</p>
+                    </div>
+                </section>
+            @endif
+
             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => 'fashion'])
 
             <div class="fashion-checkout-actions">
@@ -299,6 +313,10 @@
 
             <div class="fashion-summary-totals">
                 <p><span>Subtotal</span><strong data-role="total">$ {{ number_format($subtotal, 0, ',', '.') }}</strong></p>
+                <p class="{{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
+                    <span>Discount <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
+                    <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
+                </p>
                 @if($hasShippingCost)
                     <p><span>Shipping</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Free') }}</strong></p>
                 @endif

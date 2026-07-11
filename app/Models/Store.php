@@ -24,6 +24,7 @@ class Store extends Model
     private static ?bool $supportsSubscriptionColumns = null;
     private static ?bool $supportsTermsAcceptanceColumns = null;
     private static ?bool $supportsAiTables = null;
+    private static ?bool $supportsDiscountCouponsTable = null;
 
     public const PRODUCT_SEARCH_THRESHOLD = 20;
     public const TRIAL_DAYS = 7;
@@ -595,6 +596,12 @@ class Store extends Model
         return ! $this->isBasicPlan() && ProductReview::supportsTable();
     }
 
+    public function allowsDiscountCoupons(): bool
+    {
+        return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM
+            && DiscountCoupon::supportsTable();
+    }
+
     public function hasOfferProducts(): bool
     {
         return $this->allowsOfferBadges()
@@ -611,6 +618,11 @@ class Store extends Model
     {
         return self::$supportsAiTables ??= Schema::hasTable('ai_generations')
             && Schema::hasTable('ai_credit_transactions');
+    }
+
+    public static function supportsDiscountCouponsTable(): bool
+    {
+        return self::$supportsDiscountCouponsTable ??= Schema::hasTable('discount_coupons');
     }
 
     public static function supportsLocalDeliveryColumns(): bool
@@ -1058,90 +1070,6 @@ class Store extends Model
         return BrandTheme::contrastFor($backgroundColor, '#ffffff');
     }
 
-    public function defaultProductCategoryOptions(): array
-    {
-        if ($this->isRestaurant()) {
-            return [
-                'Entradas',
-                'Platos fuertes',
-                'Combos',
-                'Bebidas',
-                'Postres',
-                'Desayunos',
-            ];
-        }
-
-        if ($this->isTechnologyStore()) {
-            return [
-                'Tecnologia',
-                'Audio',
-                'Computo',
-                'Gaming',
-                'Accesorios',
-                'Smart Home',
-            ];
-        }
-
-        if ($this->isFashionStore()) {
-            return [
-                'Mujer',
-                'Hombre',
-                'Zapatos',
-                'Bolsos',
-                'Accesorios',
-                'Chaquetas',
-            ];
-        }
-
-        if ($this->isSupplementStore()) {
-            return [
-                'Proteina',
-                'Pre entreno',
-                'Vitaminas',
-                'Bienestar',
-                'Recuperacion',
-                'Accesorios fitness',
-            ];
-        }
-
-        if ($this->isReservationStore()) {
-            return [
-                'Consultas',
-                'Citas',
-                'Servicios',
-                'Experiencias',
-                'Paquetes',
-                'Eventos',
-            ];
-        }
-
-        return [
-            'Camisetas',
-            'Pantalones',
-            'Vestidos',
-            'Chaquetas',
-            'Zapatos',
-            'Accesorios',
-            'Tecnologia',
-            'Suplementos',
-        ];
-    }
-
-    public function ensureCategoryRecords(): void
-    {
-        if (! $this->allowsCategories() || ! $this->exists || $this->categories()->exists()) {
-            return;
-        }
-
-        foreach ($this->defaultProductCategoryOptions() as $categoryName) {
-            $this->categories()->create([
-                'name' => $categoryName,
-                'slug' => StoreCategory::uniqueSlugFor((int) $this->id, $categoryName),
-                'is_active' => true,
-            ]);
-        }
-    }
-
     public function productCategoryOptions(): array
     {
         if (! $this->allowsCategories()) {
@@ -1149,22 +1077,12 @@ class Store extends Model
         }
 
         if (! $this->exists) {
-            return $this->defaultProductCategoryOptions();
+            return [];
         }
 
-        $this->ensureCategoryRecords();
-
-        $savedCategories = $this->categories()
+        return $this->categories()
             ->orderedForDisplay()
-            ->pluck('name');
-
-        $productCategories = $this->products()
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->pluck('category');
-
-        return $savedCategories
-            ->merge($productCategories)
+            ->pluck('name')
             ->filter()
             ->unique()
             ->values()
@@ -1225,5 +1143,15 @@ class Store extends Model
     public function categories()
     {
         return $this->hasMany(StoreCategory::class);
+    }
+
+    public function discountCoupons()
+    {
+        return $this->hasMany(DiscountCoupon::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(StoreNotification::class);
     }
 }

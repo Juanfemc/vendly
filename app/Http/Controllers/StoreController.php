@@ -13,6 +13,7 @@ use App\Services\AdminUpdateService;
 use App\Services\AiCreditService;
 use App\Services\CustomerFollowupScheduler;
 use App\Services\StoreFileService;
+use App\Services\StorefrontUrlService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -30,6 +31,7 @@ class StoreController extends Controller
         private AdminUpdateService $adminUpdateService,
         private AiCreditService $aiCreditService,
         private CustomerFollowupScheduler $customerFollowups,
+        private StorefrontUrlService $storefrontUrls,
     ) {
     }
 
@@ -279,8 +281,9 @@ class StoreController extends Controller
 
         $businessTypeOptions = Store::businessTypeOptions();
         $colombiaLocations = ColombiaLocation::citiesForSelect();
+        $storeUrl = $this->storefrontUrls->publicHome($store);
 
-        return view('admin.stores.settings', compact('store', 'businessTypeOptions', 'colombiaLocations'));
+        return view('admin.stores.settings', compact('store', 'businessTypeOptions', 'colombiaLocations', 'storeUrl'));
     }
 
     public function updateSettings(StoreSettingsRequest $request)

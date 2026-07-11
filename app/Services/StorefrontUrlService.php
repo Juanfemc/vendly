@@ -19,6 +19,23 @@ class StorefrontUrlService
         return $this->storeUrl($store, $request, '/', fn () => route('store.show', $store->slug));
     }
 
+    public function publicHome(Store $store): string
+    {
+        if (
+            $store->allowsCustomDomain()
+            && $store->custom_domain_status === Store::CUSTOM_DOMAIN_VERIFIED
+            && $store->custom_domain
+        ) {
+            return $this->configuredScheme() . '://' . $store->custom_domain;
+        }
+
+        if ($store->allowsSubdomain() && $store->subdomain && $this->configuredHost()) {
+            return $this->configuredScheme() . '://' . $store->subdomain . '.' . $this->configuredHost();
+        }
+
+        return route('store.show', $store->slug);
+    }
+
     public function products(Store $store, ?Request $request = null, array $query = []): string
     {
         return $this->withQuery(
@@ -117,5 +134,18 @@ class StorefrontUrlService
         return $path === '/'
             ? $baseUrl
             : $baseUrl . '/' . ltrim($path, '/');
+    }
+
+    private function configuredHost(): ?string
+    {
+        $host = strtolower(trim((string) parse_url(config('app.url'), PHP_URL_HOST)));
+        $host = preg_replace('/:\d+$/', '', $host) ?? '';
+
+        return $host === '' ? null : $host;
+    }
+
+    private function configuredScheme(): string
+    {
+        return parse_url(config('app.url'), PHP_URL_SCHEME) ?: request()->getScheme();
     }
 }

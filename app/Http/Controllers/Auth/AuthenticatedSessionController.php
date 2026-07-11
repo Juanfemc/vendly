@@ -42,12 +42,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($user?->isAdmin()) {
-            return redirect()->intended('/admin/users');
+            return redirect('/admin/users');
         }
 
-        $store = $user?->store ?? $user?->stores()->first();
-
-        return redirect()->intended($store ? '/' . $store->slug : '/admin/products');
+        return redirect('/dashboard');
     }
 
     /**

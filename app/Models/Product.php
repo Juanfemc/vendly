@@ -88,6 +88,17 @@ class Product extends Model
         return $this->slug;
     }
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field !== null) {
+            return $this->where($field, $value)->first();
+        }
+
+        return $this->where($this->getRouteKeyName(), $value)
+            ->when(is_string($value) && ctype_digit($value), fn ($query) => $query->orWhere($this->getKeyName(), (int) $value))
+            ->first();
+    }
+
     public function store()
     {
         return $this->belongsTo(Store::class);

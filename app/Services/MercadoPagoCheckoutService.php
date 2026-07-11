@@ -129,8 +129,15 @@ class MercadoPagoCheckoutService
 
     private function payload(Order $order): array
     {
-        $payload = [
-            'items' => $order->items->map(fn ($item) => [
+        $items = (Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0)
+            ? [[
+                'id' => 'order-' . $order->id,
+                'title' => 'Pedido #' . $order->id . ' - ' . ($order->store?->name ?? 'Vendly'),
+                'quantity' => 1,
+                'unit_price' => (float) $order->total,
+                'currency_id' => 'COP',
+            ]]
+            : $order->items->map(fn ($item) => [
                 'id' => (string) ($item->product_id ?: $item->id),
                 'title' => $item->displayName(),
                 'quantity' => (int) $item->quantity,
@@ -142,7 +149,10 @@ class MercadoPagoCheckoutService
                 'quantity' => 1,
                 'unit_price' => (float) $order->shipping_cost,
                 'currency_id' => 'COP',
-            ]))->values()->all(),
+            ]))->values()->all();
+
+        $payload = [
+            'items' => $items,
             'payer' => $this->payer($order),
             'back_urls' => [
                 'success' => route('cart.mercadopago.return', ['order' => $order, 'result' => 'success']),

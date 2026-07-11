@@ -212,6 +212,13 @@
                     <div class="product-stock-state {{ $isProductSoldOut ? 'is-sold-out' : '' }}">{{ $product->stockLabel() }}</div>
                 @endif
 
+                @if($product->material)
+                    <div class="product-detail-description product-detail-material">
+                        <h2>Material</h2>
+                        <p>{{ $product->material }}</p>
+                    </div>
+                @endif
+
                 <div class="product-detail-description">
                     <h2>{{ $isRestaurant ? 'Sobre este plato' : 'Descripción' }}</h2>
                     <p>

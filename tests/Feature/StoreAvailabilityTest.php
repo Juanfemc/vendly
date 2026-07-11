@@ -5116,8 +5116,13 @@ test('restaurant storefront renders as a menu', function () {
         'business_type' => 'restaurant',
         'is_active' => true,
     ]);
-    $store->ensureCategoryRecords();
-    $category = $store->categories()->where('name', 'Entradas')->first();
+    $category = StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Entradas',
+        'slug' => 'entradas',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
 
     $product = Product::create([
         'user_id' => $user->id,
@@ -6295,6 +6300,13 @@ test('admin can create edit and delete products for any store', function () {
         'plan' => Store::PLAN_PREMIUM,
         'is_active' => true,
     ]);
+    StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Admin',
+        'slug' => 'admin',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
 
     $this->actingAs($admin)
         ->get('/admin/products')
@@ -6354,6 +6366,59 @@ test('admin can create edit and delete products for any store', function () {
         ->assertRedirect();
 
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
+});
+
+test('new stores start without categories and products only use existing store categories', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Sin Categorias',
+        'slug' => 'tienda-sin-categorias',
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    expect($store->categories()->count())->toBe(0);
+    expect($store->productCategoryOptions())->toBe([]);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/products', [
+            'name' => 'Producto con categoria inventada',
+            'category' => 'Nueva Categoria',
+            'price' => 25000,
+        ])
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseMissing('products', [
+        'store_id' => $store->id,
+        'name' => 'Producto con categoria inventada',
+    ]);
+
+    StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Camisetas',
+        'slug' => 'camisetas',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/products', [
+            'name' => 'Producto con categoria existente',
+            'category' => 'Camisetas',
+            'price' => 25000,
+        ])
+        ->assertRedirect('/admin/products');
+
+    $this->assertDatabaseHas('products', [
+        'store_id' => $store->id,
+        'name' => 'Producto con categoria existente',
+        'category' => 'Camisetas',
+    ]);
 });
 
 test('pro stores cannot see or force product offer fields', function () {
@@ -6636,6 +6701,13 @@ test('store user can add material to a product and customers can see it', functi
         'name' => 'Tienda Material',
         'slug' => 'tienda-material',
         'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+    StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Chaquetas',
+        'slug' => 'chaquetas',
+        'sort_order' => 1,
         'is_active' => true,
     ]);
 

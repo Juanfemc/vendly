@@ -66,6 +66,10 @@ class Order extends Model
         'payment_id',
         'paid_at',
         'payment_expires_at',
+        'discount_coupon_id',
+        'discount_code',
+        'discount_amount',
+        'discount_snapshot',
         'terms_accepted_at',
         'terms_version',
         'terms_snapshot',
@@ -80,6 +84,7 @@ class Order extends Model
     protected $casts = [
         'reservation_date' => 'date',
         'shipping_cost' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'payment_expires_at' => 'datetime',
         'terms_accepted_at' => 'datetime',
@@ -116,6 +121,14 @@ class Order extends Model
             && Schema::hasColumn('orders', 'terms_user_agent_hash');
     }
 
+    public static function supportsDiscountColumns(): bool
+    {
+        return Schema::hasColumn('orders', 'discount_coupon_id')
+            && Schema::hasColumn('orders', 'discount_code')
+            && Schema::hasColumn('orders', 'discount_amount')
+            && Schema::hasColumn('orders', 'discount_snapshot');
+    }
+
     public function paymentMethodLabel(): string
     {
         return self::PAYMENT_METHOD_LABELS[$this->payment_method] ?? 'WhatsApp';
@@ -147,5 +160,10 @@ class Order extends Model
     public function store()
     {
         return $this->belongsTo(\App\Models\Store::class);
+    }
+
+    public function discountCoupon()
+    {
+        return $this->belongsTo(\App\Models\DiscountCoupon::class, 'discount_coupon_id');
     }
 }

@@ -53,7 +53,14 @@ class StoreCategoryController extends Controller
             ->orderedForDisplay()
             ->get();
 
-        return view('admin.categories.index', compact('store', 'categories', 'selectedStore'));
+        $categoryProductCounts = Product::query()
+            ->where('store_id', $store->id)
+            ->whereNotNull('category')
+            ->selectRaw('category, count(*) as products_count')
+            ->groupBy('category')
+            ->pluck('products_count', 'category');
+
+        return view('admin.categories.index', compact('store', 'categories', 'selectedStore', 'categoryProductCounts'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -225,8 +232,6 @@ class StoreCategoryController extends Controller
 
         abort_if(! $store, 404);
 
-        $store->ensureCategoryRecords();
-
         return $store;
     }
 
@@ -234,7 +239,6 @@ class StoreCategoryController extends Controller
     {
         if (auth()->user()?->isAdmin()) {
             $store = Store::findOrFail($request->integer('store_id'));
-            $store->ensureCategoryRecords();
 
             return $store;
         }

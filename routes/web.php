@@ -8,8 +8,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\AiContentController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\DiscountCouponController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\StoreNotificationController;
 use App\Http\Controllers\StoreTemplateController;
 use App\Http\Controllers\StoreFaviconController;
 use App\Http\Controllers\StoreOnboardingController;
@@ -38,6 +40,7 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::patch('/cart/item/{id}', [CartController::class, 'updateItem'])->name('cart.item.update');
 Route::delete('/cart/item/{id}', [CartController::class, 'removeItem'])->name('cart.item.remove');
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+Route::post('/cart/coupon', [CartController::class, 'previewCoupon'])->middleware('throttle:30,1')->name('cart.coupon.preview');
 Route::post('/cart/whatsapp', [CartController::class, 'whatsappFromCart'])->middleware('throttle:10,1')->name('cart.whatsapp');
 Route::post('/cart/mercadopago', [CartController::class, 'mercadoPagoFromCart'])->middleware('throttle:10,1')->name('cart.mercadopago');
 Route::post('/cart/wompi', [CartController::class, 'wompiFromCart'])->middleware('throttle:10,1')->name('cart.wompi');
@@ -79,6 +82,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    Route::get('/admin/notifications', [StoreNotificationController::class, 'index'])->name('admin.notifications.index');
+    Route::patch('/admin/notifications/read-all', [StoreNotificationController::class, 'readAll'])->name('admin.notifications.read-all');
+    Route::match(['get', 'patch'], '/admin/notifications/{notification}/read', [StoreNotificationController::class, 'read'])->name('admin.notifications.read');
+
     Route::get('/admin/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::post('/admin/ai/content', [AiContentController::class, 'generate'])->middleware('throttle:30,1')->name('admin.ai.content');
     Route::post('/admin/ai/images', [AiContentController::class, 'generateImage'])->middleware('throttle:10,1')->name('admin.ai.images');
@@ -115,6 +122,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/admin/categories/{category}/edit', [StoreCategoryController::class, 'edit'])->name('admin.categories.edit');
     Route::put('/admin/categories/{category}', [StoreCategoryController::class, 'update'])->name('admin.categories.update');
     Route::delete('/admin/categories/{category}', [StoreCategoryController::class, 'destroy'])->name('admin.categories.destroy');
+    Route::get('/admin/coupons', [DiscountCouponController::class, 'index'])->name('admin.coupons.index');
+    Route::post('/admin/coupons', [DiscountCouponController::class, 'store'])->name('admin.coupons.store');
+    Route::patch('/admin/coupons/{coupon}/toggle', [DiscountCouponController::class, 'toggle'])->name('admin.coupons.toggle');
+    Route::delete('/admin/coupons/{coupon}', [DiscountCouponController::class, 'destroy'])->name('admin.coupons.destroy');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -156,6 +167,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/stores/visits', [StoreController::class, 'visits'])->name('admin.stores.visits');
     Route::get('/admin/stores/{store}/products', [ProductController::class, 'index'])->name('admin.stores.products.index');
     Route::get('/admin/stores/{store}/categories', [StoreCategoryController::class, 'index'])->name('admin.stores.categories.index');
+    Route::get('/admin/stores/{store}/coupons', [DiscountCouponController::class, 'index'])->name('admin.stores.coupons.index');
     Route::get('/admin/stores/{store}/edit', [StoreController::class, 'edit'])->name('admin.stores.edit');
     Route::put('/admin/stores/{store}', [StoreController::class, 'update'])->name('admin.stores.update');
     Route::post('/admin/stores/{store}/ai-credits', [StoreController::class, 'addAiCredits'])->name('admin.stores.ai-credits.store');

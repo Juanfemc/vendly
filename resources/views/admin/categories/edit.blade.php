@@ -1,8 +1,18 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="header">
-    <h2>Editar categoria</h2>
+<div class="admin-brand-hero">
+    <div class="admin-brand-copy">
+        <span class="admin-brand-mark"><img src="{{ asset('images/vendly-logo.svg') }}" alt=""></span>
+        <div>
+            <p class="admin-brand-eyebrow">Catalogo</p>
+            <h2 class="admin-brand-title">Editar categoria</h2>
+            <p class="admin-brand-text">Ajusta la identidad, posicion y visibilidad de esta categoria en la tienda.</p>
+        </div>
+    </div>
+    <div class="admin-brand-actions">
+        <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary">Volver</a>
+    </div>
 </div>
 
 @if ($errors->any())

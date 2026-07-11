@@ -106,6 +106,15 @@
                             </strong>
                         </span>
                     </div>
+                    @if(\App\Models\Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0)
+                        <div class="resource-metric">
+                            <span class="resource-metric__label">Cupon</span>
+                            <span class="resource-metric__value">
+                                {{ $order->discount_code ?: 'Descuento' }}
+                                (-${{ number_format((float) $order->discount_amount, 0, ',', '.') }})
+                            </span>
+                        </div>
+                    @endif
                     <div class="resource-metric">
                         <span class="resource-metric__label">Documento</span>
                         <span class="resource-metric__value">{{ $order->customer_document ?: 'Sin documento' }}</span>

@@ -1930,6 +1930,33 @@
     font-weight: 800;
 }
 
+.fashion-checkout-form .checkout-coupon {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.fashion-checkout-form .checkout-coupon-row {
+    grid-template-columns: minmax(0, 1fr) 128px;
+}
+
+.fashion-checkout-form .checkout-coupon-row input {
+    min-height: 52px;
+    border: 1px solid #d7dbe0;
+    border-radius: 3px;
+    background: #ffffff;
+    color: #111111;
+    font-size: 14px;
+    padding: 0 14px;
+}
+
+.fashion-checkout-form .checkout-coupon-row button {
+    min-height: 52px;
+    border-radius: 3px;
+    font-weight: 900;
+}
+
 .fashion-field-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2129,10 +2156,31 @@
     gap: 3px;
 }
 
+.fashion-checkout-form .checkout-terms-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
 .fashion-checkout-form .checkout-terms-label a {
     color: #111111;
     font-size: 12px;
     font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.fashion-checkout-form .checkout-terms-link {
+    border: 0;
+    background: transparent;
+    color: #111111;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 0;
+    text-align: left;
     text-decoration: underline;
     text-underline-offset: 3px;
 }
@@ -3317,6 +3365,10 @@
 
     .fashion-field-row,
     .fashion-field-row--three {
+        grid-template-columns: 1fr;
+    }
+
+    .fashion-checkout-form .checkout-coupon-row {
         grid-template-columns: 1fr;
     }
 

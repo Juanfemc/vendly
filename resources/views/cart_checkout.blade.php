@@ -42,7 +42,9 @@
     $selectedShippingKey = old('shipping_method', $shippingMethods->first()['key'] ?? null);
     $selectedShipping = $shippingMethods->firstWhere('key', (string) $selectedShippingKey) ?? $shippingMethods->first();
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
-    $checkoutTotal = $total + $shippingCost;
+    $discount = $discount ?? ['code' => null, 'amount' => 0];
+    $discountAmount = (float) ($discount['amount'] ?? 0);
+    $checkoutTotal = max(0, $total - $discountAmount) + $shippingCost;
     $hasShippingCost = $hasLocalDelivery || $shippingMethods->isNotEmpty();
     $hasSelectedDeliveryCity = $usesColombiaLocations
         ? filled(old('city_code'))
@@ -56,6 +58,8 @@
     data-feedback-empty-error="{{ $isRestaurant ? 'No se pudo vaciar el pedido.' : ($isReservationStore ? 'No se pudo vaciar la reserva.' : 'No se pudo vaciar el carrito.') }}"
     data-store-slug="{{ $store?->slug }}"
     data-cart-subtotal="{{ $total }}"
+    data-cart-discount="{{ $discountAmount }}"
+    data-coupon-preview-url="{{ route('cart.coupon.preview') }}"
     data-free-shipping-minimum="{{ $store?->free_shipping_minimum ?? '' }}"
     data-local-delivery-enabled="{{ $hasLocalDelivery ? '1' : '0' }}"
     data-local-delivery-area="{{ $store?->local_delivery_area ?? '' }}"
@@ -243,6 +247,17 @@
                                 <textarea class="textarea" name="notes" placeholder="{{ $isRestaurant ? 'Instrucciones del pedido (opcional)' : ($isReservationStore ? 'Fecha, hora o detalles de la reserva (opcional)' : 'Notas del pedido (opcional)') }}">{{ old('notes') }}</textarea>
                             </div>
 
+                            @if($store?->allowsDiscountCoupons())
+                                <div class="checkout-coupon field-wrap">
+                                    <label class="checkout-field-label" for="discountCode">Cupon de descuento</label>
+                                    <div class="checkout-coupon-row">
+                                        <input class="field" id="discountCode" type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Codigo de descuento" data-discount-code>
+                                        <button type="button" data-discount-apply>Aplicar</button>
+                                    </div>
+                                    <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Cupon aplicado.' : '' }}</p>
+                                </div>
+                            @endif
+
                             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => $isTechnologyStore ? 'technology' : 'default'])
 
                             <button class="primary-btn" type="submit">{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</button>
@@ -351,11 +366,16 @@
                     </div>
 
                     <div class="summary-total">
-                        <div class="summary-total-label">{{ $hasShippingCost ? 'Subtotal' : 'Total' }}</div>
+                        <div class="summary-total-label">{{ $hasShippingCost || $store?->allowsDiscountCoupons() ? 'Subtotal' : 'Total' }}</div>
                         <div class="summary-total-price">
                             <small>COP</small>
                             <strong data-role="total">$ {{ number_format($total, 0, ',', '.') }}</strong>
                         </div>
+                    </div>
+
+                    <div class="summary-line {{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
+                        <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
+                        <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
                     </div>
 
                     @if($hasShippingCost)
@@ -364,6 +384,14 @@
                             <strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong>
                         </div>
 
+                        <div class="summary-total summary-total--grand">
+                            <div class="summary-total-label">Total</div>
+                            <div class="summary-total-price">
+                                <small>COP</small>
+                                <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                            </div>
+                        </div>
+                    @elseif($store?->allowsDiscountCoupons())
                         <div class="summary-total summary-total--grand">
                             <div class="summary-total-label">Total</div>
                             <div class="summary-total-price">

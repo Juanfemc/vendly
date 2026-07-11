@@ -1,9 +1,18 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="header">
-    <h2>Usuarios</h2>
-    <a href="/admin/users/create" class="btn">Crear usuario</a>
+<div class="admin-brand-hero">
+    <div class="admin-brand-copy">
+        <span class="admin-brand-mark"><img src="{{ asset('images/vendly-logo.svg') }}" alt=""></span>
+        <div>
+            <p class="admin-brand-eyebrow">Administracion</p>
+            <h2 class="admin-brand-title">Usuarios</h2>
+            <p class="admin-brand-text">Controla accesos, estados y tiempo activo de los clientes de Vendly.</p>
+        </div>
+    </div>
+    <div class="admin-brand-actions">
+        <a href="/admin/users/create" class="btn">Crear usuario</a>
+    </div>
 </div>
 
 @if (session('success'))

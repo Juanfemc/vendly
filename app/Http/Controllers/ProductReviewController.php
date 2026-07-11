@@ -4,10 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductReview;
+use App\Services\StoreNotificationService;
 use Illuminate\Http\Request;
 
 class ProductReviewController extends Controller
 {
+    public function __construct(private StoreNotificationService $storeNotificationService)
+    {
+    }
+
     public function store(Request $request, Product $product)
     {
         $product->loadMissing('store');
@@ -21,7 +26,7 @@ class ProductReviewController extends Controller
             'comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        ProductReview::create([
+        $review = ProductReview::create([
             'store_id' => $store->id,
             'product_id' => $product->id,
             'name' => trim($data['name']),
@@ -29,6 +34,8 @@ class ProductReviewController extends Controller
             'comment' => trim((string) ($data['comment'] ?? '')) ?: null,
             'is_approved' => false,
         ]);
+
+        $this->storeNotificationService->notifyNewReview($review);
 
         return back()->with('review_success', 'Gracias, tu resena quedo pendiente de aprobacion.');
     }

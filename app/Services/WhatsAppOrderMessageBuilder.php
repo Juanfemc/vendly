@@ -47,6 +47,14 @@ class WhatsAppOrderMessageBuilder
             $message .= "Envio: {$order->shipping_method} ($" . number_format((float) $order->shipping_cost, 0, ',', '.') . ")\n";
         }
 
+        if (Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0) {
+            $message .= "Descuento";
+            if ($order->discount_code) {
+                $message .= " ({$order->discount_code})";
+            }
+            $message .= ': -$' . number_format((float) $order->discount_amount, 0, ',', '.') . "\n";
+        }
+
         $message .= 'Total: $' . number_format((float) $order->total, 0, ',', '.') . "\n";
 
         foreach ($order->items as $item) {

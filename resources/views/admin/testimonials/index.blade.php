@@ -1,9 +1,18 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="header">
-    <h2>Testimonios</h2>
-    <a href="{{ route('admin.testimonials.create') }}" class="btn">Crear testimonio</a>
+<div class="admin-brand-hero">
+    <div class="admin-brand-copy">
+        <span class="admin-brand-mark"><img src="{{ asset('images/vendly-logo.svg') }}" alt=""></span>
+        <div>
+            <p class="admin-brand-eyebrow">Confianza</p>
+            <h2 class="admin-brand-title">Testimonios</h2>
+            <p class="admin-brand-text">Administra opiniones visibles para reforzar la confianza en la pagina principal.</p>
+        </div>
+    </div>
+    <div class="admin-brand-actions">
+        <a href="{{ route('admin.testimonials.create') }}" class="btn">Crear testimonio</a>
+    </div>
 </div>
 
 @if (session('success'))

@@ -97,7 +97,6 @@ class ProductController extends Controller
                 ->with('error', 'El plan ' . $store->planLabel() . ' permite hasta ' . $store->productLimit() . ' productos.');
         }
 
-        $store?->ensureCategoryRecords();
         $stores = auth()->user()?->isAdmin()
             ? Store::orderBy('name')->get()
             : collect();
@@ -127,8 +126,11 @@ class ProductController extends Controller
                 ->with('error', 'El plan ' . $store->planLabel() . ' permite hasta ' . $store->productLimit() . ' productos.');
         }
 
-        if ($store->allowsCategories()) {
-            $this->productContentService->ensureStoreCategory($store, $request->category);
+        $productData = $this->productDataForStore($request, $store);
+        if (! $this->categoryBelongsToStore($store, $productData['category'] ?? null)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
         }
 
         $primaryImage = $this->productFileService->storeImage($request);
@@ -139,8 +141,6 @@ class ProductController extends Controller
         if (! $primaryImage && ! empty($galleryImages)) {
             $primaryImage = array_shift($galleryImages);
         }
-
-        $productData = $this->productDataForStore($request, $store);
 
         $product = Product::create(array_merge($productData, [
             'slug' => Product::uniqueSlugFor((int) $store->id, $request->name),
@@ -167,7 +167,6 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
 
-        $product->store?->ensureCategoryRecords();
         $stores = auth()->user()?->isAdmin()
             ? Store::orderBy('name')->get()
             : collect();
@@ -209,8 +208,10 @@ class ProductController extends Controller
         $data['sizes'] = $this->productContentService->optionList($request->sizes);
         $data['colors'] = $this->productContentService->optionList($request->colors);
 
-        if ($store && $store->allowsCategories()) {
-            $this->productContentService->ensureStoreCategory($store, $request->category);
+        if (! $this->categoryBelongsToStore($store, $data['category'] ?? null)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
         }
 
         $product->update($this->productFileService->replaceImage($product, $request, $data, $store->allowsProductGallery()));
@@ -637,13 +638,24 @@ class ProductController extends Controller
         return $count < $limit;
     }
 
+    private function categoryBelongsToStore(Store $store, ?string $categoryName): bool
+    {
+        $categoryName = trim((string) $categoryName);
+
+        if ($categoryName === '' || ! $store->allowsCategories()) {
+            return true;
+        }
+
+        return $store->categories()
+            ->where('name', $categoryName)
+            ->exists();
+    }
+
     private function activeCategories(Store $store)
     {
         if (! $store->allowsCategories()) {
             return collect();
         }
-
-        $store->ensureCategoryRecords();
 
         return $store->categories()
             ->where('is_active', true)
