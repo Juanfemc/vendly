@@ -12,12 +12,12 @@
             </a>
             <div>
                 <h2>Editar producto</h2>
-                <p>Actualiza la informacion, imagenes, precio y disponibilidad.</p>
+                <p>Actualiza la información, imágenes, precio y disponibilidad.</p>
             </div>
         </div>
 
         @if(auth()->user()->isAdmin() || ($product->store?->allowsCategories() ?? true))
-            <a href="/admin/categories" class="btn btn-secondary">Gestionar categorias</a>
+            <a href="/admin/categories" class="btn btn-secondary">Gestionar categorías</a>
         @endif
     </div>
 
@@ -47,7 +47,7 @@
                 <div>
                     <span class="product-review-panel__eyebrow">Moderacion</span>
                     <h3>Resenas del producto</h3>
-                    <p>Aprueba las resenas antes de que aparezcan en la tienda.</p>
+                    <p>Aprueba las reseñas antes de que aparezcan en la tienda.</p>
                 </div>
                 <div class="product-review-panel__summary">
                     <strong>{{ ($productReviews ?? collect())->where('is_approved', false)->count() }}</strong>
@@ -87,7 +87,7 @@
                                 <button type="submit" class="btn btn-success">Aprobar</button>
                             </form>
                         @endunless
-                        <form method="POST" action="{{ route('admin.product-reviews.destroy', $review) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar esta resena?">
+                        <form method="POST" action="{{ route('admin.product-reviews.destroy', $review) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar esta reseña?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">Eliminar</button>
@@ -96,8 +96,8 @@
                 </article>
             @empty
                 <div class="panel-empty" style="margin:0;">
-                    <h3>No hay resenas todavia</h3>
-                    <p>Cuando un cliente escriba una resena, aparecera aqui para aprobarla.</p>
+                    <h3>No hay reseñas todavía</h3>
+                    <p>Cuando un cliente escriba una reseña, aparecerá aquí para aprobarla.</p>
                 </div>
             @endforelse
             </div>

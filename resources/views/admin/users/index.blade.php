@@ -350,8 +350,8 @@
                 @if($user->role === 'store')
                     <div class="user-access" aria-label="Acceso de la cuenta">
                         <div class="user-access-item">
-                            <span class="user-access-label">Duracion</span>
-                            <span class="user-access-value">{{ $user->active_duration_days ? $user->active_duration_days . ' dia(s)' : 'Sin limite' }}</span>
+                            <span class="user-access-label">Duración</span>
+                            <span class="user-access-value">{{ $user->active_duration_days ? $user->active_duration_days . ' dia(s)' : 'Sin límite' }}</span>
                         </div>
                         <div class="user-access-item">
                             <span class="user-access-label">Inicio</span>
@@ -414,8 +414,8 @@
             Vence actualmente: <strong data-extend-current-end>Sin fecha final</strong>
         </p>
 
-        <label class="field-label" for="extend_days">Dias a agregar</label>
-        <div class="extend-presets" aria-label="Dias rapidos">
+        <label class="field-label" for="extend_days">Días a agregar</label>
+        <div class="extend-presets" aria-label="Días rápidos">
             <button type="button" class="extend-preset" data-extend-days="7">+7</button>
             <button type="button" class="extend-preset" data-extend-days="15">+15</button>
             <button type="button" class="extend-preset" data-extend-days="30">+30</button>
@@ -423,7 +423,7 @@
         </div>
         <input type="number" id="extend_days" name="extend_days" min="1" max="3650" value="30" required data-extend-input>
         <div class="extend-summary">
-            Si la cuenta sigue activa, los dias se suman desde su fecha final actual. Si ya vencio, se suman desde hoy.
+            Si la cuenta sigue activa, los días se suman desde su fecha final actual. Si ya venció, se suman desde hoy.
         </div>
 
         <div class="extend-modal-actions">

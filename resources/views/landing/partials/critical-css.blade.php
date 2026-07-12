@@ -55,9 +55,11 @@
         .steps, .feature-grid, .plans-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     .step-card, .feature-card, .plan-card { display: grid; gap: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; background: rgba(15, 25, 44, 0.72); }
-    .step-card span, .feature-card span, .plan-badge { width: auto; max-width: 100%; border-radius: 999px; padding: 6px 10px; background: rgba(255, 106, 0, 0.14); color: #ff9a3d; font-size: 11px; font-weight: 900; }
+    .step-card span, .plan-badge { width: auto; max-width: 100%; border-radius: 999px; padding: 6px 10px; background: rgba(255, 106, 0, 0.14); color: #ff9a3d; font-size: 11px; font-weight: 900; }
+    .feature-icon { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 106, 0, 0.24); border-radius: 16px; color: #ff6a00; background: rgba(255, 106, 0, 0.14); }
+    .feature-icon svg { width: 24px; height: 24px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     @supports (width: max-content) {
-        .step-card span, .feature-card span, .plan-badge { width: max-content; }
+        .step-card span, .plan-badge { width: max-content; }
     }
     .catalog-preview { margin-top: 28px; padding: 24px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; background: rgba(15, 25, 44, 0.72); }
     .catalog-copy { display: grid; gap: 18px; }

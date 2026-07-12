@@ -516,7 +516,7 @@
 
 <div class="products-console">
     <div class="products-console-head">
-        <nav class="products-tabs" aria-label="Gestion de catalogo">
+        <nav class="products-tabs" aria-label="Gestion de catálogo">
             <a href="{{ url()->current() }}" class="products-tab is-active">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-9 5-9-5"></path><path d="m21 12-9 5-9-5"></path><path d="m12 3 9 5-9 5-9-5 9-5Z"></path></svg>
                 Productos
@@ -524,7 +524,7 @@
             @if($canManageCategories)
                 <a href="{{ auth()->user()->isAdmin() && ! empty($selectedStore) ? route('admin.stores.categories.index', $selectedStore) : route('admin.categories.index') }}" class="products-tab">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
-                    Categorias
+                    Categorías
                 </a>
             @endif
         </nav>
@@ -621,11 +621,11 @@
                 </span>
                 @if($isProductSearchActive)
                     <h3>No encontramos productos</h3>
-                    <p>Prueba con otro nombre, categoria, material o descripcion.</p>
+                    <p>Prueba con otro nombre, categoría, material o descripción.</p>
                     <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar busqueda</a>
                 @else
                     <h3>No hay productos registrados</h3>
-                    <p>Agrega el primer producto para empezar a mostrar el catalogo en la tienda.</p>
+                    <p>Agrega el primer producto para empezar a mostrar el catálogo en la tienda.</p>
                     <a href="/admin/products/create" class="btn">Nuevo producto</a>
                 @endif
             </div>
@@ -644,7 +644,7 @@
                         </a>
 
                         <div class="product-card-body">
-                            <p class="product-card-kicker">{{ $product->category ?: 'Sin categoria' }}</p>
+                            <p class="product-card-kicker">{{ $product->category ?: 'Sin categoría' }}</p>
                             <h3 class="product-card-title">
                                 <a href="{{ route('admin.products.edit', $product) }}">{{ $product->name }}</a>
                             </h3>

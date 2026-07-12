@@ -375,7 +375,7 @@
                 style="font-family: {{ $font['css'] }};"
             >
                 <span class="font-preview-name">{{ $font['label'] }}</span>
-                <span class="font-preview-sample">NovaShop vende facil</span>
+                <span class="font-preview-sample">NovaShop vende fácil</span>
             </button>
         @endforeach
     </div>

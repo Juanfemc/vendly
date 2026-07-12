@@ -12,12 +12,12 @@
             </a>
             <div>
                 <h2>Nuevo producto</h2>
-                <p>Completa la informacion para agregar un nuevo item a tu catalogo.</p>
+                <p>Completa la información para agregar un nuevo item a tu catálogo.</p>
             </div>
         </div>
 
         @if(auth()->user()->isAdmin() || ($store?->allowsCategories() ?? true))
-            <a href="/admin/categories" class="btn btn-secondary">Gestionar categorias</a>
+            <a href="/admin/categories" class="btn btn-secondary">Gestionar categorías</a>
         @endif
     </div>
 

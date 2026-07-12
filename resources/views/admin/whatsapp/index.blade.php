@@ -190,8 +190,8 @@
 
 @if ($conversations->isEmpty())
     <div class="panel-empty">
-        <h3>No hay conversaciones todavia</h3>
-        <p>Cuando un cliente responda un mensaje de WhatsApp enviado desde Vendly, aparecera aqui.</p>
+        <h3>No hay conversaciones todavía</h3>
+        <p>Cuando un cliente responda un mensaje de WhatsApp enviado desde Vendly, aparecerá aquí.</p>
     </div>
 @else
     <div class="whatsapp-inbox">
@@ -281,7 +281,7 @@
                     <div class="whatsapp-reply-actions">
                         <p class="whatsapp-window-note">
                             @if ($selectedConversation->canSendFreeText())
-                                Puedes responder con texto libre porque el cliente escribio en las ultimas 24 horas.
+                                Puedes responder con texto libre porque el cliente escribió en las últimas 24 horas.
                             @else
                                 WhatsApp no permite texto libre fuera de 24 horas desde el ultimo mensaje del cliente.
                             @endif
@@ -294,7 +294,7 @@
             @else
                 <div class="panel-empty">
                     <h3>Selecciona una conversacion</h3>
-                    <p>El historial y la respuesta apareceran aqui.</p>
+                    <p>El historial y la respuesta aparecerán aquí.</p>
                 </div>
             @endif
         </section>

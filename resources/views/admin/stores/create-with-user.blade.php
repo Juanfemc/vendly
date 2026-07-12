@@ -234,8 +234,8 @@
                         <input id="password" type="password" name="password" placeholder="Minimo 8 caracteres" required autocomplete="new-password">
                     </div>
                     <div class="onboarding-field">
-                        <label for="password_confirmation">Confirmar contrasena</label>
-                        <input id="password_confirmation" type="password" name="password_confirmation" placeholder="Repite la contrasena" required autocomplete="new-password">
+                        <label for="password_confirmation">Confirmar contraseña</label>
+                        <input id="password_confirmation" type="password" name="password_confirmation" placeholder="Repite la contraseña" required autocomplete="new-password">
                     </div>
                 </div>
 
@@ -245,7 +245,7 @@
                         <input id="active_starts_at" type="date" name="active_starts_at" value="{{ old('active_starts_at', now()->toDateString()) }}">
                     </div>
                     <div class="onboarding-field">
-                        <label for="active_duration_days">Dias activos</label>
+                        <label for="active_duration_days">Días activos</label>
                         <input id="active_duration_days" type="number" name="active_duration_days" value="{{ old('active_duration_days') }}" min="1" max="3650" placeholder="Ej: 30">
                     </div>
                 </div>
@@ -256,7 +256,7 @@
             <div class="onboarding-card__head">
                 <div>
                     <h3>Tienda</h3>
-                    <p>Identidad, plan y configuracion inicial del negocio.</p>
+                    <p>Identidad, plan y configuración inicial del negocio.</p>
                 </div>
                 <span class="onboarding-step">2</span>
             </div>
@@ -296,7 +296,7 @@
 
                 <div class="onboarding-field onboarding-field--full">
                     <span class="template-picker-title">Plantilla inicial</span>
-                    <small style="display:block; margin:6px 0 10px; color:#64748b;">Muy pronto podras iniciar tiendas desde plantillas prediseñadas.</small>
+                    <small style="display:block; margin:6px 0 10px; color:#64748b;">Muy pronto podrás iniciar tiendas desde plantillas prediseñadas.</small>
                     <div class="template-picker">
                         <label class="template-option">
                             <input type="radio" name="template_key" value="" data-template-business="" @checked($selectedTemplate === '')>
@@ -322,7 +322,7 @@
 
                 <div class="onboarding-grid">
                     <div class="onboarding-field">
-                        <label for="slug">Slug publico</label>
+                        <label for="slug">Slug público</label>
                         <input id="slug" type="text" name="slug" value="{{ old('slug') }}" placeholder="mi-tienda" data-store-slug>
                         <small>URL principal: /mi-tienda</small>
                     </div>
@@ -346,8 +346,8 @@
                 </div>
 
                 <div class="onboarding-field">
-                    <label for="location">Ubicacion o direccion</label>
-                    <input id="location" type="text" name="location" value="{{ old('location') }}" placeholder="Ciudad, barrio o direccion">
+                    <label for="location">Ubicación o dirección</label>
+                    <input id="location" type="text" name="location" value="{{ old('location') }}" placeholder="Ciudad, barrio o dirección">
                 </div>
 
                 <div class="onboarding-field">
@@ -356,7 +356,7 @@
                 </div>
 
                 <div class="onboarding-field">
-                    <label for="shop_copy">Descripcion breve</label>
+                    <label for="shop_copy">Descripción breve</label>
                     <textarea id="shop_copy" name="shop_copy" rows="3" placeholder="Cuenta que vende la tienda y que la diferencia">{{ old('shop_copy') }}</textarea>
                 </div>
 

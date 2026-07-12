@@ -25,7 +25,7 @@
                     @elseif($aiContext === 'store_images')
                         Genera una portada profesional para la tienda y revisala antes de guardar.
                     @else
-                        Genera textos e imagenes para el producto y revisalos antes de guardar.
+                        Genera textos e imágenes para el producto y revísalos antes de guardar.
                     @endif
                 </p>
             </div>
@@ -38,8 +38,8 @@
                 <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image">Crear portada</button>
             @else
                 <button type="button" class="btn btn-secondary" data-ai-type="product_name">Mejorar nombre</button>
-                <button type="button" class="btn btn-secondary" data-ai-type="product_description">Generar descripcion</button>
-                <button type="button" class="btn btn-secondary" data-ai-type="product_features">Generar caracteristicas</button>
+                <button type="button" class="btn btn-secondary" data-ai-type="product_description">Generar descripción</button>
+                <button type="button" class="btn btn-secondary" data-ai-type="product_features">Generar características</button>
                 @if($aiStore->allowsCustomProductBadges())
                     <button type="button" class="btn btn-secondary" data-ai-type="product_badges">Sugerir etiquetas</button>
                 @endif
@@ -49,12 +49,12 @@
 
         <p class="ai-assistant-status" data-ai-status>Disponible solo en plan Premium.</p>
         <div class="ai-assistant-credits">
-            <strong><span data-ai-credit-balance>{{ $aiCreditBalance }}</span> creditos IA</strong>
+            <strong><span data-ai-credit-balance>{{ $aiCreditBalance }}</span> créditos IA</strong>
             <span>Premium incluye {{ \App\Services\AiCreditService::MONTHLY_PREMIUM_CREDITS }} al mes.</span>
         </div>
-        <div class="ai-assistant-packages" aria-label="Paquetes extra de creditos IA">
+        <div class="ai-assistant-packages" aria-label="Paquetes extra de créditos IA">
             @foreach(\App\Services\AiCreditService::PACKAGES as $package)
-                <span>{{ $package['credits'] }} creditos: ${{ number_format($package['price_cop'], 0, ',', '.') }}</span>
+                <span>{{ $package['credits'] }} créditos: ${{ number_format($package['price_cop'], 0, ',', '.') }}</span>
             @endforeach
         </div>
         <div class="ai-assistant-preview" data-ai-preview hidden></div>

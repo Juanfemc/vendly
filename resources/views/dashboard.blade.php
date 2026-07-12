@@ -126,13 +126,13 @@
     </div>
 
     <div class="list-card">
-        <p>Desde aqui puedes crear usuarios de tienda, asignar tiendas y publicar banners/noticias.</p>
+        <p>Desde aquí puedes crear usuarios de tienda, asignar tiendas y publicar banners/noticias.</p>
     </div>
 
     <div class="list-card dashboard-updates-card">
         <div class="dashboard-users-head">
             <strong>Nuevas actualizaciones</strong>
-            <span>Ultimas 10</span>
+            <span>Últimas 10</span>
         </div>
 
         @if (!empty($adminUpdates) && $adminUpdates->isNotEmpty())
@@ -185,8 +185,8 @@
 
                             <div class="resource-metrics">
                                 <div class="resource-metric">
-                                    <span class="resource-metric__label">Duracion</span>
-                                    <span class="resource-metric__value">{{ $storeUser->active_duration_days ? $storeUser->active_duration_days . ' dia(s)' : 'Sin limite' }}</span>
+                                    <span class="resource-metric__label">Duración</span>
+                                    <span class="resource-metric__value">{{ $storeUser->active_duration_days ? $storeUser->active_duration_days . ' dia(s)' : 'Sin límite' }}</span>
                                 </div>
                                 <div class="resource-metric">
                                     <span class="resource-metric__label">Inicio</span>
@@ -224,9 +224,9 @@
     @if (!empty($subscriptionExpired) && !empty($store))
         <div class="dashboard-notification dashboard-notification--warning">
             <div>
-                <strong>Tu prueba o suscripcion vencio</strong>
+                <strong>Tu prueba o suscripcion venció</strong>
                 <p>
-                    La tienda no estara visible para clientes ni podra recibir pedidos hasta que se active nuevamente.
+                    La tienda no estara visible para clientes ni podrá recibir pedidos hasta que se active nuevamente.
                     Contacta al administrador para validar el pago.
                 </p>
             </div>
@@ -261,7 +261,7 @@
             <div>
                 <strong>Completa tu tienda</strong>
                 <p>
-                    Tu configuracion inicial va en <b>{{ $onboardingProgress ?? 0 }}%</b>.
+                    Tu configuración inicial va en <b>{{ $onboardingProgress ?? 0 }}%</b>.
                     Termina los primeros pasos para que tu tienda se vea lista para vender.
                 </p>
             </div>

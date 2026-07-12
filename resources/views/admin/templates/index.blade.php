@@ -6,7 +6,7 @@
 <div class="header">
     <div>
         <h2>Plantillas</h2>
-        <p style="margin:6px 0 0; color:#64748b;">Muy pronto podras cambiar el diseno principal de tu tienda desde aqui.</p>
+        <p style="margin:6px 0 0; color:#64748b;">Muy pronto podrás cambiar el diseño principal de tu tienda desde aquí.</p>
     </div>
     <a href="/dashboard" class="btn btn-secondary">Volver al panel</a>
 </div>

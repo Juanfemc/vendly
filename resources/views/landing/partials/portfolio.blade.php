@@ -2,7 +2,7 @@
     <div class="landing-shell">
         <div class="proof-strip">
             <div>
-                <p>Mas de 50 negocios ya venden mas con Vendly</p>
+                <p>Más de 50 negocios ya venden más con Vendly</p>
                 <div class="proof-logos">
                     @foreach($proofStores as $proofStore)
                         <a
@@ -33,7 +33,7 @@
             <div class="section-head section-head--center">
                 <span class="section-kicker">Ejemplos</span>
                 <h2>Tiendas reales que ya venden con presencia propia.</h2>
-                <p>Mira como puede verse tu negocio online: portada, catalogo, categorias, carrito y contacto directo para cerrar pedidos.</p>
+                <p>Mira cómo puede verse tu negocio online: portada, catálogo, categorías, carrito y contacto directo para cerrar pedidos.</p>
             </div>
 
             <div class="portfolio-grid">

@@ -390,12 +390,12 @@
                 <span>vendly</span>
             </a>
 
-            <span class="signup-badge">Prueba gratis {{ $trialDays }} dias</span>
+            <span class="signup-badge">Prueba gratis {{ $trialDays }} días</span>
             <h1>Crea tu tienda y empieza a vender por <span>WhatsApp</span>.</h1>
             <p>Entra al panel en segundos. Tu tienda se crea automaticamente y luego completas lo esencial con una guia paso a paso.</p>
 
             <ul class="signup-benefits">
-                <li>Sin tarjeta de credito</li>
+                <li>Sin tarjeta de crédito</li>
                 <li>Dashboard inmediato</li>
                 <li>Mensajes automaticos</li>
             </ul>
@@ -403,7 +403,7 @@
 
         <section class="signup-card" aria-label="Formulario de registro">
             <div class="signup-card-head">
-                <span>Inicio rapido</span>
+                <span>Inicio rápido</span>
                 <h2>Crear mi tienda gratis</h2>
                 <p>Solo necesitamos estos datos para crear tu cuenta y activar tu prueba.</p>
             </div>
@@ -428,7 +428,7 @@
                 <div class="field">
                     <label for="user_email">Correo</label>
                     <input id="user_email" type="email" name="user_email" value="{{ old('user_email') }}" required autocomplete="email" placeholder="tu@email.com">
-                    <small>Lo usaremos para iniciar sesion y recuperar tu cuenta.</small>
+                    <small>Lo usaremos para iniciar sesión y recuperar tu cuenta.</small>
                     @error('user_email')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
@@ -451,7 +451,7 @@
                     </div>
                 @elseif($requiresTurnstile && ! $turnstileReady)
                     <div class="security-warning" role="alert">
-                        La proteccion anti abuso no esta configurada. Intenta nuevamente mas tarde.
+                        La protección anti abuso no está configurada. Intenta nuevamente más tarde.
                     </div>
                 @endif
 
@@ -462,8 +462,8 @@
                 @error('whatsapp_consent')<div class="error">{{ $message }}</div>@enderror
 
                 <button class="signup-submit" type="submit" @disabled($requiresTurnstile && ! $turnstileReady)>Crear mi tienda gratis</button>
-                <p class="signup-note">Gratis {{ $trialDays }} dias. Sin tarjeta. Configuras tu tienda despues.</p>
-                <p class="signup-login">Ya tienes cuenta? <a href="{{ route('login') }}">Iniciar sesion</a></p>
+                <p class="signup-note">Gratis {{ $trialDays }} días. Sin tarjeta. Configuras tu tienda después.</p>
+                <p class="signup-login">¿Ya tienes cuenta? <a href="{{ route('login') }}">Iniciar sesión</a></p>
             </form>
         </section>
     </main>

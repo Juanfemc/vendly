@@ -116,9 +116,9 @@
                 </details>
 
                 <details class="sidebar-menu-group" {{ request()->is('admin/categories*') || request()->is('admin/stores*/categories') || request()->is('admin/coupons*') || request()->is('admin/stores*/coupons') ? 'open' : '' }}>
-                    <summary><span>{!! $sidebarIcon('tag') !!}Catalogo</span></summary>
+                    <summary><span>{!! $sidebarIcon('tag') !!}Catálogo</span></summary>
                     <div class="sidebar-submenu">
-                        <a href="/admin/categories" class="{{ $sidebarSubLinkClass('admin/categories*') }}">Categorias</a>
+                        <a href="/admin/categories" class="{{ $sidebarSubLinkClass('admin/categories*') }}">Categorías</a>
                         <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarSubLinkClass('admin/coupons*') }}">Cupones</a>
                     </div>
                 </details>
@@ -174,10 +174,10 @@
             </div>
 
             <div class="sidebar-section">
-                <p class="sidebar-section-label">Configuracion</p>
+                <p class="sidebar-section-label">Configuración</p>
 
                 <details class="sidebar-menu-group" {{ request()->is('admin/onboarding') || request()->is('admin/store-settings') || request()->is('admin/templates*') || request()->is('admin/payments*') || request()->is('admin/categories*') || request()->is('admin/coupons*') ? 'open' : '' }}>
-                    <summary><span>{!! $sidebarIcon('settings') !!}Configurar catalogo</span></summary>
+                    <summary><span>{!! $sidebarIcon('settings') !!}Configurar catálogo</span></summary>
                     <div class="sidebar-submenu">
                         <a href="{{ route('admin.store.onboarding') }}" class="{{ $sidebarSubLinkClass('admin/onboarding') }}">Primeros pasos</a>
                         <a href="/admin/store-settings" class="{{ $sidebarSubLinkClass('admin/store-settings') }}">Apariencia e identidad</a>
@@ -185,10 +185,10 @@
                             <a href="{{ route('admin.templates.index') }}" class="{{ $sidebarSubLinkClass('admin/templates*') }}">Plantillas</a>
                         @endif
                         @if(($sidebarStore?->allowsOnlinePayments() ?? false))
-                            <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarSubLinkClass('admin/payments*') }}">Metodos de pago</a>
+                            <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarSubLinkClass('admin/payments*') }}">Métodos de pago</a>
                         @endif
                         @if(($sidebarStore?->allowsCategories() ?? true))
-                            <a href="/admin/categories" class="{{ $sidebarSubLinkClass('admin/categories*') }}">Categorias</a>
+                            <a href="/admin/categories" class="{{ $sidebarSubLinkClass('admin/categories*') }}">Categorías</a>
                         @endif
                         <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarSubLinkClass('admin/coupons*') }}">Gestionar cupones <span class="sidebar-plan-mini">Premium</span></a>
                     </div>
@@ -227,7 +227,7 @@
             @csrf
             <button type="submit" class="sidebar-logout-button">
                 {!! $sidebarIcon('logout') !!}
-                <span>Cerrar sesion</span>
+                <span>Cerrar sesión</span>
             </button>
         </form>
     </div>

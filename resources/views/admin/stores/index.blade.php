@@ -18,7 +18,7 @@
 @if($stores->isEmpty())
     <div class="panel-empty">
         <h3>No hay tiendas registradas</h3>
-        <p>Crea una tienda para asociarla a un usuario y publicar su catalogo.</p>
+        <p>Crea una tienda para asociarla a un usuario y publicar su catálogo.</p>
         <a href="{{ route('admin.stores.create-with-user') }}" class="btn">Crear cliente + tienda</a>
     </div>
 @endif
@@ -55,7 +55,7 @@
                 <div class="resource-metrics">
                     <div class="resource-metric">
                         <span class="resource-metric__label">WhatsApp</span>
-                        <span class="resource-metric__value">{{ $store->whatsapp ?: 'Sin numero' }}</span>
+                        <span class="resource-metric__value">{{ $store->whatsapp ?: 'Sin número' }}</span>
                     </div>
                     <div class="resource-metric">
                         <span class="resource-metric__label">Usuario</span>
@@ -77,7 +77,7 @@
                     @endif
                     @if($store->allowsAiContent())
                         <div class="resource-metric">
-                            <span class="resource-metric__label">Creditos IA</span>
+                            <span class="resource-metric__label">Créditos IA</span>
                             <span class="resource-metric__value">{{ number_format($aiCreditService->balance($store), 0, ',', '.') }}</span>
                         </div>
                     @endif
@@ -106,9 +106,9 @@
                                 </option>
                             @endforeach
                         </select>
-                        <select name="duration_days" aria-label="Duracion de suscripcion">
-                            <option value="30">30 dias</option>
-                            <option value="90">90 dias</option>
+                        <select name="duration_days" aria-label="Duración de suscripcion">
+                            <option value="30">30 días</option>
+                            <option value="90">90 días</option>
                             <option value="365">1 ano</option>
                         </select>
                         <button type="submit" class="btn btn-secondary">Activar</button>
@@ -123,14 +123,14 @@
                         data-store-name="{{ $store->name }}"
                     >
                         @csrf
-                        <select name="package_key" aria-label="Paquete de creditos IA">
+                        <select name="package_key" aria-label="Paquete de créditos IA">
                             @foreach(\App\Services\AiCreditService::PACKAGES as $packageKey => $package)
                                 <option value="{{ $packageKey }}">
-                                    {{ $package['credits'] }} creditos - ${{ number_format($package['price_cop'], 0, ',', '.') }}
+                                    {{ $package['credits'] }} créditos - ${{ number_format($package['price_cop'], 0, ',', '.') }}
                                 </option>
                             @endforeach
                         </select>
-                        <button type="submit" class="btn btn-secondary">Sumar creditos IA</button>
+                        <button type="submit" class="btn btn-secondary">Sumar créditos IA</button>
                     </form>
                 @endif
                 <form method="POST" action="{{ route('admin.stores.destroy', $store) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar esta tienda? Esta accion no se puede deshacer.">

@@ -5,10 +5,10 @@
                 <img src="{{ asset('images/vendly-whatsapp-dark.png') }}" alt="Vendly">
                 <span>vendly</span>
             </a>
-            <p>La plataforma creada para vender mas por WhatsApp.</p>
+            <p>La plataforma creada para vender más por WhatsApp.</p>
         </div>
         <div>
-            <strong>Siguenos</strong>
+            <strong>Síguenos</strong>
             <div class="footer-socials">
                 @foreach([
                     ['name' => 'Instagram', 'url' => config('services.landing_social.instagram'), 'icon' => 'instagram.png'],

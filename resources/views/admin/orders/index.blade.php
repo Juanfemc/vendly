@@ -15,8 +15,8 @@
 
 @if (($totalOrders ?? $orders->count()) === 0)
     <div class="panel-empty">
-        <h3>No hay pedidos todavia</h3>
-        <p>Cuando un cliente envie un carrito o reserva, aparecera aqui para gestionarlo.</p>
+        <h3>No hay pedidos todavía</h3>
+        <p>Cuando un cliente envíe un carrito o reserva, aparecerá aquí para gestionarlo.</p>
     </div>
 @endif
 
@@ -57,7 +57,7 @@
                     <div>
                         <h3 class="resource-card__title">{{ $order->customer_name ?: 'Sin nombre' }}</h3>
                         <p class="resource-card__subtitle">
-                            {{ $order->customer_phone ?: 'Sin telefono' }}
+                            {{ $order->customer_phone ?: 'Sin teléfono' }}
                             @if (auth()->user()->isAdmin())
                                 · {{ $order->store?->name ?? 'Sin tienda' }}
                             @endif
@@ -84,8 +84,8 @@
                         <span class="resource-metric__value">{{ $order->customer_city ?: 'Sin ciudad' }}</span>
                     </div>
                     <div class="resource-metric">
-                        <span class="resource-metric__label">Direccion</span>
-                        <span class="resource-metric__value">{{ $order->customer_address ?: 'Sin direccion' }}</span>
+                        <span class="resource-metric__label">Dirección</span>
+                        <span class="resource-metric__value">{{ $order->customer_address ?: 'Sin dirección' }}</span>
                     </div>
                     <div class="resource-metric">
                         <span class="resource-metric__label">Barrio</span>
@@ -156,7 +156,7 @@
 
                 @if (\App\Models\Order::supportsTermsAcceptanceColumns() && $order->terms_accepted_at)
                     <p class="resource-card__description">
-                        <strong>Terminos aceptados:</strong>
+                        <strong>Términos aceptados:</strong>
                         {{ $order->terms_accepted_at->format('Y-m-d H:i') }}
                         @if($order->terms_version)
                             · Version {{ $order->terms_version }}

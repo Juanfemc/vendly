@@ -320,7 +320,7 @@
         <div class="onboarding-verification-head">
             <div>
                 <h2>Verifica tu WhatsApp</h2>
-                <p>Este numero protege tu prueba gratis y permite enviar bienvenida, recordatorios y avisos importantes.</p>
+                <p>Este número protege tu prueba gratis y permite enviar bienvenida, recordatorios y avisos importantes.</p>
             </div>
             <span class="onboarding-status-pill">{{ $store->whatsapp_verified_at ? 'Verificado' : 'Pendiente' }}</span>
         </div>
@@ -332,18 +332,18 @@
                 <div class="onboarding-field">
                     <label for="verify_whatsapp">WhatsApp a verificar</label>
                     <input id="verify_whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" inputmode="tel" autocomplete="tel">
-                    <small>Si quieres cambiarlo, guardalo tambien en el formulario de configuracion.</small>
+                    <small>Si quieres cambiarlo, guárdalo también en el formulario de configuración.</small>
                 </div>
-                <button type="button" class="btn" data-send-whatsapp-code>Enviar codigo</button>
+                <button type="button" class="btn" data-send-whatsapp-code>Enviar código</button>
             </div>
 
             <div class="onboarding-code-row">
                 <div class="onboarding-field">
-                    <label for="verify_whatsapp_code">Codigo de 6 digitos</label>
+                    <label for="verify_whatsapp_code">Código de 6 dígitos</label>
                     <input id="verify_whatsapp_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
                     <input id="verify_whatsapp_token" type="hidden">
                 </div>
-                <button type="button" class="btn btn-secondary" data-confirm-whatsapp-code>Verificar numero</button>
+                <button type="button" class="btn btn-secondary" data-confirm-whatsapp-code>Verificar número</button>
             </div>
 
             <div class="onboarding-inline-status" data-whatsapp-status aria-live="polite"></div>
@@ -358,21 +358,21 @@
                 <div class="onboarding-field">
                     <label for="onboarding_name">Nombre de tienda</label>
                     <input id="onboarding_name" name="name" value="{{ old('name', $store->name) }}" required>
-                    <small>El nombre debe ser facil de recordar y reconocer.</small>
+                    <small>El nombre debe ser fácil de recordar y reconocer.</small>
                     @error('name')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="onboarding-field">
                     <label for="onboarding_whatsapp">WhatsApp de pedidos</label>
                     <input id="onboarding_whatsapp" name="whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" required inputmode="tel">
-                    <small>Si cambias este numero tendras que verificarlo nuevamente.</small>
+                    <small>Si cambias este número tendrás que verificarlo nuevamente.</small>
                     @error('whatsapp')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="onboarding-field">
-                    <label for="onboarding_location">Ciudad o direccion</label>
+                    <label for="onboarding_location">Ciudad o dirección</label>
                     <input id="onboarding_location" name="location" value="{{ old('location', $store->location) }}" placeholder="Ej: Cali, Colombia">
-                    <small>Opcional. Puedes completarlo cuando configures envios.</small>
+                    <small>Opcional. Puedes completarlo cuando configures envíos.</small>
                     @error('location')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
 
@@ -393,8 +393,8 @@
                 </div>
 
                 <div class="onboarding-field onboarding-field--full">
-                    <label for="onboarding_shop_copy">Descripcion corta</label>
-                    <textarea id="onboarding_shop_copy" name="shop_copy" placeholder="Cuenta en una frase que vendes y por que deberian comprarte.">{{ old('shop_copy', $store->shop_copy) }}</textarea>
+                    <label for="onboarding_shop_copy">Descripción corta</label>
+                    <textarea id="onboarding_shop_copy" name="shop_copy" placeholder="Cuenta en una frase que vendes y por qué deberían comprarte.">{{ old('shop_copy', $store->shop_copy) }}</textarea>
                     @error('shop_copy')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
             </div>
@@ -457,7 +457,7 @@
 
             sendButton?.addEventListener('click', async () => {
                 sendButton.disabled = true;
-                status.textContent = 'Enviando codigo...';
+                status.textContent = 'Enviando código...';
 
                 try {
                     const data = await postJson(@json(route('admin.store.onboarding.whatsapp.send')), {
@@ -465,7 +465,7 @@
                     });
 
                     tokenInput.value = data.verification_token || '';
-                    status.textContent = data.message || 'Codigo enviado.';
+                    status.textContent = data.message || 'Código enviado.';
                     if (! tokenInput.value) {
                         window.location.reload();
                         return;
@@ -480,7 +480,7 @@
 
             confirmButton?.addEventListener('click', async () => {
                 confirmButton.disabled = true;
-                status.textContent = 'Verificando codigo...';
+                status.textContent = 'Verificando código...';
 
                 try {
                     const data = await postJson(@json(route('admin.store.onboarding.whatsapp.verify')), {

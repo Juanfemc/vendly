@@ -25,12 +25,12 @@
             <option value="admin" @selected(old('role') === 'admin')>Administrador</option>
         </select>
         <input type="password" name="password" placeholder="Contrasena">
-        <input type="password" name="password_confirmation" placeholder="Confirmar contrasena">
+        <input type="password" name="password_confirmation" placeholder="Confirmar contraseña">
 
         <div id="active_period_fields">
             <label class="field-label" for="active_starts_at">Fecha de inicio</label>
             <input type="date" id="active_starts_at" name="active_starts_at" value="{{ old('active_starts_at', now()->toDateString()) }}">
-            <label class="field-label" for="active_duration_days">Cantidad de tiempo activo (dias)</label>
+            <label class="field-label" for="active_duration_days">Cantidad de tiempo activo (días)</label>
             <input type="number" id="active_duration_days" name="active_duration_days" value="{{ old('active_duration_days') }}" min="1" max="3650" placeholder="Ej: 30">
         </div>
 

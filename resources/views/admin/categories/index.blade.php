@@ -479,22 +479,22 @@
 
 <div class="categories-console">
     <div class="categories-console-head">
-        <nav class="catalog-tabs" aria-label="Gestion de catalogo">
+        <nav class="catalog-tabs" aria-label="Gestion de catálogo">
             <a href="{{ $productsUrl }}" class="catalog-tab">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-9 5-9-5"></path><path d="m21 12-9 5-9-5"></path><path d="m12 3 9 5-9 5-9-5 9-5Z"></path></svg>
                 Productos
             </a>
             <a href="{{ $categoriesUrl }}" class="catalog-tab is-active">
                 <svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
-                Categorias
+                Categorías
             </a>
         </nav>
 
         @if(! auth()->user()->isAdmin() || ! empty($selectedStore))
             @if(empty($categoriesLocked))
-                <a href="#nueva-categoria" class="category-main-action" data-category-create-link>
+                <a href="#nueva-categoría" class="category-main-action" data-category-create-link>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-                    Nueva Categoria
+                    Nueva Categoría
                 </a>
             @endif
         @endif
@@ -522,14 +522,14 @@
                 <article class="category-store-card">
                     <div>
                         <h3>{{ $storeOption->name }}</h3>
-                        <p>Gestiona las categorias de esta tienda.</p>
+                        <p>Gestiona las categorías de esta tienda.</p>
                     </div>
                     <div class="category-store-meta">
                         <span class="category-store-pill">Plan {{ $storeOption->planLabel() }}</span>
-                        <span class="category-store-pill">{{ $storeOption->categories_count }} categoria(s)</span>
+                        <span class="category-store-pill">{{ $storeOption->categories_count }} categoría(s)</span>
                     </div>
                     <a href="{{ route('admin.stores.categories.index', $storeOption) }}" class="btn">
-                        {{ $storeOption->allowsCategories() ? 'Ver categorias' : 'Ver limite' }}
+                        {{ $storeOption->allowsCategories() ? 'Ver categorías' : 'Ver límite' }}
                     </a>
                 </article>
             @endforeach
@@ -545,7 +545,7 @@
             <div class="category-owner-panel">
                 <div>
                     <h3>{{ $selectedStore->name }}</h3>
-                    <p>Categorias de esta tienda</p>
+                    <p>Categorías de esta tienda</p>
                 </div>
                 <a href="/admin/categories" class="btn btn-secondary">Volver a tiendas</a>
             </div>
@@ -554,15 +554,15 @@
         @if(! empty($categoriesLocked))
             <div class="category-lock-panel">
                 <div>
-                    <h3>Categorias no disponibles</h3>
-                    <p>El plan {{ $store->planLabel() }} no incluye categorias. Los productos se muestran como un catalogo simple.</p>
+                    <h3>Categorías no disponibles</h3>
+                    <p>El plan {{ $store->planLabel() }} no incluye categorías. Los productos se muestran como un catálogo simple.</p>
                 </div>
             </div>
         @else
-            <details class="category-create-card" id="nueva-categoria" @if($errors->any()) open @endif>
+            <details class="category-create-card" id="nueva-categoría" @if($errors->any()) open @endif>
                 <summary class="category-create-trigger">
                     <span>
-                        Crear categoria
+                        Crear categoría
                         <small>Agrega nombre, imagen y posicion en la tienda.</small>
                     </span>
                     <span aria-hidden="true">+</span>
@@ -576,7 +576,7 @@
 
                     <div class="category-form-grid">
                         <label>
-                            Nombre de la categoria
+                            Nombre de la categoría
                             <input type="text" name="name" value="{{ old('name') }}" placeholder="Ej: Camisetas" required>
                         </label>
 
@@ -586,7 +586,7 @@
                         </label>
 
                         <label class="category-field-wide">
-                            Descripcion corta
+                            Descripción corta
                             <textarea name="description" rows="3" placeholder="Texto breve para mostrar en la tienda">{{ old('description') }}</textarea>
                         </label>
 
@@ -615,12 +615,12 @@
 
                         <label class="category-inline-check category-field-wide">
                             <input type="checkbox" name="is_active" value="1" checked>
-                            Categoria visible
+                            Categoría visible
                         </label>
                     </div>
 
                     <div>
-                        <button class="btn" type="submit">Agregar categoria</button>
+                        <button class="btn" type="submit">Agregar categoría</button>
                     </div>
                 </form>
             </details>
@@ -631,8 +631,8 @@
                         <span class="category-empty-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
                         </span>
-                        <h3>No hay categorias registradas</h3>
-                        <p>Crea categorias para ordenar el catalogo y facilitar la exploracion de productos.</p>
+                        <h3>No hay categorías registradas</h3>
+                        <p>Crea categorías para ordenar el catálogo y fácilitar la exploracion de productos.</p>
                     </div>
                 </div>
             @else
@@ -670,7 +670,7 @@
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
                                 </a>
 
-                                <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" data-confirm-delete data-confirm-message="Eliminar esta categoria? Los productos quedaran sin categoria.">
+                                <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" data-confirm-delete data-confirm-message="Eliminar esta categoría? Los productos quedarán sin categoría.">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="category-row-action category-row-action--danger" aria-label="Eliminar {{ $category->name }}">
@@ -688,7 +688,7 @@
 
 <script>
     document.querySelector('[data-category-create-link]')?.addEventListener('click', function () {
-        const panel = document.getElementById('nueva-categoria');
+        const panel = document.getElementById('nueva-categoría');
 
         if (panel) {
             panel.open = true;

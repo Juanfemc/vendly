@@ -6,7 +6,7 @@
                 IA integrada para potenciar tus ventas
             </div>
             <h1>Convierte WhatsApp en tu <strong>canal de ventas</strong> profesional.</h1>
-            <p>Crea tu tienda en minutos, comparte tu catalogo y recibe pedidos por WhatsApp. Mas ventas. Menos complicaciones.</p>
+            <p>Crea tu tienda en minutos, comparte tu catálogo y recibe pedidos por WhatsApp. Más ventas. Menos complicaciones.</p>
 
             <div class="action-row">
                 <a href="{{ route('trial-signup.create') }}" class="btn btn--primary" data-meta-event="Lead">Crear mi tienda gratis</a>
@@ -15,7 +15,7 @@
             </div>
 
             <div class="hero-trust" aria-label="Beneficios de inicio">
-                <span>Gratis 7 dias</span>
+                <span>Gratis 7 días</span>
                 <span>Cancela cuando quieras</span>
             </div>
         </div>

@@ -6,7 +6,7 @@
     @if(auth()->user()?->isAdmin())
         <a href="/admin/stores" class="btn btn-secondary">Volver a tiendas</a>
     @else
-        <a href="/admin/store-settings" class="btn btn-secondary">Volver a configuracion</a>
+        <a href="/admin/store-settings" class="btn btn-secondary">Volver a configuración</a>
     @endif
 </div>
 
@@ -28,7 +28,7 @@
 
 @if($needsMigration ?? false)
     <div class="flash error">
-        La columna de visitas todavia no existe. Ejecuta <strong>php artisan migrate</strong> para habilitar esta seccion.
+        La columna de visitas todavía no existe. Ejecuta <strong>php artisan migrate</strong> para habilitar esta sección.
     </div>
 @elseif($stores->isNotEmpty())
     <div class="panel-list">
@@ -80,7 +80,7 @@
 @else
     <div class="panel-empty">
         <h3>Aun no hay visitas registradas</h3>
-        <p>Cuando las tiendas reciban trafico publico, veras aqui el conteo por tienda.</p>
+        <p>Cuando las tiendas reciban tráfico público, verás aquí el conteo por tienda.</p>
     </div>
 @endif
 @endsection

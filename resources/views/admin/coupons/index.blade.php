@@ -67,7 +67,7 @@
     @if(! empty($couponsLocked))
         <div class="panel-empty">
             <h3>Cupones no disponibles</h3>
-            <p>El plan {{ $store->planLabel() }} no incluye codigos de descuento. Disponible solo en el plan Premium.</p>
+            <p>El plan {{ $store->planLabel() }} no incluye códigos de descuento. Disponible solo en el plan Premium.</p>
         </div>
     @else
         <div class="list-card">
@@ -80,7 +80,7 @@
 
                 <div class="grid-two">
                     <label>
-                        <span>Codigo</span>
+                        <span>Código</span>
                         <input type="text" name="code" value="{{ old('code') }}" placeholder="EJ: BIENVENIDA10" required>
                     </label>
 
@@ -142,7 +142,7 @@
         @if ($coupons->isEmpty())
             <div class="panel-empty">
                 <h3>No hay cupones</h3>
-                <p>Crea codigos para campanas, clientes frecuentes o descuentos de bienvenida.</p>
+                <p>Crea códigos para campañas, clientes frecuentes o descuentos de bienvenida.</p>
             </div>
         @endif
 

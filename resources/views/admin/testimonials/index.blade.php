@@ -7,7 +7,7 @@
         <div>
             <p class="admin-brand-eyebrow">Confianza</p>
             <h2 class="admin-brand-title">Testimonios</h2>
-            <p class="admin-brand-text">Administra opiniones visibles para reforzar la confianza en la pagina principal.</p>
+            <p class="admin-brand-text">Administra opiniones visibles para reforzar la confianza en la página principal.</p>
         </div>
     </div>
     <div class="admin-brand-actions">
@@ -29,14 +29,14 @@
 
 @if ($needsMigration ?? false)
     <div class="flash error">
-        La tabla de testimonios todavia no existe. Ejecuta <strong>php artisan migrate</strong> para habilitar esta seccion.
+        La tabla de testimonios todavía no existe. Ejecuta <strong>php artisan migrate</strong> para habilitar esta sección.
     </div>
 @endif
 
 @if ($testimonials->isEmpty() && ! ($needsMigration ?? false))
     <div class="panel-empty">
         <h3>No hay testimonios registrados</h3>
-        <p>Agrega testimonios para reforzar confianza en la pagina principal de Vendly.</p>
+        <p>Agrega testimonios para reforzar confianza en la página principal de Vendly.</p>
         <a href="{{ route('admin.testimonials.create') }}" class="btn">Crear testimonio</a>
     </div>
 @endif

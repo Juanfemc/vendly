@@ -763,8 +763,8 @@
                 </svg>
             </a>
             <div>
-                <h2>Apariencia del Catalogo</h2>
-                <p>Personaliza el diseno, informacion y contenido publico de tu tienda online.</p>
+                <h2>Apariencia del Catálogo</h2>
+                <p>Personaliza el diseño, información y contenido público de tu tienda online.</p>
             </div>
         </div>
         <span class="catalog-plan-pill">{{ $store->planLabel() }}</span>
@@ -792,7 +792,7 @@
                     <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                     <div>
                         <h3>Identidad de tu tienda</h3>
-                        <p>Nombre visible en tu catalogo publico.</p>
+                        <p>Nombre visible en tu catálogo público.</p>
                     </div>
                 </div>
             </div>
@@ -833,14 +833,14 @@
                         <div class="catalog-field">
                             <label for="store_subdomain">Subdominio</label>
                             <input id="store_subdomain" type="text" name="subdomain" value="{{ old('subdomain', $store->subdomain) }}" placeholder="mitienda">
-                            <small>Tu tienda podra usarse como {{ old('subdomain', $store->subdomain) ?: 'mitienda' }}.{{ $storefrontHost }}.</small>
+                            <small>Tu tienda podrá usarse como {{ old('subdomain', $store->subdomain) ?: 'mitienda' }}.{{ $storefrontHost }}.</small>
                         </div>
 
                         @if($store->allowsCustomDomain())
                             <div class="catalog-field catalog-field--full">
                                 <label for="store_custom_domain">Dominio personalizado <span class="catalog-pro-pill">Premium</span></label>
                                 <input id="store_custom_domain" type="text" name="custom_domain" value="{{ $customDomain }}" placeholder="www.tudominio.com">
-                                <small>Guarda el dominio y apunta un CNAME hacia {{ $storefrontHost }}. Estado: {{ ($store->custom_domain_status ?? 'pending') === 'verified' ? 'verificado' : 'pendiente de verificacion' }}.</small>
+                                <small>Guarda el dominio y apunta un CNAME hacia {{ $storefrontHost }}. Estado: {{ ($store->custom_domain_status ?? 'pending') === 'verified' ? 'verificado' : 'pendiente de verificación' }}.</small>
                             </div>
                         @else
                             <div class="catalog-field">
@@ -864,7 +864,7 @@
                     </span>
                     <div>
                         <h3>Identidad visual</h3>
-                        <p>Logo, banner y descripcion de tu tienda.</p>
+                        <p>Logo, banner y descripción de tu tienda.</p>
                     </div>
                 </div>
             </div>
@@ -903,8 +903,8 @@
                 </div>
 
                 <div class="catalog-field catalog-field--full">
-                    <label for="shop_copy">Descripcion</label>
-                    <textarea id="shop_copy" name="shop_copy" maxlength="1000" placeholder="Ej: Tienda de ropa deportiva con envios a todo el pais...">{{ old('shop_copy', $store->shop_copy) }}</textarea>
+                    <label for="shop_copy">Descripción</label>
+                    <textarea id="shop_copy" name="shop_copy" maxlength="1000" placeholder="Ej: Tienda de ropa deportiva con envíos a todo el país...">{{ old('shop_copy', $store->shop_copy) }}</textarea>
                     <span class="catalog-text-count">Max. 1000</span>
                 </div>
             </div>
@@ -919,7 +919,7 @@
                         </span>
                         <div>
                             <h3>Colores</h3>
-                            <p>Personaliza los colores de tu catalogo.</p>
+                            <p>Personaliza los colores de tu catálogo.</p>
                         </div>
                     </div>
                     <button type="button" class="catalog-link-action" data-reset-theme>Restaurar</button>
@@ -936,11 +936,11 @@
                 <div class="catalog-color-grid">
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="brand_color" value="{{ $selectedBrandColor }}" data-theme-color-input="brand">
-                        <span><strong>Acento</strong><span>Precios, botones, carrito y enlaces.</span></span>
+                        <span><strong>Acento</strong><span>Precios, botónes, carrito y enlaces.</span></span>
                     </label>
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="background_color" value="{{ $selectedBackgroundColor }}" data-theme-color-input="background">
-                        <span><strong>Fondo</strong><span>Fondo de paginas y secciones.</span></span>
+                        <span><strong>Fondo</strong><span>Fondo de páginas y secciones.</span></span>
                     </label>
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" value="{{ $selectedTextColor }}" disabled>
@@ -955,8 +955,8 @@
                     <div class="catalog-card-title">
                         <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                         <div>
-                            <h3>Tipografia</h3>
-                            <p>Elige el estilo tipografico de tu catalogo.</p>
+                            <h3>Tipografía</h3>
+                            <p>Elige el estilo tipográfico de tu catálogo.</p>
                         </div>
                     </div>
                 </div>
@@ -999,7 +999,7 @@
                     </span>
                     <div>
                         <h3>WhatsApp de contacto</h3>
-                        <p>Numero publico para compras, contacto y confirmaciones.</p>
+                        <p>Número público para compras, contacto y confirmaciones.</p>
                     </div>
                 </div>
             </div>
@@ -1007,10 +1007,10 @@
                 <div class="catalog-field">
                     <label for="store_whatsapp">WhatsApp</label>
                     <input id="store_whatsapp" type="text" name="whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" placeholder="300 123 4567" required>
-                    <small>Tip: tus clientes usaran este numero para dudas, compras y confirmaciones.</small>
+                    <small>Tip: tus clientes usarán este número para dudas, compras y confirmaciones.</small>
                 </div>
                 <div class="catalog-field">
-                    <label for="store_location">Direccion / ubicacion</label>
+                    <label for="store_location">Dirección / ubicación</label>
                     <input id="store_location" type="text" name="location" value="{{ old('location', $store->location) }}" placeholder="Calle 123 #45-67, Bogota">
                 </div>
             </div>
@@ -1024,7 +1024,7 @@
                     </span>
                     <div>
                         <h3>Redes sociales</h3>
-                        <p>Conecta tus redes con el catalogo.</p>
+                        <p>Conecta tus redes con el catálogo.</p>
                     </div>
                 </div>
             </div>
@@ -1165,8 +1165,8 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17h4V5H2v12h3"></path><path d="M14 17h1m4 0h3v-6h-3l-2-4h-3v10h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
                         </span>
                         <div>
-                            <h3>Envios</h3>
-                            <p>Costos por ciudad y metodos manuales.</p>
+                            <h3>Envíos</h3>
+                            <p>Costos por ciudad y métodos manuales.</p>
                         </div>
                     </div>
                     @unless($store->allowsShippingMethods())
@@ -1206,7 +1206,7 @@
                     @endif
 
                     <div class="catalog-field catalog-field--full" style="margin-top:18px;">
-                        <span>Metodos manuales</span>
+                        <span>Métodos manuales</span>
                         <div class="catalog-shipping-list">
                             @for($shippingIndex = 0; $shippingIndex < 5; $shippingIndex++)
                                 @php($shippingMethod = $shippingMethods[$shippingIndex] ?? [])
@@ -1233,7 +1233,7 @@
                         </span>
                         <div>
                             <h3>Reservas</h3>
-                            <p>Define dias y horas disponibles.</p>
+                            <p>Define días y horas disponibles.</p>
                         </div>
                     </div>
                 </div>
@@ -1266,8 +1266,8 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h8"></path></svg>
                         </span>
                         <div>
-                            <h3>Paginas legales</h3>
-                            <p>Informacion legal para tus clientes.</p>
+                            <h3>Páginas legales</h3>
+                            <p>Información legal para tus clientes.</p>
                         </div>
                     </div>
                 </div>
@@ -1286,19 +1286,19 @@
                 <div class="catalog-settings-grid" style="margin-top:18px;">
                     <div class="catalog-field">
                         <label for="terms_title">Texto del checkbox</label>
-                        <input id="terms_title" type="text" name="terms_title" value="{{ old('terms_title', $store->terms_title) }}" maxlength="120" placeholder="Acepto los terminos y condiciones">
+                        <input id="terms_title" type="text" name="terms_title" value="{{ old('terms_title', $store->terms_title) }}" maxlength="120" placeholder="Acepto los términos y condiciones">
                     </div>
                     <div class="catalog-field">
                         <label for="terms_version">Version</label>
                         <input id="terms_version" type="text" name="terms_version" value="{{ old('terms_version', $store->terms_version) }}" maxlength="80" placeholder="v1">
                     </div>
                     <div class="catalog-field catalog-field--full">
-                        <label for="terms_content">Terminos y condiciones</label>
-                        <textarea id="terms_content" name="terms_content" maxlength="5000" placeholder="Escribe aqui tus terminos y condiciones...">{{ old('terms_content', $store->terms_content) }}</textarea>
+                        <label for="terms_content">Términos y condiciones</label>
+                        <textarea id="terms_content" name="terms_content" maxlength="5000" placeholder="Escribe aquí tus términos y condiciones...">{{ old('terms_content', $store->terms_content) }}</textarea>
                     </div>
                     <div class="catalog-field catalog-field--full">
                         <label for="terms_url">Enlace externo opcional</label>
-                        <input id="terms_url" type="url" name="terms_url" value="{{ old('terms_url', $store->terms_url) }}" maxlength="255" placeholder="https://tu-dominio.com/terminos">
+                        <input id="terms_url" type="url" name="terms_url" value="{{ old('terms_url', $store->terms_url) }}" maxlength="255" placeholder="https://tu-dominio.com/términos">
                     </div>
                 </div>
             </section>
@@ -1311,8 +1311,8 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"></path><path d="M13 2v7h7"></path></svg>
                     </span>
                     <div>
-                        <h3>Informacion del negocio</h3>
-                        <p>Textos para la pagina de nosotros.</p>
+                        <h3>Información del negocio</h3>
+                        <p>Textos para la página de nosotros.</p>
                     </div>
                 </div>
             </div>

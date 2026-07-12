@@ -31,8 +31,8 @@
                 </svg>
             </span>
             <div>
-                <h3>Datos basicos</h3>
-                <p>Informacion principal que vera el cliente en la tienda.</p>
+                <h3>Datos básicos</h3>
+                <p>Información principal que verá el cliente en la tienda.</p>
             </div>
         </div>
 
@@ -53,13 +53,13 @@
         <div class="product-editor-grid">
             <div class="product-editor-field">
                 <label for="name">Nombre del producto <span>*</span></label>
-                <input id="name" type="text" name="name" value="{{ old('name', $formProduct?->name) }}" placeholder="Ej: Camiseta basica de algodon" required>
-                <small>Usa un nombre claro y facil de reconocer.</small>
+                <input id="name" type="text" name="name" value="{{ old('name', $formProduct?->name) }}" placeholder="Ej: Camiseta básica de algodón" required>
+                <small>Usa un nombre claro y fácil de reconocer.</small>
             </div>
 
             <div class="product-editor-field">
                 <label for="material">Material</label>
-                <input id="material" type="text" name="material" value="{{ old('material', $formProduct?->material) }}" placeholder="Ej: Algodon, cuero, acero">
+                <input id="material" type="text" name="material" value="{{ old('material', $formProduct?->material) }}" placeholder="Ej: Algodón, cuero, acero">
                 <small>Opcional, pero ayuda a vender mejor.</small>
             </div>
         </div>
@@ -67,28 +67,28 @@
         @if($categoriesAllowed)
             <div class="product-editor-grid product-editor-grid--wide">
                 <div class="product-editor-field">
-                    <label for="category_select">Categoria</label>
+                    <label for="category_select">Categoría</label>
                     <select name="category" id="category_select">
-                        <option value="">Selecciona categoria</option>
+                        <option value="">Selecciona categoría</option>
                         @foreach ($categoryOptions as $categoryOption)
                             <option value="{{ $categoryOption }}" @selected($selectedCategory === $categoryOption)>{{ $categoryOption }}</option>
                         @endforeach
                     </select>
-                    <small>Para crear una categoria nueva, ve a la seccion Categorias.</small>
+                    <small>Para crear una categoría nueva, ve a la sección Categorías.</small>
                 </div>
             </div>
         @else
-            <div class="product-editor-note">El plan {{ $formStore?->planLabel() ?? 'actual' }} no incluye categorias. Este producto quedara sin categoria.</div>
+            <div class="product-editor-note">El plan {{ $formStore?->planLabel() ?? 'actual' }} no incluye categorías. Este producto quedará sin categoría.</div>
         @endif
 
         <div class="product-editor-field">
-            <label for="description">Descripcion</label>
+            <label for="description">Descripción</label>
             <textarea id="description" name="description" class="long-textarea product-editor-textarea" rows="6" maxlength="5000" placeholder="Describe materiales, beneficios, medidas, uso o detalles importantes.">{{ $descriptionValue }}</textarea>
-            <small>Mientras mas clara sea la descripcion, menos dudas tendra el cliente.</small>
+            <small>Mientras más clara sea la descripción, menos dudas tendrá el cliente.</small>
         </div>
 
         <div class="product-editor-field">
-            <label for="features_editor">Caracteristicas</label>
+            <label for="features_editor">Características</label>
             <div class="rich-editor product-editor-rich" data-rich-editor>
                 <div class="rich-toolbar" aria-label="Herramientas de texto">
                     <button type="button" data-command="bold"><strong>B</strong></button>
@@ -114,8 +114,8 @@
                 </svg>
             </span>
             <div>
-                <h3>Imagenes</h3>
-                <p>La primera imagen sera la principal del producto.</p>
+                <h3>Imágenes</h3>
+                <p>La primera imagen será la principal del producto.</p>
             </div>
         </div>
 
@@ -162,14 +162,14 @@
                         <path d="M8 12h8"></path>
                         <path d="M12 8v8"></path>
                     </svg>
-                    <strong>Agregar galeria</strong>
-                    <span>Hasta 8 imagenes adicionales.</span>
+                    <strong>Agregar galería</strong>
+                    <span>Hasta 8 imágenes adicionales.</span>
                     <input id="product_images" type="file" name="images[]" accept="image/*" multiple data-optimize-image data-max-width="1600" data-max-height="1600" data-quality="0.82" data-output="webp" data-max-size="2097152" data-max-total-size="8388608" data-product-image-preview data-preview-target="product_images_preview">
                 </label>
             @else
                 <div class="product-editor-upgrade">
-                    <strong>Galeria disponible desde Pro</strong>
-                    <span>Mejora el plan para mostrar mas imagenes por producto.</span>
+                    <strong>Galería disponible desde Pro</strong>
+                    <span>Mejora el plan para mostrar mas imágenes por producto.</span>
                 </div>
             @endif
         </div>
@@ -242,7 +242,7 @@
         @if($formStore?->allowsCustomProductBadges())
             <div class="product-editor-field">
                 <label for="custom_badges">Etiquetas personalizadas</label>
-                <input id="custom_badges" type="text" name="custom_badges" value="{{ old('custom_badges', $formProduct ? implode(', ', $formProduct->customBadges()) : '') }}" maxlength="255" placeholder="Ej: Nuevo, Mas vendido, Ultimas unidades">
+                <input id="custom_badges" type="text" name="custom_badges" value="{{ old('custom_badges', $formProduct ? implode(', ', $formProduct->customBadges()) : '') }}" maxlength="255" placeholder="Ej: Nuevo, Más vendido, Últimas unidades">
                 <small>Se muestran hasta 3 etiquetas cortas, separadas por coma.</small>
             </div>
         @endif
