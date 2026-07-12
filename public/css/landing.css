@@ -28,6 +28,22 @@ html {
     box-sizing: border-box;
 }
 
+a,
+button,
+label,
+summary,
+[role="button"] {
+    -webkit-tap-highlight-color: transparent;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+label:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+    outline: none;
+}
+
 body.landing-page {
     min-width: 320px;
     overflow-x: hidden;
@@ -1331,6 +1347,7 @@ body.landing-page {
     .landing-nav-inner {
         min-height: 68px;
         padding: 0;
+        gap: 10px;
     }
 
     .landing-menu {
@@ -1380,11 +1397,20 @@ body.landing-page {
 
     .landing-nav-actions {
         margin-left: auto;
+        gap: 8px;
     }
 
-    .landing-nav-actions .btn,
-    .login-link {
-        display: none;
+    .landing-nav-actions .btn {
+        min-height: 38px;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .landing-nav-actions .login-link {
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
     }
 
     .landing-mobile-backdrop {
@@ -1479,8 +1505,7 @@ body.landing-page {
         transform: rotate(-45deg);
     }
 
-    .mobile-drawer-menu,
-    .mobile-drawer-actions {
+    .mobile-drawer-menu {
         display: grid;
         gap: 10px;
     }
@@ -1490,8 +1515,7 @@ body.landing-page {
         border-bottom: 1px solid rgba(148, 163, 184, 0.22);
     }
 
-    .mobile-drawer-menu a,
-    .mobile-drawer-actions a {
+    .mobile-drawer-menu a {
         min-height: 66px;
         display: grid;
         grid-template-columns: 44px minmax(0, 1fr) 20px;
@@ -1505,15 +1529,13 @@ body.landing-page {
     }
 
     .mobile-drawer-menu a:hover,
-    .mobile-drawer-actions a:hover,
     .mobile-drawer-menu a.is-active {
         border-color: rgba(255, 106, 0, 0.3);
         background: linear-gradient(135deg, rgba(255, 106, 0, 0.22), rgba(255, 106, 0, 0.08));
         transform: translateX(2px);
     }
 
-    .mobile-drawer-menu strong,
-    .mobile-drawer-actions strong {
+    .mobile-drawer-menu strong {
         font-size: clamp(17px, 4.7vw, 24px);
         font-weight: 750;
         line-height: 1.1;
@@ -1540,18 +1562,6 @@ body.landing-page {
         font-size: 34px;
         font-style: normal;
         line-height: 1;
-    }
-
-    .mobile-drawer-actions {
-        margin-top: auto;
-    }
-
-    .mobile-drawer-cta {
-        min-height: 72px !important;
-        color: #141414 !important;
-        border-color: rgba(255, 126, 29, 0.78) !important;
-        background: linear-gradient(180deg, #ff8a28, #ff6a00) !important;
-        box-shadow: 0 14px 30px rgba(255, 106, 0, 0.16);
     }
 
     .hero-content h1 {
@@ -1722,8 +1732,7 @@ body.landing-page {
         height: 38px;
     }
 
-    .mobile-drawer-menu a,
-    .mobile-drawer-actions a {
+    .mobile-drawer-menu a {
         min-height: 58px;
         grid-template-columns: 36px minmax(0, 1fr) 18px;
         gap: 13px;
@@ -1735,10 +1744,6 @@ body.landing-page {
         width: 36px;
         height: 36px;
         font-size: 25px;
-    }
-
-    .mobile-drawer-cta {
-        min-height: 64px !important;
     }
 
     .hero-badge {
@@ -1848,5 +1853,44 @@ body.landing-page {
 
     .footer-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .landing-shell {
+        width: min(100% - 20px, 1180px);
+    }
+
+    .landing-nav-inner {
+        min-height: 62px;
+        gap: 8px;
+    }
+
+    .landing-nav-inner > .brand-link span {
+        display: none;
+    }
+
+    .landing-nav-inner > .brand-link {
+        gap: 0;
+    }
+
+    .landing-nav-inner > .brand-link img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .landing-menu-open {
+        width: 38px;
+        height: 38px;
+    }
+
+    .landing-nav-actions {
+        gap: 6px;
+    }
+
+    .landing-nav-actions .btn {
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 10px;
     }
 }

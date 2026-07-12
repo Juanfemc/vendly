@@ -29,6 +29,29 @@
             box-sizing: border-box;
         }
 
+        a,
+        button,
+        label,
+        summary,
+        [role="button"] {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        a:focus:not(:focus-visible),
+        button:focus:not(:focus-visible),
+        label:focus:not(:focus-visible),
+        summary:focus:not(:focus-visible),
+        [role="button"]:focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        [role="button"]:focus-visible {
+            outline: 2px solid rgba(255, 106, 0, 0.7);
+            outline-offset: 3px;
+        }
+
         img,
         table {
             max-width: 100%;

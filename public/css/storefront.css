@@ -25,6 +25,22 @@ html {
     box-sizing: border-box;
 }
 
+a,
+button,
+label,
+summary,
+[role="button"] {
+    -webkit-tap-highlight-color: transparent;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+label:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+    outline: none;
+}
+
 body.storefront-page {
     --bg: var(--store-bg);
     --ink: var(--store-text);

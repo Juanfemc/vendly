@@ -19,9 +19,9 @@
             <a href="#contacto">Contacto</a>
         </nav>
 
-        <div class="landing-nav-actions">
-            <a href="{{ route('login') }}" class="login-link">Iniciar sesion</a>
-            <a href="{{ route('trial-signup.create') }}" class="btn btn--primary btn--sm" data-meta-event="Lead">Crear mi tienda gratis</a>
+        <div class="landing-nav-actions" aria-label="Acciones principales">
+            <a href="{{ route('login') }}" class="btn btn--ghost btn--sm login-link">Iniciar sesion</a>
+            <a href="{{ route('trial-signup.create') }}" class="btn btn--primary btn--sm" data-meta-event="Lead">Probar gratis</a>
         </div>
     </div>
 </header>
@@ -65,15 +65,4 @@
             <em aria-hidden="true">›</em>
         </a>
     </nav>
-
-    <div class="mobile-drawer-actions">
-        <a href="{{ route('login') }}" data-menu-close>
-            <span class="drawer-icon" aria-hidden="true">♙</span>
-            <strong>Iniciar sesión</strong>
-        </a>
-        <a href="{{ route('trial-signup.create') }}" class="mobile-drawer-cta" data-menu-close data-meta-event="Lead">
-            <span class="drawer-icon" aria-hidden="true">□</span>
-            <strong>Crear mi tienda gratis</strong>
-        </a>
-    </div>
 </aside>
