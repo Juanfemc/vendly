@@ -90,7 +90,6 @@ body.landing-page {
     display: none;
 }
 
-.landing-nav-inner,
 .landing-menu,
 .landing-nav-actions,
 .brand-link,
@@ -104,8 +103,11 @@ body.landing-page {
 
 .landing-nav-inner {
     min-height: 64px;
-    justify-content: space-between;
-    gap: 24px;
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) auto minmax(220px, 1fr);
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
 }
 
 .brand-link {
@@ -113,6 +115,7 @@ body.landing-page {
     font-size: 20px;
     font-weight: 900;
     letter-spacing: -0.02em;
+    min-width: 0;
 }
 
 .brand-link img {
@@ -140,10 +143,12 @@ body.landing-page {
 }
 
 .landing-menu {
-    gap: 34px;
+    justify-content: center;
+    gap: clamp(18px, 2.6vw, 34px);
     color: #dce5f3;
     font-size: 13px;
     font-weight: 700;
+    min-width: 0;
 }
 
 .landing-menu a,
@@ -157,7 +162,9 @@ body.landing-page {
 }
 
 .landing-nav-actions {
+    justify-content: flex-end;
     gap: 16px;
+    min-width: 0;
 }
 
 .login-link {
@@ -1207,6 +1214,26 @@ body.landing-page {
     }
 }
 
+@media (max-width: 1100px) {
+    .landing-nav-inner {
+        grid-template-columns: minmax(130px, 0.9fr) auto minmax(190px, 0.9fr);
+        gap: 14px;
+    }
+
+    .landing-menu {
+        gap: 18px;
+        font-size: 12px;
+    }
+
+    .landing-nav-actions {
+        gap: 10px;
+    }
+
+    .landing-nav-actions .btn {
+        padding-inline: 14px;
+    }
+}
+
 @media (min-width: 1800px) {
     .landing-shell {
         width: min(1500px, calc(100% - 120px));
@@ -1346,7 +1373,7 @@ body.landing-page {
     }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 980px) {
     .landing-shell {
         width: min(100% - 28px, 1180px);
     }
@@ -1359,6 +1386,9 @@ body.landing-page {
         min-height: 68px;
         padding: 0;
         gap: 10px;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-start;
     }
 
     .landing-menu {
@@ -1409,6 +1439,7 @@ body.landing-page {
     .landing-nav-actions {
         margin-left: auto;
         gap: 8px;
+        min-width: 0;
     }
 
     .landing-nav-actions .btn {
@@ -1447,6 +1478,7 @@ body.landing-page {
         flex-direction: column;
         gap: 28px;
         overflow-y: auto;
+        overflow-x: hidden;
         overscroll-behavior: contain;
         padding: 32px;
         border-right: 1px solid rgba(148, 163, 184, 0.2);
@@ -1537,6 +1569,7 @@ body.landing-page {
         padding: 0 18px;
         color: #eff5ff;
         transition: background .18s ease, border-color .18s ease, transform .18s ease;
+        min-width: 0;
     }
 
     .mobile-drawer-menu a:hover,
@@ -1550,6 +1583,10 @@ body.landing-page {
         font-size: clamp(17px, 4.7vw, 24px);
         font-weight: 750;
         line-height: 1.1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .drawer-icon {
@@ -1903,5 +1940,21 @@ body.landing-page {
         min-height: 36px;
         padding: 0 10px;
         font-size: 10px;
+    }
+}
+
+@media (max-width: 390px) {
+    .landing-nav-actions .btn {
+        padding: 0 8px;
+        font-size: 9.5px;
+    }
+
+    .landing-nav-actions .login-link {
+        display: none;
+    }
+
+    .landing-mobile-drawer {
+        width: min(92vw, 340px);
+        padding-inline: 18px;
     }
 }

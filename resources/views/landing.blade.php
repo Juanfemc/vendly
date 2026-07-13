@@ -7,7 +7,7 @@
     $landingTitle = 'Vendly | Tiendas online listas para vender';
     $landingDescription = 'Vendly crea tiendas online profesionales para negocios que quieren mostrar productos, recibir pedidos y vender por WhatsApp.';
     $landingImage = asset('images/vendly-whatsapp-dark.png');
-    $landingWhatsappUrl = 'https://wa.me/573170613664?text=' . rawurlencode('Hola, vengo desde la landing page de Vendly y quiero m�s informaci�n para crear mi tienda.');
+    $landingWhatsappUrl = 'https://wa.me/573170613664?text=' . rawurlencode('Hola, vengo desde la landing page de Vendly y quiero más información para crear mi tienda.');
     $landingCssPath = public_path('css/landing.css');
     $landingJsPath = public_path('js/landing.js');
     $landingCssVersion = file_exists($landingCssPath) ? filemtime($landingCssPath) : null;
@@ -15,60 +15,60 @@
     $landingCssUrl = asset('css/landing.css') . ($landingCssVersion ? '?v=' . $landingCssVersion : '');
 
     $features = [
-        ['icon' => 'catalog', 'title' => 'Cat�logo profesional', 'copy' => 'Muestra tus productos con estilo y genera confianza desde el primer vistazo.'],
-        ['icon' => 'whatsapp', 'title' => 'Pedidos por WhatsApp', 'copy' => 'Tus clientes compran por el canal que ya usan todos los d�as.'],
-        ['icon' => 'sparkles', 'title' => 'IA que te ayuda a vender', 'copy' => 'Genera descripciones, t�tulos, etiquetas y avisos para impulsar tu tienda.'],
-        ['icon' => 'chart', 'title' => 'Panel inteligente', 'copy' => 'Gestiona pedidos, productos, clientes y estad�sticas desde un solo lugar.'],
-        ['icon' => 'share', 'title' => 'Comparte sin l�mites', 'copy' => 'Comparte tu tienda en redes, WhatsApp, Instagram y campa�as.'],
+        ['icon' => 'catalog', 'title' => 'Catálogo profesional', 'copy' => 'Muestra tus productos con estilo y genera confianza desde el primer vistazo.'],
+        ['icon' => 'whatsapp', 'title' => 'Pedidos por WhatsApp', 'copy' => 'Tus clientes compran por el canal que ya usan todos los días.'],
+        ['icon' => 'sparkles', 'title' => 'IA que te ayuda a vender', 'copy' => 'Genera descripciones, títulos, etiquetas y avisos para impulsar tu tienda.'],
+        ['icon' => 'chart', 'title' => 'Panel inteligente', 'copy' => 'Gestiona pedidos, productos, clientes y estadísticas desde un solo lugar.'],
+        ['icon' => 'share', 'title' => 'Comparte sin límites', 'copy' => 'Comparte tu tienda en redes, WhatsApp, Instagram y campañas.'],
     ];
 
     $steps = [
-        ['number' => '1', 'title' => 'Crea tu tienda', 'copy' => 'Registra tu negocio y configura tu cat�logo en minutos.'],
-        ['number' => '2', 'title' => 'Comparte por WhatsApp', 'copy' => 'Envia tu cat�logo a clientes y empieza a recibir pedidos claros.'],
-        ['number' => '3', 'title' => 'Gestiona y vende m�s', 'copy' => 'Administra pedidos, productos y clientes desde tu panel.'],
+        ['number' => '1', 'title' => 'Crea tu tienda', 'copy' => 'Registra tu negocio y configura tu catálogo en minutos.'],
+        ['number' => '2', 'title' => 'Comparte por WhatsApp', 'copy' => 'Envía tu catálogo a clientes y empieza a recibir pedidos claros.'],
+        ['number' => '3', 'title' => 'Gestiona y vende más', 'copy' => 'Administra pedidos, productos y clientes desde tu panel.'],
     ];
 
     $plans = [
         [
             'eyebrow' => 'Plan 01',
-            'name' => 'B�sico',
+            'name' => 'Básico',
             'summary' => 'Ideal para empezar',
             'badge' => 'Inicio simple',
             'price' => '$0',
             'button' => 'Comenzar gratis',
             'features' => [
                 '1 tienda',
-                'Cat�logo b�sico',
+                'Catálogo básico',
                 'Productos publicados',
-                'Sin categor�as',
+                'Sin categorías',
                 'Pedidos por WhatsApp',
                 'Carrito por WhatsApp',
                 'Logo y portada',
-                'Personalizaci�n b�sica',
+                'Personalización básica',
                 'Sin avisos superiores',
-                'L�mite de 20 productos',
-                'Soporte b�sico',
+                'Límite de 20 productos',
+                'Soporte básico',
             ],
         ],
         [
             'eyebrow' => 'Plan 02',
             'name' => 'Pro',
             'summary' => 'Para negocios en crecimiento',
-            'badge' => 'M�s popular',
+            'badge' => 'Más popular',
             'price' => '$10.000',
             'button' => 'Probar Pro gratis',
             'features' => [
                 'Todo lo del Starter',
-                'Todo lo del B�sico',
-                'Cat�logo ilimitado',
-                'Categor�as',
+                'Todo lo del Básico',
+                'Catálogo ilimitado',
+                'Categorías',
                 'Panel avanzado',
-                'Env�os y m�todos de pago',
+                'Envíos y métodos de pago',
                 'Varios avisos superiores rotativos',
-                'Estad�stica de visitas',
-                'Galer�a de im�genes por producto',
-                'L�mite de 100 productos',
-                'Personalizaci�n completa',
+                'Estadística de visitas',
+                'Galería de imágenes por producto',
+                'Límite de 100 productos',
+                'Personalización completa',
                 'Soporte prioritario',
             ],
         ],
@@ -76,15 +76,15 @@
             'eyebrow' => 'Plan 03',
             'name' => 'Premium',
             'summary' => 'Para marcas que escalan',
-            'badge' => 'M�s completo',
+            'badge' => 'Más completo',
             'price' => '$25.000',
             'button' => 'Probar Premium',
             'features' => [
                 'Todo lo del plan Pro',
-                'M�ltiples tiendas',
+                'Múltiples tiendas',
                 'Integraciones avanzadas',
                 'IA avanzada',
-                'Dise�o personalizado',
+                'Diseño personalizado',
                 'Dominio personalizado',
                 'Pixel / Analytics',
                 'Cupones de descuento',
