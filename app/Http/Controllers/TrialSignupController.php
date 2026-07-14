@@ -123,6 +123,7 @@ class TrialSignupController extends Controller
 
         return redirect()
             ->route('admin.store.onboarding')
+            ->with('meta_complete_registration', true)
             ->with('success', 'Tu tienda ya esta creada. Verifica tu WhatsApp para completar la activacion.');
     }
 
