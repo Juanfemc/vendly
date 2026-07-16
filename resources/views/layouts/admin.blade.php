@@ -307,6 +307,8 @@
             gap: 6px;
             flex: 1 1 auto;
             min-height: 0;
+            max-width: 100%;
+            overflow-x: hidden;
             overflow-y: auto;
             overscroll-behavior: contain;
             padding: 4px 0 10px;
@@ -330,6 +332,8 @@
         .sidebar-section {
             display: grid;
             gap: 6px;
+            min-width: 0;
+            max-width: 100%;
             padding: 12px 0;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
@@ -360,12 +364,30 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            width: 100%;
+            max-width: 100%;
             margin: 0;
             font-size: 14px;
             font-weight: 700;
             line-height: 1.25;
-            white-space: normal;
-            overflow-wrap: anywhere;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .sidebar-nav-link span,
+        .sidebar .sidebar-submenu a,
+        .sidebar-menu-group summary span:first-child,
+        .sidebar-plan-text,
+        .sidebar-store-text {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .sidebar-nav-link > span,
+        .sidebar .sidebar-submenu a,
+        .sidebar-menu-group summary span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .sidebar-nav-link.is-active,
@@ -397,6 +419,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            flex: 0 0 auto;
             min-height: 18px;
             margin-left: auto;
             padding: 2px 7px;

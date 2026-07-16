@@ -179,7 +179,7 @@ class CartService
 
     public function storeForRequest(Request $request): ?Store
     {
-        return $this->storeFromSlug($request->query('store'))
+        return $this->storeFromSlug($request->query('store') ?: $request->input('store'))
             ?? $this->firstStoreWithCart();
     }
 

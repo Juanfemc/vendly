@@ -190,7 +190,16 @@
             body,
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data = {};
+
+        if (text) {
+            try {
+                data = JSON.parse(text);
+            } catch (error) {
+                data = { message: response.ok ? '' : updateErrorText };
+            }
+        }
 
         if (!response.ok) {
             throw new Error(data.message || updateErrorText);
