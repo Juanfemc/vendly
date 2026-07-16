@@ -3,6 +3,7 @@
     $tax = 0;
     $cartItems = collect($cart);
     $discountAmount = (float) ($discount['amount'] ?? 0);
+    $checkoutTotal = max(0, $subtotal + (float) $shippingCost - $discountAmount);
 @endphp
 
 <section class="fashion-checkout">

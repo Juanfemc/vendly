@@ -100,18 +100,31 @@
                         <input type="text" name="value" value="{{ old('value') }}" placeholder="10 o 15000" required>
                     </label>
 
-                    <label>
-                        <span>Compra minima</span>
-                        <input type="text" name="min_subtotal" value="{{ old('min_subtotal', 0) }}" placeholder="0">
-                    </label>
+                    @if(\App\Models\DiscountCoupon::supportsAppliesToColumn())
+                        <label>
+                            <span>Aplicar descuento a</span>
+                            <select name="applies_to">
+                                @foreach(\App\Models\DiscountCoupon::appliesToOptions() as $appliesTo => $label)
+                                    <option value="{{ $appliesTo }}" @selected(old('applies_to', \App\Models\DiscountCoupon::APPLIES_TO_PRODUCTS) === $appliesTo)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    @endif
                 </div>
 
                 <div class="grid-two">
                     <label>
+                        <span>Compra minima</span>
+                        <input type="text" name="min_subtotal" value="{{ old('min_subtotal', 0) }}" placeholder="0">
+                    </label>
+
+                    <label>
                         <span>Descuento maximo (opcional)</span>
                         <input type="text" name="max_discount_amount" value="{{ old('max_discount_amount') }}" placeholder="Solo para porcentajes">
                     </label>
+                </div>
 
+                <div class="grid-two">
                     <label>
                         <span>Limite de usos (opcional)</span>
                         <input type="number" name="usage_limit" value="{{ old('usage_limit') }}" min="1" placeholder="Ej: 50">
@@ -165,6 +178,10 @@
                             <div class="resource-metric">
                                 <span class="resource-metric__label">Compra minima</span>
                                 <span class="resource-metric__value">$ {{ number_format((float) $coupon->min_subtotal, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="resource-metric">
+                                <span class="resource-metric__label">Aplica a</span>
+                                <span class="resource-metric__value">{{ $coupon->appliesToLabel() }}</span>
                             </div>
                             <div class="resource-metric">
                                 <span class="resource-metric__label">Vigencia</span>

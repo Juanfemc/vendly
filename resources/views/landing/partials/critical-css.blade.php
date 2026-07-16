@@ -21,6 +21,7 @@
     .landing-mobile-toggle, .landing-menu-open, .landing-mobile-backdrop, .landing-mobile-drawer { display: none; }
     .landing-page img { max-width: 100%; height: auto; }
     .landing-section { padding: 56px 0; }
+    .hero-layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 0.96fr) minmax(280px, 0.48fr); gap: 56px; align-items: center; }
     .proof-strip { display: grid; gap: 24px; padding: 22px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; background: rgba(15, 25, 44, 0.72); }
     .proof-logos { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .proof-logos a { width: 54px; height: 54px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%; background: rgba(255, 255, 255, 0.08); }
@@ -43,13 +44,19 @@
     .portfolio-media img { width: 100%; height: 100%; display: block; object-fit: cover; }
     .portfolio-copy { display: grid; gap: 4px; padding: 0 16px 16px; }
     .section-head { max-width: 720px; margin: 0 auto 28px; text-align: center; }
-    .hero-content, .catalog-copy, .feature-card, .plan-card, .final-card { min-width: 0; }
+    .hero-content, .hero-phone-demo, .catalog-copy, .feature-card, .plan-card, .final-card { min-width: 0; }
     .hero-badge, .hero-trust, .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
     .hero-content h1 { max-width: 780px; margin: 18px 0 14px; font-size: 44px; line-height: 0.96; }
     @supports (font-size: clamp(36px, 10vw, 64px)) {
         .hero-content h1 { font-size: clamp(36px, 10vw, 64px); }
     }
     .hero-content p { max-width: 580px; color: #b8c4d6; line-height: 1.65; }
+    .hero-phone-demo { display: flex; justify-content: center; width: 100%; }
+    .hero-phone-frame { position: relative; width: min(315px, 78vw); aspect-ratio: 9 / 19.5; padding: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 42px; background: #050505; box-shadow: 0 34px 90px rgba(0, 0, 0, 0.5); }
+    .hero-phone-notch { position: absolute; top: 12px; left: 50%; z-index: 2; width: 86px; height: 22px; transform: translateX(-50%); border-radius: 0 0 18px 18px; background: #050505; }
+    .hero-phone-video { width: 100%; height: 100%; display: block; border-radius: 31px; object-fit: cover; background: #050505; }
+    .hero-phone-fallback { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; border-radius: 31px; background: #050505; }
+    .hero-phone-fallback img { width: min(74%, 240px); height: auto; display: block; border-radius: 26%; }
     .steps, .feature-grid, .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     @supports (grid-template-columns: repeat(3, minmax(0, 1fr))) {
         .steps, .feature-grid, .plans-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -76,7 +83,7 @@
     .final-icon img { width: 100%; height: 100%; object-fit: cover; }
     .whatsapp-float { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: inline-flex; align-items: center; gap: 10px; max-width: calc(100vw - 36px); padding: 10px 14px; border-radius: 999px; background: #25d366; color: #03140a; font-weight: 900; box-shadow: 0 16px 34px rgba(37, 211, 102, 0.28); }
     .whatsapp-float img { width: 24px; height: 24px; flex: 0 0 auto; }
-    @media (max-width: 820px) {
+    @media (max-width: 980px) {
         .landing-shell { width: calc(100% - 28px); max-width: 1180px; }
         @supports (width: min(100%, 1px)) {
             .landing-shell { width: min(100% - 28px, 1180px); max-width: none; }
@@ -96,12 +103,14 @@
         .landing-mobile-toggle:checked ~ .landing-mobile-drawer { position: fixed; inset: 0 auto 0 0; z-index: 70; width: 88vw; max-width: 360px; height: 100vh; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; padding: 28px; background: #081120; }
         .mobile-drawer-menu { display: grid; gap: 10px; }
         .landing-section { padding: 42px 0; }
+        .hero-layout { grid-template-columns: 1fr; gap: 30px; }
         .proof-metrics, .portfolio-grid, .steps, .feature-grid, .plans-grid, .final-card { grid-template-columns: 1fr; }
         .proof-logos a { width: 48px; height: 48px; }
         .hero-content h1 { font-size: 38px; }
         @supports (font-size: clamp(34px, 11vw, 48px)) {
             .hero-content h1 { font-size: clamp(34px, 11vw, 48px); }
         }
+        .hero-phone-frame { width: min(285px, 82vw); }
         .final-card { text-align: left; }
         .final-card-action { width: 100%; }
         .whatsapp-float { right: 14px; bottom: 14px; }

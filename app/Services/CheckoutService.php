@@ -35,8 +35,8 @@ class CheckoutService
         $shipping = $this->shipping($store, $customerData, $subtotal);
 
         return DB::transaction(function () use ($fullName, $customerData, $fullAddress, $notes, $subtotal, $shipping, $store, $cart, $paymentData) {
-            $discount = $this->discountCouponService->redeem($store, $customerData['discount_code'] ?? null, $subtotal);
-            $total = max(0, $subtotal - (float) $discount['amount']) + $shipping['cost'];
+            $discount = $this->discountCouponService->redeem($store, $customerData['discount_code'] ?? null, $subtotal, (float) $shipping['cost']);
+            $total = max(0, $subtotal + (float) $shipping['cost'] - (float) $discount['amount']);
             $orderData = array_merge([
                 'customer_name' => $fullName,
                 'customer_phone' => $customerData['phone'],

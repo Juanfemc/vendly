@@ -82,6 +82,7 @@ class DiscountCouponController extends Controller
                 Rule::unique('discount_coupons', 'code')->where(fn ($query) => $query->where('store_id', $store->id)),
             ],
             'type' => ['required', Rule::in(array_keys(DiscountCoupon::typeOptions()))],
+            'applies_to' => ['nullable', Rule::in(array_keys(DiscountCoupon::appliesToOptions()))],
             'value' => ['required', 'numeric', 'min:1', 'max:99999999'],
             'min_subtotal' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'max_discount_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
@@ -101,7 +102,7 @@ class DiscountCouponController extends Controller
             return back()->withInput()->withErrors(['expires_at' => 'La fecha de vencimiento no puede ser anterior a la fecha de inicio.']);
         }
 
-        $coupon = $store->discountCoupons()->create([
+        $couponData = [
             'code' => $validated['code'],
             'type' => $validated['type'],
             'value' => $validated['value'],
@@ -111,7 +112,13 @@ class DiscountCouponController extends Controller
             'starts_at' => $validated['starts_at'] ?? null,
             'expires_at' => $validated['expires_at'] ?? null,
             'is_active' => $request->boolean('is_active', true),
-        ]);
+        ];
+
+        if (DiscountCoupon::supportsAppliesToColumn()) {
+            $couponData['applies_to'] = $validated['applies_to'] ?? DiscountCoupon::APPLIES_TO_PRODUCTS;
+        }
+
+        $coupon = $store->discountCoupons()->create($couponData);
 
         $this->adminUpdateService->record(
             'Cupon creado',

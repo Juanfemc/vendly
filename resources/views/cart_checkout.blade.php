@@ -44,7 +44,7 @@
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
     $discount = $discount ?? ['code' => null, 'amount' => 0];
     $discountAmount = (float) ($discount['amount'] ?? 0);
-    $checkoutTotal = max(0, $total - $discountAmount) + $shippingCost;
+    $checkoutTotal = max(0, $total + $shippingCost - $discountAmount);
     $hasShippingCost = $hasLocalDelivery || $shippingMethods->isNotEmpty();
     $hasSelectedDeliveryCity = $usesColombiaLocations
         ? filled(old('city_code'))

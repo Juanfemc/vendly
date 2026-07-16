@@ -8,7 +8,7 @@ use Illuminate\Validation\ValidationException;
 
 class DiscountCouponService
 {
-    public function preview(Store $store, ?string $code, float $subtotal): array
+    public function preview(Store $store, ?string $code, float $subtotal, float $shippingCost = 0): array
     {
         $code = DiscountCoupon::normalizeCode($code);
 
@@ -18,10 +18,10 @@ class DiscountCouponService
 
         $coupon = $this->findValidCoupon($store, $code, $subtotal);
 
-        return $this->couponPayload($coupon, $subtotal);
+        return $this->couponPayload($coupon, $subtotal, $shippingCost);
     }
 
-    public function redeem(Store $store, ?string $code, float $subtotal): array
+    public function redeem(Store $store, ?string $code, float $subtotal, float $shippingCost = 0): array
     {
         $code = DiscountCoupon::normalizeCode($code);
 
@@ -30,7 +30,7 @@ class DiscountCouponService
         }
 
         $coupon = $this->findValidCoupon($store, $code, $subtotal, lock: true);
-        $payload = $this->couponPayload($coupon, $subtotal);
+        $payload = $this->couponPayload($coupon, $subtotal, $shippingCost);
 
         $coupon->increment('used_count');
 
@@ -92,33 +92,53 @@ class DiscountCouponService
         return $coupon;
     }
 
-    private function couponPayload(DiscountCoupon $coupon, float $subtotal): array
+    private function couponPayload(DiscountCoupon $coupon, float $subtotal, float $shippingCost): array
     {
-        $amount = $this->discountAmount($coupon, $subtotal);
+        if ($coupon->appliesTo() === DiscountCoupon::APPLIES_TO_SHIPPING && $shippingCost <= 0) {
+            throw ValidationException::withMessages([
+                'discount_code' => 'Este cupon aplica al envio, pero el envio no tiene costo o aun esta por calcular.',
+            ]);
+        }
+
+        $amount = $this->discountAmount($coupon, $subtotal, $shippingCost);
 
         return [
             'coupon' => $coupon,
             'code' => $coupon->code,
             'amount' => $amount,
-            'snapshot' => $coupon->formattedValue() . ' - compra minima $ ' . number_format((float) $coupon->min_subtotal, 0, ',', '.'),
+            'snapshot' => $coupon->formattedValue() . ' - ' . $coupon->appliesToLabel() . ' - compra minima $ ' . number_format((float) $coupon->min_subtotal, 0, ',', '.'),
         ];
     }
 
-    private function discountAmount(DiscountCoupon $coupon, float $subtotal): float
+    private function discountAmount(DiscountCoupon $coupon, float $subtotal, float $shippingCost): float
     {
-        if ($subtotal <= 0) {
+        $base = $this->discountBase($coupon, $subtotal, $shippingCost);
+
+        if ($base <= 0) {
             return 0;
         }
 
         $amount = $coupon->type === DiscountCoupon::TYPE_PERCENT
-            ? $subtotal * ((float) $coupon->value / 100)
+            ? $base * ((float) $coupon->value / 100)
             : (float) $coupon->value;
 
         if ($coupon->max_discount_amount !== null && (float) $coupon->max_discount_amount > 0) {
             $amount = min($amount, (float) $coupon->max_discount_amount);
         }
 
-        return round(min(max(0, $amount), $subtotal), 2);
+        return round(min(max(0, $amount), $base), 2);
+    }
+
+    private function discountBase(DiscountCoupon $coupon, float $subtotal, float $shippingCost): float
+    {
+        $subtotal = max(0, $subtotal);
+        $shippingCost = max(0, $shippingCost);
+
+        return match ($coupon->appliesTo()) {
+            DiscountCoupon::APPLIES_TO_SHIPPING => $shippingCost,
+            DiscountCoupon::APPLIES_TO_ORDER_WITH_SHIPPING => $subtotal + $shippingCost,
+            default => $subtotal,
+        };
     }
 
     private function emptyDiscount(): array

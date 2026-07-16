@@ -10,11 +10,17 @@ class DiscountCoupon extends Model
 {
     public const TYPE_PERCENT = 'percent';
     public const TYPE_FIXED = 'fixed';
+    public const APPLIES_TO_PRODUCTS = 'products';
+    public const APPLIES_TO_ORDER_WITH_SHIPPING = 'order_with_shipping';
+    public const APPLIES_TO_SHIPPING = 'shipping';
+
+    private static ?bool $supportsAppliesToColumn = null;
 
     protected $fillable = [
         'store_id',
         'code',
         'type',
+        'applies_to',
         'value',
         'min_subtotal',
         'max_discount_amount',
@@ -41,11 +47,26 @@ class DiscountCoupon extends Model
         return Schema::hasTable('discount_coupons');
     }
 
+    public static function supportsAppliesToColumn(): bool
+    {
+        return self::$supportsAppliesToColumn ??= self::supportsTable()
+            && Schema::hasColumn('discount_coupons', 'applies_to');
+    }
+
     public static function typeOptions(): array
     {
         return [
             self::TYPE_PERCENT => 'Porcentaje',
             self::TYPE_FIXED => 'Valor fijo',
+        ];
+    }
+
+    public static function appliesToOptions(): array
+    {
+        return [
+            self::APPLIES_TO_PRODUCTS => 'Solo productos',
+            self::APPLIES_TO_ORDER_WITH_SHIPPING => 'Productos y envio',
+            self::APPLIES_TO_SHIPPING => 'Solo envio',
         ];
     }
 
@@ -57,6 +78,20 @@ class DiscountCoupon extends Model
     public function typeLabel(): string
     {
         return self::typeOptions()[$this->type] ?? 'Descuento';
+    }
+
+    public function appliesTo(): string
+    {
+        if (! self::supportsAppliesToColumn()) {
+            return self::APPLIES_TO_PRODUCTS;
+        }
+
+        return $this->applies_to ?: self::APPLIES_TO_PRODUCTS;
+    }
+
+    public function appliesToLabel(): string
+    {
+        return self::appliesToOptions()[$this->appliesTo()] ?? self::appliesToOptions()[self::APPLIES_TO_PRODUCTS];
     }
 
     public function statusLabel(): string

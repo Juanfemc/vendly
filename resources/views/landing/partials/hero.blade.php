@@ -5,8 +5,8 @@
                 <span>NUEVO</span>
                 IA integrada para potenciar tus ventas
             </div>
-            <h1>Convierte WhatsApp en tu <strong>canal de ventas</strong> profesional.</h1>
-            <p>Crea tu tienda en minutos, comparte tu catálogo y recibe pedidos por WhatsApp. Más ventas. Menos complicaciones.</p>
+            <h1>Crea tu tienda online gratis en menos de 2 minutos.</h1>
+            <p>Sin tarjeta de crédito. Sin conocimientos técnicos. Lista para vender hoy.</p>
 
             <div class="action-row">
                 <a href="{{ route('trial-signup.create') }}" class="btn btn--primary" data-meta-event="Lead">Crear mi tienda gratis</a>
@@ -20,5 +20,6 @@
             </div>
         </div>
 
+        @include('landing.partials.hero-phone-demo')
     </div>
 </section>

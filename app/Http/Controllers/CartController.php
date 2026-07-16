@@ -106,7 +106,12 @@ class CartController extends Controller
         $wompiAccount = $store?->wompiAccount()->first();
         $wompiAvailable = ($store?->allowsOnlinePayments() ?? false)
             && ($wompiAccount?->isWompiReady() ?? false);
-        $discount = $this->discountPreviewForView($store, old('discount_code'), $total);
+        $shippingMethodCollection = collect($shippingMethods);
+        $firstShippingMethod = $shippingMethodCollection->first();
+        $selectedShippingKey = old('shipping_method', $firstShippingMethod['key'] ?? null);
+        $selectedShipping = $shippingMethodCollection->firstWhere('key', (string) $selectedShippingKey) ?? $firstShippingMethod;
+        $initialShippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
+        $discount = $this->discountPreviewForView($store, old('discount_code'), $total, $initialShippingCost);
 
         return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'mercadoPagoAvailable', 'wompiAvailable', 'discount'));
     }
@@ -116,6 +121,7 @@ class CartController extends Controller
         $validated = $request->validate([
             'store' => ['nullable', 'string', 'max:255'],
             'discount_code' => ['nullable', 'string', 'max:60'],
+            'shipping_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
         ]);
 
         $store = $this->cartService->storeForRequest($request);
@@ -132,7 +138,7 @@ class CartController extends Controller
         }
 
         try {
-            $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal);
+            $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal, (float) ($validated['shipping_cost'] ?? 0));
         } catch (ValidationException $exception) {
             return response([
                 'message' => collect($exception->errors())->flatten()->first() ?: 'No se pudo aplicar el cupon.',
@@ -618,14 +624,14 @@ class CartController extends Controller
         return $withInput ? $redirect->withInput() : $redirect;
     }
 
-    private function discountPreviewForView(?Store $store, mixed $code, float $subtotal): array
+    private function discountPreviewForView(?Store $store, mixed $code, float $subtotal, float $shippingCost = 0): array
     {
         if (! $store || ! is_string($code) || trim($code) === '') {
             return ['code' => null, 'amount' => 0];
         }
 
         try {
-            return $this->discountCouponService->preview($store, $code, $subtotal);
+            return $this->discountCouponService->preview($store, $code, $subtotal, $shippingCost);
         } catch (ValidationException) {
             return ['code' => null, 'amount' => 0];
         }

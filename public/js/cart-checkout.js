@@ -38,11 +38,12 @@
     let subtotal = Number(page.dataset.cartSubtotal || 0);
     let discountAmount = Number(page.dataset.cartDiscount || 0);
     let feedbackTimer;
+    let discountRefreshTimer;
     let lastTermsTrigger = null;
 
     const money = (value) => `$ ${new Intl.NumberFormat('es-CO').format(value || 0)}`;
-    const discountedSubtotal = () => Math.max(0, subtotal - discountAmount);
-    const freeShippingApplies = () => freeShippingMinimum > 0 && discountedSubtotal() >= freeShippingMinimum;
+    const grandTotal = (cost) => Math.max(0, subtotal + cost - discountAmount);
+    const freeShippingApplies = () => freeShippingMinimum > 0 && subtotal >= freeShippingMinimum;
     const normalizeArea = (value) => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -161,7 +162,7 @@
         if (discountTotalEl) discountTotalEl.textContent = `- ${money(discountAmount)}`;
         if (discountRow) discountRow.classList.toggle('is-hidden', discountAmount <= 0);
         if (shippingTotalEl) shippingTotalEl.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
-        if (grandTotalEl) grandTotalEl.textContent = money(discountedSubtotal() + (awaitingCity ? 0 : cost));
+        if (grandTotalEl) grandTotalEl.textContent = money(grandTotal(awaitingCity ? 0 : cost));
     };
 
     const updateItemQuantity = (item, quantity) => {
@@ -272,6 +273,7 @@
             const data = await sendCartRequest(couponPreviewUrl, 'POST', JSON.stringify({
                 store: storeSlug,
                 discount_code: code,
+                shipping_cost: shippingCost(),
             }));
 
             discountAmount = Number(data.discount_amount || 0);
@@ -296,6 +298,16 @@
         } finally {
             discountApplyButton.disabled = false;
         }
+    };
+
+    const refreshDiscountOrSummary = () => {
+        if (discountCodeInput?.value.trim()) {
+            clearTimeout(discountRefreshTimer);
+            discountRefreshTimer = setTimeout(previewDiscount, 250);
+            return;
+        }
+
+        updateSummary();
     };
 
     discountApplyButton?.addEventListener('click', previewDiscount);
@@ -383,7 +395,7 @@
     }
 
     shippingOptions.forEach((option) => {
-        option.addEventListener('change', () => updateSummary());
+        option.addEventListener('change', refreshDiscountOrSummary);
     });
 
     const syncCityOptions = () => {
@@ -408,12 +420,12 @@
             cityInput.value = '';
         }
 
-        updateSummary();
+        refreshDiscountOrSummary();
     };
 
     departmentSelect?.addEventListener('change', syncCityOptions);
-    cityInput?.addEventListener('input', () => updateSummary());
-    cityInput?.addEventListener('change', () => updateSummary());
+    cityInput?.addEventListener('input', refreshDiscountOrSummary);
+    cityInput?.addEventListener('change', refreshDiscountOrSummary);
 
     syncCityOptions();
     updateSummary();
