@@ -1,5 +1,6 @@
 <title>{{ $seo->title }}</title>
 <meta name="description" content="{{ $seo->description }}">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="{{ $seo->url }}">
 @if($seo->favicon)
     <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $seo->favicon }}">

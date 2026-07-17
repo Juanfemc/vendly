@@ -6,6 +6,7 @@ use App\Models\Store;
 use App\Models\LandingTestimonial;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\AiContentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\DiscountCouponController;
@@ -215,7 +216,7 @@ Route::get('/', function () {
         : collect();
 
     return view('landing', compact('portfolioStores', 'proofStores', 'testimonials'));
-});
+})->name('home');
 require __DIR__.'/auth.php';
 
 Route::middleware('guest')->group(function () {
@@ -226,6 +227,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::get('/categorias/{category}', [ProductController::class, 'categoryBySubdomain'])->name('subdomain.store.category.show');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/nosotros', [ProductController::class, 'aboutBySubdomain'])->name('subdomain.store.about');
 Route::get('/ofertas', [ProductController::class, 'offersBySubdomain'])->name('subdomain.store.offers.index');
 Route::get('/productos', [ProductController::class, 'allProductsBySubdomain'])->name('subdomain.store.products.index');
