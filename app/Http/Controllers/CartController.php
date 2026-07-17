@@ -24,7 +24,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CartController extends Controller
 {
@@ -129,7 +131,7 @@ class CartController extends Controller
         $subtotal = $this->cartService->total($cart);
 
         if (empty($cart) || ! $store) {
-            return response([
+            return response()->json([
                 'message' => 'El carrito esta vacio.',
                 'discount_amount' => 0,
                 'discount_code' => null,
@@ -140,15 +142,28 @@ class CartController extends Controller
         try {
             $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal, (float) ($validated['shipping_cost'] ?? 0));
         } catch (ValidationException $exception) {
-            return response([
+            return response()->json([
                 'message' => collect($exception->errors())->flatten()->first() ?: 'No se pudo aplicar el cupon.',
                 'discount_amount' => 0,
                 'discount_code' => null,
                 'subtotal' => $subtotal,
             ], 422);
+        } catch (Throwable $exception) {
+            Log::error('No se pudo previsualizar el cupon de descuento.', [
+                'store_id' => $store?->id,
+                'code' => $validated['discount_code'] ?? null,
+                'exception' => $exception,
+            ]);
+
+            return response()->json([
+                'message' => 'No se pudo aplicar el cupon. Intenta nuevamente.',
+                'discount_amount' => 0,
+                'discount_code' => null,
+                'subtotal' => $subtotal,
+            ], 500);
         }
 
-        return response([
+        return response()->json([
             'message' => $discount['code'] ? 'Cupon aplicado.' : 'Cupon removido.',
             'discount_amount' => (float) $discount['amount'],
             'discount_code' => $discount['code'],
