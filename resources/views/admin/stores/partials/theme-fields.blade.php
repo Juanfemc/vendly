@@ -361,7 +361,7 @@
     <input id="text_color" type="hidden" name="text_color" value="{{ $selectedTextColor }}" data-theme-text="text_color">
     <div class="theme-contrast-note">
         <span class="theme-contrast-chip" data-theme-contrast-chip style="background: {{ $selectedTextColor }};"></span>
-        <span>El color de letras se ajusta automaticamente para mantener buen contraste con el fondo.</span>
+        <span>El color de letras se ajusta automáticamente para mantener buen contraste con el fondo.</span>
     </div>
 
     <label class="field-label" for="font_family">Fuente</label>

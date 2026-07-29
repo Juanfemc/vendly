@@ -15,6 +15,9 @@
     .products-console {
         display: grid;
         gap: 24px;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     .products-console-head {
@@ -29,6 +32,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        max-width: 100%;
         padding: 6px;
         border: 1px solid #dfe6ea;
         border-radius: 16px;
@@ -41,11 +45,13 @@
         display: inline-flex;
         align-items: center;
         gap: 9px;
+        min-width: 0;
         padding: 0 18px;
         border-radius: 12px;
         color: #557679;
         font-weight: 800;
         text-decoration: none;
+        white-space: nowrap;
         transition: background .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
     }
 
@@ -75,6 +81,7 @@
         align-items: center;
         justify-content: flex-end;
         gap: 12px;
+        min-width: 0;
         flex-wrap: wrap;
     }
 
@@ -101,6 +108,18 @@
         box-shadow: 0 16px 30px rgba(0, 89, 77, .26);
     }
 
+    .products-action--secondary {
+        border-color: #d8e2e8;
+        background: #ffffff;
+        color: #063a39;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, .08);
+    }
+
+    .products-action--secondary:hover {
+        background: #f8fbfc;
+        box-shadow: 0 14px 26px rgba(15, 23, 42, .11);
+    }
+
     .products-limit {
         min-height: 42px;
         display: flex;
@@ -119,6 +138,7 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 12px;
         align-items: center;
+        min-width: 0;
         padding: 24px;
         border: 1px solid #dfe6ea;
         border-radius: 18px;
@@ -164,6 +184,7 @@
         align-items: center;
         justify-content: flex-end;
         gap: 10px;
+        min-width: 0;
     }
 
     .products-toolbar-actions .btn,
@@ -173,6 +194,7 @@
         align-items: center;
         justify-content: center;
         white-space: nowrap;
+        margin-bottom: 0;
     }
 
     .products-owner-panel {
@@ -180,6 +202,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 14px;
+        min-width: 0;
         padding: 18px 20px;
         border: 1px solid #dfe6ea;
         border-radius: 16px;
@@ -204,6 +227,8 @@
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 20px;
         align-items: stretch;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .product-card {
@@ -281,6 +306,7 @@
         font-size: 18px;
         line-height: 1.25;
         letter-spacing: 0;
+        overflow-wrap: anywhere;
     }
 
     .product-card-title a {
@@ -299,6 +325,14 @@
         color: #6a8588;
         font-size: 13px;
         line-height: 1.4;
+        min-width: 0;
+    }
+
+    .product-card-meta span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .product-card-price {
@@ -314,6 +348,7 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 10px;
         align-items: center;
+        min-width: 0;
         padding: 0 18px 18px;
     }
 
@@ -327,6 +362,7 @@
         text-decoration: none;
         font-size: 13px;
         font-weight: 900;
+        min-width: 0;
     }
 
     .product-card-action--edit {
@@ -460,11 +496,122 @@
 
         .products-toolbar-actions {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .products-toolbar-actions .btn,
+        .products-toolbar-actions .btn-secondary {
+            width: 100%;
         }
 
         .products-grid {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+            gap: 14px;
+        }
+
+        .product-card {
+            border-radius: 16px;
+        }
+
+        .product-card-media {
+            aspect-ratio: 1 / 1;
+        }
+
+        .product-card-body {
+            padding: 14px 14px 12px;
+        }
+
+        .product-card-title {
+            font-size: 16px;
+        }
+
+        .product-card-price {
+            font-size: 18px;
+        }
+
+        .product-card-actions {
+            padding: 0 14px 14px;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .products-console {
+            gap: 16px;
+        }
+
+        .products-console-head {
+            gap: 12px;
+        }
+
+        .products-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+            gap: 5px;
+        }
+
+        .products-tab {
+            min-height: 42px;
+            gap: 6px;
+            padding-inline: 8px;
+            font-size: 12px;
+        }
+
+        .products-tab svg,
+        .products-action svg,
+        .products-search-icon svg,
+        .product-card-action svg,
+        .product-empty-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .products-action {
+            min-height: 44px;
+            padding-inline: 14px;
+            border-radius: 12px;
+        }
+
+        .products-limit,
+        .products-toolbar,
+        .products-owner-panel,
+        .products-empty {
+            border-radius: 14px;
+        }
+
+        .products-toolbar {
+            padding: 12px;
+        }
+
+        .products-search-field input {
+            min-height: 46px;
+            padding-left: 42px;
+            font-size: 16px;
+        }
+
+        .products-search-icon {
+            left: 13px;
+        }
+
+        .products-toolbar-actions {
             grid-template-columns: 1fr;
+        }
+
+        .products-grid,
+        .products-admin-store-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .product-card-actions {
+            grid-template-columns: minmax(0, 1fr) 44px;
+            gap: 8px;
+        }
+
+        .product-card-action {
+            min-height: 44px;
+        }
+
+        .product-card-delete .product-card-action {
+            width: 44px;
         }
     }
 
@@ -504,6 +651,19 @@
         box-shadow: 0 16px 30px var(--vendly-brand-shadow);
     }
 
+    .products-console .products-action--secondary {
+        border-color: #d8e2e8;
+        background: #ffffff;
+        color: #063a39;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, .08);
+    }
+
+    .products-console .products-action--secondary:hover {
+        background: #f8fbfc;
+        color: #063a39;
+        box-shadow: 0 14px 26px rgba(15, 23, 42, .11);
+    }
+
     .products-console .products-search-icon {
         color: var(--vendly-brand);
     }
@@ -530,6 +690,10 @@
         </nav>
 
         <div class="products-actions">
+            <a href="{{ route('admin.products.import') }}" class="products-action products-action--secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+                Importar
+            </a>
             <a href="/admin/products/create" class="products-action">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
                 Nuevo

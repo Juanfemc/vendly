@@ -15,7 +15,7 @@
             </div>
 
             <a href="{{ $storefrontUrls->category($store, $sectionCategory) }}" class="category-more-link">
-                Ver mas de {{ $sectionCategory->name }}
+                Ver más de {{ $sectionCategory->name }}
             </a>
         </section>
     @empty

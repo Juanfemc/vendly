@@ -65,6 +65,9 @@ trait ValidatesStoreProfile
             'shipping_methods' => ['nullable', 'array', 'max:5'],
             'shipping_methods.*.name' => ['nullable', 'string', 'max:80'],
             'shipping_methods.*.cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'checkout_fields' => ['nullable', 'array'],
+            'checkout_fields.*.enabled' => ['nullable', 'boolean'],
+            'checkout_fields.*.required' => ['nullable', 'boolean'],
             'local_delivery_area' => [
                 'nullable',
                 'string',
@@ -104,6 +107,7 @@ trait ValidatesStoreProfile
             'cover_image' => ['nullable', 'image', 'max:4096'],
             'ai_generated_cover_path' => ['nullable', 'string', 'max:255'],
             'logo_image' => ['nullable', 'image', 'max:4096'],
+            'ai_generated_logo_path' => ['nullable', 'string', 'max:255'],
             'brand_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'background_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'text_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
@@ -191,6 +195,12 @@ trait ValidatesStoreProfile
             $this->applyShippingData($data);
         } else {
             $this->clearShippingData($data);
+        }
+
+        if (Store::supportsCheckoutFieldsColumn()) {
+            $data['checkout_fields'] = Store::normalizeCheckoutFields($this->input('checkout_fields', []));
+        } else {
+            unset($data['checkout_fields']);
         }
 
         if (! Store::supportsMetaPixelColumn()) {

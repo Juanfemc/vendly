@@ -4,6 +4,11 @@
     $cartItems = collect($cart);
     $discountAmount = (float) ($discount['amount'] ?? 0);
     $checkoutTotal = max(0, $subtotal + (float) $shippingCost - $discountAmount);
+    $checkoutFieldEnabled = $checkoutFieldEnabled ?? fn (string $field): bool => $store?->checkoutFieldEnabled($field) ?? true;
+    $checkoutFieldRequired = $checkoutFieldRequired ?? fn (string $field): bool => $store?->checkoutFieldRequired($field) ?? false;
+    $checkoutRequired = $checkoutRequired ?? fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
+    $checkoutLocationEnabled = $checkoutLocationEnabled ?? $checkoutFieldEnabled('city');
+    $checkoutLocationRequired = $checkoutLocationRequired ?? $checkoutFieldRequired('city');
 @endphp
 
 <section class="fashion-checkout">
@@ -48,10 +53,12 @@
                     <p>Already have an account? <a href="{{ route('login') }}">Log in</a></p>
                 </div>
 
-                <label class="fashion-field fashion-field--full">
-                    <span>Email address</span>
-                    <input type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com">
-                </label>
+                @if($checkoutFieldEnabled('email'))
+                    <label class="fashion-field fashion-field--full">
+                        <span>Email address{{ $checkoutFieldRequired('email') ? '' : ' (optional)' }}</span>
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com" {{ $checkoutRequired('email') }}>
+                    </label>
+                @endif
 
                 <label class="fashion-checkbox">
                     <input type="checkbox" name="accepts_marketing" value="1" checked>
@@ -75,25 +82,37 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>Last name</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
+                            <span>Phone</span>
+                            <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
                         </label>
                     </div>
 
-                    <label class="fashion-field fashion-field--full">
-                        <span>Address</span>
-                        <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" required>
-                    </label>
+                    @if($checkoutFieldEnabled('last_name'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Last name{{ $checkoutFieldRequired('last_name') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" {{ $checkoutRequired('last_name') }}>
+                        </label>
+                    @endif
 
-                    <label class="fashion-field fashion-field--full">
-                        <span>Apartment, suite, etc. (optional)</span>
-                        <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc.">
-                    </label>
+                    @if($checkoutFieldEnabled('address'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Address{{ $checkoutFieldRequired('address') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" {{ $checkoutRequired('address') }}>
+                        </label>
+                    @endif
 
+                    @if($checkoutFieldEnabled('apartment'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Apartment, suite, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc." {{ $checkoutRequired('apartment') }}>
+                        </label>
+                    @endif
+
+                    @if($checkoutLocationEnabled)
                     <div class="fashion-field-row fashion-field-row--three">
                         <label class="fashion-field">
-                            <span>Department</span>
-                            <select name="department_code" required data-department-select>
+                            <span>Department{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
+                            <select name="department_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-department-select>
                                 <option value="">Select department</option>
                                 @foreach($colombiaDepartments as $department)
                                     <option value="{{ $department->department_code }}" @selected(old('department_code') === $department->department_code)>{{ $department->department_name }}</option>
@@ -102,8 +121,8 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>City</span>
-                            <select name="city_code" required data-city-select data-city-input disabled>
+                            <span>City{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
+                            <select name="city_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-select data-city-input disabled>
                                 <option value="">Select city</option>
                                 @foreach($colombiaLocations as $location)
                                     <option
@@ -121,6 +140,7 @@
                             <input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="000000">
                         </label>
                     </div>
+                    @endif
                 @else
                     <label class="fashion-field fashion-field--full">
                         <span>Country / Region</span>
@@ -134,55 +154,65 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>Last name</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
+                            <span>Phone</span>
+                            <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
                         </label>
                     </div>
 
-                    <label class="fashion-field fashion-field--full">
-                        <span>Address</span>
-                        <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" required>
-                    </label>
-
-                    <label class="fashion-field fashion-field--full">
-                        <span>Apartment, suite, etc. (optional)</span>
-                        <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc.">
-                    </label>
-
-                    <div class="fashion-field-row fashion-field-row--three">
-                        <label class="fashion-field">
-                            <span>City</span>
-                            <input type="text" name="city" value="{{ old('city') }}" placeholder="New York" required data-city-input>
+                    @if($checkoutFieldEnabled('last_name'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Last name{{ $checkoutFieldRequired('last_name') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" {{ $checkoutRequired('last_name') }}>
                         </label>
+                    @endif
 
-                        <label class="fashion-field">
-                            <span>State</span>
-                            <input type="text" name="region" value="{{ old('region') }}" placeholder="State">
+                    @if($checkoutFieldEnabled('address'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Address{{ $checkoutFieldRequired('address') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" {{ $checkoutRequired('address') }}>
                         </label>
+                    @endif
 
-                        <label class="fashion-field">
-                            <span>ZIP Code</span>
-                            <input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="10001">
+                    @if($checkoutFieldEnabled('apartment'))
+                        <label class="fashion-field fashion-field--full">
+                            <span>Apartment, suite, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (optional)' }}</span>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc." {{ $checkoutRequired('apartment') }}>
                         </label>
-                    </div>
+                    @endif
+
+                    @if($checkoutLocationEnabled)
+                        <div class="fashion-field-row fashion-field-row--three">
+                            <label class="fashion-field">
+                                <span>City{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
+                                <input type="text" name="city" value="{{ old('city') }}" placeholder="New York" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
+                            </label>
+
+                            <label class="fashion-field">
+                                <span>State</span>
+                                <input type="text" name="region" value="{{ old('region') }}" placeholder="State">
+                            </label>
+
+                            <label class="fashion-field">
+                                <span>ZIP Code</span>
+                                <input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="10001">
+                            </label>
+                        </div>
+                    @endif
                 @endif
 
-                <label class="fashion-field fashion-field--full">
-                    <span>Neighborhood</span>
-                    <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" placeholder="Barrio" required>
-                </label>
-
-                <div class="fashion-field-row">
-                    <label class="fashion-field">
-                        <span>Phone</span>
-                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                @if($checkoutFieldEnabled('neighborhood'))
+                    <label class="fashion-field fashion-field--full">
+                        <span>Neighborhood{{ $checkoutFieldRequired('neighborhood') ? '' : ' (optional)' }}</span>
+                        <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" placeholder="Barrio" {{ $checkoutRequired('neighborhood') }}>
                     </label>
+                @endif
 
-                    <label class="fashion-field">
-                        <span>Document</span>
-                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cédula" required>
+                @if($checkoutFieldEnabled('document'))
+                    <label class="fashion-field fashion-field--full">
+                        <span>Document{{ $checkoutFieldRequired('document') ? '' : ' (optional)' }}</span>
+                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cedula" {{ $checkoutRequired('document') }}>
                     </label>
-                </div>
+                @endif
 
                 <label class="fashion-checkbox">
                     <input type="checkbox" name="save_information" value="1" checked>
@@ -243,10 +273,12 @@
                 </div>
             </section>
 
-            <label class="fashion-field fashion-field--full">
-                <span>Order notes (optional)</span>
-                <textarea name="notes" placeholder="Add delivery notes or product details">{{ old('notes') }}</textarea>
-            </label>
+            @if($checkoutFieldEnabled('notes'))
+                <label class="fashion-field fashion-field--full">
+                    <span>Order notes{{ $checkoutFieldRequired('notes') ? '' : ' (optional)' }}</span>
+                    <textarea name="notes" placeholder="Add delivery notes or product details" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
+                </label>
+            @endif
 
             @if($store?->allowsDiscountCoupons())
                 <section class="fashion-checkout-section">

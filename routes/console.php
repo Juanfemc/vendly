@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 Artisan::command('inspire', function () {
@@ -302,6 +303,27 @@ Artisan::command('whatsapp:prune {--days= : Dias de retencion}', function () {
 
     return self::SUCCESS;
 })->purpose('Elimina trazas antiguas y finalizadas de WhatsApp');
+
+Artisan::command('imports:prune-product-images {--hours=12 : Antiguedad minima de previews temporales}', function () {
+    $hours = max(1, (int) $this->option('hours'));
+    $disk = Storage::disk('local');
+    $deleted = 0;
+
+    foreach ($disk->files('imports/product-images') as $path) {
+        if (! str_ends_with($path, '.zip')) {
+            continue;
+        }
+
+        if ($disk->lastModified($path) <= now()->subHours($hours)->timestamp) {
+            $disk->delete($path);
+            $deleted++;
+        }
+    }
+
+    $this->info("ZIPs temporales de importacion eliminados: {$deleted}");
+
+    return self::SUCCESS;
+})->purpose('Elimina ZIPs temporales abandonados por previsualizaciones de productos');
 
 Artisan::command('whatsapp:recover-stale {--minutes=15 : Antiguedad minima del intento}', function () {
     $minutes = max(5, (int) $this->option('minutes'));
@@ -640,6 +662,10 @@ Artisan::command('followups:schedule-subscriptions {--limit=500 : Cantidad maxim
 
 Schedule::command('whatsapp:prune')
     ->dailyAt('03:30')
+    ->withoutOverlapping();
+
+Schedule::command('imports:prune-product-images')
+    ->dailyAt('03:45')
     ->withoutOverlapping();
 
 Schedule::command('whatsapp:recover-stale')

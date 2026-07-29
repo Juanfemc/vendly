@@ -39,6 +39,11 @@
     $usesColombiaLocations = $colombiaDepartments->isNotEmpty() && $colombiaLocations->isNotEmpty();
     $localDelivery = $localDelivery ?? null;
     $hasLocalDelivery = (bool) ($store?->localDeliveryEnabled() ?? false);
+    $checkoutFieldEnabled = fn (string $field): bool => $store?->checkoutFieldEnabled($field) ?? true;
+    $checkoutFieldRequired = fn (string $field): bool => $store?->checkoutFieldRequired($field) ?? false;
+    $checkoutRequired = fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
+    $checkoutLocationEnabled = $checkoutFieldEnabled('city');
+    $checkoutLocationRequired = $checkoutFieldRequired('city');
     $selectedShippingKey = old('shipping_method', $shippingMethods->first()['key'] ?? null);
     $selectedShipping = $shippingMethods->firstWhere('key', (string) $selectedShippingKey) ?? $shippingMethods->first();
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
@@ -46,9 +51,9 @@
     $discountAmount = (float) ($discount['amount'] ?? 0);
     $checkoutTotal = max(0, $total + $shippingCost - $discountAmount);
     $hasShippingCost = $hasLocalDelivery || $shippingMethods->isNotEmpty();
-    $hasSelectedDeliveryCity = $usesColombiaLocations
+    $hasSelectedDeliveryCity = $checkoutLocationEnabled && ($usesColombiaLocations
         ? filled(old('city_code'))
-        : filled(old('city'));
+        : filled(old('city')));
 @endphp
 <body
     class="cart-page {{ $isTechnologyStore ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }}"
@@ -120,63 +125,99 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}" method="POST">
+                    <form id="checkoutForm" action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}" method="POST">
                         @csrf
 
-                        <section>
-                            <h2 class="section-title" style="margin-bottom: 16px;">{{ $isRestaurant ? 'Datos del pedido' : ($isReservationStore ? 'Datos de la reserva' : 'Entrega') }}</h2>
+                        <section class="checkout-card">
+                            <div class="checkout-section-head">
+                                <span class="checkout-step-badge">1</span>
+                                <div>
+                                    <h2 class="section-title">Tus datos</h2>
+                                    <p>Te contactaremos por WhatsApp para confirmar {{ $isRestaurant ? 'tu pedido' : ($isReservationStore ? 'tu reserva' : 'la compra') }}.</p>
+                                </div>
+                            </div>
 
                             <div class="grid-two field-wrap">
                                 <input class="field" type="text" name="name" placeholder="Nombre" value="{{ old('name') }}" required>
-                                <input class="field" type="text" name="last_name" placeholder="Apellidos" value="{{ old('last_name') }}" required>
+                                <input class="field" type="text" name="phone" placeholder="WhatsApp" value="{{ old('phone') }}" required>
                             </div>
 
-                            <div class="field-wrap">
-                                <input class="field" type="text" name="document" placeholder="Cédula" value="{{ old('document') }}" required>
-                            </div>
-
-                            <div class="field-wrap">
-                                <input class="field" type="text" name="phone" placeholder="Teléfono" value="{{ old('phone') }}" required>
-                            </div>
-
-                            <div class="field-wrap">
-                                <input class="field" type="text" name="address" placeholder="Dirección" value="{{ old('address') }}" required>
-                            </div>
-
-                            <div class="field-wrap">
-                                <input class="field" type="text" name="apartment" placeholder="Casa, apartamento, etc. (opcional)" value="{{ old('apartment') }}">
-                            </div>
-
-                            <div class="field-wrap">
-                                <input class="field" type="text" name="neighborhood" placeholder="Barrio" value="{{ old('neighborhood') }}" required>
-                            </div>
-
-                            @if($usesColombiaLocations)
-                                <div class="grid-two field-wrap">
-                                    <select class="field" name="department_code" required data-department-select>
-                                        <option value="">Departamento</option>
-                                        @foreach($colombiaDepartments as $department)
-                                            <option value="{{ $department->department_code }}" @selected(old('department_code') === $department->department_code)>{{ $department->department_name }}</option>
-                                        @endforeach
-                                    </select>
-
-                                    <select class="field" name="city_code" required data-city-select data-city-input disabled>
-                                        <option value="">Ciudad / municipio</option>
-                                        @foreach($colombiaLocations as $location)
-                                            <option
-                                                value="{{ $location->city_code }}"
-                                                data-department="{{ $location->department_code }}"
-                                                data-city-name="{{ $location->city_name }}"
-                                                @selected(old('city_code') === $location->city_code)
-                                            >{{ $location->city_name }}</option>
-                                        @endforeach
-                                    </select>
+                            @if($checkoutFieldEnabled('last_name'))
+                                <div class="field-wrap">
+                                    <input class="field" type="text" name="last_name" placeholder="Apellidos{{ $checkoutFieldRequired('last_name') ? '' : ' (opcional)' }}" value="{{ old('last_name') }}" {{ $checkoutRequired('last_name') }}>
                                 </div>
-                            @else
-                                <div class="grid-two field-wrap">
-                                    <input class="field" type="text" name="city" placeholder="Ciudad" value="{{ old('city') }}" required data-city-input>
-                                    <input class="field" type="text" name="region" placeholder="Provincia / Estado (opcional)" value="{{ old('region') }}">
+                            @endif
+
+                            @if($checkoutFieldEnabled('email'))
+                                <div class="field-wrap">
+                                    <input class="field" type="email" name="email" placeholder="Correo{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}" value="{{ old('email') }}" {{ $checkoutRequired('email') }}>
+                                    <small class="checkout-field-help">Útil para enviarte comprobantes o detalles del pedido.</small>
                                 </div>
+                            @endif
+
+                            @if($checkoutFieldEnabled('document'))
+                                <div class="field-wrap">
+                                    <input class="field" type="text" name="document" placeholder="Cédula{{ $checkoutFieldRequired('document') ? '' : ' (opcional)' }}" value="{{ old('document') }}" {{ $checkoutRequired('document') }}>
+                                </div>
+                            @endif
+                        </section>
+
+                        @if($checkoutFieldEnabled('address') || $checkoutFieldEnabled('apartment') || $checkoutFieldEnabled('neighborhood') || $checkoutLocationEnabled || $hasLocalDelivery || (! $hasLocalDelivery && $shippingMethods->isNotEmpty()) || $isReservationStore)
+                        <section class="checkout-card">
+                            <div class="checkout-section-head">
+                                <span class="checkout-step-badge">2</span>
+                                <div>
+                                    <h2 class="section-title">{{ $isReservationStore ? 'Fecha y detalles' : 'Entrega' }}</h2>
+                                    <p>{{ $isReservationStore ? 'Elige cuándo quieres agendar y agrega detalles importantes.' : 'Completa solo los datos necesarios para recibir tu compra.' }}</p>
+                                </div>
+                            </div>
+
+                            @if($checkoutFieldEnabled('address'))
+                                <div class="field-wrap">
+                                    <input class="field" type="text" name="address" placeholder="Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}" value="{{ old('address') }}" {{ $checkoutRequired('address') }}>
+                                </div>
+                            @endif
+
+                            @if($checkoutFieldEnabled('apartment'))
+                                <div class="field-wrap">
+                                    <input class="field" type="text" name="apartment" placeholder="Casa, apartamento, referencia{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}" value="{{ old('apartment') }}" {{ $checkoutRequired('apartment') }}>
+                                </div>
+                            @endif
+
+                            @if($checkoutFieldEnabled('neighborhood'))
+                                <div class="field-wrap">
+                                    <input class="field" type="text" name="neighborhood" placeholder="Barrio{{ $checkoutFieldRequired('neighborhood') ? '' : ' (opcional)' }}" value="{{ old('neighborhood') }}" {{ $checkoutRequired('neighborhood') }}>
+                                </div>
+                            @endif
+
+                            @if($checkoutLocationEnabled)
+                                @if($usesColombiaLocations)
+                                    <div class="grid-two field-wrap">
+                                        <select class="field" name="department_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-department-select>
+                                            <option value="">Departamento{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</option>
+                                            @foreach($colombiaDepartments as $department)
+                                                <option value="{{ $department->department_code }}" @selected(old('department_code') === $department->department_code)>{{ $department->department_name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        <select class="field" name="city_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-select data-city-input disabled>
+                                            <option value="">Ciudad / municipio{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</option>
+                                            @foreach($colombiaLocations as $location)
+                                                <option
+                                                    value="{{ $location->city_code }}"
+                                                    data-department="{{ $location->department_code }}"
+                                                    data-city-name="{{ $location->city_name }}"
+                                                    @selected(old('city_code') === $location->city_code)
+                                                >{{ $location->city_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @else
+                                    <div class="grid-two field-wrap">
+                                        <input class="field" type="text" name="city" placeholder="Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}" value="{{ old('city') }}" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
+                                        <input class="field" type="text" name="region" placeholder="Provincia / Estado (opcional)" value="{{ old('region') }}">
+                                    </div>
+                                @endif
                             @endif
 
                             @if($hasLocalDelivery)
@@ -242,51 +283,72 @@
                                     </div>
                                 </fieldset>
                             @endif
+                        </section>
+                        @endif
 
-                            <div class="field-wrap">
-                                <textarea class="textarea" name="notes" placeholder="{{ $isRestaurant ? 'Instrucciones del pedido (opcional)' : ($isReservationStore ? 'Fecha, hora o detalles de la reserva (opcional)' : 'Notas del pedido (opcional)') }}">{{ old('notes') }}</textarea>
+                        <section class="checkout-card">
+                            <div class="checkout-section-head">
+                                <span class="checkout-step-badge">3</span>
+                                <div>
+                                    <h2 class="section-title">Pago</h2>
+                                    <p>Elige cómo quieres completar tu compra.</p>
+                                </div>
                             </div>
 
-                            @if($store?->allowsDiscountCoupons())
-                                <div class="checkout-coupon field-wrap">
-                                    <label class="checkout-field-label" for="discountCode">Cupon de descuento</label>
-                                    <div class="checkout-coupon-row">
-                                        <input class="field" id="discountCode" type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Codigo de descuento" data-discount-code>
-                                        <button type="button" data-discount-apply>Aplicar</button>
-                                    </div>
-                                    <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Cupon aplicado.' : '' }}</p>
+                            @if($checkoutFieldEnabled('notes'))
+                                <div class="field-wrap">
+                                    <textarea class="textarea" name="notes" placeholder="{{ $isRestaurant ? 'Instrucciones del pedido' : ($isReservationStore ? 'Fecha, hora o detalles de la reserva' : 'Notas del pedido') }}{{ $checkoutFieldRequired('notes') ? '' : ' (opcional)' }}" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
                                 </div>
+                            @endif
+
+                            @if($store?->allowsDiscountCoupons())
+                                <details class="checkout-coupon field-wrap" {{ old('discount_code', $discount['code'] ?? '') ? 'open' : '' }}>
+                                    <summary>¿Tienes un cupón?</summary>
+                                    <div class="checkout-coupon-body">
+                                        <label class="checkout-field-label" for="discountCode">Cupón de descuento</label>
+                                        <div class="checkout-coupon-row">
+                                            <input class="field" id="discountCode" type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Código de descuento" data-discount-code>
+                                            <button type="button" data-discount-apply>Aplicar</button>
+                                        </div>
+                                        <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Cupón aplicado.' : '' }}</p>
+                                    </div>
+                                </details>
                             @endif
 
                             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => $isTechnologyStore ? 'technology' : 'default'])
 
-                            <button class="primary-btn" type="submit">{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</button>
-
-                            @if($mercadoPagoAvailable || ($wompiAvailable ?? false))
-                                <div class="payment-divider"><span>o paga en linea</span></div>
-                            @endif
-
-                            @if($mercadoPagoAvailable)
-                                <button
-                                    class="mercadopago-btn"
-                                    type="submit"
-                                    formaction="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
-                                >
-                                    <span class="mercadopago-mark">MP</span>
-                                    <span>Pagar con Mercado Pago</span>
+                            <div class="checkout-payment-options">
+                                <button class="primary-btn" type="submit">
+                                    <span>{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</span>
+                                    <small>La tienda te confirma por WhatsApp</small>
                                 </button>
-                            @endif
 
-                            @if($wompiAvailable ?? false)
-                                <button
-                                    class="wompi-btn"
-                                    type="submit"
-                                    formaction="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
-                                >
-                                    <span class="wompi-mark">W</span>
-                                    <span>Pagar con Wompi</span>
-                                </button>
-                            @endif
+                                @if($mercadoPagoAvailable || ($wompiAvailable ?? false))
+                                    <div class="payment-divider"><span>o paga en línea</span></div>
+                                @endif
+
+                                @if($mercadoPagoAvailable)
+                                    <button
+                                        class="mercadopago-btn"
+                                        type="submit"
+                                        formaction="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
+                                    >
+                                        <span class="mercadopago-mark">MP</span>
+                                        <span>Pagar con Mercado Pago</span>
+                                    </button>
+                                @endif
+
+                                @if($wompiAvailable ?? false)
+                                    <button
+                                        class="wompi-btn"
+                                        type="submit"
+                                        formaction="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
+                                    >
+                                        <span class="wompi-mark">W</span>
+                                        <span>Pagar con Wompi</span>
+                                    </button>
+                                @endif
+                            </div>
                         </section>
                     </form>
                 </div>
@@ -402,6 +464,13 @@
                     @endif
                 </div>
             </aside>
+        </div>
+        <div class="checkout-mobile-bar" aria-label="Resumen de compra">
+            <div>
+                <span>Total</span>
+                <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+            </div>
+            <button type="submit" form="checkoutForm">{{ $isRestaurant ? 'Enviar' : ($isReservationStore ? 'Reservar' : 'Finalizar') }}</button>
         </div>
         @endif
         </main>

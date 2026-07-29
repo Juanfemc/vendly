@@ -23,11 +23,13 @@ class CheckoutService
 
     public function createOrder(Store $store, array $cart, array $customerData, array $paymentData = []): Order
     {
-        $fullName = trim($customerData['name'] . ' ' . $customerData['last_name']);
-        $fullAddress = $customerData['address'];
+        $fullName = trim(($customerData['name'] ?? '') . ' ' . ($customerData['last_name'] ?? ''));
+        $fullAddress = trim((string) ($customerData['address'] ?? ''));
 
-        if (! empty($customerData['apartment'])) {
+        if ($fullAddress !== '' && ! empty($customerData['apartment'])) {
             $fullAddress .= ', ' . $customerData['apartment'];
+        } elseif (! empty($customerData['apartment'])) {
+            $fullAddress = (string) $customerData['apartment'];
         }
 
         $notes = $this->notes($customerData);
@@ -42,8 +44,8 @@ class CheckoutService
                 'customer_phone' => $customerData['phone'],
                 'customer_address' => $fullAddress,
                 'customer_neighborhood' => $customerData['neighborhood'] ?? null,
-                'customer_city' => $customerData['city'],
-                'customer_document' => $customerData['document'],
+                'customer_city' => $customerData['city'] ?? null,
+                'customer_document' => $customerData['document'] ?? null,
                 'reservation_date' => $customerData['reservation_date'] ?? null,
                 'reservation_time' => $customerData['reservation_time'] ?? null,
                 'notes' => $notes,

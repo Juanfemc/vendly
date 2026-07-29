@@ -23,6 +23,7 @@ class Store extends Model
     private static ?bool $supportsMetaPixelColumn = null;
     private static ?bool $supportsSubscriptionColumns = null;
     private static ?bool $supportsTermsAcceptanceColumns = null;
+    private static ?bool $supportsCheckoutFieldsColumn = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
 
@@ -102,6 +103,7 @@ class Store extends Model
         'announcement_items',
         'free_shipping_minimum',
         'shipping_methods',
+        'checkout_fields',
         'local_delivery_area',
         'local_delivery_city_code',
         'local_delivery_cost',
@@ -138,6 +140,7 @@ class Store extends Model
         'announcement_items' => 'array',
         'free_shipping_minimum' => 'decimal:2',
         'shipping_methods' => 'array',
+        'checkout_fields' => 'array',
         'local_delivery_cost' => 'decimal:2',
         'outside_delivery_cost' => 'decimal:2',
         'reservation_available_days' => 'array',
@@ -584,6 +587,120 @@ class Store extends Model
         return trim((string) $this->terms_version) ?: 'v1';
     }
 
+    public static function checkoutFieldDefinitions(): array
+    {
+        return [
+            'last_name' => [
+                'label' => 'Apellidos',
+                'description' => 'Util para tiendas que necesitan nombre completo.',
+                'default_enabled' => true,
+                'default_required' => false,
+            ],
+            'email' => [
+                'label' => 'Correo',
+                'description' => 'Pide correo solo si lo usas para facturas o seguimiento.',
+                'default_enabled' => false,
+                'default_required' => false,
+            ],
+            'document' => [
+                'label' => 'Cedula o documento',
+                'description' => 'Recomendado si haces envios formales o facturacion.',
+                'default_enabled' => false,
+                'default_required' => false,
+            ],
+            'address' => [
+                'label' => 'Direccion',
+                'description' => 'Necesario si entregas a domicilio.',
+                'default_enabled' => true,
+                'default_required' => true,
+            ],
+            'apartment' => [
+                'label' => 'Casa, apto o referencia',
+                'description' => 'Complementa la direccion sin hacerlo obligatorio.',
+                'default_enabled' => true,
+                'default_required' => false,
+            ],
+            'neighborhood' => [
+                'label' => 'Barrio',
+                'description' => 'Ayuda a ubicar mejor el pedido en ciudades grandes.',
+                'default_enabled' => true,
+                'default_required' => false,
+            ],
+            'city' => [
+                'label' => 'Ciudad y departamento',
+                'description' => 'Se fuerza si tienes envio local/fuera de ciudad.',
+                'default_enabled' => true,
+                'default_required' => true,
+            ],
+            'notes' => [
+                'label' => 'Notas del pedido',
+                'description' => 'Permite aclaraciones de entrega, talla o producto.',
+                'default_enabled' => true,
+                'default_required' => false,
+            ],
+        ];
+    }
+
+    public static function normalizeCheckoutFields(mixed $fields): array
+    {
+        $fields = is_array($fields) ? $fields : [];
+
+        return collect(self::checkoutFieldDefinitions())
+            ->mapWithKeys(function (array $definition, string $key) use ($fields) {
+                $field = is_array($fields[$key] ?? null) ? $fields[$key] : [];
+                $enabled = array_key_exists('enabled', $field)
+                    ? filter_var($field['enabled'], FILTER_VALIDATE_BOOL)
+                    : (bool) $definition['default_enabled'];
+                $required = $enabled && (
+                    array_key_exists('required', $field)
+                        ? filter_var($field['required'], FILTER_VALIDATE_BOOL)
+                        : (bool) $definition['default_required']
+                );
+
+                return [$key => [
+                    'enabled' => $enabled,
+                    'required' => $required,
+                ]];
+            })
+            ->all();
+    }
+
+    public function checkoutFields(): array
+    {
+        return self::normalizeCheckoutFields($this->checkout_fields ?? []);
+    }
+
+    public function checkoutField(string $key): array
+    {
+        $fields = $this->checkoutFields();
+        $definition = self::checkoutFieldDefinitions()[$key] ?? null;
+
+        if (! $definition) {
+            return ['enabled' => false, 'required' => false];
+        }
+
+        return array_merge($definition, $fields[$key] ?? []);
+    }
+
+    public function checkoutFieldEnabled(string $key): bool
+    {
+        if ($key === 'city' && $this->localDeliveryEnabled()) {
+            return true;
+        }
+
+        return (bool) ($this->checkoutField($key)['enabled'] ?? false);
+    }
+
+    public function checkoutFieldRequired(string $key): bool
+    {
+        if ($key === 'city' && $this->localDeliveryEnabled()) {
+            return true;
+        }
+
+        return $this->checkoutFieldEnabled($key)
+            && (bool) ($this->checkoutField($key)['required'] ?? false);
+    }
+
     public function allowsAiContent(): bool
     {
         return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM
@@ -623,6 +740,11 @@ class Store extends Model
     public static function supportsDiscountCouponsTable(): bool
     {
         return self::$supportsDiscountCouponsTable ??= Schema::hasTable('discount_coupons');
+    }
+
+    public static function supportsCheckoutFieldsColumn(): bool
+    {
+        return self::$supportsCheckoutFieldsColumn ??= Schema::hasColumn('stores', 'checkout_fields');
     }
 
     public static function supportsLocalDeliveryColumns(): bool

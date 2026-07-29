@@ -23,6 +23,7 @@
             margin: 0;
             font-family: Arial, sans-serif;
             background: #f5f6fa;
+            overflow-x: clip;
         }
 
         * {
@@ -61,7 +62,10 @@
             display: grid;
             grid-template-columns: 260px minmax(0, 1fr);
             align-items: start;
+            width: 100%;
+            max-width: 100vw;
             min-height: 100vh;
+            overflow-x: clip;
         }
 
         .mobile-topbar {
@@ -91,25 +95,6 @@
             height: 34px;
             border-radius: 50%;
             display: block;
-        }
-
-        .menu-toggle {
-            border: 1px solid #d1d5db;
-            background: white;
-            color: #111827;
-            border-radius: 10px;
-            width: 42px;
-            height: 42px;
-            padding: 0;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .menu-toggle svg {
-            width: 20px;
-            height: 20px;
         }
 
         .sidebar {
@@ -568,11 +553,23 @@
             color: #ffffff;
         }
 
+        .admin-mobile-bottom-nav {
+            display: none;
+        }
+
+        .admin-mobile-bottom-nav svg {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
+        }
+
         .main {
             padding: 24px;
             box-sizing: border-box;
             min-width: 0;
-            width: 100%;
+            width: auto;
+            max-width: 100%;
+            overflow-x: clip;
         }
 
         .header {
@@ -1257,6 +1254,8 @@
         .ai-assistant-panel {
             display: grid;
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             margin: 0 0 16px;
             padding: 14px;
             border: 1px solid #dbeafe;
@@ -1269,6 +1268,11 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 12px;
+            min-width: 0;
+        }
+
+        .ai-assistant-panel__head > div {
+            min-width: 0;
         }
 
         .ai-assistant-panel__head h3 {
@@ -1287,13 +1291,16 @@
 
         .ai-assistant-actions {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, max-content));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
             gap: 8px;
             align-items: center;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .ai-assistant-actions .btn {
-            width: auto;
+            width: 100%;
+            min-width: 0;
             min-height: 36px;
             padding: 8px 12px;
             font-size: 13px;
@@ -1329,6 +1336,8 @@
         .ai-assistant-preview {
             display: grid;
             gap: 8px;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .ai-assistant-preview[hidden] {
@@ -1338,6 +1347,7 @@
         .ai-assistant-preview img {
             display: block;
             width: min(100%, 360px);
+            max-width: 100%;
             max-height: 220px;
             border: 1px solid #dbeafe;
             border-radius: 12px;
@@ -1461,6 +1471,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             margin: 0 0 18px;
         }
 
@@ -1496,9 +1508,12 @@
         }
 
         .product-editor-page {
-            max-width: 1120px;
+            width: min(100%, 1120px);
+            max-width: 100%;
+            min-width: 0;
             margin: 0 auto;
             padding-bottom: 86px;
+            overflow-x: clip;
         }
 
         .product-editor-hero {
@@ -1516,6 +1531,10 @@
             min-width: 0;
             align-items: center;
             gap: 14px;
+        }
+
+        .product-editor-title > div {
+            min-width: 0;
         }
 
         .product-editor-back {
@@ -1546,6 +1565,7 @@
 
         .product-editor-hero h2 {
             margin: 0;
+            overflow-wrap: anywhere;
             color: #111827;
             font-size: clamp(24px, 3vw, 30px);
             letter-spacing: 0;
@@ -1553,6 +1573,7 @@
 
         .product-editor-hero p {
             margin: 4px 0 0;
+            overflow-wrap: anywhere;
             color: #0f766e;
             font-size: 14px;
             line-height: 1.5;
@@ -1561,10 +1582,14 @@
         .product-editor-form {
             display: grid;
             gap: 22px;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .product-editor-card {
             padding: 24px;
+            min-width: 0;
+            max-width: 100%;
             border: 1px solid #e5e7eb;
             border-radius: 18px;
             background: #ffffff;
@@ -1575,7 +1600,12 @@
             display: flex;
             align-items: flex-start;
             gap: 14px;
+            min-width: 0;
             margin-bottom: 22px;
+        }
+
+        .product-editor-card__head > div {
+            min-width: 0;
         }
 
         .product-editor-card__icon {
@@ -1613,6 +1643,8 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 18px;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .product-editor-grid--three {
@@ -1626,6 +1658,7 @@
         .product-editor-field {
             display: grid;
             gap: 8px;
+            min-width: 0;
             margin-bottom: 18px;
         }
 
@@ -1656,6 +1689,9 @@
         .product-editor-field select,
         .product-editor-field textarea {
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
             min-height: 48px;
             margin: 0;
             padding: 12px 15px;
@@ -1684,15 +1720,20 @@
 
         .product-editor-rich {
             margin: 0;
+            min-width: 0;
+            max-width: 100%;
             border-radius: 14px;
         }
 
         .product-editor-rich .rich-toolbar {
             background: #f8fafc;
+            overflow-x: hidden;
         }
 
         .product-editor-rich .rich-content {
             min-height: 150px;
+            max-width: 100%;
+            overflow-wrap: anywhere;
             padding: 14px 15px;
         }
 
@@ -1711,6 +1752,8 @@
             display: flex;
             align-items: center;
             gap: 14px;
+            min-width: 0;
+            max-width: 100%;
             margin-bottom: 18px;
             padding: 12px;
             border: 1px solid #e5e7eb;
@@ -1721,9 +1764,14 @@
         .product-editor-current-media img {
             width: 76px;
             height: 76px;
+            flex: 0 0 auto;
             object-fit: cover;
             border-radius: 14px;
             background: #e5e7eb;
+        }
+
+        .product-editor-current-media div {
+            min-width: 0;
         }
 
         .product-editor-current-media strong,
@@ -1734,22 +1782,24 @@
         }
 
         .product-editor-gallery {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             margin-bottom: 18px;
         }
 
         .product-editor-gallery label {
             display: grid;
             gap: 8px;
-            width: 96px;
+            min-width: 0;
             color: #4b5563;
             font-size: 12px;
         }
 
         .product-editor-gallery img {
-            width: 96px;
+            width: 100%;
             height: 96px;
             object-fit: cover;
             border-radius: 14px;
@@ -1771,12 +1821,16 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 16px;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .product-editor-upload,
         .product-editor-upgrade {
             position: relative;
             min-height: 164px;
+            min-width: 0;
+            max-width: 100%;
             display: grid;
             place-items: center;
             gap: 8px;
@@ -1831,6 +1885,8 @@
         .product-editor-options {
             display: grid;
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             margin-top: 18px;
         }
 
@@ -1839,6 +1895,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 18px;
+            min-width: 0;
             padding: 14px 16px;
             border: 1px solid #e5e7eb;
             border-radius: 16px;
@@ -1848,6 +1905,7 @@
 
         .product-editor-switch strong {
             display: block;
+            overflow-wrap: anywhere;
             color: #0f172a;
             font-size: 14px;
         }
@@ -1904,6 +1962,8 @@
             display: flex;
             justify-content: flex-end;
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             margin-top: 4px;
             padding: 16px;
             border: 1px solid #e5e7eb;
@@ -1961,16 +2021,35 @@
 
         @media (max-width: 900px) {
             html {
+                width: 100%;
+                max-width: 100%;
                 overflow-x: hidden;
+                overflow-x: clip;
+                overscroll-behavior-x: none;
+            }
+
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+                overflow-x: clip;
+                overscroll-behavior-x: none;
             }
 
             .mobile-topbar {
                 display: flex;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
             }
 
             .container {
                 display: block;
+                width: 100%;
+                max-width: 100%;
                 min-width: 0;
+                overflow-x: hidden;
+                overflow-x: clip;
             }
 
             .sidebar {
@@ -1984,25 +2063,149 @@
                 max-height: 100dvh;
                 align-self: auto;
                 z-index: 60;
-                transform: translateX(-100%);
-                transition: transform .22s ease;
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: none;
+                transition: opacity .18s ease, visibility .18s ease;
                 overflow: hidden;
                 overscroll-behavior: contain;
                 box-shadow: 14px 0 32px rgba(17, 24, 39, 0.14);
             }
 
             .sidebar.is-open {
-                transform: translateX(0);
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                transform: none;
             }
 
             .main {
-                padding: 18px 16px 28px;
+                padding: 18px 16px 110px;
                 width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
                 overflow-x: hidden;
+                overflow-x: clip;
+            }
+
+            .is-product-editor-route,
+            body.has-product-editor {
+                touch-action: pan-y;
+            }
+
+            .is-product-editor-route .container,
+            .is-product-editor-route .main,
+            .is-product-editor-route .product-editor-page,
+            body.has-product-editor .container,
+            body.has-product-editor .main,
+            body.has-product-editor .product-editor-page {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                overflow-x: hidden;
+                overflow-x: clip;
+            }
+
+            .admin-mobile-bottom-nav {
+                position: fixed;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: calc(100vw - 24px);
+                bottom: max(12px, env(safe-area-inset-bottom));
+                z-index: 54;
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 6px;
+                padding: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 22px;
+                background: rgba(17, 17, 17, 0.96);
+                box-shadow: 0 18px 44px rgba(17, 24, 39, 0.22);
+                backdrop-filter: blur(18px);
+            }
+
+            .admin-mobile-bottom-nav a,
+            .admin-mobile-bottom-nav button {
+                min-width: 0;
+                min-height: 56px;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                border: 0;
+                border-radius: 16px;
+                background: transparent;
+                color: rgba(255, 255, 255, 0.72);
+                font: inherit;
+                font-size: 11px;
+                font-weight: 800;
+                line-height: 1.05;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .admin-mobile-bottom-nav a.is-active,
+            .admin-mobile-bottom-nav button.is-active,
+            .admin-mobile-bottom-nav a:hover,
+            .admin-mobile-bottom-nav button:hover {
+                background: rgba(255, 106, 0, 0.18);
+                color: #ffffff;
+            }
+
+            .admin-mobile-bottom-nav svg {
+                color: #ff8a33;
             }
 
             .product-editor-page {
-                padding-bottom: 104px;
+                padding-bottom: 156px;
+                scroll-padding-bottom: 156px;
+            }
+
+            .is-product-editor-route .main {
+                padding-bottom: 128px;
+            }
+
+            body:has(.product-editor-page) .main {
+                padding-bottom: 128px;
+            }
+
+            body.has-product-editor .main {
+                padding-bottom: 128px;
+            }
+
+            .is-product-editor-route .product-editor-page {
+                padding-bottom: 156px;
+                scroll-padding-bottom: 156px;
+            }
+
+            body:has(.product-editor-page) .product-editor-page {
+                padding-bottom: 156px;
+                scroll-padding-bottom: 156px;
+            }
+
+            body.has-product-editor .product-editor-page {
+                padding-bottom: 156px;
+                scroll-padding-bottom: 156px;
+            }
+
+            body:has(.product-editor-page) .admin-mobile-bottom-nav,
+            body.has-product-editor .admin-mobile-bottom-nav {
+                min-height: auto;
+                padding: 7px;
+                border-radius: 18px;
+            }
+
+            body:has(.product-editor-page) .admin-mobile-bottom-nav a,
+            body:has(.product-editor-page) .admin-mobile-bottom-nav button,
+            body.has-product-editor .admin-mobile-bottom-nav a,
+            body.has-product-editor .admin-mobile-bottom-nav button {
+                min-height: 48px;
+                gap: 4px;
+                border-radius: 13px;
+                font-size: 10px;
             }
 
             .product-editor-hero {
@@ -2042,15 +2245,27 @@
             }
 
             .product-editor-actions {
-                position: sticky;
+                position: static;
                 right: auto;
-                bottom: 12px;
+                bottom: auto;
                 left: auto;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
                 border-radius: 18px;
+            }
+
+            .product-editor-card,
+            .product-editor-field,
+            .product-editor-rich,
+            .product-editor-upload,
+            .product-editor-upgrade,
+            .product-editor-actions {
+                scroll-margin-bottom: 140px;
             }
 
             .product-editor-actions .btn {
                 flex: 1;
+                min-width: 0;
                 justify-content: center;
             }
 
@@ -2092,6 +2307,10 @@
             .header .btn,
             .list-card .btn {
                 width: 100%;
+            }
+
+            .product-editor-actions .btn {
+                width: auto;
             }
 
             .list-card form[style*="display:inline-block"],
@@ -2141,6 +2360,101 @@
             }
         }
 
+        @media (max-width: 560px) {
+            .product-editor-page {
+                padding-bottom: 156px;
+                scroll-padding-bottom: 156px;
+            }
+
+            .product-editor-hero h2 {
+                font-size: 22px;
+            }
+
+            .product-editor-hero p,
+            .product-editor-card__head p {
+                font-size: 12px;
+            }
+
+            .product-editor-card {
+                padding: 14px;
+                border-radius: 14px;
+            }
+
+            .product-editor-card__head {
+                gap: 10px;
+            }
+
+            .product-editor-card__icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 11px;
+            }
+
+            .product-editor-card__head h3 {
+                font-size: 17px;
+            }
+
+            .product-editor-field input,
+            .product-editor-field select,
+            .product-editor-field textarea {
+                min-height: 46px;
+                padding: 11px 12px;
+                border-radius: 12px;
+                font-size: 14px;
+            }
+
+            .product-editor-current-media {
+                align-items: flex-start;
+                padding: 10px;
+            }
+
+            .product-editor-current-media img {
+                width: 62px;
+                height: 62px;
+                border-radius: 12px;
+            }
+
+            .product-editor-gallery {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .product-editor-gallery img {
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .product-editor-upload,
+            .product-editor-upgrade {
+                min-height: 132px;
+                padding: 18px 14px;
+                border-radius: 15px;
+            }
+
+            .product-editor-switch {
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+                border-radius: 14px;
+            }
+
+            .product-editor-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 12px;
+            }
+
+            .product-editor-actions .btn {
+                width: 100%;
+            }
+
+            .is-product-editor-route .product-editor-page,
+            body.has-product-editor .product-editor-page {
+                padding-bottom: 164px;
+                scroll-padding-bottom: 164px;
+            }
+        }
+
         @media (max-width: 720px) {
             .mobile-topbar {
                 padding: 12px 14px;
@@ -2148,12 +2462,6 @@
 
             .mobile-brand {
                 font-size: 14px;
-            }
-
-            .menu-toggle {
-                width: 40px;
-                height: 40px;
-                border-radius: 9px;
             }
 
             .sidebar {
@@ -2191,7 +2499,12 @@
             }
 
             .main {
-                padding: 14px 12px 24px;
+                padding: 14px 12px 112px;
+            }
+
+            .is-product-editor-route .main,
+            body.has-product-editor .main {
+                padding-bottom: 132px;
             }
 
             .header {
@@ -2252,6 +2565,11 @@
                 margin: 0 0 10px;
             }
 
+            .product-editor-upload input[type="file"]::file-selector-button {
+                width: auto;
+                margin: 0;
+            }
+
             .delete-confirm-dialog {
                 padding: 18px;
             }
@@ -2280,7 +2598,12 @@
             }
 
             .main {
-                padding: 12px 10px 20px;
+                padding: 12px 10px 104px;
+            }
+
+            .is-product-editor-route .main,
+            body.has-product-editor .main {
+                padding-bottom: 126px;
             }
 
             .header h2 {
@@ -2297,23 +2620,42 @@
             .btn {
                 font-size: 13px;
             }
+
+            .admin-mobile-bottom-nav {
+                left: 8px;
+                right: 8px;
+                max-width: calc(100vw - 16px);
+                bottom: max(8px, env(safe-area-inset-bottom));
+                border-radius: 18px;
+            }
+
+            .admin-mobile-bottom-nav a,
+            .admin-mobile-bottom-nav button {
+                min-height: 52px;
+                border-radius: 13px;
+                font-size: 10px;
+            }
+
+            .admin-mobile-bottom-nav svg {
+                width: 18px;
+                height: 18px;
+            }
         }
     </style>
 </head>
 
-<body>
+@php
+    $adminBodyClasses = collect([
+        request()->is('admin/products/create') || request()->is('admin/products/*/edit') ? 'is-product-editor-route' : null,
+    ])->filter()->implode(' ');
+@endphp
+
+<body @if($adminBodyClasses) class="{{ $adminBodyClasses }}" @endif>
     <div class="mobile-topbar">
         <div class="mobile-brand">
             <img src="{{ asset('images/vendly-logo.svg') }}" alt="Vendly">
             <span>{{ auth()->user()->isAdmin() ? 'Vendly Admin' : 'Vendly Store' }}</span>
         </div>
-        <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <path d="M4 7h16"></path>
-                <path d="M4 12h16"></path>
-                <path d="M4 17h16"></path>
-            </svg>
-        </button>
     </div>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -2389,6 +2731,63 @@
         </main>
     </div>
 
+    @php
+        $mobileNavUser = auth()->user();
+        $mobileNavIsActive = fn (...$patterns) => collect($patterns)->contains(fn ($pattern) => request()->is($pattern));
+        $mobileNavClass = fn (...$patterns) => $mobileNavIsActive(...$patterns) ? 'is-active' : '';
+        $mobileNavIcon = function (string $name): string {
+            $icons = [
+                'home' => '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
+                'cart' => '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+                'box' => '<path d="m21 8-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+                'grid' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+                'more' => '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+                'x' => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+                'store' => '<path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v10h12V10"/><path d="M9 20v-6h6v6"/>',
+                'settings' => '<circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.8 7.8 0 0 0 0-3l2-1.5-2-3.5-2.4 1a8.2 8.2 0 0 0-2.6-1.5L13.7 2h-4l-.3 3A8.2 8.2 0 0 0 6.8 6.5l-2.4-1-2 3.5 2 1.5a7.8 7.8 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8.2 8.2 0 0 0 2.6 1.5l.3 3h4l.3-3a8.2 8.2 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5z"/>',
+                'tag' => '<path d="M20.59 13.41 12 22l-9-9V4h9l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+                'bell' => '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+                'chart' => '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+                'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+                'image' => '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+                'chat' => '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>',
+                'external' => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/>',
+                'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+            ];
+
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($icons[$name] ?? $icons['home']) . '</svg>';
+        };
+    @endphp
+
+    <nav class="admin-mobile-bottom-nav" aria-label="Navegacion rapida del panel">
+        <a href="/dashboard" class="{{ $mobileNavClass('dashboard') }}">
+            {!! $mobileNavIcon('home') !!}
+            <span>Inicio</span>
+        </a>
+
+        @if($mobileNavUser?->isAdmin())
+            <a href="/admin/stores" class="{{ $mobileNavClass('admin/stores*') }}">
+                {!! $mobileNavIcon('store') !!}
+                <span>Tiendas</span>
+            </a>
+        @else
+            <a href="/admin/orders" class="{{ $mobileNavClass('admin/orders*') }}">
+                {!! $mobileNavIcon('cart') !!}
+                <span>Pedidos</span>
+            </a>
+        @endif
+
+        <a href="/admin/products" class="{{ $mobileNavClass('admin/products*') }}">
+            {!! $mobileNavIcon('box') !!}
+            <span>Productos</span>
+        </a>
+
+        <button type="button" class="{{ $mobileNavClass('admin/onboarding', 'admin/store-settings', 'admin/categories*', 'admin/coupons*', 'admin/payments*', 'admin/templates*', 'admin/notifications*', 'admin/whatsapp*', 'profile') }}" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar">
+            {!! $mobileNavIcon('more') !!}
+            <span>Mas</span>
+        </button>
+    </nav>
+
     <div class="delete-confirm-modal" data-delete-confirm-modal hidden>
         <div class="delete-confirm-backdrop" data-delete-confirm-cancel></div>
         <div class="delete-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
@@ -2403,11 +2802,11 @@
 
     <script>
         (() => {
-            const toggle = document.getElementById('menuToggle');
+            const toggles = document.querySelectorAll('[data-sidebar-toggle]');
             const sidebar = document.getElementById('adminSidebar');
             const backdrop = document.getElementById('sidebarBackdrop');
 
-            if (!toggle || !sidebar || !backdrop) {
+            if (!toggles.length || !sidebar || !backdrop) {
                 return;
             }
 
@@ -2415,16 +2814,31 @@
                 sidebar.classList.toggle('is-open', open);
                 backdrop.classList.toggle('is-visible', open);
                 document.body.classList.toggle('sidebar-open', open);
+                toggles.forEach((toggle) => {
+                    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
             };
 
-            toggle.addEventListener('click', () => {
-                setOpen(!sidebar.classList.contains('is-open'));
+            toggles.forEach((toggle) => {
+                toggle.addEventListener('click', () => {
+                    setOpen(!sidebar.classList.contains('is-open'));
+                });
             });
 
             backdrop.addEventListener('click', () => setOpen(false));
 
+            sidebar.querySelectorAll('a').forEach((link) => {
+                link.addEventListener('click', () => setOpen(false));
+            });
+
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 900) {
+                    setOpen(false);
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
                     setOpen(false);
                 }
             });
@@ -2515,6 +2929,41 @@
                 if (event.key === 'Escape' && !modal.hidden) {
                     closeModal();
                 }
+            });
+        })();
+    </script>
+    <script>
+        (() => {
+            const productEditor = document.querySelector('.product-editor-page');
+
+            if (!productEditor) {
+                return;
+            }
+
+            document.body.classList.add('has-product-editor');
+
+            const resetHorizontalScroll = () => {
+                document.documentElement.scrollLeft = 0;
+                document.body.scrollLeft = 0;
+                window.scrollTo(0, window.scrollY);
+            };
+
+            resetHorizontalScroll();
+            window.addEventListener('load', resetHorizontalScroll);
+            window.addEventListener('scroll', resetHorizontalScroll, { passive: true });
+            window.addEventListener('resize', resetHorizontalScroll);
+            document.addEventListener('touchend', resetHorizontalScroll, { passive: true });
+
+            const focusableSelector = 'input, textarea, select, [contenteditable="true"]';
+            productEditor.addEventListener('focusin', (event) => {
+                if (window.innerWidth > 900 || !event.target.matches(focusableSelector)) {
+                    return;
+                }
+
+                window.setTimeout(() => {
+                    event.target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+                    resetHorizontalScroll();
+                }, 120);
             });
         })();
     </script>

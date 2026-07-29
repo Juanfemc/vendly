@@ -22,7 +22,11 @@ class AiCreditService
         AiContentService::ANNOUNCEMENT => 2,
         AiContentService::PRODUCT_DESCRIPTION => 3,
         AiContentService::PRODUCT_IMAGE => 15,
+        AiContentService::STORE_LOGO_IMAGE => 15,
         AiContentService::STORE_COVER_IMAGE => 25,
+        AiContentService::PRODUCT_IMAGE_ENHANCE => 10,
+        AiContentService::STORE_LOGO_IMAGE_ENHANCE => 10,
+        AiContentService::STORE_COVER_IMAGE_ENHANCE => 15,
     ];
 
     public const PACKAGES = [
@@ -268,7 +272,11 @@ class AiCreditService
             AiContentService::ANNOUNCEMENT => 'Crear avisos promocionales',
             AiContentService::PRODUCT_DESCRIPTION => 'Generar descripcion de producto',
             AiContentService::PRODUCT_IMAGE => 'Crear imagen ecommerce',
+            AiContentService::STORE_LOGO_IMAGE => 'Crear logo de tienda',
             AiContentService::STORE_COVER_IMAGE => 'Crear portada de tienda',
+            AiContentService::PRODUCT_IMAGE_ENHANCE => 'Mejorar imagen de producto',
+            AiContentService::STORE_LOGO_IMAGE_ENHANCE => 'Mejorar logo de tienda',
+            AiContentService::STORE_COVER_IMAGE_ENHANCE => 'Mejorar portada de tienda',
             default => 'Uso de IA',
         };
     }

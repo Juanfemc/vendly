@@ -109,6 +109,8 @@
     .product-review-panel {
         margin-top: 22px;
         padding: 0;
+        min-width: 0;
+        max-width: 100%;
         overflow: hidden;
     }
 
@@ -117,9 +119,14 @@
         align-items: center;
         justify-content: space-between;
         gap: 18px;
+        min-width: 0;
         padding: 22px;
         border-bottom: 1px solid #e5e7eb;
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .product-review-panel__head > div {
+        min-width: 0;
     }
 
     .product-review-panel__eyebrow {
@@ -170,6 +177,7 @@
     .product-review-admin-list {
         display: grid;
         gap: 12px;
+        min-width: 0;
         padding: 18px;
     }
 
@@ -178,11 +186,16 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 18px;
         align-items: start;
+        min-width: 0;
         border: 1px solid #e5e7eb;
         border-left: 4px solid #f59e0b;
         border-radius: 14px;
         padding: 16px;
         background: #ffffff;
+    }
+
+    .product-review-admin-card .resource-actions {
+        min-width: 0;
     }
 
     .product-review-admin-card.is-approved {
@@ -193,6 +206,11 @@
         display: flex;
         justify-content: space-between;
         gap: 14px;
+        min-width: 0;
+    }
+
+    .product-review-admin-card__head > div {
+        min-width: 0;
     }
 
     .product-review-admin-card h4 {
@@ -212,6 +230,7 @@
         margin: 12px 0 0;
         color: #4b5563;
         line-height: 1.65;
+        overflow-wrap: anywhere;
     }
 
     .product-review-admin-card__comment.is-empty {
@@ -230,6 +249,10 @@
         .product-review-panel__summary {
             width: 100%;
             min-height: 68px;
+        }
+
+        .product-review-admin-card .resource-actions {
+            width: 100%;
         }
     }
 </style>

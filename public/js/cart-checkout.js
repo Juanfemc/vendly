@@ -6,10 +6,10 @@
     }
 
     const feedback = document.getElementById('cartFeedback');
-    const totalEl = document.querySelector('[data-role="total"]');
-    const grandTotalEl = document.querySelector('[data-role="grand-total"]');
-    const shippingTotalEl = document.querySelector('[data-role="shipping-total"]');
-    const discountTotalEl = document.querySelector('[data-role="discount-total"]');
+    const totalEls = Array.from(document.querySelectorAll('[data-role="total"]'));
+    const grandTotalEls = Array.from(document.querySelectorAll('[data-role="grand-total"]'));
+    const shippingTotalEls = Array.from(document.querySelectorAll('[data-role="shipping-total"]'));
+    const discountTotalEls = Array.from(document.querySelectorAll('[data-role="discount-total"]'));
     const discountRow = document.querySelector('[data-discount-row]');
     const discountCodeInput = document.querySelector('[data-discount-code]');
     const discountApplyButton = document.querySelector('[data-discount-apply]');
@@ -158,11 +158,19 @@
         const awaitingCity = localDeliveryEnabled && !hasSelectedCity();
 
         updateShippingLabels();
-        if (totalEl) totalEl.textContent = money(subtotal);
-        if (discountTotalEl) discountTotalEl.textContent = `- ${money(discountAmount)}`;
+        totalEls.forEach((element) => {
+            element.textContent = money(subtotal);
+        });
+        discountTotalEls.forEach((element) => {
+            element.textContent = `- ${money(discountAmount)}`;
+        });
         if (discountRow) discountRow.classList.toggle('is-hidden', discountAmount <= 0);
-        if (shippingTotalEl) shippingTotalEl.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
-        if (grandTotalEl) grandTotalEl.textContent = money(grandTotal(awaitingCity ? 0 : cost));
+        shippingTotalEls.forEach((element) => {
+            element.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
+        });
+        grandTotalEls.forEach((element) => {
+            element.textContent = money(grandTotal(awaitingCity ? 0 : cost));
+        });
     };
 
     const updateItemQuantity = (item, quantity) => {

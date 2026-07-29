@@ -223,6 +223,77 @@
         background: #f9fafb;
     }
 
+    .onboarding-logo-tools {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid #fed7aa;
+        border-radius: 14px;
+        background: #fff7ed;
+    }
+
+    .onboarding-logo-tools__head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .onboarding-logo-tools__head strong {
+        color: #111827;
+        font-size: 13px;
+    }
+
+    .onboarding-logo-tools__head span {
+        color: #9a3412;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .onboarding-logo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .onboarding-logo-actions .btn {
+        min-height: 38px;
+    }
+
+    .ai-assistant-status {
+        margin: 0;
+        color: #7c2d12;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .ai-assistant-status.is-error {
+        color: #b42318;
+    }
+
+    .ai-assistant-preview {
+        display: grid;
+        gap: 8px;
+    }
+
+    .ai-assistant-preview img {
+        width: 108px;
+        height: 108px;
+        border-radius: 18px;
+        object-fit: cover;
+        border: 1px solid #fdba74;
+        background: #ffffff;
+    }
+
+    .ai-assistant-preview p {
+        margin: 0;
+        color: #9a3412;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
     .onboarding-actions {
         display: flex;
         flex-wrap: wrap;
@@ -308,7 +379,7 @@
 
     <section class="onboarding-hero">
         <div>
-            <h1>Tu tienda ya esta creada</h1>
+            <h1>Tu tienda ya está creada</h1>
             <p>Completa estos pasos para activar seguridad, preparar tu imagen y publicar tu primer producto.</p>
         </div>
 
@@ -318,7 +389,7 @@
             <div class="onboarding-progress-track" aria-hidden="true">
                 <span style="--progress: {{ $progress }}%"></span>
             </div>
-            <small>{{ collect($checklist)->where('complete', true)->count() }} de {{ count($checklist) }} completado</small>
+            <small>{{ collect($checklist)->where('complete', true)->count() }} de {{ count($checklist) }} completados</small>
         </aside>
     </section>
 
@@ -394,6 +465,30 @@
                         <img class="onboarding-current-logo" src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}">
                     @endif
                     <input id="onboarding_logo" type="file" name="logo_image" accept="image/*" data-optimize-image data-max-width="720" data-max-height="720" data-quality="0.86" data-output="webp" data-max-size="4194304">
+                    @if($store->allowsAiContent())
+                        @php($aiCreditService = app(\App\Services\AiCreditService::class))
+                        <div
+                            class="onboarding-logo-tools"
+                            data-ai-panel
+                            data-ai-context="store_logo"
+                            data-ai-endpoint="{{ route('admin.ai.content') }}"
+                            data-ai-image-endpoint="{{ route('admin.ai.images') }}"
+                            data-store-id="{{ $store->id }}"
+                        >
+                            <div class="onboarding-logo-tools__head">
+                                <strong>Crear logo con IA</strong>
+                                <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos</span>
+                            </div>
+                            <div class="onboarding-logo-actions">
+                                <button type="button" class="btn btn-secondary" data-ai-image-type="store_logo_image">Generar logo</button>
+                                <small>Consume {{ $aiCreditService->cost(\App\Services\AiContentService::STORE_LOGO_IMAGE) }} créditos. Guarda para publicarlo.</small>
+                            </div>
+                            <p class="ai-assistant-status" data-ai-status>Ideal si todavía no tienes identidad visual.</p>
+                            <div class="ai-assistant-preview" data-ai-preview hidden></div>
+                        </div>
+                    @else
+                        <small>Generar logo con IA está disponible en plan Premium.</small>
+                    @endif
                     <small>Usa una imagen cuadrada para que se vea mejor.</small>
                     @error('logo_image')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
@@ -454,7 +549,7 @@
                     const message = data.message
                         || data.errors?.whatsapp?.[0]
                         || data.errors?.whatsapp_verification_code?.[0]
-                        || 'No pudimos completar la accion. Intenta nuevamente.';
+                        || 'No pudimos completar la acción. Intenta nuevamente.';
                     throw new Error(message);
                 }
 
@@ -505,5 +600,9 @@
             });
         })();
     </script>
+@endif
+
+@if($store->allowsAiContent())
+    <script src="{{ asset('js/admin-ai-content.js') }}?v={{ filemtime(public_path('js/admin-ai-content.js')) }}" defer></script>
 @endif
 @endsection

@@ -41,31 +41,39 @@ class CheckoutRequest extends FormRequest
         $isReservationStore = $store?->isReservationStore() ?? false;
         $usesColombiaLocations = ColombiaLocation::hasCatalog();
         $requiresTermsAcceptance = $store?->requiresTermsAcceptance() ?? false;
+        $checkoutFieldEnabled = fn (string $field): bool => $store?->checkoutFieldEnabled($field) ?? true;
+        $checkoutFieldPresence = fn (string $field): string => $checkoutFieldEnabled($field) && ($store?->checkoutFieldRequired($field) ?? false)
+            ? 'required'
+            : 'nullable';
+        $locationEnabled = $checkoutFieldEnabled('city');
+        $locationPresence = $locationEnabled && ($store?->checkoutFieldRequired('city') ?? true)
+            ? 'required'
+            : 'nullable';
 
         return [
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => [$checkoutFieldPresence('email'), 'email', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+            'last_name' => [$checkoutFieldPresence('last_name'), 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:255'],
-            'address' => ['required', 'string', 'max:255'],
-            'apartment' => ['nullable', 'string', 'max:255'],
-            'neighborhood' => ['required', 'string', 'max:255'],
-            'department_code' => [$usesColombiaLocations ? 'required' : 'nullable', 'string', 'max:8'],
+            'address' => [$checkoutFieldPresence('address'), 'string', 'max:255'],
+            'apartment' => [$checkoutFieldPresence('apartment'), 'string', 'max:255'],
+            'neighborhood' => [$checkoutFieldPresence('neighborhood'), 'string', 'max:255'],
+            'department_code' => [$usesColombiaLocations && $locationEnabled ? $locationPresence : 'nullable', 'string', 'max:8'],
             'city_code' => array_filter([
-                $usesColombiaLocations ? 'required' : 'nullable',
+                $usesColombiaLocations && $locationEnabled ? $locationPresence : 'nullable',
                 'string',
                 'max:12',
-                $usesColombiaLocations
+                $usesColombiaLocations && $locationEnabled
                     ? Rule::exists('colombia_locations', 'city_code')->where('department_code', (string) $this->input('department_code'))
                     : null,
             ]),
-            'city' => [$usesColombiaLocations ? 'nullable' : 'required', 'string', 'max:255'],
+            'city' => [$usesColombiaLocations || ! $locationEnabled ? 'nullable' : $locationPresence, 'string', 'max:255'],
             'region' => ['nullable', 'string', 'max:255'],
-            'document' => ['required', 'string', 'max:255'],
+            'document' => [$checkoutFieldPresence('document'), 'string', 'max:255'],
             'shipping_method' => ['nullable', 'string', 'max:20'],
             'discount_code' => ['nullable', 'string', 'max:60'],
             ...self::reservationRules($isReservationStore),
-            'notes' => ['nullable', 'string', 'max:1000'],
+            'notes' => [$checkoutFieldPresence('notes'), 'string', 'max:1000'],
             'terms_acceptance' => [$requiresTermsAcceptance ? 'accepted' : 'nullable'],
         ];
     }

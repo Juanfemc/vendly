@@ -267,13 +267,25 @@
             <div class="product-editor-field">
                 <label for="sizes">Tallas disponibles</label>
                 <input id="sizes" type="text" name="sizes" value="{{ old('sizes', $formProduct ? implode(', ', $formProduct->sizes ?? []) : '') }}" placeholder="Ej: S, M, L, XL">
-                <small>Separa cada talla con coma.</small>
+                <small>
+                    @if($formStore?->isFashionStore())
+                        En la plantilla de ropa se muestran como botones. Separa cada talla con coma.
+                    @else
+                        Separa cada talla con coma.
+                    @endif
+                </small>
             </div>
 
             <div class="product-editor-field">
                 <label for="colors">Colores disponibles</label>
-                <input id="colors" type="text" name="colors" value="{{ old('colors', $formProduct ? implode(', ', $formProduct->colors ?? []) : '') }}" placeholder="Ej: Negro, Blanco, Rojo">
-                <small>Separa cada color con coma.</small>
+                <input id="colors" type="text" name="colors" value="{{ old('colors', $formProduct ? implode(', ', $formProduct->colors ?? []) : '') }}" placeholder="Ej: Negro, Blanco, Rojo, #ff6600">
+                <small>
+                    @if($formStore?->isFashionStore())
+                        En la plantilla de ropa se muestran como circulos. Usa nombres comunes o codigos HEX, separados por coma.
+                    @else
+                        Separa cada color con coma.
+                    @endif
+                </small>
             </div>
         </div>
     </section>

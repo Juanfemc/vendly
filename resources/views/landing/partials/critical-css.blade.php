@@ -128,4 +128,8 @@
         .landing-nav-actions { gap: 6px; }
         .landing-nav-actions .btn { min-height: 36px; padding: 0 10px; font-size: 10px; }
     }
+    @media (max-width: 390px) {
+        .landing-nav-actions .btn { min-height: 34px; padding: 0 7px; font-size: 9px; }
+        .landing-nav-actions .login-link { display: inline-flex; }
+    }
 </style>

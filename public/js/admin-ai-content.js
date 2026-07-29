@@ -9,7 +9,11 @@
     const fieldValue = (form, name) => form?.querySelector(`[name="${name}"]`)?.value || '';
     const imageTypeLabels = {
         store_cover_image: 'portada',
+        store_logo_image: 'logo',
         product_image: 'imagen ecommerce',
+        store_cover_image_enhance: 'portada mejorada',
+        store_logo_image_enhance: 'logo mejorado',
+        product_image_enhance: 'imagen mejorada',
     };
 
     const setStatus = (panel, message, isError = false) => {
@@ -149,11 +153,15 @@
             return;
         }
 
-        if (type === 'store_cover_image') {
+        if (type === 'store_cover_image' || type === 'store_cover_image_enhance') {
             setHiddenField(form, 'ai_generated_cover_path', data.image_path);
         }
 
-        if (type === 'product_image') {
+        if (type === 'store_logo_image' || type === 'store_logo_image_enhance') {
+            setHiddenField(form, 'ai_generated_logo_path', data.image_path);
+        }
+
+        if (type === 'product_image' || type === 'product_image_enhance') {
             setHiddenField(form, 'ai_generated_image_path', data.image_path);
         }
 

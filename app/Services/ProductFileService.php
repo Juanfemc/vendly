@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,13 +13,13 @@ class ProductFileService
     {
     }
 
-    public function storeImage(Request $request): ?string
+    public function storeImage(Request $request, Store $store): ?string
     {
         if ($request->hasFile('image')) {
             return $request->file('image')->store('products', 'public');
         }
 
-        return $this->safeGeneratedImagePath($request->input('ai_generated_image_path'));
+        return $this->safeGeneratedImagePath($request->input('ai_generated_image_path'), $store);
     }
 
     public function storeImages(Request $request): array
@@ -34,7 +35,7 @@ class ProductFileService
             ->all();
     }
 
-    public function replaceImage(Product $product, Request $request, array $data, bool $allowGallery = true): array
+    public function replaceImage(Product $product, Request $request, array $data, bool $allowGallery = true, ?Store $store = null): array
     {
         $existingImages = collect($product->images ?? []);
         $removeImages = collect($request->input('remove_images', []))
@@ -53,7 +54,7 @@ class ProductFileService
         if ($request->hasFile('image')) {
             $this->deletePrimaryImage($product);
             $data['image'] = $request->file('image')->store('products', 'public');
-        } elseif ($generatedImage = $this->safeGeneratedImagePath($request->input('ai_generated_image_path'))) {
+        } elseif ($generatedImage = $this->safeGeneratedImagePath($request->input('ai_generated_image_path'), $store ?? $product->store)) {
             if ($generatedImage !== $product->image) {
                 $this->deletePrimaryImage($product);
             }
@@ -89,11 +90,12 @@ class ProductFileService
         $this->publicFileService->delete($product->image);
     }
 
-    private function safeGeneratedImagePath(?string $path): ?string
+    private function safeGeneratedImagePath(?string $path, ?Store $store): ?string
     {
         $path = str_replace('\\', '/', trim((string) $path));
+        $expectedPrefix = $store ? 'products/ai/' . $store->id . '-' : 'products/ai/';
 
-        if (! str_starts_with($path, 'products/ai/') || str_contains($path, '..')) {
+        if (! str_starts_with($path, $expectedPrefix) || str_contains($path, '..')) {
             return null;
         }
 

@@ -38,6 +38,7 @@ class StoreOnboardingRequest extends FormRequest
             'shop_copy' => ['nullable', 'string', 'max:320'],
             'brand_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'logo_image' => ['nullable', 'image', 'max:4096'],
+            'ai_generated_logo_path' => ['nullable', 'string', 'max:255'],
         ];
     }
 

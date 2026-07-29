@@ -133,7 +133,7 @@ class ProductController extends Controller
                 ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
         }
 
-        $primaryImage = $this->productFileService->storeImage($request);
+        $primaryImage = $this->productFileService->storeImage($request, $store);
         $galleryImages = $store->allowsProductGallery()
             ? $this->productFileService->storeImages($request)
             : [];
@@ -214,7 +214,7 @@ class ProductController extends Controller
                 ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
         }
 
-        $product->update($this->productFileService->replaceImage($product, $request, $data, $store->allowsProductGallery()));
+        $product->update($this->productFileService->replaceImage($product, $request, $data, $store->allowsProductGallery(), $store));
 
         $this->adminUpdateService->record(
             'Producto actualizado',

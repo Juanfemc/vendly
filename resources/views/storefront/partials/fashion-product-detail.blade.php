@@ -1,8 +1,8 @@
 @php
     $fashionGallery = $productGallery->isNotEmpty() ? $productGallery : collect([null]);
     $fashionRelated = $relatedProducts->take(4);
-    $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect(['S', 'M', 'L', 'XL', 'XXL']);
-    $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect(['Navy', 'Green', 'Black', 'Gray']);
+    $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
+    $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
     $fashionColorMap = [
         'navy' => '#173a63',
         'azul' => '#173a63',
@@ -13,22 +13,47 @@
         'negro' => '#111111',
         'gray' => '#b8b8b8',
         'gris' => '#b8b8b8',
+        'silver' => '#c7c7c7',
+        'plateado' => '#c7c7c7',
         'white' => '#f8f8f8',
         'blanco' => '#f8f8f8',
+        'red' => '#d62828',
+        'rojo' => '#d62828',
+        'pink' => '#f2a0b7',
+        'rosado' => '#f2a0b7',
+        'purple' => '#6d4aff',
+        'morado' => '#6d4aff',
+        'yellow' => '#f4c430',
+        'amarillo' => '#f4c430',
+        'orange' => '#ff7a1a',
+        'naranja' => '#ff7a1a',
+        'brown' => '#8b5a2b',
+        'cafe' => '#8b5a2b',
+        'beige' => '#d7c4a3',
     ];
-    $fashionCurrentColor = $fashionColors->first();
-    $fashionReviewAverage = $reviewCount > 0 ? number_format($reviewAverage, 1) : '4.8';
-    $fashionReviewCount = $reviewCount > 0 ? $reviewCount : 24;
-    $fashionDescription = \App\Support\ProductText::plain($product->description)
-        ?: 'A timeless piece reimagined for today. Soft fabric and a full zip front make it perfect for everyday wear.';
-    $fashionFeatureItems = collect([
-        'Regular fit',
-        'Full zip with stand-up collar',
-        'Soft fabric for everyday comfort',
-        'Side zip pockets',
-        'Ribbed cuffs and hem',
-        'Color: ' . ($fashionCurrentColor ?: 'Navy'),
-    ]);
+    $fashionColorOptions = $fashionColors
+        ->map(function ($color) use ($fashionColorMap) {
+            $label = trim((string) $color);
+            $key = \Illuminate\Support\Str::lower($label);
+            $swatch = preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $label)
+                ? $label
+                : ($fashionColorMap[$key] ?? '#d7dbe0');
+
+            return [
+                'label' => $label,
+                'value' => $label,
+                'swatch' => $swatch,
+            ];
+        })
+        ->filter(fn ($color) => $color['label'] !== '')
+        ->values();
+    $fashionDescription = $productDescriptionText ?? \App\Support\ProductText::plain($product->description);
+    $fashionDescription = $fashionDescription ?: 'Este producto aun no tiene una descripcion amplia configurada.';
+    $fashionFeaturesText = $productFeaturesText ?? \App\Support\ProductText::featureLines($product->features);
+    $fashionFeatureItems = collect(preg_split('/\R+/', $fashionFeaturesText) ?: [])
+        ->map(fn ($item) => trim($item, " \t\n\r\0\x0B-*•"))
+        ->filter()
+        ->values();
 @endphp
 
 <main class="fashion-product-shell">
@@ -110,11 +135,6 @@
                 <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
             </div>
 
-            <div class="fashion-product-stars" aria-label="{{ $fashionReviewAverage }} de 5 basado en {{ $fashionReviewCount }} reseñas">
-                <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                <small>({{ $fashionReviewCount }} reviews)</small>
-            </div>
-
             <p class="fashion-product-summary">{{ $fashionDescription }}</p>
 
             @if($isProductSoldOut)
@@ -124,34 +144,37 @@
                     @csrf
                     <input type="hidden" name="quantity" value="1">
 
+                    @if($fashionColorOptions->isNotEmpty())
                     <div class="fashion-option-group">
                         <div class="fashion-option-head">
-                            <span>COLOR: <b>{{ $fashionCurrentColor }}</b></span>
+                            <span>COLOR</span>
                         </div>
                         <div class="fashion-color-options">
-                            @foreach($fashionColors as $color)
-                                @php($colorKey = \Illuminate\Support\Str::lower(trim((string) $color)))
-                                <label title="{{ $color }}">
-                                    <input type="radio" name="color" value="{{ $color }}" @checked($loop->first) @required($product->hasColors())>
-                                    <span style="--swatch-color: {{ $fashionColorMap[$colorKey] ?? '#173a63' }}"></span>
+                            @foreach($fashionColorOptions as $color)
+                                <label title="{{ $color['label'] }}">
+                                    <input type="radio" name="color" value="{{ $color['value'] }}" @checked($loop->first) required>
+                                    <span style="--swatch-color: {{ $color['swatch'] }}"></span>
                                 </label>
                             @endforeach
                         </div>
                     </div>
+                    @endif
 
-                    <div class="fashion-option-group">
-                        <div class="fashion-option-head">
-                            <span>SIZE:</span>
+                    @if($fashionSizes->isNotEmpty())
+                        <div class="fashion-option-group">
+                            <div class="fashion-option-head">
+                                <span>SIZE</span>
+                            </div>
+                            <div class="fashion-size-options">
+                                @foreach($fashionSizes as $size)
+                                    <label>
+                                        <input type="radio" name="size" value="{{ $size }}" required>
+                                        <span>{{ $size }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="fashion-size-options">
-                            @foreach($fashionSizes as $size)
-                                <label>
-                                    <input type="radio" name="size" value="{{ $size }}" @required($product->hasSizes())>
-                                    <span>{{ $size }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
+                    @endif
 
                     <div class="fashion-product-actions">
                         <button type="submit">Add to Cart</button>
@@ -172,79 +195,22 @@
         </aside>
     </section>
 
-    <section class="fashion-product-story">
-        <div class="fashion-product-tabs" aria-label="Informacion del producto">
-            <a href="#fashionDescription" class="is-active">Description</a>
-            <a href="#fashionDetails">Details</a>
-            <a href="#fashionShipping">Shipping & Returns</a>
-            <a href="#fashionReviews">Reviews ({{ $fashionReviewCount }})</a>
-        </div>
-
-        <div class="fashion-product-story-grid">
-            <article id="fashionDescription">
+    <section class="fashion-product-story" aria-label="Informacion del producto">
+        <div class="fashion-product-story-grid fashion-product-story-grid--text-only">
+            <article id="fashionDescription" class="fashion-product-text-block">
+                <h2>Descripcion</h2>
                 <p>{{ $fashionDescription }}</p>
-                <ul>
-                    @foreach($fashionFeatureItems as $item)
-                        <li>{{ $item }}</li>
-                    @endforeach
-                </ul>
             </article>
 
-            <div class="fashion-product-lifestyle" aria-hidden="true">
-                @if($productGallery->first())
-                    <img src="{{ asset('storage/' . $productGallery->first()) }}" alt="">
-                @else
-                    <span>{{ $product->name }}</span>
-                @endif
-            </div>
-        </div>
-    </section>
-
-    <section class="fashion-review-summary" id="fashionReviews">
-        <div class="fashion-review-score">
-            <h2>Customer Reviews</h2>
-            <strong>{{ $fashionReviewAverage }}</strong>
-            <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-            <p>Based on {{ $fashionReviewCount }} reviews</p>
-            @if($reviewsEnabled)
-                <a href="#fashionReviewForm">Write a Review</a>
-            @endif
-        </div>
-
-        <div class="fashion-review-list">
-            @forelse($reviews->take(3) as $review)
-                <article>
-                    <strong>{{ $review->name }}</strong>
-                    <span>{{ str_repeat('★', (int) $review->rating) }}</span>
-                    <p>{{ $review->comment ?: 'Great fit and comfortable.' }}</p>
-                    <time>{{ $review->created_at?->format('M d, Y') }}</time>
+            @if($fashionFeatureItems->isNotEmpty())
+                <article id="fashionFeatures" class="fashion-product-text-block">
+                    <h2>Caracteristicas</h2>
+                    <ul>
+                        @foreach($fashionFeatureItems as $item)
+                            <li>{{ $item }}</li>
+                        @endforeach
+                    </ul>
                 </article>
-            @empty
-                @foreach([
-                    ['name' => 'James T.', 'copy' => 'Great fit and super comfortable. Classic look that never goes out of style.'],
-                    ['name' => 'Alex P.', 'copy' => 'Love the material and details. Shipping was fast too!'],
-                    ['name' => 'Kevin L.', 'copy' => 'Perfect for everyday wear. Highly recommend.'],
-                ] as $placeholderReview)
-                    <article>
-                        <strong>{{ $placeholderReview['name'] }}</strong>
-                        <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                        <p>{{ $placeholderReview['copy'] }}</p>
-                        <time>May 12, 2024</time>
-                    </article>
-                @endforeach
-            @endforelse
-            @if($reviewsEnabled)
-                <form id="fashionReviewForm" action="{{ route('product.reviews.store', $product) }}" method="POST" class="fashion-review-form">
-                    @csrf
-                    <input type="text" name="name" placeholder="Tu nombre" maxlength="80" required>
-                    <select name="rating" required>
-                        @for($rating = 5; $rating >= 1; $rating--)
-                            <option value="{{ $rating }}">{{ $rating }} estrellas</option>
-                        @endfor
-                    </select>
-                    <textarea name="comment" rows="3" maxlength="1000" placeholder="Escribe tu reseña"></textarea>
-                    <button type="submit">Enviar reseña</button>
-                </form>
             @endif
         </div>
     </section>

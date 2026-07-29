@@ -13,9 +13,12 @@
 
 <style>
     .catalog-settings-shell {
-        max-width: 1040px;
+        width: min(100%, 1040px);
+        max-width: 100%;
         margin: 0 auto;
         padding-bottom: 92px;
+        overflow-x: clip;
+        box-sizing: border-box;
     }
 
     .catalog-settings-hero {
@@ -93,9 +96,14 @@
     .catalog-settings-form {
         display: grid;
         gap: 22px;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .catalog-settings-card {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
         padding: 24px;
         border: 1px solid #d9e4e7;
         border-radius: 18px;
@@ -115,6 +123,11 @@
         display: flex;
         align-items: flex-start;
         gap: 12px;
+        min-width: 0;
+    }
+
+    .catalog-card-title > div {
+        min-width: 0;
     }
 
     .catalog-card-icon,
@@ -178,6 +191,8 @@
     .catalog-url-card,
     .catalog-social-input {
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         min-height: 50px;
         margin: 0;
         padding: 13px 16px;
@@ -221,6 +236,8 @@
         grid-template-columns: minmax(0, 1fr) auto auto;
         gap: 12px;
         align-items: stretch;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .catalog-url-card {
@@ -327,6 +344,7 @@
 
     .catalog-upload-card--wide {
         width: 100%;
+        max-width: 100%;
         min-height: 88px;
         border-radius: 16px;
     }
@@ -371,6 +389,7 @@
         grid-template-columns: 58px minmax(0, 1fr);
         gap: 12px;
         align-items: center;
+        min-width: 0;
     }
 
     .catalog-color-swatch {
@@ -460,6 +479,14 @@
         min-height: 72px;
         align-items: center;
         background: #f8fafb;
+        min-width: 0;
+    }
+
+    .catalog-social-input > span:last-child,
+    .catalog-toggle-row > div,
+    .catalog-option-row > div,
+    .catalog-checkout-item > div {
+        min-width: 0;
     }
 
     .catalog-social-input input {
@@ -569,6 +596,53 @@
         accent-color: #22e1a8;
     }
 
+    .catalog-checkout-grid {
+        display: grid;
+        gap: 12px;
+    }
+
+    .catalog-checkout-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid #edf2f4;
+        border-radius: 16px;
+        background: #f8fafb;
+        min-width: 0;
+    }
+
+    .catalog-checkout-item strong {
+        display: block;
+        color: #073241;
+        font-size: 14px;
+    }
+
+    .catalog-checkout-item small {
+        display: block;
+        margin-top: 3px;
+        color: #6c9d9c;
+        line-height: 1.35;
+    }
+
+    .catalog-checkout-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #073241;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .catalog-checkout-toggle input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: #22e1a8;
+    }
+
     .catalog-number-row,
     .catalog-shipping-row {
         display: grid;
@@ -609,6 +683,8 @@
 
     .catalog-actions-inner {
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -628,7 +704,7 @@
 
     @media (max-width: 820px) {
         .catalog-settings-shell {
-            padding-bottom: 110px;
+            padding-bottom: 190px;
         }
 
         .catalog-settings-hero,
@@ -644,6 +720,7 @@
         .catalog-color-grid,
         .catalog-font-grid,
         .catalog-social-grid,
+        .catalog-checkout-item,
         .catalog-shipping-row {
             grid-template-columns: 1fr;
         }
@@ -657,7 +734,7 @@
             position: fixed;
             left: 12px;
             right: 12px;
-            bottom: 12px;
+            bottom: calc(82px + env(safe-area-inset-bottom, 0px));
             padding: 0;
             background: transparent;
         }
@@ -671,6 +748,10 @@
         .catalog-copy-button,
         .catalog-visit-button {
             width: 100%;
+        }
+
+        .catalog-card-title {
+            align-items: flex-start;
         }
     }
 
@@ -945,7 +1026,7 @@
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" value="{{ $selectedTextColor }}" disabled>
                         <input type="hidden" name="text_color" value="{{ $selectedTextColor }}" data-theme-color-input="text">
-                        <span><strong>Texto</strong><span>Se ajusta automaticamente para contraste.</span></span>
+                        <span><strong>Texto</strong><span>Se ajusta automáticamente para contraste.</span></span>
                     </label>
                 </div>
             </section>
@@ -1078,9 +1159,9 @@
 
                 <div class="catalog-settings-grid">
                     <div class="catalog-field">
-                        <label for="free_shipping_minimum">Envio gratis desde</label>
+                        <label for="free_shipping_minimum">Envío gratis desde</label>
                         <input id="free_shipping_minimum" type="number" name="free_shipping_minimum" value="{{ old('free_shipping_minimum', $store->free_shipping_minimum) }}" min="0" step="1000" placeholder="Ej: 150000">
-                        <small>Si agregas un monto, se mostrara automaticamente como aviso superior.</small>
+                        <small>Si agregas un monto, se mostrará automáticamente como aviso superior.</small>
                     </div>
                     <div class="catalog-field catalog-field--full">
                         <span>Avisos rotativos</span>
@@ -1126,13 +1207,13 @@
                             <option value="2" @selected((int) old('responsive_product_columns', $store->responsive_product_columns ?? 2) === 2)>2 columnas</option>
                             <option value="3" @selected((int) old('responsive_product_columns', $store->responsive_product_columns ?? 2) === 3)>3 columnas</option>
                         </select>
-                        <small>Elige como se acomodan los productos en pantallas pequenas.</small>
+                        <small>Elige cómo se acomodan los productos en pantallas pequeñas.</small>
                     </div>
                 </div>
                 <div class="catalog-toggle-row" style="margin-top:12px;">
                     <div>
-                        <strong>Boton sobre la portada</strong>
-                        <p class="catalog-help" style="margin:4px 0 0;">Muestra un llamado a la accion hacia todos los productos.</p>
+                        <strong>Botón sobre la portada</strong>
+                        <p class="catalog-help" style="margin:4px 0 0;">Muestra un llamado a la acción hacia todos los productos.</p>
                     </div>
                     <label class="catalog-switch">
                         <input type="checkbox" name="show_hero_products_action" value="1" @checked((bool) old('show_hero_products_action', $store->show_hero_products_action ?? false))>
@@ -1143,7 +1224,7 @@
 
             <div class="catalog-toggle-row" style="margin-top:12px;">
                 <div>
-                    <strong>Mostrar horario de atencion</strong>
+                    <strong>Mostrar horario de atención</strong>
                     <p class="catalog-help" style="margin:4px 0 0;">Activa este campo si quieres mostrar horarios en la tienda.</p>
                 </div>
                 <label class="catalog-switch">
@@ -1152,7 +1233,7 @@
                 </label>
             </div>
             <div class="catalog-field" style="margin-top:12px;" data-optional-block="business_hours">
-                <label for="business_hours">Horario de atencion</label>
+                <label for="business_hours">Horario de atención</label>
                 <textarea id="business_hours" name="business_hours" placeholder="Ej: Lunes a viernes 8:00 AM - 6:00 PM">{{ old('business_hours', $store->business_hours) }}</textarea>
             </div>
         </section>
@@ -1212,17 +1293,72 @@
                                 @php($shippingMethod = $shippingMethods[$shippingIndex] ?? [])
                                 <div class="catalog-shipping-row">
                                     <span class="catalog-number-badge">{{ $shippingIndex + 1 }}</span>
-                                    <input type="text" name="shipping_methods[{{ $shippingIndex }}][name]" value="{{ old('shipping_methods.' . $shippingIndex . '.name', $shippingMethod['name'] ?? '') }}" maxlength="80" placeholder="{{ ['Domicilio local', 'Envio nacional', 'Recoger en tienda', 'Mensajeria express', 'Contra entrega'][$shippingIndex] }}">
+                                    <input type="text" name="shipping_methods[{{ $shippingIndex }}][name]" value="{{ old('shipping_methods.' . $shippingIndex . '.name', $shippingMethod['name'] ?? '') }}" maxlength="80" placeholder="{{ ['Domicilio local', 'Envío nacional', 'Recoger en tienda', 'Mensajería express', 'Contra entrega'][$shippingIndex] }}">
                                     <input type="number" name="shipping_methods[{{ $shippingIndex }}][cost]" value="{{ old('shipping_methods.' . $shippingIndex . '.cost', $shippingMethod['cost'] ?? '') }}" min="0" step="1" placeholder="Costo">
                                 </div>
                             @endfor
                         </div>
                     </div>
                 @else
-                    <p class="catalog-help">Actualiza a Pro o Premium para ofrecer costos de envio y opciones como domicilio local, envio nacional o recogida en tienda.</p>
+                    <p class="catalog-help">Actualiza a Pro o Premium para ofrecer costos de envío y opciones como domicilio local, envío nacional o recogida en tienda.</p>
                 @endif
             </section>
         @endif
+
+        <?php
+            $supportsCheckoutFields = \App\Models\Store::supportsCheckoutFieldsColumn();
+            $checkoutFieldDefinitions = $supportsCheckoutFields ? \App\Models\Store::checkoutFieldDefinitions() : [];
+            $checkoutFieldsInput = $supportsCheckoutFields ? old('checkout_fields', $store->checkoutFields()) : [];
+        ?>
+        <?php if ($supportsCheckoutFields): ?>
+            <section class="catalog-settings-card">
+                <div class="catalog-card-head">
+                    <div class="catalog-card-title">
+                        <span class="catalog-card-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        </span>
+                        <div>
+                            <h3>Campos del checkout</h3>
+                            <p>Reduce fricción mostrando solo los datos que necesitas para procesar pedidos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="catalog-toggle-row" style="margin-bottom:12px;">
+                    <div>
+                        <strong>Campos fijos</strong>
+                        <p class="catalog-help" style="margin:4px 0 0;">Nombre y WhatsApp siempre se solicitan para poder confirmar el pedido. Si tienes envío local, ciudad y departamento también se exigen para calcular el costo.</p>
+                    </div>
+                </div>
+
+                <div class="catalog-checkout-grid">
+                    <?php foreach ($checkoutFieldDefinitions as $fieldKey => $fieldDefinition): ?>
+                        <?php
+                            $fieldState = $checkoutFieldsInput[$fieldKey] ?? $store->checkoutField($fieldKey);
+                            $fieldEnabled = (bool) ($fieldState['enabled'] ?? false);
+                            $fieldRequired = $fieldEnabled && (bool) ($fieldState['required'] ?? false);
+                            $forcedByShipping = $fieldKey === 'city' && $store->localDeliveryEnabled();
+                        ?>
+                        <div class="catalog-checkout-item">
+                            <div>
+                                <strong>{{ $fieldDefinition['label'] }}</strong>
+                                <small>{{ $forcedByShipping ? 'Obligatorio porque tienes envío local/fuera de ciudad activo.' : $fieldDefinition['description'] }}</small>
+                            </div>
+                            <label class="catalog-checkout-toggle">
+                                <input type="hidden" name="checkout_fields[{{ $fieldKey }}][enabled]" value="{{ $forcedByShipping ? '1' : '0' }}">
+                                <input type="checkbox" name="checkout_fields[{{ $fieldKey }}][enabled]" value="1" {{ ($fieldEnabled || $forcedByShipping) ? 'checked' : '' }} {{ $forcedByShipping ? 'disabled' : '' }}>
+                                Mostrar
+                            </label>
+                            <label class="catalog-checkout-toggle">
+                                <input type="hidden" name="checkout_fields[{{ $fieldKey }}][required]" value="{{ $forcedByShipping ? '1' : '0' }}">
+                                <input type="checkbox" name="checkout_fields[{{ $fieldKey }}][required]" value="1" {{ ($fieldRequired || $forcedByShipping) ? 'checked' : '' }} {{ $forcedByShipping ? 'disabled' : '' }}>
+                                Obligatorio
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
 
         @if($store->isReservationStore())
             <section class="catalog-settings-card">
@@ -1274,7 +1410,7 @@
 
                 <div class="catalog-toggle-row">
                     <div>
-                        <strong>Aceptacion en checkout</strong>
+                        <strong>Aceptación en checkout</strong>
                         <p class="catalog-help" style="margin:4px 0 0;">Solicita que el cliente acepte condiciones antes de enviar el pedido o pagar.</p>
                     </div>
                     <label class="catalog-switch">
@@ -1289,7 +1425,7 @@
                         <input id="terms_title" type="text" name="terms_title" value="{{ old('terms_title', $store->terms_title) }}" maxlength="120" placeholder="Acepto los términos y condiciones">
                     </div>
                     <div class="catalog-field">
-                        <label for="terms_version">Version</label>
+                        <label for="terms_version">Versión</label>
                         <input id="terms_version" type="text" name="terms_version" value="{{ old('terms_version', $store->terms_version) }}" maxlength="80" placeholder="v1">
                     </div>
                     <div class="catalog-field catalog-field--full">
@@ -1318,11 +1454,11 @@
             </div>
             <div class="catalog-settings-grid">
                 <div class="catalog-field">
-                    <label for="mission">Mision</label>
+                    <label for="mission">Misión</label>
                     <textarea id="mission" name="mission" placeholder="Que hace hoy la tienda y para que existe">{{ old('mission', $store->mission) }}</textarea>
                 </div>
                 <div class="catalog-field">
-                    <label for="vision">Vision</label>
+                    <label for="vision">Visión</label>
                     <textarea id="vision" name="vision" placeholder="Hacia donde quiere crecer la tienda">{{ old('vision', $store->vision) }}</textarea>
                 </div>
             </div>
@@ -1335,7 +1471,7 @@
                         <span class="catalog-card-icon" aria-hidden="true">PX</span>
                         <div>
                             <h3>Meta Pixel</h3>
-                            <p>Medicion de visitas y eventos de la tienda.</p>
+                            <p>Medición de visitas y eventos de la tienda.</p>
                         </div>
                     </div>
                     <span class="catalog-pro-pill">Premium</span>

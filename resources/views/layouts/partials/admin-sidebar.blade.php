@@ -112,6 +112,7 @@
                     <div class="sidebar-submenu">
                         <a href="/admin/products" class="{{ $sidebarSubLinkClass('admin/products') }}">Ver productos</a>
                         <a href="/admin/products/create" class="{{ $sidebarSubLinkClass('admin/products/create') }}">Crear producto</a>
+                        <a href="{{ route('admin.products.import') }}" class="{{ $sidebarSubLinkClass('admin/products/import') }}">Importar productos</a>
                     </div>
                 </details>
 
@@ -162,6 +163,7 @@
                     <div class="sidebar-submenu">
                         <a href="/admin/products" class="{{ $sidebarSubLinkClass('admin/products') }}">Ver productos</a>
                         <a href="/admin/products/create" class="{{ $sidebarSubLinkClass('admin/products/create') }}">Crear producto</a>
+                        <a href="{{ route('admin.products.import') }}" class="{{ $sidebarSubLinkClass('admin/products/import') }}">Importar productos</a>
                     </div>
                 </details>
 

@@ -865,8 +865,7 @@ body.storefront-page .product-detail-copy h1 {
 }
 
 .hero-primary-link:hover,
-.hero-secondary-link:hover,
-.product-card button:hover {
+.hero-secondary-link:hover {
     opacity: 0.85;
 }
 
@@ -1097,6 +1096,43 @@ body.storefront-page .product-detail-copy h1 {
     background: var(--brand-color, #111);
     color: #fff !important;
     box-shadow: 0 12px 24px color-mix(in srgb, var(--brand-color, #111) 18%, transparent);
+}
+
+.product-card-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-top: auto;
+}
+
+.product-card-actions form {
+    margin: 0;
+}
+
+.product-card-add-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid color-mix(in srgb, var(--brand-color, #111) 28%, #d1d5db);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color, #111);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.product-card-add-link:hover,
+.product-card-add-link:focus-visible {
+    background: color-mix(in srgb, var(--brand-color, #111) 7%, #fff);
+    border-color: var(--brand-color, #111);
+    color: var(--brand-color, #111);
+    transform: translateY(-1px);
 }
 
 .product-stock-badge {
@@ -1618,12 +1654,21 @@ body.storefront-page .product-detail-copy h1 {
 }
 
 .product-card button {
-    background: var(--brand-color, #111);
-    color: var(--brand-contrast, #fff);
-    padding: 13px 16px;
+    min-height: 44px;
+    background: #fff;
+    color: var(--brand-color, #111);
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--brand-color, #111) 28%, #d1d5db);
     border-radius: 999px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
+    box-shadow: none;
+}
+
+.product-card button:hover,
+.product-card button:focus-visible {
+    background: color-mix(in srgb, var(--brand-color, #111) 7%, #fff);
+    border-color: var(--brand-color, #111);
 }
 
 .product-card button.is-loading {

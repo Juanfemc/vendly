@@ -19,7 +19,11 @@ class AiContentService
     public const PRODUCT_FEATURES = 'product_features';
     public const ANNOUNCEMENT = 'announcement';
     public const STORE_COVER_IMAGE = 'store_cover_image';
+    public const STORE_LOGO_IMAGE = 'store_logo_image';
     public const PRODUCT_IMAGE = 'product_image';
+    public const STORE_COVER_IMAGE_ENHANCE = 'store_cover_image_enhance';
+    public const STORE_LOGO_IMAGE_ENHANCE = 'store_logo_image_enhance';
+    public const PRODUCT_IMAGE_ENHANCE = 'product_image_enhance';
 
     public const TYPES = [
         self::PRODUCT_DESCRIPTION,
@@ -31,7 +35,11 @@ class AiContentService
 
     public const IMAGE_TYPES = [
         self::STORE_COVER_IMAGE,
+        self::STORE_LOGO_IMAGE,
         self::PRODUCT_IMAGE,
+        self::STORE_COVER_IMAGE_ENHANCE,
+        self::STORE_LOGO_IMAGE_ENHANCE,
+        self::PRODUCT_IMAGE_ENHANCE,
     ];
 
     public function generate(Store $store, string $type, array $context): array

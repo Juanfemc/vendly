@@ -197,9 +197,12 @@ class AiContentController extends Controller
                 'precio' => $validated['price'] ?? $product?->price,
                 'descripcion_actual' => $validated['description'] ?? $product?->description,
                 'caracteristicas_actuales' => $validated['features'] ?? $product?->features,
+                'imagen' => $product?->image,
             ],
             'solicitud' => $validated['topic'] ?? null,
             'categorias_tienda' => $store->allowsCategories() ? $store->productCategoryOptions() : [],
+            'store_cover_image' => $store->cover_image,
+            'store_logo_image' => $store->logo_image,
         ];
     }
 
@@ -209,7 +212,28 @@ class AiContentController extends Controller
             return;
         }
 
-        if ($type === AiContentService::STORE_COVER_IMAGE) {
+        if (in_array($type, [
+            AiContentService::STORE_COVER_IMAGE,
+            AiContentService::STORE_LOGO_IMAGE,
+        ], true)) {
+            return;
+        }
+
+        if (in_array($type, [
+            AiContentService::STORE_COVER_IMAGE_ENHANCE,
+            AiContentService::STORE_LOGO_IMAGE_ENHANCE,
+            AiContentService::PRODUCT_IMAGE_ENHANCE,
+        ], true)) {
+            $source = match ($type) {
+                AiContentService::STORE_COVER_IMAGE_ENHANCE => $context['store_cover_image'] ?? null,
+                AiContentService::STORE_LOGO_IMAGE_ENHANCE => $context['store_logo_image'] ?? null,
+                default => ($context['producto'] ?? [])['imagen'] ?? null,
+            };
+
+            if (trim((string) $source) === '') {
+                throw new RuntimeException('Sube o guarda primero una imagen para poder mejorarla con IA.');
+            }
+
             return;
         }
 

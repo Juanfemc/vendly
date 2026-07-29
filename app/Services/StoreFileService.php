@@ -30,7 +30,7 @@ class StoreFileService
         if ($request->hasFile('cover_image')) {
             $this->deletePublicFile($store->cover_image);
             $data['cover_image'] = $request->file('cover_image')->store('stores', 'public');
-        } elseif ($generatedCover = $this->safeGeneratedCoverPath($request->input('ai_generated_cover_path'))) {
+        } elseif ($generatedCover = $this->safeGeneratedCoverPath($request->input('ai_generated_cover_path'), $store)) {
             if ($generatedCover !== $store->cover_image) {
                 $this->deletePublicFile($store->cover_image);
             }
@@ -41,6 +41,12 @@ class StoreFileService
         if ($request->hasFile('logo_image')) {
             $this->deletePublicFile($store->logo_image);
             $data['logo_image'] = $request->file('logo_image')->store('stores', 'public');
+        } elseif ($generatedLogo = $this->safeGeneratedStoreImagePath($request->input('ai_generated_logo_path'), $store)) {
+            if ($generatedLogo !== $store->logo_image) {
+                $this->deletePublicFile($store->logo_image);
+            }
+
+            $data['logo_image'] = $generatedLogo;
         }
 
         return $data;
@@ -82,11 +88,17 @@ class StoreFileService
         $this->publicFileService->delete($path);
     }
 
-    private function safeGeneratedCoverPath(?string $path): ?string
+    private function safeGeneratedCoverPath(?string $path, Store $store): ?string
+    {
+        return $this->safeGeneratedStoreImagePath($path, $store);
+    }
+
+    private function safeGeneratedStoreImagePath(?string $path, Store $store): ?string
     {
         $path = str_replace('\\', '/', trim((string) $path));
+        $expectedPrefix = 'stores/ai/' . $store->id . '-';
 
-        if (! str_starts_with($path, 'stores/ai/') || str_contains($path, '..')) {
+        if (! str_starts_with($path, $expectedPrefix) || str_contains($path, '..')) {
             return null;
         }
 

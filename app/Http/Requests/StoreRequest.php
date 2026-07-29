@@ -62,6 +62,7 @@ class StoreRequest extends FormRequest
             'announcement_items',
             'free_shipping_minimum',
             'shipping_methods',
+            'checkout_fields',
             'local_delivery_area',
             'local_delivery_city_code',
             'local_delivery_cost',
