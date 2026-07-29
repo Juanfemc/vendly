@@ -71,6 +71,12 @@
         $brandTheme = \App\Support\BrandTheme::from($store->brand_color);
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
         $showHeroProductsAction = (bool) ($store->show_hero_products_action ?? false);
+        $supportsHeroOverlay = \App\Models\Store::supportsHeroOverlayColumns();
+        $heroOverlayTitle = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_title ?? '')) : '';
+        $heroOverlayButtonText = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_text ?? '')) : '';
+        $heroOverlayButtonUrl = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_url ?? '')) : '';
+        $heroOverlayButtonUrl = $heroOverlayButtonUrl !== '' ? $heroOverlayButtonUrl : $storefrontUrls->products($store);
+        $heroOverlayButtonText = $heroOverlayButtonText !== '' ? $heroOverlayButtonText : 'Ver todo';
         $showAboutSection = trim((string) $store->mission) !== '' && trim((string) $store->vision) !== '';
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])

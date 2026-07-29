@@ -55,9 +55,16 @@
         $shareText = $product->name . ' | ' . $store->name;
         $shareUrlEncoded = rawurlencode($metaUrl);
         $shareTextEncoded = rawurlencode($shareText);
+        $storeWhatsappNumber = $store->whatsappNumber();
+        $productWhatsappUrl = $storeWhatsappNumber !== ''
+            ? 'https://wa.me/' . $storeWhatsappNumber . '?text=' . rawurlencode('Hola, quiero comprar ' . $product->name . ' en ' . $store->name . ': ' . $metaUrl)
+            : null;
         $brandTheme = \App\Support\BrandTheme::from($store->brand_color);
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
         $isProductSoldOut = $product->isSoldOut();
+        $detailCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
+        $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        $detailBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
         $quantityMax = $product->stock_quantity !== null && ! $isReservationStore ? max(1, min(99, (int) $product->stock_quantity)) : 99;
         $showsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
         $productBadges = $product->displayBadges($store);
@@ -197,7 +204,6 @@
                 @endif
 
                 <div class="product-detail-head">
-                    <span class="product-detail-label">{{ $previewTitle }}</span>
                     <h1>{{ $product->name }}</h1>
                 </div>
 
@@ -284,16 +290,40 @@
                             </div>
                         @endif
 
-                        <div class="product-quantity-block">
-                            <label for="quantity">Cantidad</label>
-                            <div class="product-quantity-stepper" aria-label="Seleccionar cantidad">
-                                <button type="button" class="product-quantity-button" data-quantity-minus aria-label="Disminuir cantidad">-</button>
-                                <input id="quantity" type="number" name="quantity" min="1" max="{{ $quantityMax }}" value="{{ old('quantity', 1) }}" class="product-quantity-input">
-                                <button type="button" class="product-quantity-button" data-quantity-plus aria-label="Aumentar cantidad">+</button>
+                        <div class="product-detail-action-bar">
+                            <div class="product-quantity-block">
+                                <label for="quantity">Cantidad</label>
+                                <div class="product-quantity-stepper" aria-label="Seleccionar cantidad">
+                                    <button type="button" class="product-quantity-button" data-quantity-minus aria-label="Disminuir cantidad">-</button>
+                                    <input id="quantity" type="number" name="quantity" min="1" max="{{ $quantityMax }}" value="{{ old('quantity', 1) }}" class="product-quantity-input">
+                                    <button type="button" class="product-quantity-button" data-quantity-plus aria-label="Aumentar cantidad">+</button>
+                                </div>
                             </div>
-                        </div>
 
-                        <button type="submit" class="product-detail-secondary">{{ $isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito') }}</button>
+                            <button
+                                type="submit"
+                                class="product-detail-secondary"
+                                data-variant-action
+                                data-variant-add-action
+                                data-enabled-label="{{ $isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito') }}"
+                                @disabled($product->hasVariants())
+                            >
+                                {!! $detailCartIcon !!}
+                                <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : ($isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito')) }}</span>
+                            </button>
+
+                            @if($productWhatsappUrl)
+                                <a
+                                    href="{{ $productWhatsappUrl }}"
+                                    class="product-detail-whatsapp-action"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Comprar por WhatsApp"
+                                >
+                                    <img src="{{ asset('images/icons/icon-whatsapp.png') }}" alt="" aria-hidden="true">
+                                </a>
+                            @endif
+                        </div>
                     </form>
 
                     <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" class="product-detail-form" data-role="buy-now-form">
@@ -301,7 +331,8 @@
                         <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
                         <input type="hidden" name="size" value="" data-role="buy-now-size">
                         <input type="hidden" name="color" value="" data-role="buy-now-color">
-                        <button type="submit" class="product-detail-primary">
+                        <button type="submit" class="product-detail-primary" data-variant-action @disabled($product->hasVariants())>
+                            {!! $detailBuyIcon !!}
                             <span>{{ $isRestaurant ? 'Pedir ahora' : ($isReservationStore ? 'Reservar ahora' : 'Comprar ahora') }}</span>
                         </button>
                     </form>
@@ -429,7 +460,8 @@
                     @foreach($relatedProducts as $relatedProduct)
                         <article class="product-card">
                             @php($relatedBadges = $relatedProduct->displayBadges($store))
-                            <div class="product-image">
+                            @php($relatedProductUrl = $storefrontUrls->product($store, $relatedProduct))
+                            <a href="{{ $relatedProductUrl }}" class="product-image" aria-label="Ver detalle de {{ $relatedProduct->name }}">
                                 @if($relatedBadges !== [])
                                     <div class="product-badges">
                                         @foreach($relatedBadges as $badge)
@@ -440,9 +472,9 @@
                                 @if($relatedProduct->image)
                                     <img src="{{ asset('storage/' . $relatedProduct->image) }}" alt="{{ $relatedProduct->name }}" loading="lazy" decoding="async">
                                 @endif
-                            </div>
+                            </a>
 
-                            <h3>{{ $relatedProduct->name }}</h3>
+                            <h3><a href="{{ $relatedProductUrl }}">{{ $relatedProduct->name }}</a></h3>
 
                             <div class="price-row">
                                 @if($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
@@ -455,9 +487,27 @@
                                 @endif
                             </div>
 
-                            <a href="{{ $storefrontUrls->product($store, $relatedProduct) }}" class="product-preview-link">
+                            <div class="product-card-actions">
+                                @if($relatedProduct->isSoldOut())
+                                    <span class="product-preview-link is-disabled">Agotado</span>
+                                @elseif($relatedProduct->hasVariants())
+                                    <a href="{{ $relatedProductUrl }}" class="product-card-add-link">
+                                        {!! $detailIcon !!}
+                                        <span>Ver opciones</span>
+                                    </a>
+                                @else
+                                    <form action="{{ route('cart.add', $relatedProduct->id) }}" method="POST" class="add-to-cart-form">
+                                        @csrf
+                                        <button type="submit">
+                                            {!! $detailCartIcon !!}
+                                            <span>{{ $isRestaurant ? 'Agregar pedido' : 'Agregar al carrito' }}</span>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                            {{--
                                 Ver más
-                            </a>
+                            --}}
                         </article>
                     @endforeach
                 </div>
@@ -574,6 +624,7 @@
             const addQuantity = document.querySelector('[data-role="add-quantity"]');
             const selectedSize = document.querySelector('[data-role="selected-size"]');
             const selectedColor = document.querySelector('[data-role="selected-color"]');
+            const selectedSizeRadio = () => document.querySelector('[data-role="selected-size-radio"]:checked');
             const selectedColorRadio = () => document.querySelector('[data-role="selected-color-radio"]:checked');
             const buyNowSize = document.querySelector('[data-role="buy-now-size"]');
             const buyNowColor = document.querySelector('[data-role="buy-now-color"]');
@@ -583,8 +634,51 @@
             const addForm = document.querySelector('[data-role="minimal-add-form"]');
             const quantityMinus = document.querySelector('[data-quantity-minus]');
             const quantityPlus = document.querySelector('[data-quantity-plus]');
+            const variantActions = document.querySelectorAll('[data-variant-action]');
+
+            const hasRequiredSize = Boolean(selectedSize || document.querySelector('[data-role="selected-size-radio"]'));
+            const hasRequiredColor = Boolean(selectedColor || document.querySelector('[data-role="selected-color-radio"]'));
+
+            const variantsAreSelected = () => {
+                const sizeSelected = !hasRequiredSize || Boolean(selectedSize?.value || selectedSizeRadio()?.value);
+                const colorSelected = !hasRequiredColor || Boolean(selectedColor?.value || selectedColorRadio()?.value);
+
+                return sizeSelected && colorSelected;
+            };
+
+            const syncVariantActions = () => {
+                const isDisabled = !variantsAreSelected();
+
+                variantActions.forEach((button) => {
+                    button.disabled = isDisabled;
+                    button.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+
+                    if (button.hasAttribute('data-variant-add-action')) {
+                        const label = button.querySelector('[data-variant-label]');
+                        const nextLabel = isDisabled
+                            ? 'Selecciona una opcion'
+                            : (button.dataset.enabledLabel || 'Agregar al carrito');
+
+                        if (label) {
+                            label.textContent = nextLabel;
+                        } else {
+                            button.textContent = nextLabel;
+                        }
+                    }
+                });
+            };
+
+            const bindVariantInputs = (callback) => {
+                selectedSize?.addEventListener('change', callback);
+                selectedColor?.addEventListener('change', callback);
+                document.querySelectorAll('[data-role="selected-size-radio"], [data-role="selected-color-radio"]').forEach((radio) => {
+                    radio.addEventListener('change', callback);
+                });
+            };
 
             if (!quantityInput || !buyNowQuantity) {
+                bindVariantInputs(syncVariantActions);
+                syncVariantActions();
                 return;
             }
 
@@ -607,7 +701,7 @@
 
             const syncBuyNowFields = () => {
                 const quantity = normalizeQuantity();
-                const size = selectedSize?.value || '';
+                const size = selectedSize?.value || selectedSizeRadio()?.value || '';
                 const color = selectedColor?.value || selectedColorRadio()?.value || '';
 
                 syncField(buyNowQuantity, quantity);
@@ -642,11 +736,12 @@
                 quantityInput.value = normalizeQuantity() + 1;
                 syncBuyNowFields();
             });
-            selectedSize?.addEventListener('change', syncBuyNowFields);
-            selectedColor?.addEventListener('change', syncBuyNowFields);
-            document.querySelectorAll('[data-role="selected-color-radio"]').forEach((radio) => {
-                radio.addEventListener('change', syncBuyNowFields);
-            });
+            const syncOptions = () => {
+                syncBuyNowFields();
+                syncVariantActions();
+            };
+
+            bindVariantInputs(syncOptions);
             addForm?.addEventListener('submit', requireOptions);
             buyNowForm?.addEventListener('submit', (event) => {
                 if (!requireOptions(event)) {
@@ -654,6 +749,7 @@
                 }
             });
             syncBuyNowFields();
+            syncVariantActions();
         })();
 
         (() => {

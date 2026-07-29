@@ -332,14 +332,22 @@ class StoreController extends Controller
         }
 
         if (! $store->allowsFullCustomization()) {
-            $store->forceFill([
+            $customizationData = [
                 'brand_color' => null,
                 'background_color' => null,
                 'text_color' => Store::automaticTextColorFor(null),
                 'font_family' => 'system',
                 'responsive_product_columns' => 2,
                 'show_hero_products_action' => false,
-            ])->save();
+            ];
+
+            if (Store::supportsHeroOverlayColumns()) {
+                $customizationData['hero_overlay_title'] = null;
+                $customizationData['hero_overlay_button_text'] = null;
+                $customizationData['hero_overlay_button_url'] = null;
+            }
+
+            $store->forceFill($customizationData)->save();
         }
 
         if (Store::supportsCustomDomainColumns() && ! $store->allowsCustomDomain()) {

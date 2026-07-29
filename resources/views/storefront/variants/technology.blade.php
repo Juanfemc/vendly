@@ -16,6 +16,14 @@
         @else
             <div class="minimal-shop-hero-fallback">{{ $store->name }}</div>
         @endif
+        @if($showHeroProductsAction)
+            <div class="minimal-shop-hero-overlay">
+                @if($heroOverlayTitle !== '')
+                    <h1>{{ $heroOverlayTitle }}</h1>
+                @endif
+                <a href="{{ $heroOverlayButtonUrl }}">{{ $heroOverlayButtonText }}</a>
+            </div>
+        @endif
     </div>
 </section>
 

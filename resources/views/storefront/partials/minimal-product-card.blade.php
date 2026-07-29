@@ -15,6 +15,8 @@
     $reviewLabel = $reviewCount > 0
         ? number_format($reviewAverage, 1) . ' (' . $reviewCount . ' ' . \Illuminate\Support\Str::plural('resena', $reviewCount) . ')'
         : null;
+    $cartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
+    $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
 @endphp
 
 <article class="minimal-shop-product-card {{ ($isRecommendation ?? false) ? 'minimal-shop-product-card--recommendation' : '' }}">
@@ -60,13 +62,22 @@
         @if($isSoldOut)
             <span class="minimal-shop-card-button minimal-shop-card-button--disabled">Agotado</span>
         @elseif($product->hasVariants())
-            <a href="{{ $storefrontUrls->product($store, $product) }}" class="minimal-shop-card-button">Agregar</a>
+            <a href="{{ $storefrontUrls->product($store, $product) }}" class="minimal-shop-card-button">
+                {!! $cartIcon !!}
+                <span>Agregar al carrito</span>
+            </a>
         @else
             <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
                 @csrf
-                <button type="submit">Agregar</button>
+                <button type="submit">
+                    {!! $cartIcon !!}
+                    <span>Agregar al carrito</span>
+                </button>
             </form>
         @endif
-        <a href="{{ $storefrontUrls->product($store, $product) }}">Comprar ahora</a>
+        <a href="{{ $storefrontUrls->product($store, $product) }}">
+            {!! $detailIcon !!}
+            <span>Ver detalle</span>
+        </a>
     </div>
 </article>

@@ -64,13 +64,20 @@
             ]))
             ->values();
     }
+    $fashionHeroTitle = $heroOverlayTitle !== '' ? $heroOverlayTitle : 'Jackets for the Modern Man';
+    $fashionHeroButtonText = ($supportsHeroOverlay && trim((string) ($store->hero_overlay_button_text ?? '')) !== '')
+        ? trim((string) $store->hero_overlay_button_text)
+        : 'Discover Now';
+    $fashionHeroButtonUrl = ($supportsHeroOverlay && trim((string) ($store->hero_overlay_button_url ?? '')) !== '')
+        ? trim((string) $store->hero_overlay_button_url)
+        : $storefrontUrls->products($store);
 @endphp
 
 <section class="fashion-hero">
     <div class="fashion-hero-copy">
         <span>Urban Edge</span>
-        <h1>Jackets for the Modern Man</h1>
-        <a href="{{ $storefrontUrls->products($store) }}">Discover Now</a>
+        <h1>{{ $fashionHeroTitle }}</h1>
+        <a href="{{ $fashionHeroButtonUrl }}">{{ $fashionHeroButtonText }}</a>
     </div>
 
     <button class="fashion-hero-arrow fashion-hero-arrow--left" type="button" aria-label="Anterior">&lsaquo;</button>

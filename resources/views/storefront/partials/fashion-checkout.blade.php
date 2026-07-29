@@ -82,17 +82,15 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>Phone</span>
-                            <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                            <span>Last name</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
                         </label>
                     </div>
 
-                    @if($checkoutFieldEnabled('last_name'))
-                        <label class="fashion-field fashion-field--full">
-                            <span>Last name{{ $checkoutFieldRequired('last_name') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" {{ $checkoutRequired('last_name') }}>
-                        </label>
-                    @endif
+                    <label class="fashion-field fashion-field--full">
+                        <span>Phone</span>
+                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                    </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">
@@ -154,17 +152,15 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>Phone</span>
-                            <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                            <span>Last name</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
                         </label>
                     </div>
 
-                    @if($checkoutFieldEnabled('last_name'))
-                        <label class="fashion-field fashion-field--full">
-                            <span>Last name{{ $checkoutFieldRequired('last_name') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" {{ $checkoutRequired('last_name') }}>
-                        </label>
-                    @endif
+                    <label class="fashion-field fashion-field--full">
+                        <span>Phone</span>
+                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                    </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">

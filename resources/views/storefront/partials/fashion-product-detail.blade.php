@@ -3,6 +3,7 @@
     $fashionRelated = $relatedProducts->take(4);
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
+    $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $fashionColorMap = [
         'navy' => '#173a63',
         'azul' => '#173a63',
@@ -152,7 +153,7 @@
                         <div class="fashion-color-options">
                             @foreach($fashionColorOptions as $color)
                                 <label title="{{ $color['label'] }}">
-                                    <input type="radio" name="color" value="{{ $color['value'] }}" @checked($loop->first) required>
+                                    <input type="radio" name="color" value="{{ $color['value'] }}" required data-role="selected-color-radio">
                                     <span style="--swatch-color: {{ $color['swatch'] }}"></span>
                                 </label>
                             @endforeach
@@ -168,7 +169,7 @@
                             <div class="fashion-size-options">
                                 @foreach($fashionSizes as $size)
                                     <label>
-                                        <input type="radio" name="size" value="{{ $size }}" required>
+                                        <input type="radio" name="size" value="{{ $size }}" required data-role="selected-size-radio">
                                         <span>{{ $size }}</span>
                                     </label>
                                 @endforeach
@@ -177,7 +178,16 @@
                     @endif
 
                     <div class="fashion-product-actions">
-                        <button type="submit">Add to Cart</button>
+                        <button
+                            type="submit"
+                            data-variant-action
+                            data-variant-add-action
+                            data-enabled-label="Agregar al carrito"
+                            @disabled($product->hasVariants())
+                        >
+                            {!! $fashionCartIcon !!}
+                            <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : 'Agregar al carrito' }}</span>
+                        </button>
                         <a href="{{ $storefrontUrls->products($store) }}" aria-label="Agregar a favoritos">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z"></path>

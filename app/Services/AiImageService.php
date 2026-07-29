@@ -180,9 +180,11 @@ class AiImageService
 
         if ($type === AiContentService::PRODUCT_IMAGE_ENHANCE) {
             return implode(' ', [
-                'Mejora esta foto de producto para catalogo ecommerce sin cambiar el producto.',
-                'Producto centrado, mas nitido, mejor iluminado, con fondo limpio y sombra suave natural.',
-                'Manten colores y forma reales. No agregues texto, logos, marcas de agua, personas ni objetos que no existan.',
+                'Edita esta foto para catalogo ecommerce conservando el producto original como sujeto principal.',
+                'No redisenes, no reemplaces, no cambies forma, talla, color, textura, estampados, logos existentes, proporciones ni detalles del producto.',
+                'Manten el producto igual o ligeramente mas nitido y mejor iluminado; solo limpia recortes, mejora luz y presentacion.',
+                'Cambia principalmente el fondo por un fondo ecommerce profesional, limpio, realista, con sombra suave natural y profundidad sutil.',
+                'El producto debe seguir viendose como el mismo de la foto original. No agregues texto, marcas de agua, personas, manos, empaques ni objetos nuevos.',
                 'Nombre: ' . ((string) ($product['nombre'] ?? 'Producto')),
                 'Categoria: ' . ((string) ($product['categoria'] ?? 'General')),
             ]);

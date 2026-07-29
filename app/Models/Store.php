@@ -24,6 +24,7 @@ class Store extends Model
     private static ?bool $supportsSubscriptionColumns = null;
     private static ?bool $supportsTermsAcceptanceColumns = null;
     private static ?bool $supportsCheckoutFieldsColumn = null;
+    private static ?bool $supportsHeroOverlayColumns = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
 
@@ -122,6 +123,9 @@ class Store extends Model
         'font_family',
         'responsive_product_columns',
         'show_hero_products_action',
+        'hero_overlay_title',
+        'hero_overlay_button_text',
+        'hero_overlay_button_url',
         'instagram_url',
         'facebook_url',
         'tiktok_url',
@@ -594,7 +598,7 @@ class Store extends Model
                 'label' => 'Apellidos',
                 'description' => 'Util para tiendas que necesitan nombre completo.',
                 'default_enabled' => true,
-                'default_required' => false,
+                'default_required' => true,
             ],
             'email' => [
                 'label' => 'Correo',
@@ -684,6 +688,10 @@ class Store extends Model
 
     public function checkoutFieldEnabled(string $key): bool
     {
+        if ($key === 'last_name') {
+            return true;
+        }
+
         if ($key === 'city' && $this->localDeliveryEnabled()) {
             return true;
         }
@@ -693,6 +701,10 @@ class Store extends Model
 
     public function checkoutFieldRequired(string $key): bool
     {
+        if ($key === 'last_name') {
+            return true;
+        }
+
         if ($key === 'city' && $this->localDeliveryEnabled()) {
             return true;
         }
@@ -745,6 +757,13 @@ class Store extends Model
     public static function supportsCheckoutFieldsColumn(): bool
     {
         return self::$supportsCheckoutFieldsColumn ??= Schema::hasColumn('stores', 'checkout_fields');
+    }
+
+    public static function supportsHeroOverlayColumns(): bool
+    {
+        return self::$supportsHeroOverlayColumns ??= Schema::hasColumn('stores', 'hero_overlay_title')
+            && Schema::hasColumn('stores', 'hero_overlay_button_text')
+            && Schema::hasColumn('stores', 'hero_overlay_button_url');
     }
 
     public static function supportsLocalDeliveryColumns(): bool

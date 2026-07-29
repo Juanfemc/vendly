@@ -1,6 +1,8 @@
 html, body {
     margin: 0;
     padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 :root {
@@ -69,6 +71,8 @@ body.cart-page {
     min-height: 100vh;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 540px;
+    width: 100%;
+    min-width: 0;
 }
 
 .cart-page--technology .checkout {
@@ -79,6 +83,7 @@ body.cart-page {
 }
 
 .checkout-main {
+    min-width: 0;
     padding: 28px 40px 48px;
 }
 
@@ -87,6 +92,7 @@ body.cart-page {
 }
 
 .checkout-side {
+    min-width: 0;
     background: var(--panel);
     border-left: 1px solid var(--line);
     padding: 40px 38px;
@@ -108,6 +114,8 @@ body.cart-page {
 }
 
 .checkout-inner {
+    width: 100%;
+    min-width: 0;
     max-width: 640px;
     margin-left: auto;
 }
@@ -123,6 +131,7 @@ body.cart-page {
 }
 
 .checkout-card {
+    min-width: 0;
     margin-bottom: 18px;
     padding: 24px;
     border: 1px solid var(--line);
@@ -282,6 +291,7 @@ body.cart-page {
 .field,
 .select,
 .textarea {
+    min-width: 0;
     width: 100%;
     border: 1px solid var(--line);
     border-radius: 12px;
@@ -316,6 +326,7 @@ body.cart-page {
 .grid-two,
 .grid-three {
     display: grid;
+    min-width: 0;
     gap: 12px;
 }
 
@@ -357,6 +368,7 @@ body.cart-page {
 .cart-item {
     display: grid;
     grid-template-columns: 72px minmax(0, 1fr) auto;
+    min-width: 0;
     gap: 14px;
     align-items: start;
     margin-bottom: 24px;
@@ -432,6 +444,7 @@ body.cart-page {
 }
 
 .item-title {
+    overflow-wrap: anywhere;
     margin: 4px 0 3px;
     font-size: 20px;
     font-weight: 500;
@@ -465,6 +478,7 @@ body.cart-page {
 .item-actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 12px;
 }
@@ -1308,7 +1322,7 @@ body.cart-page {
 
 @media (max-width: 640px) {
     body.cart-page {
-        padding-bottom: 92px;
+        padding-bottom: calc(104px + env(safe-area-inset-bottom));
     }
 
     .tech-checkout-shell {
@@ -1323,6 +1337,8 @@ body.cart-page {
 
     .checkout-main,
     .checkout-side {
+        width: 100%;
+        min-width: 0;
         padding: 18px 0 24px;
     }
 
@@ -1361,17 +1377,46 @@ body.cart-page {
         grid-template-columns: 1fr;
     }
 
+    .checkout-section-head > div,
+    .field-wrap,
+    .shipping-options,
+    .summary,
+    .checkout-payment-options {
+        min-width: 0;
+    }
+
     .item-price {
         padding-top: 0;
+        white-space: normal;
     }
 
     .cart-page--technology .cart-item {
-        grid-template-columns: 76px minmax(0, 1fr);
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
     }
 
     .cart-page--technology .cart-thumb-wrap {
         width: 72px;
         height: 72px;
+    }
+
+    .item-title {
+        margin-top: 0;
+        font-size: 16px;
+    }
+
+    .cart-page--technology .item-title {
+        font-size: 14px;
+    }
+
+    .item-meta {
+        font-size: 13px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .item-actions {
+        gap: 8px;
     }
 
     .cart-store-brand {
@@ -1391,11 +1436,17 @@ body.cart-page {
     }
 
     .shipping-option {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 10px;
         align-items: flex-start;
     }
 
     .shipping-option-price {
+        grid-column: 2;
+        justify-self: flex-start;
         align-self: flex-start;
+        white-space: normal;
     }
 
     .local-delivery-preview {
@@ -1412,12 +1463,12 @@ body.cart-page {
         position: fixed;
         left: 12px;
         right: 12px;
-        bottom: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
         z-index: 45;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) minmax(116px, auto);
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         padding: 12px;
         border: 1px solid rgba(17, 17, 17, 0.08);
         border-radius: 18px;
@@ -1444,6 +1495,7 @@ body.cart-page {
 
     .checkout-mobile-bar button {
         min-height: 46px;
+        min-width: 0;
         border: 0;
         border-radius: 14px;
         background: var(--accent);
@@ -1451,7 +1503,92 @@ body.cart-page {
         cursor: pointer;
         font-size: 14px;
         font-weight: 900;
-        padding: 0 18px;
-        white-space: nowrap;
+        line-height: 1.1;
+        padding: 0 14px;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 420px) {
+    .tech-checkout-shell {
+        width: min(100% - 18px, 1740px);
+    }
+
+    .checkout-card,
+    .cart-page--technology .checkout-side,
+    .checkout-side {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .checkout-section-head {
+        align-items: center;
+    }
+
+    .checkout-section-head p {
+        display: none;
+    }
+
+    .field,
+    .select,
+    .textarea,
+    .cart-page--technology .field,
+    .cart-page--technology .select,
+    .cart-page--technology .textarea {
+        min-height: 46px;
+        padding: 12px 12px;
+        font-size: 15px;
+    }
+
+    .checkout-coupon-row {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-coupon-row button,
+    .primary-btn,
+    .mercadopago-btn,
+    .wompi-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        padding-inline: 14px;
+        font-size: 14px;
+        line-height: 1.15;
+        white-space: normal;
+    }
+
+    .payment-divider {
+        margin: 14px 0 10px;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+    }
+
+    .summary-total,
+    .summary-line {
+        gap: 10px;
+    }
+
+    .summary-total-price strong,
+    .summary-line strong {
+        overflow-wrap: anywhere;
+        text-align: right;
+    }
+
+    .checkout-mobile-bar {
+        left: 8px;
+        right: 8px;
+        grid-template-columns: minmax(0, 1fr) minmax(98px, 0.8fr);
+        padding: 10px;
+        border-radius: 16px;
+    }
+
+    .checkout-mobile-bar strong {
+        font-size: 16px;
+    }
+
+    .checkout-mobile-bar button {
+        min-height: 44px;
+        padding-inline: 10px;
+        font-size: 13px;
     }
 }

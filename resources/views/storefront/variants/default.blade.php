@@ -1,8 +1,11 @@
 <section class="store-hero">
     @if($showHeroProductsAction)
         <div class="store-hero-products-action">
-            <a href="{{ $storefrontUrls->products($store) }}" class="catalog-all-link">
-                Comprar ahora
+            @if($heroOverlayTitle !== '')
+                <h1 class="store-hero-overlay-title">{{ $heroOverlayTitle }}</h1>
+            @endif
+            <a href="{{ $heroOverlayButtonUrl }}" class="catalog-all-link">
+                {{ $heroOverlayButtonText }}
             </a>
         </div>
     @endif

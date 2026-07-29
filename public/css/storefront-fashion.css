@@ -1014,8 +1014,8 @@
 
 .fashion-product-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 28px 6px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 22px 10px;
 }
 
 .fashion-product {
@@ -1057,7 +1057,7 @@
 }
 
 .fashion-product p {
-    margin: 18px 0 3px;
+    margin: 12px 0 3px;
     color: #9aa0a8;
     font-size: var(--fashion-text-xs);
     font-weight: 800;
@@ -1067,14 +1067,14 @@
 .fashion-product h3 {
     margin: 0 0 6px;
     color: #222222;
-    font-size: var(--fashion-text-sm);
+    font-size: 13px;
     font-weight: 600;
     line-height: 1.32;
 }
 
 .fashion-product strong {
     color: #222222;
-    font-size: var(--fashion-text-sm);
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -1526,11 +1526,32 @@
 .fashion-product-actions button {
     min-height: 50px;
     border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
     background: linear-gradient(135deg, #232323, #060606);
     color: #ffffff;
     font-size: 14px;
     font-weight: 900;
     cursor: pointer;
+}
+
+.fashion-product-actions button svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.fashion-product-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    box-shadow: none;
 }
 
 .fashion-product-actions a {
@@ -1753,17 +1774,20 @@
 .fashion-checkout-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+    min-width: 0;
     gap: 72px;
     align-items: start;
 }
 
 .fashion-checkout-form {
     display: grid;
+    min-width: 0;
     gap: 30px;
 }
 
 .fashion-checkout-section {
     display: grid;
+    min-width: 0;
     gap: 16px;
 }
 
@@ -1807,6 +1831,7 @@
 
 .fashion-checkout-form .checkout-coupon-row {
     grid-template-columns: minmax(0, 1fr) 128px;
+    min-width: 0;
 }
 
 .fashion-checkout-form .checkout-coupon-row input {
@@ -2694,8 +2719,8 @@
     }
 
     .fashion-product-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 24px 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px 8px;
     }
 
     .fashion-footer-shell {
@@ -2986,6 +3011,11 @@
         white-space: nowrap;
     }
 
+    .fashion-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 8px;
+    }
+
     .fashion-product p {
         margin-top: 12px;
     }
@@ -3141,6 +3171,7 @@
     .fashion-checkout {
         width: min(100% - 28px, 1480px);
         padding: 18px 0 46px;
+        overflow-x: hidden;
     }
 
     .fashion-checkout-breadcrumb {
@@ -3196,8 +3227,16 @@
 
     .fashion-shipping-option,
     .fashion-payment-option {
-        grid-template-columns: 20px minmax(0, 1fr) auto;
+        grid-template-columns: 20px minmax(0, 1fr);
         padding: 12px;
+    }
+
+    .fashion-shipping-option b,
+    .fashion-payment-option b,
+    .fashion-payment-option strong {
+        grid-column: 2;
+        justify-self: start;
+        overflow-wrap: anywhere;
     }
 
     .fashion-checkout-actions {
@@ -3229,9 +3268,11 @@
     .fashion-summary-item h3 {
         margin-top: 2px;
         font-size: 13px;
+        overflow-wrap: anywhere;
     }
 
     .fashion-summary-grand strong {
         font-size: 22px;
+        overflow-wrap: anywhere;
     }
 }

@@ -10,10 +10,12 @@
     $showsOfferPricing = $showsOfferBadge && $product->hasOfferPricing();
     $displayBadges = $product->displayBadges($store ?? null);
     $productUrl = $storefrontUrls->product($store, $product);
+    $cartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
+    $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
 @endphp
 
 <article class="product-card {{ $cardClass ?? '' }}">
-    <div class="product-image">
+    <a href="{{ $productUrl }}" class="product-image" aria-label="Ver detalle de {{ $product->name }}">
         @if($displayBadges !== [])
             <div class="product-badges">
                 @foreach($displayBadges as $badge)
@@ -24,9 +26,9 @@
         @if($product->image)
             <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy" decoding="async">
         @endif
-    </div>
+    </a>
 
-    <h3>{{ $product->name }}</h3>
+    <h3><a href="{{ $productUrl }}">{{ $product->name }}</a></h3>
 
     <div class="price-row">
         @if($showsOfferPricing)
@@ -48,18 +50,23 @@
             <span class="product-preview-link is-disabled">Agotado</span>
         @elseif($product->hasVariants())
             <a href="{{ $productUrl }}" class="product-card-add-link">
-                {{ $isRestaurantCard ? 'Elegir opciones' : 'Agregar' }}
+                {!! $cartIcon !!}
+                <span>{{ $isRestaurantCard ? 'Elegir opciones' : 'Agregar al carrito' }}</span>
             </a>
         @else
             <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
                 @csrf
-                <button type="submit">{{ $isRestaurantCard ? 'Agregar pedido' : 'Agregar' }}</button>
+                <button type="submit">
+                    {!! $cartIcon !!}
+                    <span>{{ $isRestaurantCard ? 'Agregar pedido' : 'Agregar al carrito' }}</span>
+                </button>
             </form>
         @endif
 
         @unless($isSoldOut)
             <a href="{{ $productUrl }}" class="product-preview-link">
-                {{ $isRestaurantCard ? 'Pedir ahora' : 'Comprar ahora' }}
+                {!! $detailIcon !!}
+                <span>Ver detalle</span>
             </a>
         @endunless
     </div>

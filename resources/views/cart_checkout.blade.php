@@ -139,14 +139,12 @@
 
                             <div class="grid-two field-wrap">
                                 <input class="field" type="text" name="name" placeholder="Nombre" value="{{ old('name') }}" required>
-                                <input class="field" type="text" name="phone" placeholder="WhatsApp" value="{{ old('phone') }}" required>
+                                <input class="field" type="text" name="last_name" placeholder="Apellidos" value="{{ old('last_name') }}" required>
                             </div>
 
-                            @if($checkoutFieldEnabled('last_name'))
-                                <div class="field-wrap">
-                                    <input class="field" type="text" name="last_name" placeholder="Apellidos{{ $checkoutFieldRequired('last_name') ? '' : ' (opcional)' }}" value="{{ old('last_name') }}" {{ $checkoutRequired('last_name') }}>
-                                </div>
-                            @endif
+                            <div class="field-wrap">
+                                <input class="field" type="text" name="phone" placeholder="WhatsApp" value="{{ old('phone') }}" required>
+                            </div>
 
                             @if($checkoutFieldEnabled('email'))
                                 <div class="field-wrap">
@@ -167,7 +165,7 @@
                             <div class="checkout-section-head">
                                 <span class="checkout-step-badge">2</span>
                                 <div>
-                                    <h2 class="section-title">{{ $isReservationStore ? 'Fecha y detalles' : 'Entrega' }}</h2>
+                                    <h2 class="section-title">{{ $isReservationStore ? 'Datos de la reserva' : 'Entrega' }}</h2>
                                     <p>{{ $isReservationStore ? 'Elige cuándo quieres agendar y agrega detalles importantes.' : 'Completa solo los datos necesarios para recibir tu compra.' }}</p>
                                 </div>
                             </div>
