@@ -1687,7 +1687,7 @@ body.storefront-page .product-detail-copy h1 {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 206px), 222px));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 214px));
     justify-content: center;
     gap: 18px;
     padding-bottom: 40px;
