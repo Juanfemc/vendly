@@ -236,7 +236,7 @@ trait ValidatesStoreProfile
             $data['terms_version'] = trim((string) ($data['terms_version'] ?? '')) ?: null;
 
             if ($data['require_terms_acceptance']) {
-                $data['terms_title'] ??= 'Acepto los terminos y condiciones';
+                $data['terms_title'] ??= 'Acepto los términos y condiciones';
                 $data['terms_version'] ??= 'v1';
             }
         } else {

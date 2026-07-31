@@ -392,12 +392,12 @@
 
             <span class="signup-badge">Prueba gratis {{ $trialDays }} días</span>
             <h1>Crea tu tienda y empieza a vender por <span>WhatsApp</span>.</h1>
-            <p>Entra al panel en segundos. Tu tienda se crea automaticamente y luego completas lo esencial con una guia paso a paso.</p>
+            <p>Entra al panel en segundos. Tu tienda se crea automáticamente y luego completas lo esencial con una guía paso a paso.</p>
 
             <ul class="signup-benefits">
                 <li>Sin tarjeta de crédito</li>
                 <li>Dashboard inmediato</li>
-                <li>Mensajes automaticos</li>
+                <li>Mensajes automáticos</li>
             </ul>
         </section>
 
@@ -433,7 +433,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="password">Contrasena</label>
+                    <label for="password">Contraseña</label>
                     <div class="password-field">
                         <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="Minimo 8 caracteres">
                         <button class="password-toggle" type="button" data-password-toggle>Mostrar</button>

@@ -8,6 +8,7 @@ use App\Models\Store;
 use App\Models\TrialSignupClaim;
 use App\Services\AdminUpdateService;
 use App\Services\StoreFileService;
+use App\Services\StorefrontUrlService;
 use App\Services\TrialPhoneHashService;
 use App\Services\WhatsAppPhoneVerificationService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class StoreOnboardingController extends Controller
 {
     public function __construct(
         private StoreFileService $storeFileService,
+        private StorefrontUrlService $storefrontUrls,
         private AdminUpdateService $adminUpdateService,
         private WhatsAppPhoneVerificationService $phoneVerification,
         private TrialPhoneHashService $trialPhoneHashes,
@@ -34,6 +36,7 @@ class StoreOnboardingController extends Controller
 
         return view('admin.stores.onboarding', [
             'store' => $store,
+            'storeUrl' => $this->storefrontUrls->publicHome($store),
             'checklist' => $store->onboardingChecklist(),
             'progress' => $store->onboardingProgress(),
         ]);

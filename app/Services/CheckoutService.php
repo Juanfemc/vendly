@@ -69,7 +69,7 @@ class CheckoutService
             if (Order::supportsTermsAcceptanceColumns() && $store->requiresTermsAcceptance()) {
                 if (! $this->acceptedTerms($customerData)) {
                     throw ValidationException::withMessages([
-                        'terms_acceptance' => 'Debes aceptar los terminos y condiciones de la tienda para continuar.',
+                        'terms_acceptance' => 'Debes aceptar los términos y condiciones de la tienda para continuar.',
                     ]);
                 }
 
@@ -355,7 +355,7 @@ class CheckoutService
 
         if (! $method) {
             throw ValidationException::withMessages([
-                'shipping_method' => 'Selecciona un metodo de envio.',
+                'shipping_method' => 'Selecciona un método de envío.',
             ]);
         }
 

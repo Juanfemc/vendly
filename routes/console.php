@@ -67,19 +67,19 @@ Artisan::command('users:make-admin {email : Email del usuario admin} {--name= : 
 
     if ($generatedPassword !== null) {
         $this->warn("Password generado: {$generatedPassword}");
-        $this->comment('Guardalo en un lugar seguro. Solo se muestra una vez.');
+        $this->comment('Guárdalo en un lugar seguro. Solo se muestra una vez.');
     }
 
     return self::SUCCESS;
-})->purpose('Crea o asciende un usuario admin sin sembrarlo automaticamente');
+})->purpose('Crea o asciende un usuario admin sin sembrarlo automáticamente');
 
 Artisan::command('payments:expire-pending', function () {
     $expired = app(CheckoutService::class)->expirePendingOnlinePaymentOrders();
 
-    $this->info("Pedidos de pago en linea vencidos: {$expired}");
+    $this->info("Pedidos de pago en línea vencidos: {$expired}");
 
     return self::SUCCESS;
-})->purpose('Cancela pedidos pendientes de pago en linea vencidos y libera stock');
+})->purpose('Cancela pedidos pendientes de pago en línea vencidos y libera stock');
 
 Artisan::command('stores:expire-subscriptions', function () {
     $expired = Store::expirePastSubscriptions();
@@ -336,7 +336,7 @@ Artisan::command('whatsapp:recover-stale {--minutes=15 : Antiguedad minima del i
         ->where('last_attempt_at', '<', now()->subMinutes($minutes))
         ->update([
             'status' => WhatsAppMessage::STATUS_UNKNOWN,
-            'error' => encrypt('El worker se interrumpio durante el envio; no se reenvia para evitar duplicados.'),
+            'error' => encrypt('El worker se interrumpió durante el envío; no se reenvía para evitar duplicados.'),
         ]);
     $queued = 0;
 

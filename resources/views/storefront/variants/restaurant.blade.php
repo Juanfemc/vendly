@@ -80,7 +80,7 @@
         </section>
     @empty
         @if($otherProducts->isEmpty())
-            <div class="empty-state">Aun no hay platos publicados.</div>
+            <div class="empty-state">Aún no hay platos publicados.</div>
         @endif
     @endforelse
 

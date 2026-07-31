@@ -13,6 +13,9 @@ use Throwable;
 
 class ProductImportController extends Controller
 {
+    private const PRODUCT_FILE_MAX_KB = 5120;
+    private const IMAGES_ZIP_MAX_KB = 51200;
+
     public function __construct(
         private ProductImportService $productImportService,
         private AdminUpdateService $adminUpdateService,
@@ -29,7 +32,13 @@ class ProductImportController extends Controller
             : collect();
         $preview = session(ProductImportService::SESSION_KEY);
 
-        return view('admin.products.import', compact('store', 'stores', 'preview'));
+        return view('admin.products.import', [
+            'store' => $store,
+            'stores' => $stores,
+            'preview' => $preview,
+            'productFileMaxKb' => self::PRODUCT_FILE_MAX_KB,
+            'imagesZipMaxKb' => self::IMAGES_ZIP_MAX_KB,
+        ]);
     }
 
     public function preview(Request $request)
@@ -40,8 +49,14 @@ class ProductImportController extends Controller
             'store_id' => auth()->user()?->isAdmin()
                 ? ['required', 'integer', 'exists:stores,id']
                 : ['nullable'],
-            'file' => ['required', 'file', 'max:5120', 'mimes:csv,txt,xlsx'],
-            'images_zip' => ['nullable', 'file', 'max:51200', 'mimes:zip'],
+            'file' => ['required', 'file', 'max:' . self::PRODUCT_FILE_MAX_KB, 'mimes:csv,txt,xlsx'],
+            'images_zip' => ['nullable', 'file', 'max:' . self::IMAGES_ZIP_MAX_KB, 'mimes:zip'],
+        ], [
+            'file.required' => 'Sube la plantilla CSV o XLSX antes de revisar.',
+            'file.max' => 'La plantilla no puede pesar más de 5 MB. Si tiene imágenes incrustadas, usa la columna imagen o imagen_url.',
+            'file.mimes' => 'La plantilla debe ser CSV o XLSX.',
+            'images_zip.max' => 'El ZIP de imágenes no puede pesar más de 50 MB.',
+            'images_zip.mimes' => 'El archivo de imágenes debe ser un ZIP.',
         ]);
 
         $store = $this->storeForRequest($validated);

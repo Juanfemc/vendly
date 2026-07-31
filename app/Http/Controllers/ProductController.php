@@ -130,7 +130,7 @@ class ProductController extends Controller
         if (! $this->categoryBelongsToStore($store, $productData['category'] ?? null)) {
             return back()
                 ->withInput()
-                ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
+                ->with('error', 'Crea la categoría en la sección Categorías antes de asignarla a un producto.');
         }
 
         $primaryImage = $this->productFileService->storeImage($request, $store);
@@ -211,7 +211,7 @@ class ProductController extends Controller
         if (! $this->categoryBelongsToStore($store, $data['category'] ?? null)) {
             return back()
                 ->withInput()
-                ->with('error', 'Crea la categoria en la seccion Categorias antes de asignarla a un producto.');
+                ->with('error', 'Crea la categoría en la sección Categorías antes de asignarla a un producto.');
         }
 
         $product->update($this->productFileService->replaceImage($product, $request, $data, $store->allowsProductGallery(), $store));

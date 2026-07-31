@@ -48,7 +48,7 @@
                 class="fashion-menu-toggle nav-toggle"
                 aria-expanded="false"
                 aria-controls="storefrontNavPanel"
-                aria-label="Abrir menu"
+                aria-label="Abrir menú"
             >
                 <span></span>
                 <span></span>
@@ -87,13 +87,13 @@
             <div class="fashion-nav-panel nav-panel" id="storefrontNavPanel">
                 <div class="nav-panel-head">
                     <span>{{ $store->name }}</span>
-                    <button type="button" class="nav-close" aria-label="Cerrar menu">
+                    <button type="button" class="nav-close" aria-label="Cerrar menú">
                         <span></span>
                         <span></span>
                     </button>
                 </div>
 
-                <nav class="fashion-nav-links" aria-label="Navegacion principal">
+                <nav class="fashion-nav-links" aria-label="Navegación principal">
                     <a href="{{ $storefrontUrls->home($store) }}">
                         <span>Home</span>
                         <span class="fashion-nav-chevron" aria-hidden="true"></span>
@@ -166,7 +166,7 @@
                         </a>
                         <a href="{{ $storefrontUrls->products($store) }}">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l2 4-3 2v10H9V10L6 8l2-4Z"></path></svg>
-                            <span>Categorias</span>
+                            <span>Categorías</span>
                             <b aria-hidden="true">⌄</b>
                         </a>
                         <a href="{{ $storefrontUrls->offers($store) }}">
@@ -237,7 +237,7 @@
                 </div>
             </div>
 
-            <button type="button" class="nav-backdrop" aria-label="Cerrar menu"></button>
+            <button type="button" class="nav-backdrop" aria-label="Cerrar menú"></button>
         </div>
 
         <label class="fashion-cart-backdrop" for="minimalShopCartToggle" aria-hidden="true"></label>
@@ -286,7 +286,7 @@
                         <div class="minimal-shop-cart-info">
                             <strong>{{ $item['name'] ?? 'Producto' }}</strong>
                             <small>{{ $drawerVariant !== '' ? $drawerVariant : 'Sin variante' }}</small>
-                            <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 2) }}</b>
+                            <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
                         </div>
                         <div class="minimal-shop-cart-controls">
                             <button type="button" data-cart-drawer-minus aria-label="Restar">&minus;</button>
@@ -299,7 +299,7 @@
                     </article>
                 @empty
                     <div class="minimal-shop-cart-empty" data-cart-drawer-empty>
-                        <strong>Tu carrito esta vacio</strong>
+                        <strong>Tu carrito está vacío</strong>
                         <a href="{{ $storefrontUrls->home($store) }}">Volver a la tienda</a>
                     </div>
                 @endforelse
@@ -313,10 +313,10 @@
             </details>
 
             <div class="minimal-shop-cart-summary">
-                <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 2) }}</strong></p>
+                <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
                 <p><span>Shipping</span><strong data-cart-drawer-shipping>Free</strong></p>
-                <p><span>Estimated Tax</span><strong data-cart-drawer-tax>${{ number_format($drawerTax, 2) }}</strong></p>
-                <p class="minimal-shop-cart-total"><span>Total</span><small>USD</small><strong data-cart-drawer-total>${{ number_format($drawerTotal, 2) }}</strong></p>
+                <p><span>Estimated Tax</span><strong data-cart-drawer-tax>${{ number_format($drawerTax, 0, ',', '.') }}</strong></p>
+                <p class="minimal-shop-cart-total"><span>Total</span><small>COP</small><strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
             </div>
 
             <div class="minimal-shop-cart-actions">

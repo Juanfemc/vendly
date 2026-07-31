@@ -12,11 +12,11 @@ class StoreTemplateCatalog
         return [
             self::TECHNOLOGY => [
                 'key' => self::TECHNOLOGY,
-                'name' => 'Tecnologia',
+                'name' => 'Tecnología',
                 'business_type' => 'technology',
-                'subtitle' => 'Plantilla minimalista para catalogos de tecnologia.',
-                'description' => 'Incluye portada amplia, categorias horizontales, tarjetas limpias, producto detallado, checkout y carrito lateral.',
-                'features' => ['Portada visual', 'Catalogo moderno', 'Carrito lateral', 'Checkout optimizado'],
+                'subtitle' => 'Plantilla minimalista para catálogos de tecnología.',
+                'description' => 'Incluye portada amplia, categorías horizontales, tarjetas limpias, producto detallado, checkout y carrito lateral.',
+                'features' => ['Portada visual', 'Catálogo moderno', 'Carrito lateral', 'Checkout optimizado'],
             ],
             self::FASHION => [
                 'key' => self::FASHION,

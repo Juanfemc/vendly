@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AdminUpdateService;
 use App\Services\CustomerFollowupScheduler;
 use App\Services\StoreSlugService;
+use App\Services\StoreSubdomainService;
 use App\Services\TrialPhoneHashService;
 use App\Services\TurnstileService;
 use App\Services\WhatsAppRegistrationNotifier;
@@ -28,6 +29,7 @@ class TrialSignupController extends Controller
 {
     public function __construct(
         private StoreSlugService $storeSlugs,
+        private StoreSubdomainService $storeSubdomains,
         private AdminUpdateService $adminUpdateService,
         private CustomerFollowupScheduler $customerFollowups,
         private WhatsAppRegistrationNotifier $whatsAppRegistrationNotifier,
@@ -61,6 +63,9 @@ class TrialSignupController extends Controller
 
         try {
             [$user, $store] = DB::transaction(function () use ($request, $phoneHash, $storeNameForSlug) {
+                $slug = $this->storeSlugs->uniqueFrom($storeNameForSlug);
+                $subdomain = $this->storeSubdomains->uniqueFrom($storeNameForSlug);
+
                 $claim = TrialSignupClaim::create([
                     'phone_hash' => $phoneHash,
                     'source' => 'trial_signup',
@@ -73,7 +78,7 @@ class TrialSignupController extends Controller
                 ]);
 
                 $store = Store::create([
-                    ...$request->storeData($this->storeSlugs->uniqueFrom($storeNameForSlug)),
+                    ...$request->storeData($slug, $subdomain),
                     'user_id' => $user->id,
                 ]);
 
@@ -124,7 +129,7 @@ class TrialSignupController extends Controller
         return redirect()
             ->route('admin.store.onboarding')
             ->with('meta_complete_registration', true)
-            ->with('success', 'Tu tienda ya esta creada. Verifica tu WhatsApp para completar la activacion.');
+            ->with('success', 'Tu tienda ya está creada. Verifica tu WhatsApp para completar la activación.');
     }
 
     private function trialPhoneHash(string $phone): string

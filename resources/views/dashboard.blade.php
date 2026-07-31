@@ -230,7 +230,7 @@
                     Contacta al administrador para validar el pago.
                 </p>
             </div>
-            <a href="{{ $activationWhatsappUrl }}" class="btn" target="_blank" rel="noopener noreferrer">Solicitar activacion</a>
+            <a href="{{ $activationWhatsappUrl }}" class="btn" target="_blank" rel="noopener noreferrer">Solicitar activación</a>
         </div>
     @elseif (!empty($subscriptionEndsSoon) && !empty($store))
         <div class="dashboard-notification dashboard-notification--warning">
@@ -302,12 +302,13 @@
     </div>
 
     @if (!empty($store) && $store->slug)
+        @php($dashboardStoreUrl = app(\App\Services\StorefrontUrlService::class)->publicHome($store))
         <div class="list-card dashboard-store-link-card">
             <div>
                 <strong>Tu tienda ya esta publicada</strong>
                 <p>Abrela para revisar como la ven tus clientes y compartir el enlace.</p>
             </div>
-            <a href="{{ url('/' . $store->slug) }}" class="btn btn-secondary dashboard-store-link" target="_blank" rel="noopener noreferrer">
+            <a href="{{ $dashboardStoreUrl }}" class="btn btn-secondary dashboard-store-link" target="_blank" rel="noopener noreferrer">
                 Ir a mi tienda
             </a>
         </div>

@@ -563,7 +563,7 @@
                 <summary class="category-create-trigger">
                     <span>
                         Crear categoría
-                        <small>Agrega nombre, imagen y posicion en la tienda.</small>
+                        <small>Agrega nombre, imagen y posición en la tienda.</small>
                     </span>
                     <span aria-hidden="true">+</span>
                 </summary>
@@ -593,7 +593,7 @@
                         <label>
                             Imagen
                             <input type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1200" data-quality="0.84" data-output="webp" data-max-size="8388608">
-                            <span class="category-form-help">JPG, PNG o WebP. Maximo 8 MB.</span>
+                            <span class="category-form-help">JPG, PNG o WebP. Máximo 8 MB.</span>
                         </label>
 
                         <label>
@@ -632,7 +632,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
                         </span>
                         <h3>No hay categorías registradas</h3>
-                        <p>Crea categorías para ordenar el catálogo y fácilitar la exploracion de productos.</p>
+                        <p>Crea categorías para ordenar el catálogo y facilitar la exploración de productos.</p>
                     </div>
                 </div>
             @else

@@ -35,7 +35,7 @@
                     <span class="resource-metric__value">{{ $store->whatsapp ?: 'Sin WhatsApp' }}</span>
                 </div>
                 <div class="resource-metric">
-                    <span class="resource-metric__label">Metodo</span>
+                    <span class="resource-metric__label">Método</span>
                     <span class="resource-metric__value">Pedido manual</span>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                     @if($mercadoPagoAccount?->isConnected())
                         <span class="resource-badge resource-badge--active">Conectado</span>
                     @elseif(($mercadoPagoAccount?->status) === \App\Models\StorePaymentAccount::STATUS_EXPIRED)
-                        <span class="resource-badge resource-badge--warning">Requiere revision</span>
+                        <span class="resource-badge resource-badge--warning">Requiere revisión</span>
                     @else
                         <span class="resource-badge">No conectado</span>
                     @endif
@@ -73,7 +73,7 @@
                         @elseif(($mercadoPagoAccount?->status) === \App\Models\StorePaymentAccount::STATUS_EXPIRED)
                             Token vencido
                         @else
-                            Pendiente de conexion
+                            Pendiente de conexión
                         @endif
                     </span>
                 </div>
@@ -82,7 +82,7 @@
                     <span class="resource-metric__value">{{ $mercadoPagoAccount?->provider_user_id ? 'ID ' . $mercadoPagoAccount->provider_user_id : 'Sin cuenta conectada' }}</span>
                 </div>
                 <div class="resource-metric">
-                    <span class="resource-metric__label">Conexion</span>
+                    <span class="resource-metric__label">Conexión</span>
                     <span class="resource-metric__value">{{ $mercadoPagoAccount?->connected_at ? $mercadoPagoAccount->connected_at->format('d/m/Y') : 'Sin fecha' }}</span>
                 </div>
                 <div class="resource-metric">
@@ -124,10 +124,10 @@
             <div class="resource-metrics">
                 <div class="resource-metric">
                     <span class="resource-metric__label">Modo</span>
-                    <span class="resource-metric__value">{{ ($wompiAccount?->mode ?? 'sandbox') === 'production' ? 'Produccion' : 'Pruebas' }}</span>
+                    <span class="resource-metric__value">{{ ($wompiAccount?->mode ?? 'sandbox') === 'production' ? 'Producción' : 'Pruebas' }}</span>
                 </div>
                 <div class="resource-metric">
-                    <span class="resource-metric__label">Conexion</span>
+                    <span class="resource-metric__label">Conexión</span>
                     <span class="resource-metric__value">{{ $wompiAccount?->connected_at ? $wompiAccount->connected_at->format('d/m/Y') : 'Sin fecha' }}</span>
                 </div>
                 <div class="resource-metric">
@@ -137,7 +137,7 @@
             </div>
 
             <p class="resource-card__description">
-                Pega las llaves de tu comercio Wompi. Vendly solo las usara para generar pagos y confirmar eventos de esta tienda.
+                Pega las llaves de tu comercio Wompi. Vendly solo las usará para generar pagos y confirmar eventos de esta tienda.
             </p>
 
             <form method="POST" action="{{ route('admin.payments.wompi.update') }}" class="settings-form">
@@ -153,12 +153,12 @@
                         <span class="field-label">Modo</span>
                         <select class="input" name="mode">
                             <option value="sandbox" @selected(($wompiAccount?->mode ?? 'sandbox') === 'sandbox')>Pruebas</option>
-                            <option value="production" @selected(($wompiAccount?->mode ?? 'sandbox') === 'production')>Produccion</option>
+                            <option value="production" @selected(($wompiAccount?->mode ?? 'sandbox') === 'production')>Producción</option>
                         </select>
                     </label>
 
                     <label class="field-wrap">
-                        <span class="field-label">Llave publica</span>
+                        <span class="field-label">Llave pública</span>
                         <input class="input" type="text" name="public_key" value="{{ old('public_key', $wompiAccount?->public_key) }}" placeholder="pub_test_...">
                     </label>
 

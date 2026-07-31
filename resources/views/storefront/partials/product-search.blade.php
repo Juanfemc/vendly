@@ -19,7 +19,7 @@
         </div>
 
         @if($productSearchValue !== '')
-            <a href="{{ $productSearchAction }}" class="product-search-clear">Limpiar busqueda</a>
+            <a href="{{ $productSearchAction }}" class="product-search-clear">Limpiar búsqueda</a>
         @endif
     </form>
 @endif

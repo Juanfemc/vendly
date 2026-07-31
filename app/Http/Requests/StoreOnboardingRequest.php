@@ -17,6 +17,9 @@ class StoreOnboardingRequest extends FormRequest
     {
         $store = $this->user()?->store ?? $this->user()?->stores()->first();
         $phone = preg_replace('/\D+/', '', (string) $this->input('whatsapp')) ?: '';
+        $subdomain = Store::normalizeSubdomain(
+            $this->input('subdomain') ?: $this->input('name') ?: $store?->subdomain ?: $store?->name
+        );
 
         if (strlen($phone) === 10 && str_starts_with($phone, '3')) {
             $phone = '57'.$phone;
@@ -25,14 +28,28 @@ class StoreOnboardingRequest extends FormRequest
         $this->merge([
             'business_type' => $store?->business_type ?: 'store',
             'whatsapp' => $phone,
+            'subdomain' => $subdomain,
         ]);
     }
 
     public function rules(): array
     {
+        $store = $this->user()?->store ?? $this->user()?->stores()->first();
+        $allowsSubdomain = Store::supportsSubdomainColumn() && (bool) $store?->allowsSubdomain();
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'business_type' => ['required', Rule::in(array_keys(Store::businessTypeOptions()))],
+            'subdomain' => array_filter([
+                $allowsSubdomain ? 'required' : 'nullable',
+                'string',
+                'max:63',
+                'regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/',
+                Rule::notIn(Store::reservedSubdomains()),
+                $allowsSubdomain
+                    ? Rule::unique('stores', 'subdomain')->ignore($store?->id)
+                    : null,
+            ]),
             'whatsapp' => ['required', 'regex:/^573\d{9}$/'],
             'location' => ['nullable', 'string', 'max:255'],
             'shop_copy' => ['nullable', 'string', 'max:320'],
@@ -50,7 +67,7 @@ class StoreOnboardingRequest extends FormRequest
             $brandColor = '#' . $brandColor;
         }
 
-        return [
+        $data = [
             'name' => $this->validated('name'),
             'business_type' => $this->validated('business_type'),
             'whatsapp' => $this->validated('whatsapp'),
@@ -60,5 +77,13 @@ class StoreOnboardingRequest extends FormRequest
             'text_color' => Store::automaticTextColorFor('#ffffff'),
             'background_color' => '#ffffff',
         ];
+
+        $store = $this->user()?->store ?? $this->user()?->stores()->first();
+
+        if (Store::supportsSubdomainColumn()) {
+            $data['subdomain'] = $store?->allowsSubdomain() ? $this->validated('subdomain') : null;
+        }
+
+        return $data;
     }
 }

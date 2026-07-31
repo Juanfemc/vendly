@@ -68,7 +68,7 @@ class StoreCategoryController extends Controller
         $store = $this->storeForRequest($request);
         if (! $store->allowsCategories()) {
             return $this->redirectToCategories($store)
-                ->with('error', 'El plan ' . $store->planLabel() . ' no incluye categorias.');
+                ->with('error', 'El plan ' . $store->planLabel() . ' no incluye categorías.');
         }
 
         $request->merge([
@@ -98,8 +98,8 @@ class StoreCategoryController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ], [
-            'image.image' => 'La imagen de la categoria debe ser un archivo de imagen valido.',
-            'image.max' => 'La imagen de la categoria no puede pesar mas de 8 MB. Comprimela o elige una imagen mas liviana.',
+            'image.image' => 'La imagen de la categoría debe ser un archivo de imagen válido.',
+            'image.max' => 'La imagen de la categoría no puede pesar más de 8 MB. Comprímela o elige una imagen más liviana.',
         ]);
 
         $category = $store->categories()->create([
@@ -112,13 +112,13 @@ class StoreCategoryController extends Controller
         ]);
 
         $this->adminUpdateService->record(
-            'Categoria creada',
+            'Categoría creada',
             $category->name . ' en ' . $store->name,
-            'categoria',
+            'categoría',
             route('admin.categories.edit', $category)
         );
 
-        return $this->redirectToCategories($store)->with('success', 'Categoria creada.');
+        return $this->redirectToCategories($store)->with('success', 'Categoría creada.');
     }
 
     public function edit(StoreCategory $category): View
@@ -166,8 +166,8 @@ class StoreCategoryController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ], [
-            'image.image' => 'La imagen de la categoria debe ser un archivo de imagen valido.',
-            'image.max' => 'La imagen de la categoria no puede pesar mas de 8 MB. Comprimela o elige una imagen mas liviana.',
+            'image.image' => 'La imagen de la categoría debe ser un archivo de imagen válido.',
+            'image.max' => 'La imagen de la categoría no puede pesar más de 8 MB. Comprímela o elige una imagen más liviana.',
         ]);
 
         $oldName = $category->name;
@@ -195,13 +195,13 @@ class StoreCategoryController extends Controller
         }
 
         $this->adminUpdateService->record(
-            'Categoria actualizada',
+            'Categoría actualizada',
             $category->name . ' en ' . $store->name,
-            'categoria',
+            'categoría',
             route('admin.categories.edit', $category)
         );
 
-        return $this->redirectToCategories($store)->with('success', 'Categoria actualizada.');
+        return $this->redirectToCategories($store)->with('success', 'Categoría actualizada.');
     }
 
     public function destroy(StoreCategory $category): RedirectResponse
@@ -221,9 +221,9 @@ class StoreCategoryController extends Controller
         $categoryName = $category->name;
         $category->delete();
 
-        $this->adminUpdateService->record('Categoria eliminada', $categoryName . ' en ' . $store->name, 'categoria');
+        $this->adminUpdateService->record('Categoría eliminada', $categoryName . ' en ' . $store->name, 'categoría');
 
-        return $this->redirectToCategories($store)->with('success', 'Categoria eliminada.');
+        return $this->redirectToCategories($store)->with('success', 'Categoría eliminada.');
     }
 
     protected function currentStore(): Store

@@ -114,19 +114,19 @@
 
                 <div class="grid-two">
                     <label>
-                        <span>Compra minima</span>
+                        <span>Compra mínima</span>
                         <input type="text" name="min_subtotal" value="{{ old('min_subtotal', 0) }}" placeholder="0">
                     </label>
 
                     <label>
-                        <span>Descuento maximo (opcional)</span>
+                        <span>Descuento máximo (opcional)</span>
                         <input type="text" name="max_discount_amount" value="{{ old('max_discount_amount') }}" placeholder="Solo para porcentajes">
                     </label>
                 </div>
 
                 <div class="grid-two">
                     <label>
-                        <span>Limite de usos (opcional)</span>
+                        <span>Límite de usos (opcional)</span>
                         <input type="number" name="usage_limit" value="{{ old('usage_limit') }}" min="1" placeholder="Ej: 50">
                     </label>
                 </div>
@@ -193,7 +193,7 @@
                             </div>
                             @if($coupon->max_discount_amount)
                                 <div class="resource-metric">
-                                    <span class="resource-metric__label">Maximo</span>
+                                    <span class="resource-metric__label">Máximo</span>
                                     <span class="resource-metric__value">$ {{ number_format((float) $coupon->max_discount_amount, 0, ',', '.') }}</span>
                                 </div>
                             @endif
@@ -207,7 +207,7 @@
                             <button type="submit" class="btn btn-secondary">{{ $coupon->is_active ? 'Desactivar' : 'Activar' }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.coupons.destroy', $coupon) }}" data-confirm-delete data-confirm-message="Eliminar este cupon?">
+                        <form method="POST" action="{{ route('admin.coupons.destroy', $coupon) }}" data-confirm-delete data-confirm-message="¿Eliminar este cupón?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">Eliminar</button>

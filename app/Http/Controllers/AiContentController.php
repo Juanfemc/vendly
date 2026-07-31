@@ -145,7 +145,10 @@ class AiContentController extends Controller
 
     private function errorStatus(RuntimeException $exception): int
     {
-        return str_contains($exception->getMessage(), 'creditos IA suficientes') ? 402 : 422;
+        return str_contains($exception->getMessage(), 'créditos IA suficientes')
+            || str_contains($exception->getMessage(), 'creditos IA suficientes')
+            ? 402
+            : 422;
     }
 
     private function storeForRequest(Request $request, array $validated): ?Store
@@ -253,7 +256,7 @@ class AiContentController extends Controller
             AiContentService::PRODUCT_FEATURES,
             AiContentService::PRODUCT_IMAGE,
         ], true) && $name === '' && $category === '' && $description === '' && $material === '') {
-            throw new RuntimeException('Agrega primero el nombre, categoria o detalles del producto para generar contenido con IA.');
+            throw new RuntimeException('Agrega primero el nombre, categoría o detalles del producto para generar contenido con IA.');
         }
     }
 }

@@ -167,7 +167,7 @@ class Store extends Model
     public static function planOptions(): array
     {
         return [
-            self::PLAN_BASIC => 'Basico',
+            self::PLAN_BASIC => 'Básico',
             self::PLAN_PRO => 'Pro',
             self::PLAN_PREMIUM => 'Premium',
         ];
@@ -447,10 +447,15 @@ class Store extends Model
                 'complete' => filled($this->whatsapp_verified_at),
             ],
             'profile' => [
-                'label' => 'Nombre de tienda configurado',
-                'description' => 'Usa un nombre claro para que tus clientes te reconozcan.',
+                'label' => 'Nombre y enlace configurados',
+                'description' => 'Usa un nombre claro y un subdominio facil de compartir.',
                 'complete' => trim((string) $this->name) !== ''
-                    && trim((string) $this->business_type) !== '',
+                    && trim((string) $this->business_type) !== ''
+                    && (
+                        ! self::supportsSubdomainColumn()
+                        || ! $this->allowsSubdomain()
+                        || trim((string) $this->subdomain) !== ''
+                    ),
             ],
             'identity' => [
                 'label' => 'Logo agregado',
@@ -583,7 +588,7 @@ class Store extends Model
 
     public function termsAcceptanceTitle(): string
     {
-        return trim((string) $this->terms_title) ?: 'Acepto los terminos y condiciones';
+        return trim((string) $this->terms_title) ?: 'Acepto los términos y condiciones';
     }
 
     public function termsAcceptanceVersion(): string
@@ -596,7 +601,7 @@ class Store extends Model
         return [
             'last_name' => [
                 'label' => 'Apellidos',
-                'description' => 'Util para tiendas que necesitan nombre completo.',
+                'description' => 'Útil para tiendas que necesitan nombre completo.',
                 'default_enabled' => true,
                 'default_required' => true,
             ],
@@ -607,20 +612,20 @@ class Store extends Model
                 'default_required' => false,
             ],
             'document' => [
-                'label' => 'Cedula o documento',
-                'description' => 'Recomendado si haces envios formales o facturacion.',
+                'label' => 'Cédula o documento',
+                'description' => 'Recomendado si haces envíos formales o facturación.',
                 'default_enabled' => false,
                 'default_required' => false,
             ],
             'address' => [
-                'label' => 'Direccion',
+                'label' => 'Dirección',
                 'description' => 'Necesario si entregas a domicilio.',
                 'default_enabled' => true,
                 'default_required' => true,
             ],
             'apartment' => [
                 'label' => 'Casa, apto o referencia',
-                'description' => 'Complementa la direccion sin hacerlo obligatorio.',
+                'description' => 'Complementa la dirección sin hacerlo obligatorio.',
                 'default_enabled' => true,
                 'default_required' => false,
             ],
@@ -632,7 +637,7 @@ class Store extends Model
             ],
             'city' => [
                 'label' => 'Ciudad y departamento',
-                'description' => 'Se fuerza si tienes envio local/fuera de ciudad.',
+                'description' => 'Se fuerza si tienes envío local/fuera de ciudad.',
                 'default_enabled' => true,
                 'default_required' => true,
             ],
@@ -806,7 +811,7 @@ class Store extends Model
         $baseCost = max(0, (float) ($isLocal ? $this->local_delivery_cost : $this->outside_delivery_cost));
 
         return [
-            'name' => $isLocal ? 'Envio local: ' . $localCity : 'Envio fuera de ' . $localCity,
+            'name' => $isLocal ? 'Envío local: ' . $localCity : 'Envío fuera de ' . $localCity,
             'cost' => $this->shippingCostForAmount($baseCost, $subtotal),
             'base_cost' => $baseCost,
             'is_local' => $isLocal,
@@ -1015,7 +1020,7 @@ class Store extends Model
             ->values();
 
         if ($this->free_shipping_minimum !== null && (float) $this->free_shipping_minimum > 0) {
-            $messages->prepend('Envio gratis desde $' . number_format((float) $this->free_shipping_minimum, 0, ',', '.'));
+            $messages->prepend('Envío gratis desde $' . number_format((float) $this->free_shipping_minimum, 0, ',', '.'));
         }
 
         return $messages->unique()->values()->all();

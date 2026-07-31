@@ -351,7 +351,7 @@
                 </div>
 
                 <div class="onboarding-field">
-                    <label for="business_hours">Horario de atencion</label>
+                    <label for="business_hours">Horario de atención</label>
                     <textarea id="business_hours" name="business_hours" rows="3" placeholder="Ej: Lunes a viernes 8:00 AM - 6:00 PM">{{ old('business_hours') }}</textarea>
                 </div>
 

@@ -3,7 +3,7 @@
     $sidebarStores = $sidebarUser?->stores()->get() ?? collect();
     $sidebarStore = $sidebarUser?->store ?? $sidebarStores->first();
     $sidebarAllowsTemplates = $sidebarStores->contains(fn ($store) => $store->allowsTemplates());
-    $sidebarStoreUrl = $sidebarStore?->slug ? url('/' . $sidebarStore->slug) : url('/');
+    $sidebarStoreUrl = $sidebarStore?->slug ? app(\App\Services\StorefrontUrlService::class)->publicHome($sidebarStore) : url('/');
     $sidebarStoreHost = parse_url($sidebarStoreUrl, PHP_URL_HOST) ?: config('app.name', 'Vendly');
     $sidebarPlanLabel = $sidebarStore?->planLabel() ?? 'Admin';
     $sidebarUnreadNotifications = 0;

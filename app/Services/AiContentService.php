@@ -79,7 +79,7 @@ class AiContentService
         return implode(' ', [
             'Eres un asistente de ecommerce para tiendas colombianas.',
             'Escribe en espanol claro, vendedor y profesional.',
-            'No inventes descuentos, garantia, stock, envios ni metodos de pago si no aparecen en el contexto.',
+            'No inventes descuentos, garantía, stock, envíos ni métodos de pago si no aparecen en el contexto.',
             'Devuelve solo JSON valido, sin markdown.',
         ]);
     }
@@ -105,10 +105,10 @@ class AiContentService
     {
         return match ($type) {
             self::PRODUCT_NAME => ['name' => 'Nombre corto, comercial y sin comillas.'],
-            self::PRODUCT_BADGES => ['badges' => ['3 etiquetas cortas, maximo 18 caracteres cada una.']],
-            self::PRODUCT_FEATURES => ['features' => ['5 caracteristicas o beneficios concretos, cortos y verificables.']],
-            self::ANNOUNCEMENT => ['announcements' => ['3 avisos promocionales breves, maximo 90 caracteres cada uno.']],
-            default => ['description' => 'Descripcion de producto de 70 a 120 palabras.'],
+            self::PRODUCT_BADGES => ['badges' => ['3 etiquetas cortas, máximo 18 caracteres cada una.']],
+            self::PRODUCT_FEATURES => ['features' => ['5 características o beneficios concretos, cortos y verificables.']],
+            self::ANNOUNCEMENT => ['announcements' => ['3 avisos promocionales breves, máximo 90 caracteres cada uno.']],
+            default => ['description' => 'Descripción de producto de 70 a 120 palabras.'],
         };
     }
 

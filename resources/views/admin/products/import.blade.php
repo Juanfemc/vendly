@@ -6,6 +6,11 @@
     $summary = $preview['summary'] ?? null;
     $rows = collect($preview['rows'] ?? []);
     $hasErrors = $summary && (int) ($summary['errors'] ?? 0) > 0;
+    $productFileMaxKb = $productFileMaxKb ?? 5120;
+    $imagesZipMaxKb = $imagesZipMaxKb ?? 51200;
+    $productFileMaxBytes = $productFileMaxKb * 1024;
+    $imagesZipMaxBytes = $imagesZipMaxKb * 1024;
+    $totalUploadMaxBytes = $productFileMaxBytes + $imagesZipMaxBytes;
 @endphp
 
 <style>
@@ -217,6 +222,21 @@
         color: #1e3a8a;
     }
 
+    .product-import-client-error {
+        display: none;
+        padding: 12px 14px;
+        border: 1px solid #fecaca;
+        border-radius: 13px;
+        background: #fef2f2;
+        color: #b42318;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+
+    .product-import-client-error.is-visible {
+        display: block;
+    }
+
     @media (max-width: 780px) {
         .product-import-grid,
         .product-import-summary {
@@ -265,20 +285,30 @@
     <section class="product-import-card">
         <div>
             <h2>Archivo de productos</h2>
-                <p class="product-import-help">Columnas obligatorias: <strong>nombre</strong> y <strong>precio</strong>. Puedes agregar categoria, descripcion, caracteristicas, material, stock, precio_antes, etiquetas, agotado, imagen_url o imagen.</p>
+                <p class="product-import-help">Columnas obligatorias: <strong>nombre</strong> y <strong>precio</strong>. Puedes agregar categoría, descripción, características, material, stock, precio_antes, etiquetas, agotado, imagen_url o imagen.</p>
         </div>
 
-        <form method="POST" action="{{ route('admin.products.import.preview') }}" enctype="multipart/form-data" class="product-import-grid">
+        <form
+            method="POST"
+            action="{{ route('admin.products.import.preview') }}"
+            enctype="multipart/form-data"
+            class="product-import-grid"
+            data-product-import-form
+            data-file-max="{{ $productFileMaxBytes }}"
+            data-zip-max="{{ $imagesZipMaxBytes }}"
+            data-total-max="{{ $totalUploadMaxBytes }}"
+        >
             @csrf
             <div class="product-import-field">
                 <label for="file">Archivo CSV o XLSX</label>
                 <input id="file" type="file" name="file" accept=".csv,.txt,.xlsx" required>
+                <p class="product-import-help">Máximo {{ number_format($productFileMaxKb / 1024, 0, ',', '.') }} MB. El Excel no debe traer imágenes incrustadas; usa imagen_url o un ZIP.</p>
             </div>
 
             <div class="product-import-field">
-                <label for="images_zip">ZIP de imagenes opcional</label>
+                <label for="images_zip">ZIP de imágenes opcional</label>
                 <input id="images_zip" type="file" name="images_zip" accept=".zip">
-                <p class="product-import-help">Usalo si la columna <strong>imagen</strong> tiene nombres como camiseta.jpg. Maximo 50MB.</p>
+                <p class="product-import-help">Úsalo si la columna <strong>imagen</strong> tiene nombres como camiseta.jpg. Máximo 50 MB.</p>
             </div>
 
             @if(auth()->user()?->isAdmin())
@@ -297,6 +327,7 @@
                 <button type="submit" class="btn">Revisar archivo</button>
                 <a href="{{ route('admin.products.import.template') }}" class="btn btn-secondary">Usar plantilla</a>
             </div>
+            <div class="product-import-client-error" data-product-import-error aria-live="polite"></div>
         </form>
     </section>
 
@@ -304,7 +335,7 @@
         <section class="product-import-card">
             <div>
                 <h2>Vista previa</h2>
-                <p class="product-import-help">Tienda: <strong>{{ $preview['store_name'] ?? 'Tienda' }}</strong>. Nada se guarda hasta que confirmes la importacion.</p>
+                <p class="product-import-help">Tienda: <strong>{{ $preview['store_name'] ?? 'Tienda' }}</strong>. Nada se guarda hasta que confirmes la importación.</p>
             </div>
 
             <div class="product-import-summary">
@@ -324,7 +355,7 @@
 
             @if(($summary['available_slots'] ?? null) !== null)
                 <div class="product-import-note">
-                    Tu plan permite importar {{ $summary['available_slots'] }} producto(s) mas en este momento.
+                    Tu plan permite importar {{ $summary['available_slots'] }} producto(s) más en este momento.
                 </div>
             @endif
 
@@ -342,7 +373,7 @@
                             <th>Estado</th>
                             <th>Nombre</th>
                             <th>Precio</th>
-                            <th>Categoria</th>
+                            <th>Categoría</th>
                             <th>Stock</th>
                             <th>Imagen</th>
                             <th>Etiquetas</th>
@@ -355,7 +386,7 @@
                                 <td>{{ $row['line'] }}</td>
                                 <td>
                                     <span class="product-import-status {{ $row['valid'] ? 'is-valid' : 'is-error' }}">
-                                        {{ $row['valid'] ? 'Valido' : 'Revisar' }}
+                                        {{ $row['valid'] ? 'Válido' : 'Revisar' }}
                                     </span>
                                 </td>
                                 <td>{{ $row['data']['name'] ?: 'Sin nombre' }}</td>
@@ -366,7 +397,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td>{{ $row['data']['category'] ?: 'Sin categoria' }}</td>
+                                <td>{{ $row['data']['category'] ?: 'Sin categoría' }}</td>
                                 <td>{{ $row['data']['stock_quantity'] ?? 'Ilimitado' }}</td>
                                 <td>
                                     @if(($row['data']['image_source']['type'] ?? 'none') === 'url')
@@ -398,7 +429,7 @@
             <div class="product-import-actions">
                 <form method="POST" action="{{ route('admin.products.import.store') }}">
                     @csrf
-                    <button type="submit" class="btn" @disabled($hasErrors)>Confirmar importacion</button>
+                    <button type="submit" class="btn" @disabled($hasErrors)>Confirmar importación</button>
                 </form>
 
                 <form method="POST" action="{{ route('admin.products.import.destroy') }}">
@@ -411,3 +442,68 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (() => {
+        const form = document.querySelector('[data-product-import-form]');
+
+        if (! form) {
+            return;
+        }
+
+        const fileInput = form.querySelector('input[name="file"]');
+        const zipInput = form.querySelector('input[name="images_zip"]');
+        const errorBox = form.querySelector('[data-product-import-error]');
+        const fileMax = Number(form.dataset.fileMax || 0);
+        const zipMax = Number(form.dataset.zipMax || 0);
+        const totalMax = Number(form.dataset.totalMax || 0);
+        const formatMb = (bytes) => `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
+
+        const setError = (message = '') => {
+            if (! errorBox) {
+                return;
+            }
+
+            errorBox.textContent = message;
+            errorBox.classList.toggle('is-visible', message !== '');
+        };
+
+        const selectedFile = (input) => input?.files?.[0] || null;
+
+        const validateFiles = () => {
+            const productFile = selectedFile(fileInput);
+            const imagesZip = selectedFile(zipInput);
+            const totalSize = (productFile?.size || 0) + (imagesZip?.size || 0);
+
+            if (productFile && fileMax > 0 && productFile.size > fileMax) {
+                return `La plantilla pesa ${formatMb(productFile.size)}. Sube un CSV o XLSX de máximo ${formatMb(fileMax)}. Si el Excel tiene imágenes incrustadas, quítalas y usa imagen_url o ZIP.`;
+            }
+
+            if (imagesZip && zipMax > 0 && imagesZip.size > zipMax) {
+                return `El ZIP pesa ${formatMb(imagesZip.size)}. Sube un ZIP de máximo ${formatMb(zipMax)}.`;
+            }
+
+            if (totalMax > 0 && totalSize > totalMax) {
+                return `Los archivos pesan ${formatMb(totalSize)} en total. Sube máximo ${formatMb(totalMax)} por importación.`;
+            }
+
+            return '';
+        };
+
+        [fileInput, zipInput].forEach((input) => {
+            input?.addEventListener('change', () => setError(validateFiles()));
+        });
+
+        form.addEventListener('submit', (event) => {
+            const error = validateFiles();
+
+            if (error !== '') {
+                event.preventDefault();
+                setError(error);
+                errorBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    })();
+</script>
+@endpush

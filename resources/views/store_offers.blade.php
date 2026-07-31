@@ -100,7 +100,7 @@
                 @endif
             @else
                 <div class="empty-state">
-                    No encontramos {{ $itemsLabel }} en oferta para esa busqueda.
+                    No encontramos {{ $itemsLabel }} en oferta para esa búsqueda.
                 </div>
             @endif
         </section>

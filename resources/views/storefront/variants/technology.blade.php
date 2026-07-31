@@ -37,10 +37,10 @@
         </form>
     </div>
 
-    <section class="minimal-shop-layout" id="catalogo" aria-label="Catalogo">
+    <section class="minimal-shop-layout" id="catalogo" aria-label="Catálogo">
         <aside class="minimal-shop-sidebar">
-            <h2>Categorias</h2>
-            <nav aria-label="Categorias">
+            <h2>Categorías</h2>
+            <nav aria-label="Categorías">
                 <a href="{{ $minimalCategoryUrl() }}" data-minimal-category-link @class(['is-active' => ! $selectedHomeCategorySlug])>
                     <span class="minimal-shop-category-icon">{!! $icons::categoryIcon('Todos los productos') !!}</span>
                     <span class="minimal-shop-category-label">Todos los productos</span>
@@ -73,7 +73,7 @@
             @forelse($minimalRecommendationProducts as $product)
                 @include('storefront.partials.minimal-product-card', ['product' => $product, 'isRecommendation' => true])
             @empty
-                <div class="minimal-shop-empty-state">Aun no hay recomendaciones.</div>
+                <div class="minimal-shop-empty-state">Aún no hay recomendaciones.</div>
             @endforelse
         </div>
     </section>

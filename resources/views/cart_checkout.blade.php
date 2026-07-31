@@ -28,6 +28,7 @@
     $itemLabel = $isRestaurant ? 'plato' : ($isReservationStore ? 'servicio' : 'producto');
     $brandTheme = \App\Support\BrandTheme::from($store?->brand_color);
     $storefrontUrls = app(\App\Services\StorefrontUrlService::class);
+    $storeHomeUrl = $store ? $storefrontUrls->publicHome($store) : url('/');
     $cartCount = collect($cart)->sum('quantity');
     $instagramUrl = $page?->instagramUrl;
     $facebookUrl = $page?->facebookUrl;
@@ -86,10 +87,10 @@
     @if (empty($cart))
         <main class="{{ $isTechnologyStore ? 'tech-checkout-shell shell' : ($isFashionStore ? 'fashion-checkout-shell' : '') }}">
         <div class="empty-state">
-            <h1 class="section-title">Tu {{ $cartLabel }} esta vacio</h1>
+            <h1 class="section-title">Tu {{ $cartLabel }} está vacío</h1>
             <p>No hay {{ $itemsLabel }} agregados todavia.</p>
             @if ($store)
-                <a href="{{ url('/' . $store->slug) }}">Volver al {{ $businessLabel }}</a>
+                <a href="{{ $storeHomeUrl }}">Volver al {{ $businessLabel }}</a>
             @endif
         </div>
         </main>
@@ -221,8 +222,8 @@
                             @if($hasLocalDelivery)
                                 <div class="field-wrap local-delivery-preview" data-local-delivery-preview>
                                     <div>
-                                        <span data-local-delivery-label>Envio por ciudad</span>
-                                        <small>Selecciona la ciudad para calcular el costo de envio.</small>
+                                        <span data-local-delivery-label>Envío por ciudad</span>
+                                        <small>Selecciona la ciudad para calcular el costo de envío.</small>
                                     </div>
                                     <strong data-local-delivery-price>Por calcular</strong>
                                 </div>
@@ -237,7 +238,7 @@
                                     <div class="field-wrap">
                                         <div class="flash-error" style="background:#f8fafc; color:#475569; border-color:#e2e8f0;">
                                             @if(trim((string) $store?->business_hours) !== '')
-                                                Horario de atencion:<br>{{ $store->business_hours }}
+                                                Horario de atención:<br>{{ $store->business_hours }}
                                             @endif
                                             @if($scheduleSummary)
                                                 @if(trim((string) $store?->business_hours) !== '')<br><br>@endif
@@ -255,7 +256,7 @@
 
                             @if(! $hasLocalDelivery && $shippingMethods->isNotEmpty())
                                 <fieldset class="field-wrap shipping-fieldset">
-                                    <legend class="checkout-field-label">Metodo de envio</legend>
+                                    <legend class="checkout-field-label">Método de envío</legend>
                                     <div class="shipping-options">
                                         @foreach($shippingMethods as $method)
                                             <label class="shipping-option">
@@ -271,7 +272,7 @@
                                                 <span class="shipping-option-mark" aria-hidden="true"></span>
                                                 <span class="shipping-option-copy">
                                                     <strong>{{ $method['name'] }}</strong>
-                                                    <small>{{ ((float) $method['cost']) > 0 ? 'Costo de envio' : 'Sin costo adicional' }}</small>
+                                                    <small>{{ ((float) $method['cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</small>
                                                 </span>
                                                 <span class="shipping-option-price" data-shipping-price>
                                                     {{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}
@@ -315,37 +316,64 @@
 
                             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => $isTechnologyStore ? 'technology' : 'default'])
 
-                            <div class="checkout-payment-options">
-                                <button class="primary-btn" type="submit">
-                                    <span>{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</span>
-                                    <small>La tienda te confirma por WhatsApp</small>
-                                </button>
-
-                                @if($mercadoPagoAvailable || ($wompiAvailable ?? false))
-                                    <div class="payment-divider"><span>o paga en línea</span></div>
-                                @endif
+                            <div class="checkout-payment-options" data-payment-options>
+                                <label class="checkout-payment-option">
+                                    <input
+                                        type="radio"
+                                        name="checkout_payment_choice"
+                                        value="whatsapp"
+                                        data-payment-choice
+                                        data-payment-action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}"
+                                        data-payment-label="{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}"
+                                        checked
+                                    >
+                                    <span class="checkout-payment-mark">WA</span>
+                                    <span>
+                                        <strong>WhatsApp</strong>
+                                        <small>La tienda te confirma por WhatsApp</small>
+                                    </span>
+                                </label>
 
                                 @if($mercadoPagoAvailable)
-                                    <button
-                                        class="mercadopago-btn"
-                                        type="submit"
-                                        formaction="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
-                                    >
-                                        <span class="mercadopago-mark">MP</span>
-                                        <span>Pagar con Mercado Pago</span>
-                                    </button>
+                                    <label class="checkout-payment-option">
+                                        <input
+                                            type="radio"
+                                            name="checkout_payment_choice"
+                                            value="mercadopago"
+                                            data-payment-choice
+                                            data-payment-action="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
+                                            data-payment-label="Pagar con Mercado Pago"
+                                        >
+                                        <span class="checkout-payment-mark checkout-payment-mark--mp">MP</span>
+                                        <span>
+                                            <strong>Mercado Pago</strong>
+                                            <small>Pago en línea con tarjeta o cuenta Mercado Pago</small>
+                                        </span>
+                                    </label>
                                 @endif
 
                                 @if($wompiAvailable ?? false)
-                                    <button
-                                        class="wompi-btn"
-                                        type="submit"
-                                        formaction="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
-                                    >
-                                        <span class="wompi-mark">W</span>
-                                        <span>Pagar con Wompi</span>
-                                    </button>
+                                    <label class="checkout-payment-option">
+                                        <input
+                                            type="radio"
+                                            name="checkout_payment_choice"
+                                            value="wompi"
+                                            data-payment-choice
+                                            data-payment-action="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
+                                            data-payment-label="Pagar con Wompi"
+                                        >
+                                        <span class="checkout-payment-mark checkout-payment-mark--wompi">W</span>
+                                        <span>
+                                            <strong>Wompi</strong>
+                                            <small>Pago en línea seguro con Wompi</small>
+                                        </span>
+                                    </label>
                                 @endif
+
+                                <button class="primary-btn" type="submit" data-payment-submit>
+                                    <span>{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</span>
+                                    <small>Continuar con el método seleccionado</small>
+                                </button>
                             </div>
                         </section>
                     </form>
@@ -440,7 +468,7 @@
 
                     @if($hasShippingCost)
                         <div class="summary-line">
-                            <span>Envio</span>
+                            <span>Envío</span>
                             <strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong>
                         </div>
 

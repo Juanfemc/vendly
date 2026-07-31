@@ -44,7 +44,7 @@
                 <div class="minimal-shop-cart-info">
                     <strong>{{ $item['name'] ?? 'Producto' }}</strong>
                     <small>{{ $drawerVariant !== '' ? $drawerVariant : 'Sin variante' }}</small>
-                    <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 2) }}</b>
+                    <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
                 </div>
                 <div class="minimal-shop-cart-controls">
                     <button type="button" data-cart-drawer-minus aria-label="Restar">&minus;</button>
@@ -62,16 +62,16 @@
             </article>
         @empty
             <div class="minimal-shop-cart-empty" data-cart-drawer-empty>
-                <strong>Tu carrito esta vacio</strong>
+                <strong>Tu carrito está vacío</strong>
                 <a href="{{ $storefrontUrls->home($store) }}">Volver a la tienda</a>
             </div>
         @endforelse
     </div>
 
     <div class="minimal-shop-cart-summary">
-        <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 2) }}</strong></p>
-        <p><span>Envio</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
-        <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 2) }}</strong></p>
+        <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
+        <p><span>Envío</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
+        <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
     </div>
 
     <div class="minimal-shop-cart-actions">

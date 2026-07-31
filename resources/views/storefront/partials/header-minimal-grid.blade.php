@@ -37,12 +37,12 @@
     }
 
     $mobileMenuSections[] = [
-            'label' => 'Informacion movil',
+            'label' => 'Información móvil',
             'items' => array_values(array_filter([
                 ($showAboutSection ?? false)
                     ? ['icon' => 'users', 'text' => 'Nosotros', 'url' => $storefrontUrls->about($store)]
                     : null,
-                ['icon' => 'phone-call', 'text' => 'Contactanos', 'url' => '#minimalShopFooter'],
+                ['icon' => 'phone-call', 'text' => 'Contáctanos', 'url' => '#minimalShopFooter'],
             ])),
         ];
 @endphp
@@ -51,7 +51,7 @@
     <input class="minimal-shop-menu-state" type="checkbox" id="{{ $mobileMenuId }}" aria-hidden="true">
     <input class="minimal-shop-cart-state" type="checkbox" id="{{ $cartDrawerId }}" aria-hidden="true">
     <div class="shell minimal-shop-nav">
-        <label class="minimal-shop-menu-button" for="{{ $mobileMenuId }}" aria-label="Abrir menu">
+        <label class="minimal-shop-menu-button" for="{{ $mobileMenuId }}" aria-label="Abrir menú">
             {!! $icons::icon('menu') !!}
         </label>
 
@@ -64,7 +64,7 @@
             <span>{{ $store->name }}</span>
         </a>
 
-        <nav class="minimal-shop-links" aria-label="Navegacion principal">
+        <nav class="minimal-shop-links" aria-label="Navegación principal">
             <a href="{{ $storefrontUrls->home($store) }}">Inicio</a>
             <a href="{{ $storefrontUrls->products($store) }}">Tienda</a>
             @foreach($mobileBadgeFilters as $badge)
@@ -129,8 +129,8 @@
         <div class="minimal-shop-cart-free">
             <div>
                 <span>&check;</span>
-                <p>Tu pedido califica para envio gratis.</p>
-                <small>Estas a $20.00<br>del envio gratis</small>
+                <p>Tu pedido califica para envío gratis.</p>
+                <small>Estás a $20.00<br>del envío gratis</small>
             </div>
             <b style="--cart-progress: {{ $drawerProgress }}%"></b>
         </div>
@@ -160,7 +160,7 @@
                         @else
                             <small>Sin variante</small>
                         @endif
-                        <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 2) }}</b>
+                        <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
                     </div>
                     <div class="minimal-shop-cart-controls">
                         <button type="button" data-cart-drawer-minus aria-label="Restar">&minus;</button>
@@ -178,9 +178,9 @@
         </div>
 
         <div class="minimal-shop-cart-summary">
-            <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 2) }}</strong></p>
-            <p><span>Envio</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
-            <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 2) }}</strong></p>
+            <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
+            <p><span>Envío</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
+            <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
         </div>
 
         <div class="minimal-shop-cart-actions">
@@ -192,7 +192,7 @@
     </aside>
 
     <aside class="minimal-shop-mobile-menu" aria-label="Menu movil">
-        <label class="minimal-shop-menu-close" for="{{ $mobileMenuId }}" aria-label="Cerrar menu">
+        <label class="minimal-shop-menu-close" for="{{ $mobileMenuId }}" aria-label="Cerrar menú">
             {!! $icons::icon('close') !!}
         </label>
 
@@ -205,8 +205,8 @@
             <strong>{{ $store->name }}</strong>
         </a>
 
-        <nav class="minimal-shop-mobile-section" aria-label="Categorias moviles">
-            <p>Comprar por categoria</p>
+        <nav class="minimal-shop-mobile-section" aria-label="Categorías móviles">
+            <p>Comprar por categoría</p>
             <a href="{{ $minimalCategoryUrl() }}" data-minimal-category-link>
                 <span>{!! $icons::icon('grid') !!}</span>
                 <strong>Todos los productos</strong>
@@ -225,7 +225,7 @@
             @if($hasMoreMobileCategories)
                 <a href="{{ $minimalCategoryUrl() }}" data-minimal-category-link>
                     <span>{!! $icons::icon('grid') !!}</span>
-                    <strong>Ver todas las categorias</strong>
+                    <strong>Ver todas las categorías</strong>
                     <i>{!! $icons::icon('arrow') !!}</i>
                 </a>
             @endif

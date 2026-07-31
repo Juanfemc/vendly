@@ -20,7 +20,7 @@
         $canManageStore = $page->canManageStore;
         $businessLabel = $isRestaurant ? 'Restaurante' : ($isReservationStore ? 'Reservas' : 'Tienda');
         $cartLabel = $isRestaurant ? 'Pedido' : ($isReservationStore ? 'Reserva' : 'Carrito');
-        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catalogo');
+        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catálogo');
         $itemsLabel = $isRestaurant ? 'platos' : ($isReservationStore ? 'servicios' : 'productos');
         $addLabel = $isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito');
         $showStorefrontSectionLinks = false;
@@ -44,6 +44,8 @@
         $seo = \App\Support\SeoMeta::category($store, $category->name, $category->description, $metaUrl, $seoImage, $fallbackDescription, $faviconImage);
         $brandTheme = \App\Support\BrandTheme::from($store->brand_color);
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
+        $categoryImageUrl = $storageAssetUrl($category->image);
+        $categoryInitial = mb_strtoupper(mb_substr($category->name, 0, 1));
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -70,10 +72,21 @@
     @endif
 
     <main class="shell">
-        <section class="category-page-hero">
+        <section class="category-page-hero category-page-hero--category">
+            <div class="category-page-mark" aria-hidden="true">
+                @if($categoryImageUrl)
+                    <img src="{{ $categoryImageUrl }}" alt="">
+                @else
+                    <span>{{ $categoryInitial }}</span>
+                @endif
+            </div>
+
             <div class="category-page-copy">
-                <span class="eyebrow">{{ $businessLabel }}</span>
                 <h1>{{ $category->name }}</h1>
+                <p>{{ $products->total() }} {{ $products->total() === 1 ? rtrim($itemsLabel, 's') : $itemsLabel }}</p>
+                @if($category->description)
+                    <small>{{ $category->description }}</small>
+                @endif
             </div>
         </section>
 
@@ -102,9 +115,9 @@
             @else
                 <div class="empty-state">
                     @if(($searchQuery ?? '') !== '')
-                        No encontramos {{ $itemsLabel }} en esta categoria para esa busqueda.
+                        No encontramos {{ $itemsLabel }} en esta categoría para esa búsqueda.
                     @else
-                        Aun no hay {{ $itemsLabel }} en esta categoria.
+                        Aún no hay {{ $itemsLabel }} en esta categoría.
                     @endif
                 </div>
             @endif

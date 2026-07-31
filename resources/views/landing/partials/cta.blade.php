@@ -4,7 +4,7 @@
         
         <div>
             <span class="section-kicker">Únete a Vendly</span>
-            <h2>Tú negocio merece verse profesional.</h2>
+            <h2>Tu negocio merece verse profesional.</h2>
             <p>Crea tu tienda gratis y empieza a vender por WhatsApp hoy mismo.</p>
         </div>
         <a href="{{ route('trial-signup.create') }}" class="btn btn--primary final-card-action" data-meta-event="Lead">Crear mi tienda gratis</a>

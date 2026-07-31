@@ -72,7 +72,7 @@
 
                 <div class="resource-metrics">
                     <div class="resource-metric">
-                        <span class="resource-metric__label">Metodo de pago</span>
+                        <span class="resource-metric__label">Método de pago</span>
                         <span class="resource-metric__value">{{ $order->paymentMethodLabel() }}</span>
                     </div>
                     <div class="resource-metric">
@@ -92,9 +92,9 @@
                         <span class="resource-metric__value">{{ $order->customer_neighborhood ?: 'Sin barrio' }}</span>
                     </div>
                     <div class="resource-metric">
-                        <span class="resource-metric__label">Envio</span>
+                        <span class="resource-metric__label">Envío</span>
                         <span class="resource-metric__value order-shipping-value">
-                            <span>{{ $order->shipping_method ?: 'Sin envio' }}</span>
+                            <span>{{ $order->shipping_method ?: 'Sin envío' }}</span>
                             <strong>
                                 @if((float) ($order->shipping_cost ?? 0) > 0)
                                     ${{ number_format((float) $order->shipping_cost, 0, ',', '.') }}
@@ -178,7 +178,7 @@
                     <button type="submit" class="btn">Guardar estado</button>
                 </form>
 
-                <form method="POST" action="{{ route('admin.orders.destroy', $order) }}" data-confirm-delete data-confirm-message="Eliminar este pedido? Esta accion no se puede deshacer.">
+                <form method="POST" action="{{ route('admin.orders.destroy', $order) }}" data-confirm-delete data-confirm-message="¿Eliminar este pedido? Esta acción no se puede deshacer.">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Eliminar pedido</button>

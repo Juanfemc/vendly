@@ -59,7 +59,9 @@
 
             <nav class="fashion-footer-column" aria-label="About Us">
                 <h3>About Us</h3>
-                <a href="{{ $storefrontUrls->about($store) }}">Our Story</a>
+                @if($showAboutSection ?? false)
+                    <a href="{{ $storefrontUrls->about($store) }}">Our Story</a>
+                @endif
                 <a href="{{ $storefrontUrls->home($store) }}">Careers</a>
                 <a href="{{ $storefrontUrls->home($store) }}">Press</a>
                 <a href="{{ $storefrontUrls->home($store) }}">Sustainability</a>

@@ -28,7 +28,7 @@
         $tiktokUrl = $page->tiktokUrl;
         $canManageStore = $page->canManageStore;
         $cartLabel = $isRestaurant ? 'Pedido' : ($isReservationStore ? 'Reserva' : 'Carrito');
-        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catalogo');
+        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catálogo');
         $showStorefrontSectionLinks = false;
         $storefrontVariant = $isTechnologyStore ? 'technology' : ($isFashionStore ? 'fashion' : ($isRestaurant ? 'restaurant' : ($isSupplementStore ? 'supplements' : 'default')));
         $variantStylesheets = [
@@ -42,7 +42,7 @@
             ? 'Detalle del plato'
             : ($isReservationStore ? 'Vista previa del servicio' : ($isSupplementStore ? 'Vista previa del suplemento' : ($isTechnologyStore ? 'Vista previa del producto' : 'Vista previa del producto')));
         $previewCopy = $isRestaurant
-            ? 'Revisa el plato, ajusta la cantidad y agregalo al pedido para enviarlo por WhatsApp.'
+            ? 'Revisa el plato, ajusta la cantidad y agrégalo al pedido para enviarlo por WhatsApp.'
             : ($isSupplementStore
                 ? 'Revisa el detalle del suplemento, ajusta la cantidad y decide si quieres agregarlo al carrito o ir directo al flujo de compra por WhatsApp.'
                 : ($isTechnologyStore
@@ -56,8 +56,10 @@
         $shareUrlEncoded = rawurlencode($metaUrl);
         $shareTextEncoded = rawurlencode($shareText);
         $storeWhatsappNumber = $store->whatsappNumber();
+        $productWhatsappVerb = $isReservationStore ? 'reservar' : ($isRestaurant ? 'pedir' : 'comprar');
+        $productWhatsappLabel = $isReservationStore ? 'Reservar por WhatsApp' : ($isRestaurant ? 'Pedir por WhatsApp' : 'Pedir por WhatsApp');
         $productWhatsappUrl = $storeWhatsappNumber !== ''
-            ? 'https://wa.me/' . $storeWhatsappNumber . '?text=' . rawurlencode('Hola, quiero comprar ' . $product->name . ' en ' . $store->name . ': ' . $metaUrl)
+            ? 'https://wa.me/' . $storeWhatsappNumber . '?text=' . rawurlencode('Hola, quiero ' . $productWhatsappVerb . ' ' . $product->name . ' en ' . $store->name . ': ' . $metaUrl)
             : null;
         $brandTheme = \App\Support\BrandTheme::from($store->brand_color);
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
@@ -75,7 +77,7 @@
         $productReviewCount = $productReviewsEnabled ? $product->reviewCount() : 0;
         $productReviewAverage = $productReviewsEnabled ? $product->reviewAverage() : null;
         $productReviewLabel = $productReviewCount > 0
-            ? number_format($productReviewAverage, 1) . ' (' . $productReviewCount . ' ' . \Illuminate\Support\Str::plural('resena', $productReviewCount) . ')'
+            ? number_format($productReviewAverage, 1) . ' (' . $productReviewCount . ' ' . \Illuminate\Support\Str::plural('reseña', $productReviewCount) . ')'
             : null;
         $productPreviewLimit = 170;
         $makeProductPreview = function (string $text) use ($productPreviewLimit): array {
@@ -98,7 +100,7 @@
             ];
         };
         $compactProductText = fn (string $text): string => trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
-        $productDescriptionFallback = $isRestaurant ? 'Este plato aun no tiene una descripcion amplia, pero ya esta disponible para pedir por WhatsApp.' : ($isReservationStore ? 'Este servicio aun no tiene una descripcion amplia configurada, pero ya esta listo para reservarse.' : 'Este producto aun no tiene una descripcion amplia configurada, pero ya esta listo para venderse.');
+        $productDescriptionFallback = $isRestaurant ? 'Este plato aún no tiene una descripción amplia, pero ya está disponible para pedir por WhatsApp.' : ($isReservationStore ? 'Este servicio aún no tiene una descripción amplia configurada, pero ya está listo para reservarse.' : 'Este producto aún no tiene una descripción amplia configurada, pero ya está listo para venderse.');
         $productDescriptionText = $compactProductText(\App\Support\ProductText::plain($product->description) ?: $productDescriptionFallback);
         [$productDescriptionPreview, $productDescriptionMore] = $makeProductPreview($productDescriptionText);
         $hasLongProductDescription = $productDescriptionMore !== '';
@@ -170,7 +172,7 @@
                     </div>
 
                     @if($productGallery->count() > 1)
-                        <div class="product-carousel-thumbs" aria-label="Imagenes del producto">
+                        <div class="product-carousel-thumbs" aria-label="Imágenes del producto">
                             @foreach($productGallery as $index => $galleryImage)
                                 <button
                                     type="button"
@@ -258,7 +260,7 @@
                 @endif
 
                 @if($isProductSoldOut)
-                    <div class="product-unavailable-message">{{ $isRestaurant ? 'Este plato esta agotado por ahora.' : 'Este producto esta agotado por ahora.' }}</div>
+                    <div class="product-unavailable-message">{{ $isRestaurant ? 'Este plato está agotado por ahora.' : 'Este producto está agotado por ahora.' }}</div>
                 @else
                     <form action="{{ route('cart.add', $product->id) }}" method="POST" class="product-detail-form add-to-cart-form">
                         @csrf
@@ -266,9 +268,9 @@
                             <div class="product-options product-options--detail">
                                 @if($product->hasSizes())
                                     <label>
-                                        <span>{{ $isRestaurant ? 'Porcion' : 'Talla' }}</span>
+                                        <span>{{ $isRestaurant ? 'Porción' : 'Talla' }}</span>
                                         <select name="size" data-role="selected-size" required>
-                                            <option value="">{{ $isRestaurant ? 'Selecciona porcion' : 'Selecciona talla' }}</option>
+                                            <option value="">{{ $isRestaurant ? 'Selecciona porción' : 'Selecciona talla' }}</option>
                                             @foreach($product->sizes as $size)
                                                 <option value="{{ $size }}">{{ $size }}</option>
                                             @endforeach
@@ -278,9 +280,9 @@
 
                                 @if($product->hasColors())
                                     <label>
-                                        <span>{{ $isRestaurant ? 'Opcion' : 'Color' }}</span>
+                                        <span>{{ $isRestaurant ? 'Opción' : 'Color' }}</span>
                                         <select name="color" data-role="selected-color" required>
-                                            <option value="">{{ $isRestaurant ? 'Selecciona opcion' : 'Selecciona color' }}</option>
+                                            <option value="">{{ $isRestaurant ? 'Selecciona opción' : 'Selecciona color' }}</option>
                                             @foreach($product->colors as $color)
                                                 <option value="{{ $color }}">{{ $color }}</option>
                                             @endforeach
@@ -309,24 +311,13 @@
                                 @disabled($product->hasVariants())
                             >
                                 {!! $detailCartIcon !!}
-                                <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : ($isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito')) }}</span>
+                                <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opción' : ($isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito')) }}</span>
                             </button>
 
-                            @if($productWhatsappUrl)
-                                <a
-                                    href="{{ $productWhatsappUrl }}"
-                                    class="product-detail-whatsapp-action"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Comprar por WhatsApp"
-                                >
-                                    <img src="{{ asset('images/icons/icon-whatsapp.png') }}" alt="" aria-hidden="true">
-                                </a>
-                            @endif
                         </div>
                     </form>
 
-                    <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" class="product-detail-form" data-role="buy-now-form">
+                    <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" class="product-detail-form product-detail-buy-now-form {{ $productWhatsappUrl ? 'product-detail-buy-now-form--with-whatsapp' : '' }}" data-role="buy-now-form">
                         @csrf
                         <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
                         <input type="hidden" name="size" value="" data-role="buy-now-size">
@@ -337,10 +328,23 @@
                         </button>
                     </form>
 
+                    @if($productWhatsappUrl)
+                        <a
+                            href="{{ $productWhatsappUrl }}"
+                            class="product-detail-whatsapp-action"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="{{ $productWhatsappLabel }}"
+                        >
+                            <img src="{{ asset('images/icons/icon-whatsapp.png') }}" alt="" aria-hidden="true">
+                            <span>{{ $productWhatsappLabel }}</span>
+                        </a>
+                    @endif
+
                 @endif
 
                 @if($productReviewsEnabled)
-                    <section class="product-review-compact" aria-label="Resenas del producto">
+                    <section class="product-review-compact" aria-label="Reseñas del producto">
                         <div class="product-review-compact-head">
                             <div>
                                 <h2>Reseñas</h2>
@@ -656,7 +660,7 @@
                     if (button.hasAttribute('data-variant-add-action')) {
                         const label = button.querySelector('[data-variant-label]');
                         const nextLabel = isDisabled
-                            ? 'Selecciona una opcion'
+                            ? 'Selecciona una opción'
                             : (button.dataset.enabledLabel || 'Agregar al carrito');
 
                         if (label) {

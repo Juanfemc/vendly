@@ -94,6 +94,10 @@ class Product extends Model
             return $this->where($field, $value)->first();
         }
 
+        if (request()->is('admin/*')) {
+            return $this->where($this->getRouteKeyName(), $value)->first();
+        }
+
         return $this->where($this->getRouteKeyName(), $value)
             ->when(is_string($value) && ctype_digit($value), fn ($query) => $query->orWhere($this->getKeyName(), (int) $value))
             ->first();

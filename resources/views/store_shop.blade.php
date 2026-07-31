@@ -28,23 +28,23 @@
         $businessLabel = $isRestaurant ? 'Restaurante' : ($isReservationStore ? 'Reservas' : 'Tienda');
         $cartLabel = $isRestaurant ? 'Pedido' : ($isReservationStore ? 'Reserva' : 'Carrito');
         $collectionLabel = $isRestaurant ? 'menu' : ($isReservationStore ? 'servicios' : 'catalogo');
-        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catalogo');
+        $collectionLabelTitle = $isRestaurant ? 'Carta' : ($isReservationStore ? 'Servicios' : 'Catálogo');
         $itemsLabel = $isRestaurant ? 'platos' : ($isReservationStore ? 'servicios' : 'productos');
         $productsTotal = $storeProductsTotal ?? (method_exists($catalogProducts, 'total') ? $catalogProducts->total() : $allProducts->count());
         $buyNowLabel = $isRestaurant ? 'Pedir ahora' : ($isReservationStore ? 'Reservar ahora' : 'Comprar ahora');
         $addLabel = $isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito');
         $heroEyebrow = $isRestaurant
             ? 'Recomendados de la casa'
-            : ($isTechnologyStore ? 'Lo ultimo en tecnologia' : ($isSupplementStore ? 'Bienestar y rendimiento' : ($isReservationStore ? 'Servicios disponibles' : 'Nueva coleccion')));
+            : ($isTechnologyStore ? 'Lo último en tecnología' : ($isSupplementStore ? 'Bienestar y rendimiento' : ($isReservationStore ? 'Servicios disponibles' : 'Nueva colección')));
         $defaultHeroCopy = $isRestaurant
             ? 'Elige tus platos favoritos de la carta y envia tu pedido directo por WhatsApp.'
             : ($isTechnologyStore
-                ? 'Descubre tecnologia seleccionada para tu dia a dia, con una vitrina pensada para resolver compras rapido por WhatsApp.'
+                ? 'Descubre tecnología seleccionada para tu día a día, con una vitrina pensada para resolver compras rápido por WhatsApp.'
                 : ($isSupplementStore
                     ? 'Encuentra suplementos para energia, fuerza y bienestar en una experiencia pensada para cerrar pedidos por WhatsApp.'
                     : ($isReservationStore
-                        ? 'Explora nuestros servicios y solicita tu reserva rapido por WhatsApp.'
-                        : 'Descubre nuestros productos y compra rapido desde una experiencia pensada para cerrar pedidos por WhatsApp.')));
+                        ? 'Explora nuestros servicios y solicita tu reserva rápido por WhatsApp.'
+                        : 'Descubre nuestros productos y compra rápido desde una experiencia pensada para cerrar pedidos por WhatsApp.')));
         $heroShortCopy = trim((string) $store->shop_copy) !== '' ? trim((string) $store->shop_copy) : $defaultHeroCopy;
         $defaultShopCopy = $isRestaurant
             ? 'Revisa la carta de ' . ($store->name ?? 'el restaurante') . ', elige tus platos favoritos y envia tu pedido por WhatsApp.'
@@ -54,7 +54,7 @@
                     ? 'Explora la linea actual de suplementos de ' . ($store->name ?? 'la tienda') . ' y agrega tus favoritos al carrito para cerrar tu pedido por WhatsApp.'
                     : ($isReservationStore
                         ? 'Explora los servicios disponibles de ' . ($store->name ?? 'la tienda') . ' y solicita tu reserva por WhatsApp.'
-                        : 'Explora la coleccion actual de ' . ($store->name ?? 'la tienda') . ' y agrega tus favoritos al carrito para finalizar tu pedido por WhatsApp.')));
+                        : 'Explora la colección actual de ' . ($store->name ?? 'la tienda') . ' y agrega tus favoritos al carrito para finalizar tu pedido por WhatsApp.')));
         $productDescriptionFallback = $isRestaurant
             ? 'Plato recomendado del restaurante.'
             : ($isTechnologyStore ? 'Producto de tecnologia.' : ($isSupplementStore ? 'Suplemento de la tienda.' : ($isReservationStore ? 'Servicio disponible para reservar.' : 'Producto de la tienda.')));
@@ -76,7 +76,7 @@
         $heroOverlayButtonText = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_text ?? '')) : '';
         $heroOverlayButtonUrl = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_url ?? '')) : '';
         $heroOverlayButtonUrl = $heroOverlayButtonUrl !== '' ? $heroOverlayButtonUrl : $storefrontUrls->products($store);
-        $heroOverlayButtonText = $heroOverlayButtonText !== '' ? $heroOverlayButtonText : 'Ver todo';
+        $heroOverlayButtonText = $heroOverlayButtonText !== '' ? $heroOverlayButtonText : 'Comprar ahora';
         $showAboutSection = trim((string) $store->mission) !== '' && trim((string) $store->vision) !== '';
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])

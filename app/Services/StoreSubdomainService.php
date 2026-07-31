@@ -4,9 +4,39 @@ namespace App\Services;
 
 use App\Models\Store;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class StoreSubdomainService
 {
+    public function uniqueFrom(string $value, ?int $ignoreStoreId = null): ?string
+    {
+        if (! Store::supportsSubdomainColumn()) {
+            return null;
+        }
+
+        $base = Store::normalizeSubdomain(Str::ascii($value));
+
+        if (! $base) {
+            $base = 'tienda';
+        }
+
+        if (in_array($base, Store::reservedSubdomains(), true)) {
+            $base .= '-tienda';
+        }
+
+        $base = $this->truncateSubdomain($base);
+        $subdomain = $base;
+        $suffix = 2;
+
+        while ($this->subdomainExists($subdomain, $ignoreStoreId)) {
+            $suffixText = '-' . $suffix;
+            $subdomain = $this->truncateSubdomain($base, strlen($suffixText)) . $suffixText;
+            $suffix++;
+        }
+
+        return $subdomain;
+    }
+
     public function subdomainFromRequest(Request $request): ?string
     {
         return $this->subdomainFromHost($request->getHost());
@@ -100,5 +130,21 @@ class StoreSubdomainService
         $host = preg_replace('/:\d+$/', '', $host) ?? '';
 
         return $host === '' ? null : $host;
+    }
+
+    private function subdomainExists(string $subdomain, ?int $ignoreStoreId): bool
+    {
+        return Store::query()
+            ->where('subdomain', $subdomain)
+            ->when($ignoreStoreId, fn ($query) => $query->whereKeyNot($ignoreStoreId))
+            ->exists();
+    }
+
+    private function truncateSubdomain(string $value, int $reservedLength = 0): string
+    {
+        $maxLength = max(1, 63 - $reservedLength);
+        $value = substr($value, 0, $maxLength);
+
+        return trim($value, '-') ?: 'tienda';
     }
 }

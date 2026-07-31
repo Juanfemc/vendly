@@ -87,7 +87,7 @@
             </div>
 
             <div class="resource-actions">
-                <a href="{{ url('/' . $store->slug) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Ver tienda</a>
+                <a href="{{ app(\App\Services\StorefrontUrlService::class)->publicHome($store) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Ver tienda</a>
                 <a href="{{ route('admin.stores.edit', $store) }}" class="btn">Editar</a>
                 @if(\App\Models\Store::supportsSubscriptionColumns())
                     <form
@@ -133,7 +133,7 @@
                         <button type="submit" class="btn btn-secondary">Sumar créditos IA</button>
                     </form>
                 @endif
-                <form method="POST" action="{{ route('admin.stores.destroy', $store) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar esta tienda? Esta accion no se puede deshacer.">
+                <form method="POST" action="{{ route('admin.stores.destroy', $store) }}" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar esta tienda? Esta acción no se puede deshacer.">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Eliminar</button>

@@ -17,7 +17,7 @@
     $minimalSwatches = ['#111111', '#ffffff', '#33415f'];
     $minimalCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $minimalBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
-    $minimalDescription = \App\Support\ProductText::plain($product->description) ?: 'Disfruta ' . $product->name . ' con una experiencia pensada para comprar facil, rapido y con confianza.';
+    $minimalDescription = \App\Support\ProductText::plain($product->description) ?: 'Disfruta ' . $product->name . ' con una experiencia pensada para comprar fácil, rápido y con confianza.';
     $minimalFeatureItems = collect(preg_split('/\R+/', \App\Support\ProductText::featureLines($product->features)) ?: [])
         ->map(fn ($feature) => trim($feature, " \t\n\r\0\x0B-*"))
         ->filter()
@@ -34,7 +34,7 @@
     }
 
     $minimalBenefits = [
-        ['icon' => 'E', 'title' => 'Envio gratis', 'copy' => 'En pedidos seleccionados'],
+        ['icon' => 'E', 'title' => 'Envío gratis', 'copy' => 'En pedidos seleccionados'],
         ['icon' => 'D', 'title' => 'Devoluciones faciles', 'copy' => 'Politica de devolucion disponible'],
         $minimalAllowsOnlinePayments
             ? ['icon' => 'P', 'title' => 'Pago seguro', 'copy' => 'Compra protegida']
@@ -117,7 +117,7 @@
                     @if($minimalReviewsEnabled && $minimalReviewCount > 0)
                         <a href="#minimalProductReviews">Resenas ({{ $minimalReviewCount }})</a>
                     @endif
-                    <a href="#minimalProductDescription">Envios y devoluciones</a>
+                    <a href="#minimalProductDescription">Envíos y devoluciones</a>
                 </nav>
                 <div id="minimalProductDescription" class="minimal-product-copy">
                     <p>{{ $minimalDescription }}</p>

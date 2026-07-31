@@ -138,18 +138,18 @@ class AiImageService
         if ($type === AiContentService::STORE_COVER_IMAGE) {
             return implode(' ', [
                 'Crea una portada horizontal profesional para una tienda online colombiana.',
-                'Estilo ecommerce moderno, limpio, realista, con buena iluminacion y espacio visual para texto.',
+                'Estilo ecommerce moderno, limpio, realista, con buena iluminación y espacio visual para texto.',
                 'No incluyas texto, logos, marcas registradas, personas reconocibles ni marcas de agua.',
                 "Nombre de tienda: {$store->name}. Tipo de negocio: {$business}.",
-                'Descripcion de tienda: ' . ((string) ($store->shop_copy ?: 'Catalogo online profesional.')),
+                'Descripción de tienda: ' . ((string) ($store->shop_copy ?: 'Catálogo online profesional.')),
             ]);
         }
 
         if ($type === AiContentService::STORE_COVER_IMAGE_ENHANCE) {
             return implode(' ', [
                 'Mejora esta portada de tienda online sin cambiar su producto principal ni su identidad visual.',
-                'Optimiza iluminacion, nitidez, composicion horizontal, contraste y acabado profesional ecommerce.',
-                'Manten una apariencia natural, limpia y confiable. No agregues texto, marcas de agua ni logos nuevos.',
+                'Optimiza iluminación, nitidez, composición horizontal, contraste y acabado profesional ecommerce.',
+                'Mantén una apariencia natural, limpia y confiable. No agregues texto, marcas de agua ni logos nuevos.',
                 "Nombre de tienda: {$store->name}. Tipo de negocio: {$business}.",
             ]);
         }
@@ -158,11 +158,11 @@ class AiImageService
             return implode(' ', [
                 'Crea un logo cuadrado profesional para una tienda online colombiana.',
                 'Estilo moderno, simple, memorable y usable como avatar de tienda.',
-                'Fondo limpio, alto contraste, simbolo principal claro, sin mockups ni fotografias.',
-                'Puedes usar iniciales o un simbolo abstracto relacionado con el negocio.',
+                'Fondo limpio, alto contraste, símbolo principal claro, sin mockups ni fotografías.',
+                'Puedes usar iniciales o un símbolo abstracto relacionado con el negocio.',
                 'No incluyas marcas registradas, personas, sombras exageradas ni marcas de agua.',
                 "Nombre de tienda: {$store->name}. Tipo de negocio: {$business}.",
-                'Descripcion de tienda: ' . ((string) ($store->shop_copy ?: 'Catalogo online profesional.')),
+                'Descripción de tienda: ' . ((string) ($store->shop_copy ?: 'Catálogo online profesional.')),
                 'Color principal: ' . ((string) ($store->brand_color ?: '#ff6b00')) . '.',
             ]);
         }

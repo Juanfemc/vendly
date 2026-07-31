@@ -74,7 +74,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('admin.testimonials.destroy', $testimonial) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar este testimonio? Esta accion no se puede deshacer.">
+                    <form method="POST" action="{{ route('admin.testimonials.destroy', $testimonial) }}" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar este testimonio? Esta acción no se puede deshacer.">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger">Eliminar</button>

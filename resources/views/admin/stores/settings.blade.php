@@ -986,18 +986,18 @@
                 @if(\App\Models\Store::supportsHeroOverlayColumns())
                     <div class="catalog-field">
                         <label for="hero_overlay_title">Texto sobre portada</label>
-                        <input id="hero_overlay_title" type="text" name="hero_overlay_title" value="{{ old('hero_overlay_title', $store->hero_overlay_title) }}" maxlength="120" placeholder="Nueva coleccion">
+                        <input id="hero_overlay_title" type="text" name="hero_overlay_title" value="{{ old('hero_overlay_title', $store->hero_overlay_title) }}" maxlength="120" placeholder="Nueva colección">
                         <small>Se muestra centrado sobre el banner.</small>
                     </div>
                     <div class="catalog-field">
-                        <label for="hero_overlay_button_text">Texto del boton</label>
-                        <input id="hero_overlay_button_text" type="text" name="hero_overlay_button_text" value="{{ old('hero_overlay_button_text', $store->hero_overlay_button_text) }}" maxlength="60" placeholder="Ver todo">
-                        <small>Si lo dejas vacio se usara "Ver todo".</small>
+                        <label for="hero_overlay_button_text">Texto del botón</label>
+                        <input id="hero_overlay_button_text" type="text" name="hero_overlay_button_text" value="{{ old('hero_overlay_button_text', $store->hero_overlay_button_text) }}" maxlength="60" placeholder="Comprar ahora">
+                        <small>Si lo dejas vacío se usará "Comprar ahora".</small>
                     </div>
                     <div class="catalog-field catalog-field--full">
-                        <label for="hero_overlay_button_url">Enlace del boton</label>
+                        <label for="hero_overlay_button_url">Enlace del botón</label>
                         <input id="hero_overlay_button_url" type="text" name="hero_overlay_button_url" value="{{ old('hero_overlay_button_url', $store->hero_overlay_button_url) }}" maxlength="255" placeholder="/productos o https://...">
-                        <small>Si lo dejas vacio llevara a todos los productos.</small>
+                        <small>Si lo dejas vacío llevará a todos los productos.</small>
                     </div>
                 @endif
 
@@ -1081,7 +1081,7 @@
                         <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                         <div>
                             <h3>Apariencia avanzada</h3>
-                            <p>Colores, fuentes y vistas completas estan disponibles desde Pro.</p>
+                            <p>Colores, fuentes y vistas completas están disponibles desde Pro.</p>
                         </div>
                     </div>
                     <span class="catalog-pro-pill">Pro</span>

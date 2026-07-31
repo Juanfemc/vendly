@@ -8,7 +8,7 @@ use Illuminate\Validation\Rules\Password;
 
 class TrialSignupRequest extends FormRequest
 {
-    public const WHATSAPP_CONSENT_TEXT = 'Acepto recibir por WhatsApp la bienvenida y mensajes relacionados con la activacion de mi tienda.';
+    public const WHATSAPP_CONSENT_TEXT = 'Acepto recibir por WhatsApp la bienvenida y mensajes relacionados con la activación de mi tienda.';
 
     protected function prepareForValidation(): void
     {
@@ -51,11 +51,11 @@ class TrialSignupRequest extends FormRequest
         ];
     }
 
-    public function storeData(string $slug): array
+    public function storeData(string $slug, ?string $subdomain = null): array
     {
         $storeName = trim((string) $this->validated('store_name'));
 
-        return [
+        $data = [
             'name' => $storeName !== '' ? $storeName : 'Tienda de '.$this->validated('user_name'),
             'business_type' => 'store',
             'plan' => Store::PLAN_PREMIUM,
@@ -78,5 +78,11 @@ class TrialSignupRequest extends FormRequest
             'responsive_product_columns' => 2,
             'is_active' => true,
         ];
+
+        if (Store::supportsSubdomainColumn()) {
+            $data['subdomain'] = $subdomain;
+        }
+
+        return $data;
     }
 }

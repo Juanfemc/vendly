@@ -24,10 +24,10 @@
         @if($termsCopy !== '' || $termsLink !== '')
             <div class="checkout-terms-actions">
                 @if($termsCopy !== '')
-                    <button type="button" class="checkout-terms-link" data-terms-open="{{ $termsModalId }}">Ver terminos</button>
+                    <button type="button" class="checkout-terms-link" data-terms-open="{{ $termsModalId }}">Ver términos</button>
                 @endif
                 @if($termsLink !== '')
-                    <a href="{{ $termsLink }}" target="_blank" rel="noopener noreferrer">{{ $termsCopy !== '' ? 'Ver pagina completa' : 'Ver terminos' }}</a>
+                    <a href="{{ $termsLink }}" target="_blank" rel="noopener noreferrer">{{ $termsCopy !== '' ? 'Ver página completa' : 'Ver términos' }}</a>
                 @endif
             </div>
         @endif
@@ -50,7 +50,7 @@
                         <p>Terminos de la tienda</p>
                         <h2 id="{{ $termsModalId }}Title">{{ $termsTitle }}</h2>
                     </div>
-                    <button type="button" class="checkout-terms-modal-close" data-terms-close aria-label="Cerrar terminos">&times;</button>
+                    <button type="button" class="checkout-terms-modal-close" data-terms-close aria-label="Cerrar términos">&times;</button>
                 </div>
                 <div class="checkout-terms-modal-body">
                     {!! nl2br(e($termsCopy)) !!}

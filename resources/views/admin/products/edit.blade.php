@@ -87,7 +87,7 @@
                                 <button type="submit" class="btn btn-success">Aprobar</button>
                             </form>
                         @endunless
-                        <form method="POST" action="{{ route('admin.product-reviews.destroy', $review) }}" data-confirm-delete data-confirm-message="Seguro que quieres eliminar esta reseña?">
+                        <form method="POST" action="{{ route('admin.product-reviews.destroy', $review) }}" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar esta reseña?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">Eliminar</button>

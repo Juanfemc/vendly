@@ -53,7 +53,7 @@
                 class="nav-toggle"
                 aria-expanded="false"
                 aria-controls="storefrontNavPanel"
-                aria-label="Abrir menu"
+                aria-label="Abrir menú"
             >
                 <span></span>
                 <span></span>
@@ -64,13 +64,13 @@
         <div class="nav-panel" id="storefrontNavPanel">
             <div class="nav-panel-head">
                 <span>{{ $store->name }}</span>
-                <button type="button" class="nav-close" aria-label="Cerrar menu">
+                <button type="button" class="nav-close" aria-label="Cerrar menú">
                     <span></span>
                     <span></span>
                 </button>
             </div>
 
-            <nav class="nav-links" aria-label="Navegacion principal">
+            <nav class="nav-links" aria-label="Navegación principal">
                 <a href="{{ $storefrontUrls->home($store) }}">Inicio</a>
                 @if($showAboutSection ?? false)
                     <a href="{{ $storefrontUrls->about($store) }}">Nosotros</a>
@@ -88,7 +88,7 @@
                 @if(($activeCategories ?? collect())->isNotEmpty())
                     <div class="nav-dropdown">
                         <button type="button" class="nav-dropdown-button" aria-haspopup="true" aria-expanded="false" aria-controls="storefrontCategoryMenu">
-                            <span>Categorias</span>
+                            <span>Categorías</span>
                             <span class="nav-dropdown-icon" aria-hidden="true"></span>
                         </button>
                         <div class="nav-dropdown-menu" id="storefrontCategoryMenu">
@@ -125,7 +125,7 @@
             </div>
         </div>
 
-        <button type="button" class="nav-backdrop" aria-label="Cerrar menu"></button>
+        <button type="button" class="nav-backdrop" aria-label="Cerrar menú"></button>
     </div>
 </header>
 </div>

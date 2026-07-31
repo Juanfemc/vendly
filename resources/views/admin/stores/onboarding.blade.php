@@ -7,6 +7,11 @@
 @endif
 
 @section('content')
+@php
+    $storefrontHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost();
+    $currentSubdomain = old('subdomain', $store->subdomain);
+    $canUseSubdomain = $store->allowsSubdomain();
+@endphp
 <style>
     .onboarding-page {
         display: grid;
@@ -434,10 +439,25 @@
             <div class="onboarding-form-grid">
                 <div class="onboarding-field">
                     <label for="onboarding_name">Nombre de tienda</label>
-                    <input id="onboarding_name" name="name" value="{{ old('name', $store->name) }}" required>
+                    <input id="onboarding_name" name="name" value="{{ old('name', $store->name) }}" required data-onboarding-store-name>
                     <small>El nombre debe ser fácil de recordar y reconocer.</small>
                     @error('name')<span class="onboarding-error">{{ $message }}</span>@enderror
                 </div>
+
+                @if($canUseSubdomain)
+                    <div class="onboarding-field">
+                        <label for="onboarding_subdomain">Enlace de tienda</label>
+                        <input id="onboarding_subdomain" name="subdomain" value="{{ $currentSubdomain }}" required placeholder="mitienda" inputmode="url" data-onboarding-subdomain>
+                        <small>Tu URL sera <span data-onboarding-subdomain-preview>{{ $currentSubdomain ?: 'mitienda' }}</span>.{{ $storefrontHost }}. Cambiala solo si quieres otro enlace publico.</small>
+                        @error('subdomain')<span class="onboarding-error">{{ $message }}</span>@enderror
+                    </div>
+                @else
+                    <div class="onboarding-field">
+                        <label>Enlace de tienda</label>
+                        <input value="{{ $storeUrl }}" readonly>
+                        <small>Los subdominios personalizados estan disponibles en planes Pro y Premium.</small>
+                    </div>
+                @endif
 
                 <div class="onboarding-field">
                     <label for="onboarding_whatsapp">WhatsApp de pedidos</label>
@@ -502,7 +522,7 @@
 
             <div class="onboarding-actions">
                 <button type="submit" class="btn">Guardar y continuar</button>
-                <a href="{{ url('/' . $store->slug) }}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Ver tienda</a>
+                <a href="{{ $storeUrl }}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Ver tienda</a>
             </div>
         </form>
 
@@ -522,6 +542,53 @@
         </aside>
     </div>
 </div>
+
+<script>
+    (() => {
+        const nameInput = document.querySelector('[data-onboarding-store-name]');
+        const subdomainInput = document.querySelector('[data-onboarding-subdomain]');
+        const preview = document.querySelector('[data-onboarding-subdomain-preview]');
+
+        if (! nameInput || ! subdomainInput) {
+            return;
+        }
+
+        const initialSubdomain = subdomainInput.value;
+        let subdomainTouched = Boolean({{ old('subdomain') ? 'true' : 'false' }});
+
+        const normalizeSubdomain = (value) => String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .slice(0, 63);
+
+        const syncPreview = () => {
+            if (preview) {
+                preview.textContent = subdomainInput.value || 'mitienda';
+            }
+        };
+
+        subdomainInput.addEventListener('input', () => {
+            subdomainTouched = true;
+            subdomainInput.value = normalizeSubdomain(subdomainInput.value);
+            syncPreview();
+        });
+
+        nameInput.addEventListener('input', () => {
+            if (subdomainTouched && subdomainInput.value !== initialSubdomain) {
+                return;
+            }
+
+            subdomainInput.value = normalizeSubdomain(nameInput.value) || initialSubdomain || 'mitienda';
+            syncPreview();
+        });
+
+        syncPreview();
+    })();
+</script>
 
 @if(! $store->whatsapp_verified_at)
     <script>

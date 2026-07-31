@@ -20,7 +20,7 @@
         $canManageStore = $page->canManageStore;
         $businessLabel = $isRestaurant ? 'Restaurante' : ($isReservationStore ? 'Reservas' : 'Tienda');
         $cartLabel = $isRestaurant ? 'Pedido' : ($isReservationStore ? 'Reserva' : 'Carrito');
-        $collectionLabelTitle = $isRestaurant ? 'Carta completa' : ($isReservationStore ? 'Servicios' : 'Catalogo');
+        $collectionLabelTitle = $isRestaurant ? 'Carta completa' : ($isReservationStore ? 'Servicios' : 'Catálogo');
         $itemsLabel = $isRestaurant ? 'platos' : ($isReservationStore ? 'servicios' : 'productos');
         $addLabel = $isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito');
         $showStorefrontSectionLinks = false;
@@ -103,9 +103,9 @@
             @else
                 <div class="empty-state">
                     @if(($searchQuery ?? '') !== '')
-                        No encontramos {{ $itemsLabel }} para esa busqueda.
+                        No encontramos {{ $itemsLabel }} para esa búsqueda.
                     @else
-                        Aun no hay {{ $itemsLabel }} publicados.
+                        Aún no hay {{ $itemsLabel }} publicados.
                     @endif
                 </div>
             @endif

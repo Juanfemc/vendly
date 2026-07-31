@@ -90,7 +90,7 @@
         @endif
         <input type="text" name="whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" placeholder="WhatsApp">
         <input type="text" name="location" value="{{ old('location', $store->location) }}" placeholder="Ubicación o dirección (opcional)">
-        <label class="field-label" for="business_hours">Horario de atencion</label>
+        <label class="field-label" for="business_hours">Horario de atención</label>
         <textarea id="business_hours" name="business_hours" placeholder="Ej: Lunes a viernes 8:00 AM - 6:00 PM">{{ old('business_hours', $store->business_hours) }}</textarea>
         @include('admin.stores.partials.theme-fields', ['store' => $store])
         <label class="field-label" for="shop_copy">Quienes somos</label>

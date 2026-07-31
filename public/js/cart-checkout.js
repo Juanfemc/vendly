@@ -6,6 +6,7 @@
     }
 
     const feedback = document.getElementById('cartFeedback');
+    const checkoutForm = document.getElementById('checkoutForm') || document.querySelector('.fashion-checkout-form');
     const totalEls = Array.from(document.querySelectorAll('[data-role="total"]'));
     const grandTotalEls = Array.from(document.querySelectorAll('[data-role="grand-total"]'));
     const shippingTotalEls = Array.from(document.querySelectorAll('[data-role="shipping-total"]'));
@@ -23,6 +24,8 @@
     const localDeliveryLabel = document.querySelector('[data-local-delivery-label]');
     const localDeliveryPrice = document.querySelector('[data-local-delivery-price]');
     const clearCartButton = document.getElementById('clearCartButton');
+    const paymentChoices = Array.from(document.querySelectorAll('[data-payment-choice]'));
+    const paymentSubmitButtons = Array.from(document.querySelectorAll('[data-payment-submit]'));
     const csrfToken = page.dataset.csrf || '';
     const updatedText = page.dataset.feedbackUpdated || 'Carrito actualizado';
     const updateErrorText = page.dataset.feedbackUpdateError || 'No se pudo actualizar el carrito.';
@@ -86,6 +89,30 @@
         feedback.classList.add('is-visible');
         clearTimeout(feedbackTimer);
         feedbackTimer = setTimeout(() => feedback.classList.remove('is-visible'), 1800);
+    };
+
+    const selectedPaymentChoice = () => paymentChoices.find((choice) => choice.checked);
+
+    const syncPaymentChoice = () => {
+        const selected = selectedPaymentChoice();
+
+        if (!selected) {
+            return;
+        }
+
+        paymentSubmitButtons.forEach((button) => {
+            const label = selected.dataset.paymentLabel;
+            const labelEl = button.querySelector('span');
+
+            if (labelEl && label) {
+                labelEl.textContent = label;
+                return;
+            }
+
+            if (label) {
+                button.textContent = label;
+            }
+        });
     };
 
     const shippingCost = () => {
@@ -335,6 +362,19 @@
         }
     });
 
+    paymentChoices.forEach((choice) => {
+        choice.addEventListener('change', syncPaymentChoice);
+    });
+
+    checkoutForm?.addEventListener('submit', () => {
+        const selected = selectedPaymentChoice();
+        const action = selected?.dataset.paymentAction;
+
+        if (action) {
+            checkoutForm.action = action;
+        }
+    });
+
     page.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-action]');
 
@@ -445,5 +485,6 @@
     cityInput?.addEventListener('change', refreshDiscountOrSummary);
 
     syncCityOptions();
+    syncPaymentChoice();
     updateSummary();
 })();

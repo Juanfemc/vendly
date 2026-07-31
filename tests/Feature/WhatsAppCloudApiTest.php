@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\WhatsAppCloudApiService;
+use App\Services\WhatsAppInboxService;
 use App\Services\WhatsAppStatusService;
 use App\Exceptions\WhatsAppRetryableException;
 use App\Jobs\SendWhatsAppTemplate;
@@ -77,7 +78,11 @@ test('whatsapp job records the provider message id without exposing recipient in
     expect($rawMessage->recipient)->not->toContain('573001112233')
         ->and($rawMessage->parameters)->not->toContain('Cliente');
 
-    (new SendWhatsAppTemplate($message->id))->handle(app(WhatsAppCloudApiService::class), app(WhatsAppStatusService::class));
+    (new SendWhatsAppTemplate($message->id))->handle(
+        app(WhatsAppCloudApiService::class),
+        app(WhatsAppStatusService::class),
+        app(WhatsAppInboxService::class),
+    );
 
     $message->refresh();
 
@@ -103,7 +108,11 @@ test('whatsapp job marks a successful response without message id as unknown', f
         'status' => WhatsAppMessage::STATUS_QUEUED,
     ]);
 
-    (new SendWhatsAppTemplate($message->id))->handle(app(WhatsAppCloudApiService::class), app(WhatsAppStatusService::class));
+    (new SendWhatsAppTemplate($message->id))->handle(
+        app(WhatsAppCloudApiService::class),
+        app(WhatsAppStatusService::class),
+        app(WhatsAppInboxService::class),
+    );
 
     expect($message->refresh()->status)->toBe(WhatsAppMessage::STATUS_UNKNOWN)
         ->and($message->provider_message_id)->toBeNull();
@@ -129,11 +138,19 @@ test('whatsapp job retries temporary meta failures', function () {
     ]);
     $job = new SendWhatsAppTemplate($message->id);
 
-    expect(fn () => $job->handle(app(WhatsAppCloudApiService::class), app(WhatsAppStatusService::class)))
+    expect(fn () => $job->handle(
+        app(WhatsAppCloudApiService::class),
+        app(WhatsAppStatusService::class),
+        app(WhatsAppInboxService::class),
+    ))
         ->toThrow(WhatsAppRetryableException::class);
     expect($message->refresh()->status)->toBe(WhatsAppMessage::STATUS_RETRYING);
 
-    $job->handle(app(WhatsAppCloudApiService::class), app(WhatsAppStatusService::class));
+    $job->handle(
+        app(WhatsAppCloudApiService::class),
+        app(WhatsAppStatusService::class),
+        app(WhatsAppInboxService::class),
+    );
 
     expect($message->refresh()->status)->toBe(WhatsAppMessage::STATUS_SENT)
         ->and($message->attempts)->toBe(2)

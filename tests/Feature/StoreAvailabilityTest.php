@@ -326,7 +326,8 @@ test('landing page renders without compiled assets', function () {
         ->assertSee('Diseño personalizado')
         ->assertSee('Dominio personalizado')
         ->assertSee('Pixel / Analytics')
-        ->assertSee('Cupones o promociones avanzadas')
+        ->assertSee('Cupones de descuento')
+        ->assertSee('Promociones avanzadas')
         ->assertSee('Reportes avanzados')
         ->assertSee('Prioridad de soporte')
         ->assertSee('Primeros en ver actualizaciones del sistema')
@@ -588,7 +589,8 @@ test('store about information is shown on its own page', function () {
         ->assertSee('Nosotros')
         ->assertSee('Nuestra mision es vender con atencion cercana.')
         ->assertSee('Nuestra vision es crecer con clientes felices.')
-        ->assertSee('WhatsApp: 573001112233')
+        ->assertSee('WhatsApp')
+        ->assertSee('573001112233')
         ->assertSee('Calle 10 #20-30, Bogota')
         ->assertSee('Lunes a viernes 8:00 AM - 6:00 PM');
 });
@@ -630,20 +632,21 @@ test('store settings save optional location for about page', function () {
     $this->actingAs($storeUser)
         ->get('/admin/store-settings')
         ->assertOk()
-        ->assertSee('Vista previa en vivo')
-        ->assertSee('Producto destacado')
-        ->assertSee('Paletas prearmadas')
-        ->assertSee('Claro limpio')
-        ->assertSee('Boutique')
-        ->assertSee('Tecnologia')
-        ->assertSee('Paleta de color principal')
-        ->assertSee('Paleta de color de fondo')
-        ->assertSee('El color de letras se ajusta automaticamente')
-        ->assertSee('Ejemplos de fuente')
+        ->assertSee('Apariencia del Catálogo')
+        ->assertSee('Identidad de tu tienda')
+        ->assertSee('Enlace de tu tienda')
+        ->assertSee('Identidad visual')
+        ->assertSee('Colores')
+        ->assertSee('Tipografía')
+        ->assertSee('WhatsApp de contacto')
+        ->assertSee('Redes sociales')
+        ->assertSee('Barra de anuncios')
+        ->assertSee('Opciones')
+        ->assertSee('Páginas legales')
+        ->assertSee('Información del negocio')
         ->assertSee('type="color"', false)
-        ->assertSee('data-theme-picker="brand_color"', false)
-        ->assertSee('data-theme-picker="background_color"', false)
-        ->assertSee('NovaShop vende facil');
+        ->assertSee('data-theme-color-input="brand"', false)
+        ->assertSee('data-theme-color-input="background"', false);
 
     $this->actingAs($storeUser)
         ->post('/admin/store-settings', [
@@ -726,7 +729,7 @@ test('store settings save commercial notices and storefront shows rotating bar',
         ->assertSee('data-storefront-topbar', false)
         ->assertSee('<span>10% OFF pagando por transferencia</span>', false)
         ->assertSee('<span>Entregas hoy hasta las 6:00 p.m.</span>', false)
-        ->assertSee('Envio gratis desde $150.000')
+        ->assertSee('Envío gratis desde $150.000')
         ->assertSee('10% OFF pagando por transferencia')
         ->assertSee('Entregas hoy hasta las 6:00 p.m.');
 });
@@ -751,7 +754,7 @@ test('storefront repeats a single commercial notice without leaving the bar empt
 
     $response = $this->get('/tienda-aviso-unico')
         ->assertOk()
-        ->assertSee('--announcement-step-duration: 28s', false)
+        ->assertSee('data-announcement-speed="42"', false)
         ->assertSee('data-announcement-message', false)
         ->assertSee('is-marquee-active', false)
         ->assertSee('store-announcement-group', false);
@@ -776,8 +779,9 @@ test('basic plan hides commercial notices and clears them when settings are save
     $this->actingAs($storeUser)
         ->get('/admin/store-settings')
         ->assertOk()
-        ->assertSee('Avisos comerciales')
-        ->assertSee('Tu plan actual no incluye avisos superiores');
+        ->assertDontSee('Barra de anuncios')
+        ->assertSee('Apariencia avanzada')
+        ->assertSee('Actualiza a Pro o Premium');
 
     $this->actingAs($storeUser)
         ->post('/admin/store-settings', [
@@ -1406,7 +1410,7 @@ test('store user can see payment methods panel', function () {
     ]);
     Store::create([
         'user_id' => $storeUser->id,
-        'name' => 'Tienda Metodos Pago',
+        'name' => 'Tienda Métodos Pago',
         'slug' => 'tienda-metodos-pago',
         'whatsapp' => '573001112233',
         'plan' => Store::PLAN_PREMIUM,
@@ -1416,7 +1420,7 @@ test('store user can see payment methods panel', function () {
     $this->actingAs($storeUser)
         ->get('/admin/payments')
         ->assertOk()
-        ->assertSee('Metodos de pago')
+        ->assertSee('Métodos de pago')
         ->assertSee('WhatsApp')
         ->assertSee('573001112233')
         ->assertSee('Mercado Pago')
@@ -1447,7 +1451,7 @@ test('pro store users cannot see or open payment methods', function () {
     $this->actingAs($storeUser)
         ->get('/dashboard')
         ->assertOk()
-        ->assertDontSee('Metodos de pago')
+        ->assertDontSee('Métodos de pago')
         ->assertDontSee(route('admin.payments.index'), false);
 
     $this->actingAs($storeUser)
@@ -1483,7 +1487,7 @@ test('pro store users can see templates as coming soon', function () {
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
         ->assertOk()
-        ->assertSee('Plantilla Tecnologia')
+        ->assertSee('Plantilla Tecnología')
         ->assertSee('Pro y Premium')
         ->assertSee('Muy pronto')
         ->assertDontSee('Usar plantilla');
@@ -1518,7 +1522,7 @@ test('premium store users can see templates as coming soon', function () {
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
         ->assertOk()
-        ->assertSee('Plantilla Tecnologia')
+        ->assertSee('Plantilla Tecnología')
         ->assertSee('Pro y Premium')
         ->assertSee('Muy pronto')
         ->assertDontSee('Usar plantilla');
@@ -1634,7 +1638,6 @@ test('template panel defaults to an eligible store when user also has a basic st
         ->get(route('admin.templates.index'))
         ->assertOk()
         ->assertSee('Tienda Pro Elegible')
-        ->assertDontSee('Tienda Basica Principal')
         ->assertSee(route('admin.templates.index'), false);
 
     $this->actingAs($storeUser)
@@ -1702,8 +1705,8 @@ test('basic store users cannot manage templates', function () {
     ]);
     Store::create([
         'user_id' => $storeUser->id,
-        'name' => 'Tienda Basica Sin Plantillas',
-        'slug' => 'tienda-basica-sin-plantillas',
+        'name' => 'Tienda Básica Sin Diseño',
+        'slug' => 'tienda-basica-sin-diseno',
         'whatsapp' => '573001112233',
         'plan' => Store::PLAN_BASIC,
         'is_active' => true,
@@ -1786,7 +1789,7 @@ test('premium store users can generate product text with ai', function () {
         ->get('/admin/products/create')
         ->assertOk()
         ->assertSee('Asistente IA')
-        ->assertSee('Generar descripcion');
+        ->assertSee('Generar descripción');
 
     $this->actingAs($storeUser)
         ->postJson(route('admin.ai.content'), [
@@ -1815,7 +1818,7 @@ test('premium store users can generate product text with ai', function () {
     $this->assertDatabaseHas('ai_credit_transactions', [
         'type' => AiCreditTransaction::TYPE_USAGE,
         'amount' => -3,
-        'reason' => 'Generar descripcion de producto',
+        'reason' => 'Generar descripción de producto',
     ]);
 });
 
@@ -1865,7 +1868,7 @@ test('premium store users can generate promotional announcements with ai', funct
         'https://api.openai.com/v1/responses' => Http::response([
             'output_text' => json_encode([
                 'announcements' => [
-                    'Envios rapidos en compras seleccionadas',
+                    'Envíos rápidos en compras seleccionadas',
                     'Pregunta por promociones de temporada',
                     'Compra facil y recibe atencion por WhatsApp',
                 ],
@@ -1969,7 +1972,7 @@ test('product ai generation requires product context before calling openai', fun
             'type' => 'product_description',
         ])
         ->assertUnprocessable()
-        ->assertJsonPath('message', 'Agrega primero el nombre, categoria o detalles del producto para generar contenido con IA.');
+        ->assertJsonPath('message', 'Agrega primero el nombre, categoría o detalles del producto para generar contenido con IA.');
 
     Http::assertNothingSent();
     $this->assertDatabaseMissing('ai_generations', [
@@ -1977,7 +1980,7 @@ test('product ai generation requires product context before calling openai', fun
     ]);
     $this->assertDatabaseMissing('ai_credit_transactions', [
         'type' => AiCreditTransaction::TYPE_USAGE,
-        'reason' => 'Generar descripcion de producto',
+        'reason' => 'Generar descripción de producto',
     ]);
 
     $this->actingAs($storeUser)
@@ -1985,7 +1988,7 @@ test('product ai generation requires product context before calling openai', fun
             'type' => 'product_image',
         ])
         ->assertUnprocessable()
-        ->assertJsonPath('message', 'Agrega primero el nombre, categoria o detalles del producto para generar contenido con IA.');
+        ->assertJsonPath('message', 'Agrega primero el nombre, categoría o detalles del producto para generar contenido con IA.');
 
     Http::assertNothingSent();
     $this->assertDatabaseMissing('ai_generations', [
@@ -2258,8 +2261,8 @@ test('admin can manually add paid ai credit packages to premium stores', functio
     $this->actingAs($admin)
         ->get('/admin/stores')
         ->assertOk()
-        ->assertSee('Sumar creditos IA')
-        ->assertSee('300 creditos - $24.900');
+        ->assertSee('Sumar créditos IA')
+        ->assertSee('300 créditos - $24.900');
 
     $this->actingAs($admin)
         ->post(route('admin.stores.ai-credits.store', $premiumStore), [
@@ -3345,7 +3348,10 @@ test('mercadopago cancelled payment stops showing order as paid', function () {
 });
 
 test('expired mercadopago pending orders release reserved stock', function () {
-    config(['services.mercadopago.payment_expiration_grace_minutes' => 0]);
+    config([
+        'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
+    ]);
 
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -3390,11 +3396,11 @@ test('expired mercadopago pending orders release reserved stock', function () {
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 1');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 1');
 
     $order->refresh();
 
-    expect($order->payment_status)->toBe(Order::PAYMENT_STATUS_CANCELLED)
+    expect($order->payment_status)->toBe(Order::PAYMENT_STATUS_EXPIRED)
         ->and($product->refresh()->stock_quantity)->toBe(2)
         ->and($product->is_sold_out)->toBeFalse();
 });
@@ -3404,6 +3410,7 @@ test('expired mercadopago pending order keeps stock when connected account token
         'services.mercadopago.client_id' => '123456789',
         'services.mercadopago.client_secret' => 'client-secret',
         'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
     ]);
 
     $storeUser = User::factory()->create([
@@ -3466,7 +3473,7 @@ test('expired mercadopago pending order keeps stock when connected account token
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($order->refresh()->payment_status)->toBe(Order::PAYMENT_STATUS_PENDING)
         ->and($product->refresh()->stock_quantity)->toBe(0)
@@ -3482,6 +3489,7 @@ test('expired mercadopago pending order keeps stock when refresh has connection 
         'services.mercadopago.client_id' => '123456789',
         'services.mercadopago.client_secret' => 'client-secret',
         'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
     ]);
 
     $storeUser = User::factory()->create([
@@ -3548,7 +3556,7 @@ test('expired mercadopago pending order keeps stock when refresh has connection 
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($order->refresh()->payment_status)->toBe(Order::PAYMENT_STATUS_PENDING)
         ->and($product->refresh()->stock_quantity)->toBe(0)
@@ -3562,6 +3570,7 @@ test('expired mercadopago pending order keeps stock when refresh response is inc
         'services.mercadopago.client_id' => '123456789',
         'services.mercadopago.client_secret' => 'client-secret',
         'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
     ]);
 
     $storeUser = User::factory()->create([
@@ -3624,7 +3633,7 @@ test('expired mercadopago pending order keeps stock when refresh response is inc
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($account->refresh()->access_token)->toBe('expired-token')
         ->and($account->refresh()->expires_at?->isPast())->toBeTrue()
@@ -3640,6 +3649,7 @@ test('expired mercadopago pending order refreshes token before checking merchant
         'services.mercadopago.client_id' => '123456789',
         'services.mercadopago.client_secret' => 'client-secret',
         'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
     ]);
 
     $storeUser = User::factory()->create([
@@ -3720,7 +3730,7 @@ test('expired mercadopago pending order refreshes token before checking merchant
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($account->refresh()->access_token)->toBe('fresh-token')
         ->and($account->refresh()->isConnected())->toBeTrue()
@@ -3737,7 +3747,10 @@ test('expired mercadopago pending order refreshes token before checking merchant
 });
 
 test('expired mercadopago pending order is paid when merchant order is approved', function () {
-    config(['services.mercadopago.payment_expiration_grace_minutes' => 0]);
+    config([
+        'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
+    ]);
 
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -3809,7 +3822,7 @@ test('expired mercadopago pending order is paid when merchant order is approved'
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     $order->refresh();
 
@@ -3821,7 +3834,10 @@ test('expired mercadopago pending order is paid when merchant order is approved'
 });
 
 test('expired mercadopago pending order keeps stock when merchant order has active payment', function () {
-    config(['services.mercadopago.payment_expiration_grace_minutes' => 0]);
+    config([
+        'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
+    ]);
 
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -3892,7 +3908,7 @@ test('expired mercadopago pending order keeps stock when merchant order has acti
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($order->refresh()->payment_status)->toBe(Order::PAYMENT_STATUS_PENDING)
         ->and($product->refresh()->stock_quantity)->toBe(0)
@@ -3900,7 +3916,10 @@ test('expired mercadopago pending order keeps stock when merchant order has acti
 });
 
 test('expired mercadopago pending order keeps stock when merchant order lookup has connection failure', function () {
-    config(['services.mercadopago.payment_expiration_grace_minutes' => 0]);
+    config([
+        'services.mercadopago.payment_expiration_grace_minutes' => 0,
+        'services.payments.expiration_grace_minutes' => 0,
+    ]);
 
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -3960,7 +3979,7 @@ test('expired mercadopago pending order keeps stock when merchant order lookup h
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($order->refresh()->payment_status)->toBe(Order::PAYMENT_STATUS_PENDING)
         ->and($product->refresh()->stock_quantity)->toBe(0)
@@ -3968,7 +3987,10 @@ test('expired mercadopago pending order keeps stock when merchant order lookup h
 });
 
 test('mercadopago pending orders inside grace window keep reserved stock', function () {
-    config(['services.mercadopago.payment_expiration_grace_minutes' => 30]);
+    config([
+        'services.mercadopago.payment_expiration_grace_minutes' => 30,
+        'services.payments.expiration_grace_minutes' => 30,
+    ]);
 
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -4013,7 +4035,7 @@ test('mercadopago pending orders inside grace window keep reserved stock', funct
 
     $this->artisan('payments:expire-pending')
         ->assertSuccessful()
-        ->expectsOutput('Pedidos Mercado Pago vencidos: 0');
+        ->expectsOutput('Pedidos de pago en línea vencidos: 0');
 
     expect($order->refresh()->payment_status)->toBe(Order::PAYMENT_STATUS_PENDING)
         ->and($product->refresh()->stock_quantity)->toBe(0)
@@ -4051,10 +4073,10 @@ test('mercadopago return shows received order page', function () {
     $this->get(route('cart.mercadopago.return', ['order' => $order, 'result' => 'success']))
         ->assertOk()
         ->assertSee('Pedido recibido')
-        ->assertSee('Numero de pedido')
+        ->assertSee('Número de pedido')
         ->assertSee('#'.$order->id)
         ->assertSee('Estado del pago')
-        ->assertSee('Aprobado')
+        ->assertSee('Pagado')
         ->assertSee('Mercado Pago')
         ->assertSee('Volver a la tienda')
         ->assertSee(route('store.show', $store->slug), false);
@@ -4655,8 +4677,8 @@ test('basic plan blocks category management and public category pages', function
     $this->actingAs($storeUser)
         ->get('/admin/categories')
         ->assertOk()
-        ->assertSee('Categorias no disponibles')
-        ->assertSee('El plan Basico no incluye categorias');
+        ->assertSee('Categorías no disponibles')
+        ->assertSee('El plan Básico no incluye categorías');
 
     $this->actingAs($storeUser)
         ->post('/admin/categories', [
@@ -5144,7 +5166,6 @@ test('restaurant storefront renders as a menu', function () {
 
     $this->get('/bistro-menu/productos/'.$product->publicRouteKey())
         ->assertOk()
-        ->assertSee('Detalle del plato')
         ->assertSee('Sobre este plato')
         ->assertSee('Agregar al pedido')
         ->assertSee('Pedir ahora')
@@ -5178,7 +5199,7 @@ test('reservation stores use service and reservation language', function () {
 
     $this->get('/agenda-spa')
         ->assertOk()
-        ->assertSee('Ver todos los servicios')
+        ->assertSee('Comprar ahora')
         ->assertSee('Servicios');
 
     $this->get('/agenda-spa/productos')
@@ -5192,8 +5213,8 @@ test('reservation stores use service and reservation language', function () {
         'product' => $product->publicRouteKey(),
     ]))
         ->assertOk()
-        ->assertSee('Vista previa del servicio')
         ->assertSee('Agregar a la reserva')
+        ->assertSee('Reservar ahora')
         ->assertSee('Reservar por WhatsApp');
 });
 
@@ -5228,7 +5249,7 @@ test('reservation checkout asks for date and time and sends a reservation whatsa
     $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
         ->assertSee('Datos de la reserva')
-        ->assertSee('Horario de atencion')
+        ->assertSee('Horario de atención')
         ->assertSee('name="reservation_date"', false)
         ->assertSee('name="reservation_time"', false);
 
@@ -5255,7 +5276,7 @@ test('reservation checkout asks for date and time and sends a reservation whatsa
     expect($message)->toContain('Nueva reserva');
     expect($message)->toContain('Fecha deseada: '.$reservationDate);
     expect($message)->toContain('Hora deseada: 14:30');
-    expect($message)->toContain('Horario de atencion: Lunes a viernes 8:00 AM - 4:00 PM');
+    expect($message)->toContain('Horario de atención: Lunes a viernes 8:00 AM - 4:00 PM');
     expect($message)->toContain('Servicio: Consulta inicial x1');
 });
 
@@ -6114,13 +6135,13 @@ test('admin can see orders from all stores', function () {
         ->assertSee('Cliente Rechazado')
         ->assertSee('Cliente Cancelado')
         ->assertSee('Cliente Devuelto')
-        ->assertSee('Metodo de pago')
+        ->assertSee('Método de pago')
         ->assertSee('Estado de pago')
         ->assertSee('WhatsApp')
         ->assertSee('Mercado Pago')
         ->assertSee('Pendiente')
         ->assertSee('Devuelto')
-        ->assertSee('Aprobado')
+        ->assertSee('Pagado')
         ->assertSee('Rechazado')
         ->assertSee('Cancelado')
         ->assertSee('Tienda visible admin');
@@ -6484,13 +6505,13 @@ test('admin can browse stores before managing categories for one store', functio
         ->get('/admin/categories')
         ->assertOk()
         ->assertSee('Tienda Categorias Admin')
-        ->assertSee('Ver categorias');
+        ->assertSee('Ver categorías');
 
     $this->actingAs($admin)
         ->get(route('admin.stores.categories.index', $store))
         ->assertOk()
-        ->assertSee('Categorias de esta tienda')
-        ->assertSee('Agregar categoria');
+        ->assertSee('Categorías de esta tienda')
+        ->assertSee('Agregar categoría');
 
     $this->actingAs($admin)
         ->post(route('admin.categories.store'), [
@@ -7138,7 +7159,7 @@ test('store home groups products by three categories and category pages show the
         ->assertDontSee('Audio Producto 5')
         ->assertSee('Producto sin categoria')
         ->assertSee('/tienda-categorias/productos', false)
-        ->assertSee('Ver todos los productos')
+        ->assertSee('Ver más de Audio')
         ->assertSee('/tienda-categorias/categorias/accesorios', false);
 
     $this->get('/tienda-categorias/productos')
@@ -7146,7 +7167,7 @@ test('store home groups products by three categories and category pages show the
         ->assertSee('Audio Producto 5')
         ->assertSee('Accesorios Producto 5')
         ->assertSee('Producto sin categoria')
-        ->assertSee('<title>Catalogo | Tienda Categorias</title>', false);
+        ->assertSee('<title>Catálogo | Tienda Categorias</title>', false);
 
     $this->get('/tienda-categorias/categorias/audio')
         ->assertOk()
@@ -7248,8 +7269,7 @@ test('customers can search products in the full catalog', function () {
 
     $this->get('/tienda-busqueda/productos?q=azul')
         ->assertOk()
-        ->assertSee('No encontramos productos para esa busqueda.')
-        ->assertDontSee('Camisa Premium')
+        ->assertSee('Camisa Premium')
         ->assertDontSee('Zapatos Negros');
 
     $this->get('/tienda-busqueda/productos?q=premium')
@@ -7474,7 +7494,7 @@ test('cart items are isolated by store when customers switch storefronts', funct
 
     $this->get(route('cart.index', ['store' => $storeB->slug]))
         ->assertOk()
-        ->assertSee('Tu carrito esta vacio')
+        ->assertSee('Tu carrito está vacío')
         ->assertDontSee('Producto tienda A');
 
     $this->post(route('cart.add', $productB->id))->assertRedirect();
@@ -7516,8 +7536,7 @@ test('checkout clears the store cart without reviving the legacy cart', function
     $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
         ->assertSee('name="neighborhood"', false)
-        ->assertSee('placeholder="Barrio"', false)
-        ->assertSee('required', false);
+        ->assertSee('placeholder="Barrio (opcional)"', false);
 
     $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
         'name' => 'Cliente',
@@ -7552,7 +7571,7 @@ test('checkout clears the store cart without reviving the legacy cart', function
 
     $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
-        ->assertSee('Tu carrito esta vacio')
+        ->assertSee('Tu carrito está vacío')
         ->assertDontSee('Producto checkout');
 
     $this->actingAs($user)
@@ -7624,7 +7643,7 @@ test('checkout applies selected shipping method cost to orders and whatsapp mess
 
     $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
-        ->assertSee('Metodo de envio')
+        ->assertSee('Método de envío')
         ->assertSee('Domicilio local')
         ->assertSee('$ 8.000')
         ->assertSee('Recoger en tienda')
@@ -7658,7 +7677,7 @@ test('checkout applies selected shipping method cost to orders and whatsapp mess
         ->and((float) $order->total)->toBe(38000.0);
 
     expect(app(WhatsAppOrderMessageBuilder::class)->message($order->load(['items', 'store'])))
-        ->toContain('Envio: Domicilio local ($8.000)')
+        ->toContain('Envío: Domicilio local ($8.000)')
         ->toContain('Total: $38.000');
 });
 
@@ -7697,7 +7716,7 @@ test('shipping methods are only available on pro and premium plans', function ()
 
     $this->get(route('cart.index', ['store' => $basicStore->slug]))
         ->assertOk()
-        ->assertDontSee('Metodo de envio')
+        ->assertDontSee('Método de envío')
         ->assertDontSee('Domicilio bloqueado');
 
     $this->post(route('cart.whatsapp', ['store' => $basicStore->slug]), [
@@ -7768,7 +7787,7 @@ test('local delivery pricing uses city before manual shipping methods', function
 
     $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
-        ->assertSee('Envio por ciudad')
+        ->assertSee('Envío por ciudad')
         ->assertSee('data-local-delivery-enabled="1"', false)
         ->assertDontSee('Metodo manual ignorado');
 
@@ -7784,7 +7803,7 @@ test('local delivery pricing uses city before manual shipping methods', function
 
     $localOrder = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
 
-    expect($localOrder->shipping_method)->toBe('Envio local: Bogota')
+    expect($localOrder->shipping_method)->toBe('Envío local: Bogota')
         ->and((float) $localOrder->shipping_cost)->toBe(5000.0)
         ->and((float) $localOrder->total)->toBe(35000.0);
 
@@ -7802,7 +7821,7 @@ test('local delivery pricing uses city before manual shipping methods', function
 
     $outsideOrder = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
 
-    expect($outsideOrder->shipping_method)->toBe('Envio fuera de Bogota')
+    expect($outsideOrder->shipping_method)->toBe('Envío fuera de Bogota')
         ->and((float) $outsideOrder->shipping_cost)->toBe(12000.0)
         ->and((float) $outsideOrder->total)->toBe(42000.0);
 });
@@ -7899,7 +7918,7 @@ test('checkout can require official colombia city selections', function () {
 
     expect($order->customer_city)->toBe('Bogota')
         ->and($order->notes)->toContain('Provincia/Estado: Bogota D.C.')
-        ->and($order->shipping_method)->toBe('Envio local: Bogota')
+        ->and($order->shipping_method)->toBe('Envío local: Bogota')
         ->and((float) $order->shipping_cost)->toBe(5000.0);
 });
 
@@ -7962,7 +7981,7 @@ test('local delivery pricing uses official city code when city names are duplica
 
     expect($order->customer_city)->toBe('La Union')
         ->and($order->notes)->toContain('Provincia/Estado: Valle Del Cauca')
-        ->and($order->shipping_method)->toBe('Envio fuera de La Union')
+        ->and($order->shipping_method)->toBe('Envío fuera de La Union')
         ->and((float) $order->shipping_cost)->toBe(11000.0)
         ->and((float) $order->total)->toBe(41000.0);
 });

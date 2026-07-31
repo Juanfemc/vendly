@@ -220,13 +220,13 @@ class ProductImportService
         }
 
         if (trim((string) ($raw['stock'] ?? '')) !== '' && $data['stock_quantity'] === null) {
-            $errors[] = 'El stock debe ser un numero entero.';
+            $errors[] = 'El stock debe ser un número entero.';
         }
 
         if ($data['category'] && ! $store->allowsCategories()) {
             $data['category'] = null;
         } elseif ($data['category'] && ! $store->categories()->where('name', $data['category'])->exists()) {
-            $errors[] = 'La categoria no existe en esta tienda.';
+            $errors[] = 'La categoría no existe en esta tienda.';
         }
 
         if (! Product::supportsInventoryColumns() || $store->isReservationStore()) {

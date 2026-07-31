@@ -75,7 +75,7 @@ class AiCreditService
             $balance = $monthlyBalance + $purchasedBalance;
 
             if ($balance < $cost) {
-                throw new RuntimeException('No tienes creditos IA suficientes. Compra un paquete extra o espera la renovacion mensual.');
+                throw new RuntimeException('No tienes créditos IA suficientes. Compra un paquete extra o espera la renovación mensual.');
             }
 
             $remainingCost = $cost;
@@ -270,7 +270,7 @@ class AiCreditService
             AiContentService::PRODUCT_BADGES => 'Sugerir etiquetas',
             AiContentService::PRODUCT_FEATURES => 'Generar caracteristicas de producto',
             AiContentService::ANNOUNCEMENT => 'Crear avisos promocionales',
-            AiContentService::PRODUCT_DESCRIPTION => 'Generar descripcion de producto',
+            AiContentService::PRODUCT_DESCRIPTION => 'Generar descripción de producto',
             AiContentService::PRODUCT_IMAGE => 'Crear imagen ecommerce',
             AiContentService::STORE_LOGO_IMAGE => 'Crear logo de tienda',
             AiContentService::STORE_COVER_IMAGE => 'Crear portada de tienda',

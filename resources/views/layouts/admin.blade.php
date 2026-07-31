@@ -2759,7 +2759,7 @@
         };
     @endphp
 
-    <nav class="admin-mobile-bottom-nav" aria-label="Navegacion rapida del panel">
+    <nav class="admin-mobile-bottom-nav" aria-label="Navegación rápida del panel">
         <a href="/dashboard" class="{{ $mobileNavClass('dashboard') }}">
             {!! $mobileNavIcon('home') !!}
             <span>Inicio</span>
@@ -2784,15 +2784,15 @@
 
         <button type="button" class="{{ $mobileNavClass('admin/onboarding', 'admin/store-settings', 'admin/categories*', 'admin/coupons*', 'admin/payments*', 'admin/templates*', 'admin/notifications*', 'admin/whatsapp*', 'profile') }}" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar">
             {!! $mobileNavIcon('more') !!}
-            <span>Mas</span>
+            <span>Más</span>
         </button>
     </nav>
 
     <div class="delete-confirm-modal" data-delete-confirm-modal hidden>
         <div class="delete-confirm-backdrop" data-delete-confirm-cancel></div>
         <div class="delete-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
-            <h2 id="deleteConfirmTitle">Confirmar eliminacion</h2>
-            <p id="deleteConfirmMessage" data-delete-confirm-message>Esta accion no se puede deshacer.</p>
+            <h2 id="deleteConfirmTitle">Confirmar eliminación</h2>
+            <p id="deleteConfirmMessage" data-delete-confirm-message>Esta acción no se puede deshacer.</p>
             <div class="delete-confirm-actions">
                 <button type="button" class="btn btn-secondary" data-delete-confirm-cancel>Cancelar</button>
                 <button type="button" class="btn btn-danger" data-delete-confirm-submit>Eliminar</button>
@@ -2895,7 +2895,7 @@
 
             const openModal = (form) => {
                 pendingForm = form;
-                message.textContent = form.dataset.confirmMessage || 'Esta accion no se puede deshacer.';
+                message.textContent = form.dataset.confirmMessage || 'Esta acción no se puede deshacer.';
                 modal.hidden = false;
                 document.body.classList.add('delete-confirm-open');
                 submitButton.focus();

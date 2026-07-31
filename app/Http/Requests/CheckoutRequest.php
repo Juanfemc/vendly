@@ -81,7 +81,7 @@ class CheckoutRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'terms_acceptance.accepted' => 'Debes aceptar los terminos y condiciones de la tienda para continuar.',
+            'terms_acceptance.accepted' => 'Debes aceptar los términos y condiciones de la tienda para continuar.',
         ];
     }
 

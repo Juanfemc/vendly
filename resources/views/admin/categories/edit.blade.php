@@ -7,7 +7,7 @@
         <div>
             <p class="admin-brand-eyebrow">Catálogo</p>
             <h2 class="admin-brand-title">Editar categoría</h2>
-            <p class="admin-brand-text">Ajusta la identidad, posicion y visibilidad de esta categoría en la tienda.</p>
+            <p class="admin-brand-text">Ajusta la identidad, posición y visibilidad de esta categoría en la tienda.</p>
         </div>
     </div>
     <div class="admin-brand-actions">
@@ -32,7 +32,7 @@
         <input type="text" name="slug" value="{{ old('slug', $category->slug) }}" placeholder="Slug">
         <textarea name="description" rows="4" placeholder="Descripción corta">{{ old('description', $category->description) }}</textarea>
         <input type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1200" data-quality="0.84" data-output="webp" data-max-size="8388608">
-        <small style="display:block; margin-top:-6px; color:var(--muted);">Imagen recomendada: JPG, PNG o WebP. Maximo 8 MB.</small>
+        <small style="display:block; margin-top:-6px; color:var(--muted);">Imagen recomendada: JPG, PNG o WebP. Máximo 8 MB.</small>
         @if($category->image)
             <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" style="width:160px; height:100px; object-fit:cover; border-radius:10px; margin:10px 0;">
         @endif

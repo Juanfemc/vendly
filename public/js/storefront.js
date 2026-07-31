@@ -164,7 +164,10 @@
         }, 1800);
     };
 
-    const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+    const formatMoney = (value) => `$${Number(value || 0).toLocaleString('es-CO', {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+    })}`;
     const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

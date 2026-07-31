@@ -392,7 +392,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" data-confirm-delete data-confirm-message="Eliminar este usuario y su tienda? Esta accion no se puede deshacer.">
+                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" data-confirm-delete data-confirm-message="¿Eliminar este usuario y su tienda? Esta acción no se puede deshacer.">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger">Eliminar</button>

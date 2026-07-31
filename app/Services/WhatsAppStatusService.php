@@ -153,7 +153,7 @@ class WhatsAppStatusService
             $updates['read_at'] = now();
         } elseif ($status === WhatsAppMessage::STATUS_FAILED) {
             $updates['failed_at'] = now();
-            $updates['error'] = Str::limit($error ?: 'Meta reporto el envio como fallido.', 500);
+            $updates['error'] = Str::limit($error ?: 'Meta reportó el envío como fallido.', 500);
         }
 
         $message->update($updates);
@@ -173,7 +173,7 @@ class WhatsAppStatusService
             $updates['read_at'] = now();
         } elseif ($status === WhatsAppMessage::STATUS_FAILED) {
             $updates['failed_at'] = now();
-            $updates['error'] = Str::limit($error ?: 'Meta reporto el envio como fallido.', 500);
+            $updates['error'] = Str::limit($error ?: 'Meta reportó el envío como fallido.', 500);
         }
 
         $message->update($updates);

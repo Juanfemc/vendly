@@ -145,7 +145,7 @@ class MercadoPagoCheckoutService
                 'currency_id' => 'COP',
             ])->when((float) ($order->shipping_cost ?? 0) > 0, fn ($items) => $items->push([
                 'id' => 'shipping',
-                'title' => 'Envio: ' . ($order->shipping_method ?: 'Envio'),
+                'title' => 'Envío: ' . ($order->shipping_method ?: 'Envío'),
                 'quantity' => 1,
                 'unit_price' => (float) $order->shipping_cost,
                 'currency_id' => 'COP',

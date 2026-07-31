@@ -65,8 +65,8 @@ class DiscountCoupon extends Model
     {
         return [
             self::APPLIES_TO_PRODUCTS => 'Solo productos',
-            self::APPLIES_TO_ORDER_WITH_SHIPPING => 'Productos y envio',
-            self::APPLIES_TO_SHIPPING => 'Solo envio',
+            self::APPLIES_TO_ORDER_WITH_SHIPPING => 'Productos y envío',
+            self::APPLIES_TO_SHIPPING => 'Solo envío',
         ];
     }
 

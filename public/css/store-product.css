@@ -889,8 +889,67 @@
         padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
         border-top: 1px solid rgba(15, 23, 42, 0.08);
         background: rgba(255, 255, 255, 0.96);
-        box-shadow: 0 -18px 38px rgba(15, 23, 42, 0.14);
+        box-shadow: 0 -16px 34px rgba(15, 23, 42, 0.12);
         backdrop-filter: blur(18px);
+    }
+
+    .product-detail-buy-now-form {
+        position: static;
+        width: auto;
+        margin-top: 12px;
+    }
+
+    .product-detail-buy-now-form--with-whatsapp {
+        right: auto;
+    }
+
+    .product-detail-buy-now-form .product-detail-primary {
+        width: 100%;
+    }
+
+    .product-detail-buy-now-form .product-detail-primary svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+    }
+
+    .product-detail-buy-now-form .product-detail-primary span {
+        display: inline;
+        overflow: visible;
+        white-space: normal;
+    }
+
+    .product-detail-whatsapp-action {
+        position: fixed;
+        right: 8px;
+        bottom: calc(9px + env(safe-area-inset-bottom));
+        z-index: 96;
+        width: 48px;
+        height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #25d366;
+        color: #063f21;
+        text-decoration: none;
+        box-shadow: 0 12px 24px rgba(37, 211, 102, 0.28);
+    }
+
+    .product-detail-whatsapp-action img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+        display: block;
+    }
+
+    .product-detail-whatsapp-action span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
     }
 
     .store-whatsapp-float {
@@ -976,33 +1035,16 @@
         box-shadow: none;
     }
 
-    .product-detail-whatsapp-action {
-        width: 48px;
-        height: 48px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        background: #25d366;
-        box-shadow: 0 12px 24px rgba(37, 211, 102, 0.32);
-    }
-
-    .product-detail-whatsapp-action img {
-        width: 23px;
-        height: 23px;
-        object-fit: contain;
-        display: block;
-    }
-
     .product-detail-action-bar + .product-detail-form {
-        margin-top: 12px;
+        margin-top: 0;
     }
 
     @media (max-width: 380px) {
         .product-detail-action-bar {
-            grid-template-columns: 86px minmax(0, 1fr) 44px;
+            grid-template-columns: 82px minmax(0, 1fr) 46px;
             gap: 7px;
-            padding-inline: 6px;
+            padding-left: 6px;
+            padding-right: 6px;
         }
 
         .product-detail-action-bar .product-detail-secondary {
@@ -1011,9 +1053,22 @@
             font-size: 10px;
         }
 
+        .product-detail-buy-now-form {
+            margin-top: 12px;
+        }
+
+        .product-detail-buy-now-form--with-whatsapp {
+            right: auto;
+        }
+
+        .product-detail-buy-now-form .product-detail-primary {
+            font-size: 13px;
+        }
+
         .product-detail-whatsapp-action {
-            width: 44px;
-            height: 44px;
+            right: 6px;
+            width: 46px;
+            height: 46px;
         }
     }
 

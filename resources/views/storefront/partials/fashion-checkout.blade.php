@@ -1,4 +1,4 @@
-@php
+﻿@php
     $subtotal = (float) $total;
     $tax = 0;
     $cartItems = collect($cart);
@@ -9,12 +9,13 @@
     $checkoutRequired = $checkoutRequired ?? fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
     $checkoutLocationEnabled = $checkoutLocationEnabled ?? $checkoutFieldEnabled('city');
     $checkoutLocationRequired = $checkoutLocationRequired ?? $checkoutFieldRequired('city');
+    $storeHomeUrl = app(\App\Services\StorefrontUrlService::class)->publicHome($store);
 @endphp
 
 <section class="fashion-checkout">
     <nav class="fashion-checkout-breadcrumb" aria-label="Breadcrumb">
-        <a href="{{ url('/' . $store->slug) }}">Home</a>
-        <span aria-hidden="true">›</span>
+        <a href="{{ $storeHomeUrl }}">Home</a>
+        <span aria-hidden="true">&rsaquo;</span>
         <span>Checkout</span>
     </nav>
 
@@ -198,30 +199,30 @@
 
                 @if($checkoutFieldEnabled('neighborhood'))
                     <label class="fashion-field fashion-field--full">
-                        <span>Neighborhood{{ $checkoutFieldRequired('neighborhood') ? '' : ' (optional)' }}</span>
+                        <span>Barrio{{ $checkoutFieldRequired('neighborhood') ? '' : ' (opcional)' }}</span>
                         <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" placeholder="Barrio" {{ $checkoutRequired('neighborhood') }}>
                     </label>
                 @endif
 
                 @if($checkoutFieldEnabled('document'))
                     <label class="fashion-field fashion-field--full">
-                        <span>Document{{ $checkoutFieldRequired('document') ? '' : ' (optional)' }}</span>
-                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cedula" {{ $checkoutRequired('document') }}>
+                        <span>Documento{{ $checkoutFieldRequired('document') ? '' : ' (opcional)' }}</span>
+                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cédula" {{ $checkoutRequired('document') }}>
                     </label>
                 @endif
 
                 <label class="fashion-checkbox">
                     <input type="checkbox" name="save_information" value="1" checked>
-                    <span>Save this information for next time</span>
+                    <span>Guardar esta información para la próxima vez</span>
                 </label>
             </section>
 
             <section class="fashion-checkout-section">
-                <h2>Shipping Method</h2>
+                <h2>Método de envío</h2>
 
                 @if($hasLocalDelivery)
                     <div class="fashion-delivery-preview" data-local-delivery-preview>
-                        <span data-local-delivery-label>Envio por ciudad</span>
+                        <span data-local-delivery-label>Envío por ciudad</span>
                         <strong data-local-delivery-price>Por calcular</strong>
                     </div>
                 @elseif($shippingMethods->isNotEmpty())
@@ -239,52 +240,68 @@
                                 >
                                 <span aria-hidden="true"></span>
                                 <strong>{{ $method['name'] }}</strong>
-                                <em>{{ ((float) $method['cost']) > 0 ? '1-3 business days' : '3-5 business days' }}</em>
-                                <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Free' }}</b>
+                                <em>{{ ((float) $method['cost']) > 0 ? '1-3 días hábiles' : '3-5 días hábiles' }}</em>
+                                <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
                             </label>
                         @endforeach
                     </fieldset>
                 @else
-                    <p class="fashion-checkout-muted">El vendedor coordinara el envio por WhatsApp.</p>
+                    <p class="fashion-checkout-muted">El vendedor coordinará el envío por WhatsApp.</p>
                 @endif
             </section>
 
             <section class="fashion-checkout-section">
-                <h2>Payment Method</h2>
-                <p class="fashion-checkout-muted">All transactions are secure and encrypted.</p>
+                <h2>Método de pago</h2>
+                <p class="fashion-checkout-muted">Todas las transacciones son seguras.</p>
 
                 <div class="fashion-payment-options">
-                    <label class="fashion-payment-option is-selected">
-                        <input type="radio" checked>
-                        <span>WhatsApp Order</span>
+                    <label class="fashion-payment-option">
+                        <input
+                            type="radio"
+                            name="checkout_payment_choice"
+                            value="whatsapp"
+                            data-payment-choice
+                            data-payment-action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}"
+                                        data-payment-label="Finalizar pedido por WhatsApp"
+                            checked
+                        >
+                        <span>Pedido por WhatsApp</span>
                         <b>WA</b>
                     </label>
 
                     @if($mercadoPagoAvailable)
-                        <button class="fashion-payment-option fashion-payment-option--button" type="submit" formaction="{{ route('cart.mercadopago', ['store' => $store->slug]) }}">
+                        <label class="fashion-payment-option">
+                            <input
+                                type="radio"
+                                name="checkout_payment_choice"
+                                value="mercadopago"
+                                data-payment-choice
+                                data-payment-action="{{ route('cart.mercadopago', ['store' => $store->slug]) }}"
+                                data-payment-label="Pagar con Mercado Pago"
+                            >
                             <span>Mercado Pago</span>
                             <b>MP</b>
-                        </button>
+                        </label>
                     @endif
                 </div>
             </section>
 
             @if($checkoutFieldEnabled('notes'))
                 <label class="fashion-field fashion-field--full">
-                    <span>Order notes{{ $checkoutFieldRequired('notes') ? '' : ' (optional)' }}</span>
-                    <textarea name="notes" placeholder="Add delivery notes or product details" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
+                    <span>Notas del pedido{{ $checkoutFieldRequired('notes') ? '' : ' (opcional)' }}</span>
+                    <textarea name="notes" placeholder="Agrega notas de entrega o detalles del producto" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
                 </label>
             @endif
 
             @if($store?->allowsDiscountCoupons())
                 <section class="fashion-checkout-section">
-                    <h2>Discount code</h2>
+                    <h2>Cupón de descuento</h2>
                     <div class="checkout-coupon">
                         <div class="checkout-coupon-row">
-                            <input type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Enter code" data-discount-code>
-                            <button type="button" data-discount-apply>Apply</button>
+                            <input type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Ingresa el código" data-discount-code>
+                            <button type="button" data-discount-apply>Aplicar</button>
                         </div>
-                        <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Discount applied.' : '' }}</p>
+                        <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Descuento aplicado.' : '' }}</p>
                     </div>
                 </section>
             @endif
@@ -292,15 +309,15 @@
             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => 'fashion'])
 
             <div class="fashion-checkout-actions">
-                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">‹ Return to Cart</a>
-                <button type="submit">Continue to Review</button>
+                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">&lsaquo; Volver al carrito</a>
+                <button type="submit" data-payment-submit>Finalizar pedido</button>
             </div>
         </form>
 
         <aside class="fashion-checkout-summary">
             <div class="fashion-checkout-summary-head">
-                <h2>Order Summary ({{ $cartCount }})</h2>
-                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">Edit Cart</a>
+                <h2>Resumen del pedido ({{ $cartCount }})</h2>
+                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">Editar carrito</a>
             </div>
 
             <div class="fashion-summary-items">
@@ -331,7 +348,7 @@
                                 <button type="button" data-action="decrease" data-product-id="{{ $productId }}">-</button>
                                 <span data-role="quantity">{{ $item['quantity'] }}</span>
                                 <button type="button" data-action="increase" data-product-id="{{ $productId }}">+</button>
-                                <button type="button" data-action="remove" data-product-id="{{ $productId }}" aria-label="Remove item">×</button>
+                                <button type="button" data-action="remove" data-product-id="{{ $productId }}" aria-label="Eliminar producto">&times;</button>
                             </div>
                         </div>
 
@@ -374,3 +391,5 @@
         </aside>
     </div>
 </section>
+
+

@@ -132,7 +132,7 @@ class CartController extends Controller
 
         if (empty($cart) || ! $store) {
             return response()->json([
-                'message' => 'El carrito esta vacio.',
+                'message' => 'El carrito está vacío.',
                 'discount_amount' => 0,
                 'discount_code' => null,
                 'subtotal' => $subtotal,
@@ -580,7 +580,7 @@ class CartController extends Controller
         $cart = $this->cartService->cartForStore($store);
 
         if (empty($cart)) {
-            return $this->cartError($store, 'El carrito esta vacio.');
+            return $this->cartError($store, 'El carrito está vacío.');
         }
 
         $store = $store ?: $this->cartService->resolveStore($cart);

@@ -6,7 +6,7 @@
                 <div class="proof-logos">
                     @foreach($proofStores as $proofStore)
                         <a
-                            href="{{ url('/' . $proofStore->slug) }}"
+                            href="{{ app(\App\Services\StorefrontUrlService::class)->publicHome($proofStore) }}"
                             aria-label="Visitar {{ $proofStore->name }}"
                             title="{{ $proofStore->name }}"
                             target="_blank"
@@ -39,7 +39,7 @@
             <div class="portfolio-grid">
                 @foreach($portfolioStores as $portfolioStore)
                     @php($portfolioImage = $portfolioStore->cover_image ?: $portfolioStore->logo_image)
-                    <a href="{{ url('/' . $portfolioStore->slug) }}" class="portfolio-card" target="_blank" rel="noopener noreferrer">
+                    <a href="{{ app(\App\Services\StorefrontUrlService::class)->publicHome($portfolioStore) }}" class="portfolio-card" target="_blank" rel="noopener noreferrer">
                         <div class="portfolio-media">
                             <img
                                 src="{{ $portfolioImage ? asset('storage/' . $portfolioImage) : asset('images/vendly-whatsapp-dark.png') }}"

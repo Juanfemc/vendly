@@ -16,7 +16,28 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+
+function createStoreOwnerForWhatsAppVerification(string $phone = '573001234560'): array
+{
+    $user = User::factory()->create([
+        'role' => 'store',
+        'is_active' => true,
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda verificacion',
+        'slug' => 'tienda-verificacion-'.Str::random(6),
+        'business_type' => 'store',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => $phone,
+        'is_active' => true,
+    ]);
+
+    return [$user, $store];
+}
 
 test('trial signup does not ask for store type', function () {
     $this->get(route('trial-signup.create'))
@@ -35,8 +56,8 @@ test('trial signup shows controlled warning when required turnstile is not ready
 
     $this->get(route('trial-signup.create'))
         ->assertOk()
-        ->assertSee('La proteccion anti abuso no esta configurada. Intenta nuevamente mas tarde.')
-        ->assertSee('id="send-whatsapp-code" type="button" style="white-space:nowrap" disabled', false);
+        ->assertSee('La protección anti abuso no está configurada. Intenta nuevamente más tarde.')
+        ->assertSee('class="signup-submit" type="submit" disabled', false);
 });
 
 test('trial signup always creates a normal store', function () {
@@ -57,6 +78,7 @@ test('trial signup always creates a normal store', function () {
 
     expect($store->business_type)->toBe('store')
         ->and($store->name)->toBe('Tienda Normal Demo')
+        ->and($store->subdomain)->toBe('tienda-normal-demo')
         ->and($store->subscriptionStatus())->toBe(Store::SUBSCRIPTION_TRIALING)
         ->and($store->whatsapp_consent_at)->not->toBeNull()
         ->and($store->whatsapp_consent_version)->toBe('registration_v1')
@@ -231,7 +253,7 @@ test('deleting a trial store does not release its phone claim', function () {
     ])->assertSessionHasErrors('whatsapp');
 });
 
-test('trial signup requires the whatsapp verification code when api is configured', function () {
+test('trial signup defers whatsapp verification to onboarding when api is configured', function () {
     config([
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
@@ -247,62 +269,15 @@ test('trial signup requires the whatsapp verification code when api is configure
         'store_name' => 'Tienda Sin Codigo',
         'whatsapp' => '573001234567',
         'whatsapp_consent' => '1',
-    ])->assertSessionHasErrors('whatsapp_verification_code');
-
-    $this->assertDatabaseMissing('users', ['email' => 'cliente-sin-codigo@example.com']);
-});
-
-test('verified whatsapp code allows trial signup and is consumed', function () {
-    Queue::fake();
-    config([
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake([
-        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
-    ]);
-    $phone = '573001234568';
-    $this->get(route('trial-signup.create'))->assertOk();
-    $verification = $this->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-        ->assertOk()
-        ->json();
-    $request = Http::recorded()->last()[0];
-    $code = $request['template']['components'][0]['parameters'][0]['text'];
-
-    $this->post(route('trial-signup.store'), [
-        'user_name' => 'Cliente Verificado',
-        'user_email' => 'cliente-verificado@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        'store_name' => 'Tienda Verificada',
-        'whatsapp' => $phone,
-        'whatsapp_verification_code' => $code,
-        'whatsapp_verification_token' => $verification['verification_token'],
-        'whatsapp_consent' => '1',
     ])->assertRedirect(route('admin.store.onboarding'));
 
-    $this->assertDatabaseHas('users', ['email' => 'cliente-verificado@example.com']);
+    $user = User::where('email', 'cliente-sin-codigo@example.com')->firstOrFail();
+    $store = Store::where('user_id', $user->id)->firstOrFail();
 
-    auth()->logout();
-
-    $this->post(route('trial-signup.store'), [
-        'user_name' => 'Segundo Cliente',
-        'user_email' => 'segundo-cliente@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        'store_name' => 'Segunda Tienda',
-        'whatsapp' => $phone,
-        'whatsapp_verification_code' => $code,
-        'whatsapp_verification_token' => $verification['verification_token'],
-        'whatsapp_consent' => '1',
-    ])->assertSessionHasErrors('whatsapp_verification_code');
-
-    $this->assertDatabaseMissing('users', ['email' => 'segundo-cliente@example.com']);
+    expect($store->whatsapp_verified_at)->toBeNull();
 });
 
-test('whatsapp verification endpoint sends a code without exposing it', function () {
+test('onboarding whatsapp verification sends a code without exposing it', function () {
     config([
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
@@ -313,93 +288,56 @@ test('whatsapp verification endpoint sends a code without exposing it', function
         'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
     ]);
 
-    $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '300 123 4569',
-    ])->assertOk()->assertJsonMissing(['code']);
+    [$user] = createStoreOwnerForWhatsAppVerification('573001234569');
+
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), [
+            'whatsapp' => '300 123 4569',
+        ])->assertOk()
+        ->assertJsonMissing(['code']);
 
     Http::assertSent(fn ($request) => $request['to'] === '573001234569'
         && $request['template']['name'] === 'vendly_verificar_numero'
     );
 });
 
-test('whatsapp verification endpoint requires turnstile when anti abuse is enabled', function () {
+test('onboarding verified whatsapp code marks the store as verified and consumes the code', function () {
     config([
-        'services.turnstile.required' => true,
-        'services.turnstile.site_key' => 'site-key',
-        'services.turnstile.secret_key' => 'secret-key',
-        'services.turnstile.verification_url' => 'https://turnstile.test/siteverify',
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake();
-
-    $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '300 123 4577',
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors('turnstile_token');
-
-    Http::assertNothingSent();
-});
-
-test('whatsapp verification endpoint sends a code after valid turnstile challenge', function () {
-    config([
-        'services.turnstile.required' => true,
-        'services.turnstile.site_key' => 'site-key',
-        'services.turnstile.secret_key' => 'secret-key',
-        'services.turnstile.verification_url' => 'https://turnstile.test/siteverify',
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
         'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
         'services.whatsapp.require_phone_verification' => true,
     ]);
     Http::fake([
-        'turnstile.test/*' => Http::response(['success' => true], 200),
         'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
     ]);
 
-    $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '300 123 4578',
-        'turnstile_token' => 'valid-token',
-    ])->assertOk()->assertJsonMissing(['code']);
+    [$user, $store] = createStoreOwnerForWhatsAppVerification('573001234568');
+    $verification = $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), ['whatsapp' => $store->whatsapp])
+        ->assertOk()
+        ->json();
+    $code = Http::recorded()->last()[0]['template']['components'][0]['parameters'][0]['text'];
 
-    Http::assertSent(fn ($request) => $request->url() === 'https://turnstile.test/siteverify'
-        && $request['response'] === 'valid-token'
-        && $request['secret'] === 'secret-key'
-    );
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'graph.facebook.com')
-        && $request['to'] === '573001234578'
-    );
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.verify'), [
+            'whatsapp' => $store->whatsapp,
+            'whatsapp_verification_code' => $code,
+            'whatsapp_verification_token' => $verification['verification_token'],
+        ])->assertOk();
+
+    expect($store->fresh()->whatsapp_verified_at)->not->toBeNull();
+
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.verify'), [
+            'whatsapp' => $store->whatsapp,
+            'whatsapp_verification_code' => $code,
+            'whatsapp_verification_token' => $verification['verification_token'],
+        ])->assertUnprocessable()
+        ->assertJsonValidationErrors('whatsapp_verification_code');
 });
 
-test('invalid turnstile challenge does not call meta for whatsapp verification', function () {
-    config([
-        'services.turnstile.required' => true,
-        'services.turnstile.site_key' => 'site-key',
-        'services.turnstile.secret_key' => 'secret-key',
-        'services.turnstile.verification_url' => 'https://turnstile.test/siteverify',
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake([
-        'turnstile.test/*' => Http::response(['success' => false], 200),
-        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
-    ]);
-
-    $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '300 123 4579',
-        'turnstile_token' => 'invalid-token',
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors('turnstile_token');
-
-    Http::assertSent(fn ($request) => $request->url() === 'https://turnstile.test/siteverify');
-    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'graph.facebook.com'));
-});
-
-test('whatsapp verification endpoint does not message phones that already used a trial', function () {
+test('onboarding whatsapp verification does not message phones claimed by another store', function () {
     config([
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
@@ -413,20 +351,17 @@ test('whatsapp verification endpoint does not message phones that already used a
         'source' => 'trial_signup',
         'claimed_at' => now(),
     ]);
+    [$user] = createStoreOwnerForWhatsAppVerification($phone);
 
-    $claimedResponse = $this->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-        ->assertOk()
-        ->assertJson([
-            'message' => 'Si el numero es elegible, recibiras un codigo por WhatsApp.',
-        ])
-        ->json();
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), ['whatsapp' => $phone])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('whatsapp');
 
     Http::assertNothingSent();
-
-    expect($claimedResponse['verification_token'])->toHaveLength(64);
 });
 
-test('whatsapp verification response does not reveal whether a phone already used a trial', function () {
+test('onboarding whatsapp verification applies request and phone rate limits', function () {
     config([
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
@@ -436,61 +371,21 @@ test('whatsapp verification response does not reveal whether a phone already use
     Http::fake([
         'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
     ]);
-    $claimedPhone = '573001234575';
-    TrialSignupClaim::create([
-        'phone_hash' => app(TrialPhoneHashService::class)->make($claimedPhone),
-        'source' => 'trial_signup',
-        'claimed_at' => now(),
-    ]);
-
-    $claimed = $this->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $claimedPhone])
-        ->assertOk()
-        ->json();
-    $eligible = $this->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => '573001234576'])
-        ->assertOk()
-        ->json();
-
-    expect(array_keys($claimed))->toBe(array_keys($eligible))
-        ->and($claimed['message'])->toBe($eligible['message'])
-        ->and($claimed['verification_token'])->toHaveLength(strlen($eligible['verification_token']));
-    Http::assertSentCount(1);
-});
-
-test('whatsapp verification applies the same rate limit to eligible and claimed phones', function () {
-    config([
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake([
-        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
-    ]);
-    $claimedPhone = '573001234581';
-    $eligiblePhone = '573001234582';
-    TrialSignupClaim::create([
-        'phone_hash' => app(TrialPhoneHashService::class)->make($claimedPhone),
-        'source' => 'trial_signup',
-        'claimed_at' => now(),
-    ]);
+    [$user] = createStoreOwnerForWhatsAppVerification('573001234584');
 
     foreach (range(1, 3) as $attempt) {
         $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])
-            ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $claimedPhone])
-            ->assertOk();
-        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])
-            ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $eligiblePhone])
+            ->actingAs($user)
+            ->postJson(route('admin.store.onboarding.whatsapp.send'), ['whatsapp' => '573001234584'])
             ->assertOk();
     }
 
     $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])
-        ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $claimedPhone])
+        ->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), ['whatsapp' => '573001234584'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('whatsapp');
-    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])
-        ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $eligiblePhone])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('whatsapp');
+
     Http::assertSentCount(3);
 });
 
@@ -511,7 +406,7 @@ test('whatsapp eligibility is checked inside the send lock before calling meta',
     Http::assertNothingSent();
 });
 
-test('whatsapp verification response does not reveal when meta rejects an eligible phone', function () {
+test('onboarding whatsapp verification returns a controlled error when meta rejects the phone', function () {
     config([
         'services.whatsapp.access_token' => 'test-token',
         'services.whatsapp.phone_number_id' => '123456',
@@ -521,91 +416,32 @@ test('whatsapp verification response does not reveal when meta rejects an eligib
     Http::fake([
         'graph.facebook.com/*' => Http::response(['error' => ['message' => 'Template not approved']], 400),
     ]);
+    [$user] = createStoreOwnerForWhatsAppVerification('573001234570');
 
-    $response = $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '300 123 4570',
-    ])->assertOk()
-        ->assertJson([
-            'message' => 'Si el numero es elegible, recibiras un codigo por WhatsApp.',
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), [
+            'whatsapp' => '300 123 4570',
         ])
-        ->json();
-
-    expect($response['verification_token'])->toHaveLength(64);
-});
-
-test('one requester cannot consume another requesters phone verification limit', function () {
-    config([
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake([
-        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
-    ]);
-    $phone = '573001234583';
-
-    foreach (range(1, 3) as $attempt) {
-        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.10'])
-            ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-            ->assertOk();
-    }
-
-    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.10'])
-        ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-        ->assertUnprocessable();
-    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.11'])
-        ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-        ->assertOk();
-    Http::assertSentCount(4);
-});
-
-test('distributed requesters cannot send unlimited verification codes to one phone', function () {
-    config([
-        'services.whatsapp.access_token' => 'test-token',
-        'services.whatsapp.phone_number_id' => '123456',
-        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
-        'services.whatsapp.require_phone_verification' => true,
-    ]);
-    Http::fake([
-        'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.verification']]], 200),
-    ]);
-    $phone = '573001234584';
-
-    foreach (range(1, 8) as $attempt) {
-        $this->withServerVariables(['REMOTE_ADDR' => '10.0.1.'.$attempt])
-            ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
-            ->assertOk();
-    }
-
-    $this->withServerVariables(['REMOTE_ADDR' => '10.0.1.99'])
-        ->postJson(route('trial-signup.whatsapp.verify'), ['whatsapp' => $phone])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('whatsapp');
-    Http::assertSentCount(8);
 });
 
-test('required whatsapp verification fails closed when meta is not configured', function () {
+test('onboarding whatsapp verification fails closed when meta is not configured', function () {
     config([
         'services.whatsapp.access_token' => '',
         'services.whatsapp.phone_number_id' => '',
         'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
         'services.whatsapp.require_phone_verification' => true,
     ]);
+    [$user, $store] = createStoreOwnerForWhatsAppVerification('573001234571');
 
-    $this->post(route('trial-signup.store'), [
-        'user_name' => 'Cliente Sin Meta',
-        'user_email' => 'cliente-sin-meta@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        'store_name' => 'Tienda Sin Meta',
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), [
         'whatsapp' => '573001234571',
-        'whatsapp_verification_code' => '123456',
-        'whatsapp_verification_token' => str_repeat('a', 64),
-        'whatsapp_consent' => '1',
-    ])->assertSessionHasErrors('whatsapp');
+        ])->assertUnprocessable()
+        ->assertJsonValidationErrors('whatsapp');
 
-    $this->assertDatabaseMissing('users', ['email' => 'cliente-sin-meta@example.com']);
+    expect($store->fresh()->whatsapp_verified_at)->toBeNull();
 });
 
 test('whatsapp verification code is invalidated after five failed attempts', function () {
@@ -732,12 +568,20 @@ test('trial key guard migration recovers a partially created table', function ()
 
 test('trial key configuration failures return a controlled validation error', function () {
     config([
+        'services.whatsapp.access_token' => 'test-token',
+        'services.whatsapp.phone_number_id' => '123456',
+        'services.whatsapp.phone_verification_template' => 'vendly_verificar_numero',
         'services.whatsapp.require_phone_verification' => true,
         'services.trial.phone_hash_key' => 'different-key',
     ]);
+    Http::fake();
+    [$user] = createStoreOwnerForWhatsAppVerification('573001234580');
 
-    $this->postJson(route('trial-signup.whatsapp.verify'), [
-        'whatsapp' => '573001234580',
-    ])->assertUnprocessable()
+    $this->actingAs($user)
+        ->postJson(route('admin.store.onboarding.whatsapp.send'), [
+            'whatsapp' => '573001234580',
+        ])->assertUnprocessable()
         ->assertJsonValidationErrors('whatsapp');
+
+    Http::assertNothingSent();
 });

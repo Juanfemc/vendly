@@ -11,7 +11,7 @@
         @forelse($minimalCatalogProducts as $product)
             @include('storefront.partials.minimal-product-card', ['product' => $product, 'isRecommendation' => false])
         @empty
-            <div class="minimal-shop-empty-state">Aun no hay productos para mostrar.</div>
+            <div class="minimal-shop-empty-state">Aún no hay productos para mostrar.</div>
         @endforelse
     </div>
 

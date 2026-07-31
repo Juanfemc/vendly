@@ -96,7 +96,7 @@ class DiscountCouponService
     {
         if ($coupon->appliesTo() === DiscountCoupon::APPLIES_TO_SHIPPING && $shippingCost <= 0) {
             throw ValidationException::withMessages([
-                'discount_code' => 'Este cupon aplica al envio, pero el envio no tiene costo o aun esta por calcular.',
+                'discount_code' => 'Este cupón aplica al envío, pero el envío no tiene costo o aún está por calcular.',
             ]);
         }
 

@@ -44,7 +44,7 @@
                 @endif
             @else
                 <button type="button" class="btn btn-secondary" data-ai-type="product_name">Mejorar nombre</button>
-                <button type="button" class="btn btn-secondary" data-ai-type="product_description">Generar descripcion</button>
+                <button type="button" class="btn btn-secondary" data-ai-type="product_description">Generar descripción</button>
                 <button type="button" class="btn btn-secondary" data-ai-type="product_features">Generar caracteristicas</button>
                 @if($aiStore->allowsCustomProductBadges())
                     <button type="button" class="btn btn-secondary" data-ai-type="product_badges">Sugerir etiquetas</button>

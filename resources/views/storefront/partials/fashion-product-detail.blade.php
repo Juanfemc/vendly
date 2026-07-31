@@ -49,7 +49,7 @@
         ->filter(fn ($color) => $color['label'] !== '')
         ->values();
     $fashionDescription = $productDescriptionText ?? \App\Support\ProductText::plain($product->description);
-    $fashionDescription = $fashionDescription ?: 'Este producto aun no tiene una descripcion amplia configurada.';
+    $fashionDescription = $fashionDescription ?: 'Este producto aún no tiene una descripción amplia configurada.';
     $fashionFeaturesText = $productFeaturesText ?? \App\Support\ProductText::featureLines($product->features);
     $fashionFeatureItems = collect(preg_split('/\R+/', $fashionFeaturesText) ?: [])
         ->map(fn ($item) => trim($item, " \t\n\r\0\x0B-*•"))

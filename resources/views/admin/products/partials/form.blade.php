@@ -151,7 +151,7 @@
                     <path d="M20 16v4H4v-4"></path>
                 </svg>
                 <strong>{{ $isEditing ? 'Subir nueva imagen principal' : 'Subir imagen principal' }}</strong>
-                <span>JPG, PNG o WebP. Maximo 2MB.</span>
+                <span>JPG, PNG o WebP. Máximo 2 MB.</span>
                 <input id="product_image" type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1600" data-quality="0.82" data-output="webp" data-max-size="2097152">
             </label>
 

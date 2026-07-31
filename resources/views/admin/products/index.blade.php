@@ -758,7 +758,7 @@
                 </span>
                 <h3>No encontramos tiendas o productos</h3>
                 <p>Prueba con otro nombre de tienda o producto.</p>
-                <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar busqueda</a>
+                <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar búsqueda</a>
             </div>
         @endif
 
@@ -786,7 +786,7 @@
                 @if($isProductSearchActive)
                     <h3>No encontramos productos</h3>
                     <p>Prueba con otro nombre, categoría, material o descripción.</p>
-                    <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar busqueda</a>
+                    <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar búsqueda</a>
                 @else
                     <h3>No hay productos registrados</h3>
                     <p>Agrega el primer producto para empezar a mostrar el catálogo en la tienda.</p>
@@ -826,7 +826,7 @@
 
                         <div class="product-card-actions">
                             <a href="{{ route('admin.products.edit', $product) }}" class="product-card-action product-card-action--edit">Editar</a>
-                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="product-card-delete" data-confirm-delete data-confirm-message="Seguro que quieres eliminar este producto? Esta accion no se puede deshacer.">
+                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="product-card-delete" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar este producto? Esta acción no se puede deshacer.">
                                 @csrf
                                 @method('DELETE')
                                 <button class="product-card-action" type="submit" aria-label="Eliminar {{ $product->name }}">

@@ -20,7 +20,7 @@
         </section>
     @empty
         @if($otherProducts->isEmpty())
-            <div class="empty-state">Aun no hay {{ $itemsLabel }} publicados.</div>
+            <div class="empty-state">Aún no hay {{ $itemsLabel }} publicados.</div>
         @endif
     @endforelse
 

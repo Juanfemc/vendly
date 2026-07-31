@@ -67,7 +67,7 @@
                 </div>
 
                 <div class="resource-actions">
-                    <a href="{{ url('/' . $store->slug) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Ver tienda</a>
+                    <a href="{{ app(\App\Services\StorefrontUrlService::class)->publicHome($store) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Ver tienda</a>
                     <a href="{{ route('admin.stores.edit', $store) }}" class="btn">Editar</a>
                 </div>
             </article>
@@ -79,7 +79,7 @@
     </div>
 @else
     <div class="panel-empty">
-        <h3>Aun no hay visitas registradas</h3>
+        <h3>Aún no hay visitas registradas</h3>
         <p>Cuando las tiendas reciban tráfico público, verás aquí el conteo por tienda.</p>
     </div>
 @endif

@@ -12,7 +12,7 @@
 @endphp
 
 @if($homeCategories->isNotEmpty())
-    <section class="home-categories {{ $homeCategoriesAreCompact ? 'home-categories--scroll' : 'home-categories--centered' }}" aria-label="Categorias">
+    <section class="home-categories {{ $homeCategoriesAreCompact ? 'home-categories--scroll' : 'home-categories--centered' }}" aria-label="Categorías">
         <div class="home-categories-scroll-shell">
             <div class="home-categories-track {{ $homeCategoriesAreCompact ? 'is-scrollable' : 'is-centered' }}" @if(! $homeCategoriesAreCompact) style="--home-category-width: {{ $homeCenteredCategoryWidth }};" @endif>
                 @foreach($homeCategories as $homeCategory)

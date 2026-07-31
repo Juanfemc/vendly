@@ -35,7 +35,7 @@ class WhatsAppOrderMessageBuilder
         ];
 
         if ($order->customer_document) {
-            $lines[] = 'Cedula: ' . $order->customer_document;
+            $lines[] = 'Cédula: ' . $order->customer_document;
         }
 
         if ($order->customer_neighborhood) {
@@ -47,7 +47,7 @@ class WhatsAppOrderMessageBuilder
         }
 
         if ($order->customer_address) {
-            $lines[] = ($isReservationStore ? 'Referencia: ' : 'Direccion: ') . $order->customer_address;
+            $lines[] = ($isReservationStore ? 'Referencia: ' : 'Dirección: ') . $order->customer_address;
         }
 
         if ($isReservationStore) {
@@ -55,7 +55,7 @@ class WhatsAppOrderMessageBuilder
             $lines[] = 'Hora deseada: ' . $order->reservation_time;
 
             if ($order->store?->business_hours) {
-                $lines[] = 'Horario de atencion: ' . $order->store->business_hours;
+                $lines[] = 'Horario de atención: ' . $order->store->business_hours;
             }
         }
 
@@ -82,7 +82,7 @@ class WhatsAppOrderMessageBuilder
         $lines[] = 'Subtotal: ' . $this->money($subtotal);
 
         if ($order->shipping_method) {
-            $lines[] = 'Envio: ' . $order->shipping_method . ' (' . $this->money((float) $order->shipping_cost) . ')';
+            $lines[] = 'Envío: ' . $order->shipping_method . ' (' . $this->money((float) $order->shipping_cost) . ')';
         }
 
         if (Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0) {

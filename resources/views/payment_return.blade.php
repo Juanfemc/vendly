@@ -22,12 +22,12 @@
         ? 'Pedido recibido'
         : ($isRejected ? 'Pago no completado' : 'Pedido recibido');
     $paymentCopy = $paymentConfirmationPending
-        ? "Estamos confirmando tu pago con {$paymentMethod}. La tienda vera el estado actualizado en cuanto recibamos la confirmacion."
+        ? "Estamos confirmando tu pago con {$paymentMethod}. La tienda verá el estado actualizado en cuanto recibamos la confirmación."
         : ($isApproved
         ? 'Tu pago fue aprobado y la tienda ya puede gestionar tu pedido.'
         : ($isRejected
-            ? "{$paymentMethod} no completo el pago. Puedes volver a la tienda e intentarlo nuevamente."
-            : "Tu pago esta pendiente de confirmacion. La tienda vera el pedido en su panel cuando {$paymentMethod} actualice el estado."));
+            ? "{$paymentMethod} no completó el pago. Puedes volver a la tienda e intentarlo nuevamente."
+            : "Tu pago está pendiente de confirmación. La tienda verá el pedido en su panel cuando {$paymentMethod} actualice el estado."));
 @endphp
 <body class="cart-page" style="--accent: {{ $brandTheme->color }};">
     @include('storefront.partials.meta-pixel-noscript', ['store' => $store])
@@ -50,7 +50,7 @@
 
             <div class="payment-return-grid">
                 <div class="resource-metric payment-return-metric">
-                    <span class="resource-metric__label">Numero de pedido</span>
+                    <span class="resource-metric__label">Número de pedido</span>
                     <span class="resource-metric__value">#{{ $order->id }}</span>
                 </div>
                 <div class="resource-metric payment-return-metric">
@@ -58,7 +58,7 @@
                     <span class="resource-metric__value">{{ $order->paymentStatusLabel() }}</span>
                 </div>
                 <div class="resource-metric payment-return-metric">
-                    <span class="resource-metric__label">Metodo</span>
+                    <span class="resource-metric__label">Método</span>
                     <span class="resource-metric__value">{{ $order->paymentMethodLabel() }}</span>
                 </div>
                 <div class="resource-metric payment-return-metric">
