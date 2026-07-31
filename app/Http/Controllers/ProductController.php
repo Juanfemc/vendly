@@ -463,7 +463,7 @@ class ProductController extends Controller
                         ->withReviewStats()
                         ->where('category', $category->name)
                         ->latest()
-                        ->take(4)
+                        ->take(5)
                         ->get(),
                     'total' => (int) ($categoryProductCounts[$category->name] ?? 0),
                 ];
@@ -477,7 +477,7 @@ class ProductController extends Controller
                 $query->whereNull('category')->orWhere('category', '');
             })
             ->latest()
-            ->take(4)
+            ->take(5)
             ->get();
 
         $homeProductPageSize = $store->isTechnologyStore() ? 6 : 7;
