@@ -91,10 +91,6 @@
         </section>
 
         <section class="catalog-section" id="catalogo">
-            <div class="catalog-head">
-                <h2>{{ $products->total() }} {{ $itemsLabel }}</h2>
-            </div>
-
             @include('storefront.partials.product-search', [
                 'productSearchId' => 'category',
                 'productSearchAction' => $storefrontUrls->category($store, $category),

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Store;
 use App\Models\StoreBanner;
 use App\Models\User;
+use App\Services\SubscriptionStatsService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -44,6 +45,7 @@ class DashboardController extends Controller
             $adminUpdates = Schema::hasTable('admin_updates')
                 ? AdminUpdate::orderByDesc('id')->take(10)->get()
                 : collect();
+            $subscriptionStats = app(SubscriptionStatsService::class)->summary();
 
             return view('dashboard', compact(
                 'storeUsersCount',
@@ -54,7 +56,8 @@ class DashboardController extends Controller
                 'expiringUsers',
                 'totalSales',
                 'totalVisits',
-                'adminUpdates'
+                'adminUpdates',
+                'subscriptionStats'
             ));
         }
 

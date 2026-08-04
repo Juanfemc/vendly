@@ -125,6 +125,91 @@
         </div>
     </div>
 
+    @if (!empty($subscriptionStats))
+        <div class="list-card dashboard-subscription-card">
+            <div class="dashboard-users-head">
+                <div>
+                    <strong>Estadísticas de planes</strong>
+                    <span>Pruebas, pagos activos y vencimientos</span>
+                </div>
+                <a href="{{ url('/admin/stores') }}" class="btn btn-secondary">Gestionar tiendas</a>
+            </div>
+
+            <div class="dashboard-subscription-grid">
+                <div class="dashboard-subscription-metric">
+                    <span>Pruebas activas</span>
+                    <strong>{{ $subscriptionStats['trial_active'] ?? 0 }}</strong>
+                    <small>{{ $subscriptionStats['trial_ending_soon'] ?? 0 }} por vencer</small>
+                </div>
+                <div class="dashboard-subscription-metric">
+                    <span>Pagos activos</span>
+                    <strong>{{ $subscriptionStats['paid_active'] ?? 0 }}</strong>
+                    <small>{{ $subscriptionStats['paid_ending_soon'] ?? 0 }} por vencer</small>
+                </div>
+                <div class="dashboard-subscription-metric dashboard-subscription-metric--warning">
+                    <span>Vencidas</span>
+                    <strong>{{ ($subscriptionStats['trial_expired'] ?? 0) + ($subscriptionStats['paid_expired'] ?? 0) }}</strong>
+                    <small>{{ $subscriptionStats['trial_expired'] ?? 0 }} pruebas / {{ $subscriptionStats['paid_expired'] ?? 0 }} pagos</small>
+                </div>
+                <div class="dashboard-subscription-metric dashboard-subscription-metric--mrr">
+                    <span>MRR estimado</span>
+                    <strong>$ {{ number_format($subscriptionStats['mrr'] ?? 0, 0, ',', '.') }}</strong>
+                    <small>{{ number_format($subscriptionStats['conversion_rate'] ?? 0, 1, ',', '.') }}% conversión</small>
+                </div>
+            </div>
+
+            @if (!empty($subscriptionStats['attention_stores']) && $subscriptionStats['attention_stores']->isNotEmpty())
+                <div class="dashboard-subscription-table-wrap">
+                    <table class="dashboard-subscription-table">
+                        <thead>
+                            <tr>
+                                <th>Tienda</th>
+                                <th>Cliente</th>
+                                <th>Plan</th>
+                                <th>Estado</th>
+                                <th>Vence</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($subscriptionStats['attention_stores'] as $attentionStore)
+                                @php
+                                    $endsAt = $attentionStore->subscriptionStatus() === \App\Models\Store::SUBSCRIPTION_TRIALING
+                                        ? $attentionStore->trial_ends_at
+                                        : $attentionStore->subscription_ends_at;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <strong>{{ $attentionStore->name }}</strong>
+                                        <span>{{ $attentionStore->whatsapp ?: 'Sin WhatsApp' }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $attentionStore->user->name ?? 'Sin usuario' }}</strong>
+                                        <span>{{ $attentionStore->user->email ?? 'Sin correo' }}</span>
+                                    </td>
+                                    <td>{{ $attentionStore->planLabel() }}</td>
+                                    <td>
+                                        <span class="dashboard-subscription-status {{ $attentionStore->subscriptionExpired() ? 'is-expired' : 'is-ending' }}">
+                                            {{ $attentionStore->subscriptionRemainingLabel() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $endsAt ? $endsAt->format('d/m/Y') : 'Sin fecha' }}</td>
+                                    <td>
+                                        @if ($attentionStore->getKey())
+                                            <a href="{{ route('admin.stores.edit', ['store' => $attentionStore->getKey()]) }}" class="btn btn-secondary">Ver</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="dashboard-subscription-empty">No hay tiendas por vencer o vencidas en este momento.</p>
+            @endif
+        </div>
+    @endif
+
     <div class="list-card">
         <p>Desde aquí puedes crear usuarios de tienda, asignar tiendas y publicar banners/noticias.</p>
     </div>

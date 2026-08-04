@@ -77,10 +77,6 @@
         </section>
 
         <section class="catalog-section" id="catalogo">
-            <div class="catalog-head">
-                <h2>{{ $products->total() }} {{ $itemsLabel }} en oferta</h2>
-            </div>
-
             @include('storefront.partials.product-search', [
                 'productSearchId' => 'offers',
                 'productSearchAction' => $storefrontUrls->offers($store),

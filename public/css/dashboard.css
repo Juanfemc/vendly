@@ -39,6 +39,126 @@
     font-size: clamp(28px, 4vw, 38px);
 }
 
+.dashboard-subscription-card {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+
+.dashboard-subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.dashboard-subscription-metric {
+    display: grid;
+    gap: 8px;
+    min-height: 126px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.dashboard-subscription-metric span,
+.dashboard-subscription-metric small {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.dashboard-subscription-metric strong {
+    color: #0f172a;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1;
+}
+
+.dashboard-subscription-metric--warning {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.dashboard-subscription-metric--warning strong {
+    color: #9a3412;
+}
+
+.dashboard-subscription-metric--mrr {
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+}
+
+.dashboard-subscription-metric--mrr strong {
+    color: #065f46;
+}
+
+.dashboard-subscription-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.dashboard-subscription-table {
+    width: 100%;
+    min-width: 780px;
+    border-collapse: collapse;
+}
+
+.dashboard-subscription-table th,
+.dashboard-subscription-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.dashboard-subscription-table th {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.dashboard-subscription-table td {
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.dashboard-subscription-table td > strong,
+.dashboard-subscription-table td > span {
+    display: block;
+}
+
+.dashboard-subscription-table td > span {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.dashboard-subscription-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.dashboard-subscription-status.is-ending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.dashboard-subscription-status.is-expired {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.dashboard-subscription-empty {
+    margin: 0;
+    color: #64748b;
+}
+
 .dashboard-notification {
     display: grid;
     gap: 14px;
@@ -365,6 +485,10 @@
         grid-template-columns: 1fr;
     }
 
+    .dashboard-subscription-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .dashboard-store-link-card {
         flex-direction: column;
         align-items: stretch;
@@ -423,6 +547,10 @@
 }
 
 @media (max-width: 480px) {
+    .dashboard-subscription-grid {
+        grid-template-columns: 1fr;
+    }
+
     .dashboard-slide-media {
         min-height: 165px;
     }

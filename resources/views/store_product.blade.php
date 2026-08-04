@@ -161,6 +161,16 @@
                             >
                         @endforeach
 
+                        <button type="button" class="product-carousel-zoom" data-carousel-zoom aria-label="Ampliar imagen del producto">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="6"></circle>
+                                <path d="m16 16 4 4"></path>
+                                <path d="M11 8v6"></path>
+                                <path d="M8 11h6"></path>
+                            </svg>
+                            <span>Ampliar</span>
+                        </button>
+
                         @if($productGallery->count() > 1)
                             <button type="button" class="product-carousel-control product-carousel-control--prev" data-carousel-prev aria-label="Imagen anterior">
                                 <span aria-hidden="true"></span>
@@ -456,10 +466,6 @@
 
         @if($relatedProducts->isNotEmpty())
             <section class="product-related">
-                <div class="catalog-head">
-                    <h2>{{ $isRestaurant ? 'Tambien puedes pedir' : 'Tambien te puede interesar' }}</h2>
-                </div>
-
                 <div class="products-grid">
                     @foreach($relatedProducts as $relatedProduct)
                         <article class="product-card">
@@ -531,6 +537,36 @@
 
     <div class="cart-feedback" id="cartFeedback" aria-live="polite">{{ $isReservationStore ? 'Servicio agregado a la reserva' : 'Producto agregado al carrito' }}</div>
 
+    @if($productGallery->isNotEmpty())
+        <div class="product-lightbox" data-product-lightbox hidden>
+            <button type="button" class="product-lightbox-close" data-product-lightbox-close aria-label="Cerrar imagen ampliada">
+                <span aria-hidden="true"></span>
+            </button>
+            @if($productGallery->count() > 1)
+                <button type="button" class="product-lightbox-nav product-lightbox-nav--prev" data-product-lightbox-prev aria-label="Imagen anterior">
+                    <span aria-hidden="true"></span>
+                </button>
+            @endif
+            <figure class="product-lightbox-figure">
+                @foreach($productGallery as $index => $galleryImage)
+                    <img
+                        src="{{ asset('storage/' . $galleryImage) }}"
+                        alt="{{ $product->name }} imagen ampliada {{ $index + 1 }}"
+                        class="product-lightbox-image {{ $index === 0 ? 'is-active' : '' }}"
+                        data-product-lightbox-image="{{ $index }}"
+                        loading="lazy"
+                        decoding="async"
+                    >
+                @endforeach
+            </figure>
+            @if($productGallery->count() > 1)
+                <button type="button" class="product-lightbox-nav product-lightbox-nav--next" data-product-lightbox-next aria-label="Imagen siguiente">
+                    <span aria-hidden="true"></span>
+                </button>
+            @endif
+        </div>
+    @endif
+
     <script src="{{ asset('js/storefront.js') }}?v={{ filemtime(public_path('js/storefront.js')) }}" defer></script>
     @if($storefrontVariant === 'technology')
         <script src="{{ asset('js/minimal-shop.js') }}?v={{ filemtime(public_path('js/minimal-shop.js')) }}" defer></script>
@@ -549,6 +585,12 @@
             const prev = carousel.querySelector('[data-carousel-prev]');
             const next = carousel.querySelector('[data-carousel-next]');
             const stage = carousel.querySelector('.product-carousel-stage, .minimal-product-stage, .fashion-product-stage');
+            const zoom = carousel.querySelector('[data-carousel-zoom]');
+            const lightbox = document.querySelector('[data-product-lightbox]');
+            const lightboxImages = lightbox ? [...lightbox.querySelectorAll('[data-product-lightbox-image]')] : [];
+            const lightboxClose = lightbox?.querySelector('[data-product-lightbox-close]');
+            const lightboxPrev = lightbox?.querySelector('[data-product-lightbox-prev]');
+            const lightboxNext = lightbox?.querySelector('[data-product-lightbox-next]');
             let current = 0;
             let touchStartX = 0;
             let touchStartY = 0;
@@ -574,10 +616,72 @@
                     thumb.classList.toggle('is-active', isActive);
                     thumb.setAttribute('aria-current', isActive ? 'true' : 'false');
                 });
+
+                lightboxImages.forEach((image, imageIndex) => {
+                    image.classList.toggle('is-active', imageIndex === current);
+                });
+            };
+
+            const openLightbox = () => {
+                if (!lightbox || lightboxImages.length === 0) {
+                    return;
+                }
+
+                lightbox.hidden = false;
+                document.documentElement.classList.add('has-product-lightbox');
+                lightboxClose?.focus({ preventScroll: true });
+            };
+
+            const closeLightbox = () => {
+                if (!lightbox) {
+                    return;
+                }
+
+                lightbox.hidden = true;
+                document.documentElement.classList.remove('has-product-lightbox');
+                zoom?.focus({ preventScroll: true });
             };
 
             prev?.addEventListener('click', () => showSlide(current - 1));
             next?.addEventListener('click', () => showSlide(current + 1));
+            zoom?.addEventListener('click', openLightbox);
+            lightboxClose?.addEventListener('click', closeLightbox);
+            lightboxPrev?.addEventListener('click', () => showSlide(current - 1));
+            lightboxNext?.addEventListener('click', () => showSlide(current + 1));
+            lightbox?.addEventListener('click', (event) => {
+                if (event.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+            stage?.addEventListener('click', (event) => {
+                if (event.target.closest('button, a, input, select, textarea')) {
+                    return;
+                }
+
+                if (touchMoved) {
+                    touchMoved = false;
+                    return;
+                }
+
+                openLightbox();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (!lightbox || lightbox.hidden) {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    closeLightbox();
+                }
+
+                if (event.key === 'ArrowLeft') {
+                    showSlide(current - 1);
+                }
+
+                if (event.key === 'ArrowRight') {
+                    showSlide(current + 1);
+                }
+            });
             thumbs.forEach((thumb, index) => {
                 thumb.addEventListener('click', () => showSlide(index));
             });

@@ -384,6 +384,76 @@
         gap: 18px;
     }
 
+    .catalog-palette-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .catalog-palette-option {
+        position: relative;
+        display: grid;
+        gap: 10px;
+        min-height: 104px;
+        padding: 14px;
+        border: 1px solid #dce5ea;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #073241;
+        cursor: pointer;
+        text-align: left;
+        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .catalog-palette-option:hover,
+    .catalog-palette-option.is-selected {
+        border-color: #22e1a8;
+        box-shadow: 0 14px 34px rgba(0, 104, 87, .12);
+        transform: translateY(-1px);
+    }
+
+    .catalog-palette-option.is-selected::after {
+        content: "";
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: #22e1a8;
+        box-shadow: 0 0 0 4px rgba(34, 225, 168, .16);
+    }
+
+    .catalog-palette-swatches {
+        display: flex;
+        gap: 6px;
+    }
+
+    .catalog-palette-swatch {
+        width: 24px;
+        height: 24px;
+        border: 1px solid rgba(7, 50, 65, .12);
+        border-radius: 999px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .44);
+    }
+
+    .catalog-palette-option strong,
+    .catalog-palette-option span {
+        display: block;
+    }
+
+    .catalog-palette-option strong {
+        font-size: 14px;
+        line-height: 1.2;
+    }
+
+    .catalog-palette-option span {
+        color: #6c9d9c;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
     .catalog-color-item {
         display: grid;
         grid-template-columns: 58px minmax(0, 1fr);
@@ -717,6 +787,7 @@
         .catalog-settings-grid,
         .catalog-settings-grid--three,
         .catalog-media-layout,
+        .catalog-palette-grid,
         .catalog-color-grid,
         .catalog-font-grid,
         .catalog-social-grid,
@@ -1024,15 +1095,52 @@
                     <button type="button" class="catalog-link-action" data-reset-theme>Restaurar</button>
                 </div>
 
-                @php
-                    $selectedBrandColor = \App\Support\BrandTheme::normalizeColor(old('brand_color', $store->brand_color), '#111111');
-                    $selectedBackgroundColor = \App\Support\BrandTheme::normalizeColor(old('background_color', $store->background_color), '#ffffff');
-                    $selectedTextColor = \App\Models\Store::automaticTextColorFor($selectedBackgroundColor);
-                    $selectedFontFamily = old('font_family', $store->font_family ?: 'system');
-                    $selectedFontFamily = array_key_exists($selectedFontFamily, \App\Models\Store::FONT_FAMILIES) ? $selectedFontFamily : 'system';
-                @endphp
+	                @php
+	                    $selectedBrandColor = \App\Support\BrandTheme::normalizeColor(old('brand_color', $store->brand_color), '#111111');
+	                    $selectedBackgroundColor = \App\Support\BrandTheme::normalizeColor(old('background_color', $store->background_color), '#ffffff');
+	                    $selectedTextColor = \App\Models\Store::automaticTextColorFor($selectedBackgroundColor);
+	                    $selectedFontFamily = old('font_family', $store->font_family ?: 'system');
+	                    $selectedFontFamily = array_key_exists($selectedFontFamily, \App\Models\Store::FONT_FAMILIES) ? $selectedFontFamily : 'system';
+	                    $catalogPalettes = [
+	                        ['name' => 'Clasica', 'description' => 'Negro, blanco y contraste limpio.', 'brand' => '#111111', 'background' => '#ffffff'],
+	                        ['name' => 'Vendly', 'description' => 'Naranja comercial con fondo claro.', 'brand' => '#ff6b00', 'background' => '#ffffff'],
+	                        ['name' => 'Natural', 'description' => 'Verde suave para marcas cercanas.', 'brand' => '#007c68', 'background' => '#f7fbf8'],
+	                        ['name' => 'Boutique', 'description' => 'Elegante para moda y belleza.', 'brand' => '#7c3aed', 'background' => '#fbf8ff'],
+	                        ['name' => 'Tecnologia', 'description' => 'Azul profundo para productos tech.', 'brand' => '#0f4c81', 'background' => '#f5f8ff'],
+	                        ['name' => 'Energia', 'description' => 'Rojo vibrante para promociones.', 'brand' => '#dc2626', 'background' => '#fff7f4'],
+	                        ['name' => 'Premium', 'description' => 'Dorado sobrio para tiendas finas.', 'brand' => '#b7791f', 'background' => '#fffaf0'],
+	                        ['name' => 'Minimal', 'description' => 'Gris moderno y muy neutral.', 'brand' => '#334155', 'background' => '#f8fafc'],
+	                    ];
+	                @endphp
 
-                <div class="catalog-color-grid">
+	                <div class="catalog-palette-grid" data-palette-picker>
+	                    @foreach($catalogPalettes as $palette)
+	                        @php
+	                            $paletteText = \App\Models\Store::automaticTextColorFor($palette['background']);
+	                            $isSelectedPalette = strcasecmp($selectedBrandColor, $palette['brand']) === 0
+	                                && strcasecmp($selectedBackgroundColor, $palette['background']) === 0;
+	                        @endphp
+	                        <button
+	                            type="button"
+	                            class="catalog-palette-option @if($isSelectedPalette) is-selected @endif"
+	                            data-palette-brand="{{ $palette['brand'] }}"
+	                            data-palette-background="{{ $palette['background'] }}"
+	                            data-palette-text="{{ $paletteText }}"
+	                        >
+	                            <span class="catalog-palette-swatches" aria-hidden="true">
+	                                <span class="catalog-palette-swatch" style="background: {{ $palette['brand'] }}"></span>
+	                                <span class="catalog-palette-swatch" style="background: {{ $palette['background'] }}"></span>
+	                                <span class="catalog-palette-swatch" style="background: {{ $paletteText }}"></span>
+	                            </span>
+	                            <span>
+	                                <strong>{{ $palette['name'] }}</strong>
+	                                <span>{{ $palette['description'] }}</span>
+	                            </span>
+	                        </button>
+	                    @endforeach
+	                </div>
+
+	                <div class="catalog-color-grid">
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="brand_color" value="{{ $selectedBrandColor }}" data-theme-color-input="brand">
                         <span><strong>Acento</strong><span>Precios, botónes, carrito y enlaces.</span></span>
@@ -1538,29 +1646,55 @@
         });
 
         const fontSelect = document.getElementById('font_family');
-        document.querySelectorAll('[data-font-value]').forEach((button) => {
-            button.addEventListener('click', () => {
-                if (fontSelect) {
-                    fontSelect.value = button.dataset.fontValue;
-                }
+	        document.querySelectorAll('[data-font-value]').forEach((button) => {
+	            button.addEventListener('click', () => {
+	                if (fontSelect) {
+	                    fontSelect.value = button.dataset.fontValue;
+	                }
 
                 document.querySelectorAll('[data-font-value]').forEach((item) => {
                     item.classList.toggle('is-selected', item === button);
                 });
-            });
-        });
+	            });
+	        });
 
-        document.querySelectorAll('[data-reset-theme]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const brand = document.querySelector('[data-theme-color-input="brand"]');
-                const background = document.querySelector('[data-theme-color-input="background"]');
-                const text = document.querySelector('[data-theme-color-input="text"]');
+	        const brandInput = document.querySelector('[data-theme-color-input="brand"]');
+	        const backgroundInput = document.querySelector('[data-theme-color-input="background"]');
+	        const textInput = document.querySelector('[data-theme-color-input="text"]');
+	        const paletteButtons = document.querySelectorAll('[data-palette-brand]');
 
-                if (brand) brand.value = '#111111';
-                if (background) background.value = '#ffffff';
-                if (text) text.value = '#111111';
-            });
-        });
+	        const normalizeColor = (value) => String(value || '').trim().toLowerCase();
+	        const syncSelectedPalette = () => {
+	            paletteButtons.forEach((button) => {
+	                const isSelected = normalizeColor(button.dataset.paletteBrand) === normalizeColor(brandInput?.value)
+	                    && normalizeColor(button.dataset.paletteBackground) === normalizeColor(backgroundInput?.value);
+
+	                button.classList.toggle('is-selected', isSelected);
+	            });
+	        };
+
+	        paletteButtons.forEach((button) => {
+	            button.addEventListener('click', () => {
+	                if (brandInput) brandInput.value = button.dataset.paletteBrand;
+	                if (backgroundInput) backgroundInput.value = button.dataset.paletteBackground;
+	                if (textInput) textInput.value = button.dataset.paletteText;
+
+	                syncSelectedPalette();
+	            });
+	        });
+
+	        brandInput?.addEventListener('input', syncSelectedPalette);
+	        backgroundInput?.addEventListener('input', syncSelectedPalette);
+	        syncSelectedPalette();
+
+	        document.querySelectorAll('[data-reset-theme]').forEach((button) => {
+	            button.addEventListener('click', () => {
+	                if (brandInput) brandInput.value = '#111111';
+	                if (backgroundInput) backgroundInput.value = '#ffffff';
+	                if (textInput) textInput.value = '#111111';
+	                syncSelectedPalette();
+	            });
+	        });
 
         document.querySelectorAll('[data-toggle-target]').forEach((toggle) => {
             const block = document.querySelector(`[data-optional-block="${toggle.dataset.toggleTarget}"]`);

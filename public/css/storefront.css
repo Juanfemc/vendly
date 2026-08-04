@@ -1138,6 +1138,8 @@ body.storefront-page .product-detail-copy h1 {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     margin-top: auto;
+    opacity: 1;
+    visibility: visible;
 }
 
 .product-card-actions form {
@@ -1162,7 +1164,9 @@ body.storefront-page .product-detail-copy h1 {
     letter-spacing: 0.04em;
     text-transform: uppercase;
     text-decoration: none;
-    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+    opacity: 1;
+    visibility: visible;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
 }
 
 .product-card-add-link span,
@@ -1189,10 +1193,21 @@ body.storefront-page .product-detail-copy h1 {
 .product-card-add-link:focus-visible,
 .product-card-actions button:hover,
 .product-card-actions button:focus-visible {
-    background: color-mix(in srgb, var(--brand-color, #111) 7%, #fff);
+    background: color-mix(in srgb, var(--brand-color, #111) 8%, #fff);
     border-color: var(--brand-color, #111);
-    color: var(--brand-color, #111);
+    color: var(--brand-color, #111) !important;
+    opacity: 1;
+    visibility: visible;
     transform: translateY(-1px);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--brand-color, #111) 12%, transparent);
+}
+
+.product-card:hover .product-card-actions,
+.product-card:hover .product-card-actions form,
+.product-card:hover .product-card-add-link,
+.product-card:hover .product-card-actions button {
+    opacity: 1;
+    visibility: visible;
 }
 
 .product-stock-badge {
@@ -1344,6 +1359,7 @@ body.storefront-page .product-detail-copy h1 {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--brand-color, #111) 40%, var(--line));
     background: #ffffff;
+    color: #111827;
     box-shadow: 0 18px 38px rgba(17, 24, 39, 0.08);
     outline: none;
 }
@@ -1392,15 +1408,26 @@ body.storefront-page .product-detail-copy h1 {
 }
 
 .home-category-copy strong {
+    color: #111827;
     overflow-wrap: anywhere;
     font-size: 15px;
     line-height: 1.2;
 }
 
 .home-category-copy small {
-    color: var(--muted);
+    color: #667085;
     font-size: 12px;
     font-weight: 700;
+}
+
+.home-category-card:hover .home-category-copy strong,
+.home-category-card:focus-visible .home-category-copy strong {
+    color: #111827;
+}
+
+.home-category-card:hover .home-category-copy small,
+.home-category-card:focus-visible .home-category-copy small {
+    color: #667085;
 }
 
 .catalog-head {
