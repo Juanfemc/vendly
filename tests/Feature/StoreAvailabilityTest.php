@@ -1463,7 +1463,7 @@ test('pro store users cannot see or open payment methods', function () {
         ->assertForbidden();
 });
 
-test('pro store users can see templates as coming soon', function () {
+test('pro store users can apply available templates', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1487,24 +1487,27 @@ test('pro store users can see templates as coming soon', function () {
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
         ->assertOk()
+        ->assertSee('Plantilla Tienda normal')
+        ->assertSee('Plantilla Ropa')
         ->assertSee('Plantilla Tecnología')
         ->assertSee('Pro y Premium')
+        ->assertSee('Disponible')
         ->assertSee('Muy pronto')
-        ->assertDontSee('Usar plantilla');
+        ->assertSee('Usar plantilla');
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'technology'))
+        ->post(route('admin.templates.apply', 'fashion'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
-        ->assertSessionHas('error');
+        ->assertSessionHas('success');
 
-    expect($store->fresh()->business_type)->toBe('store');
+    expect($store->fresh()->business_type)->toBe('fashion');
     $this->assertDatabaseMissing('store_categories', [
         'store_id' => $store->id,
         'name' => 'Audio',
     ]);
 });
 
-test('premium store users can see templates as coming soon', function () {
+test('premium store users can apply the normal store template', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1515,27 +1518,27 @@ test('premium store users can see templates as coming soon', function () {
         'slug' => 'tienda-premium-plantillas',
         'whatsapp' => '573001112233',
         'plan' => Store::PLAN_PREMIUM,
-        'business_type' => 'store',
+        'business_type' => 'fashion',
         'is_active' => true,
     ]);
 
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
         ->assertOk()
+        ->assertSee('Plantilla Tienda normal')
         ->assertSee('Plantilla Tecnología')
         ->assertSee('Pro y Premium')
-        ->assertSee('Muy pronto')
-        ->assertDontSee('Usar plantilla');
+        ->assertSee('Usar plantilla');
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'technology'))
+        ->post(route('admin.templates.apply', 'store'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
-        ->assertSessionHas('error');
+        ->assertSessionHas('success');
 
     expect($store->fresh()->business_type)->toBe('store');
 });
 
-test('fashion template is listed but cannot be applied yet', function () {
+test('unavailable templates stay disabled', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1553,12 +1556,12 @@ test('fashion template is listed but cannot be applied yet', function () {
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
         ->assertOk()
-        ->assertSee('Ropa')
-        ->assertSee('Plantilla editorial para moda, ropa y accesorios.')
+        ->assertSee('Tecnología')
+        ->assertSee('Plantilla minimalista para catálogos de tecnología.')
         ->assertSee('Muy pronto');
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'fashion'))
+        ->post(route('admin.templates.apply', 'technology'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
         ->assertSessionHas('error');
 
@@ -1600,14 +1603,14 @@ test('template selection applies to the selected owned store', function () {
         ->assertSee('Primera Tienda');
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'technology'), [
+        ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $secondStore->id,
         ])
         ->assertRedirect(route('admin.templates.index', ['store_id' => $secondStore->id]))
-        ->assertSessionHas('error');
+        ->assertSessionHas('success');
 
     expect($firstStore->fresh()->business_type)->toBe('store')
-        ->and($secondStore->fresh()->business_type)->toBe('store');
+        ->and($secondStore->fresh()->business_type)->toBe('fashion');
 });
 
 test('template panel defaults to an eligible store when user also has a basic store', function () {
@@ -1641,20 +1644,20 @@ test('template panel defaults to an eligible store when user also has a basic st
         ->assertSee(route('admin.templates.index'), false);
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'technology'), [
+        ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $basicStore->id,
         ])
         ->assertNotFound();
 
     $this->actingAs($storeUser)
-        ->post(route('admin.templates.apply', 'technology'), [
+        ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $proStore->id,
         ])
         ->assertRedirect(route('admin.templates.index', ['store_id' => $proStore->id]))
-        ->assertSessionHas('error');
+        ->assertSessionHas('success');
 
     expect($basicStore->fresh()->business_type)->toBe('store')
-        ->and($proStore->fresh()->business_type)->toBe('store');
+        ->and($proStore->fresh()->business_type)->toBe('fashion');
 });
 
 test('template selection cannot target another users store', function () {
@@ -5722,7 +5725,7 @@ test('admin can create a store user and store in one flow', function () {
         ->and($user->active_duration_days)->toBe(30)
         ->and($store)->not->toBeNull()
         ->and($store->user_id)->toBe($user->id)
-        ->and($store->business_type)->toBe('store')
+        ->and($store->business_type)->toBe('fashion')
         ->and($store->plan)->toBe(Store::PLAN_PREMIUM);
 });
 
@@ -6547,6 +6550,84 @@ test('admin can browse stores before managing categories for one store', functio
     $this->assertDatabaseMissing('store_categories', ['id' => $category->id]);
 });
 
+test('subcategories are only available for premium stores', function () {
+    $proUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDays(7),
+    ]);
+    $proStore = Store::create([
+        'user_id' => $proUser->id,
+        'name' => 'Tienda Pro sin Subcategorias',
+        'slug' => 'tienda-pro-sin-subcategorias',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PRO,
+        'is_active' => true,
+    ]);
+    $proParent = StoreCategory::create([
+        'store_id' => $proStore->id,
+        'name' => 'Ropa',
+        'slug' => 'ropa',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($proUser)
+        ->post(route('admin.categories.store'), [
+            'name' => 'Camisetas',
+            'slug' => 'camisetas-pro',
+            'parent_id' => $proParent->id,
+            'is_active' => 1,
+        ])
+        ->assertSessionHasErrors('parent_id');
+
+    $this->assertDatabaseMissing('store_categories', [
+        'store_id' => $proStore->id,
+        'name' => 'Camisetas',
+        'parent_id' => $proParent->id,
+    ]);
+
+    $legacyChild = StoreCategory::create([
+        'store_id' => $proStore->id,
+        'name' => 'Child Legacy',
+        'slug' => 'child-legacy',
+        'parent_id' => $proParent->id,
+        'is_active' => true,
+    ]);
+
+    $this->get('/'.$proStore->slug.'/categorias/'.$legacyChild->slug)
+        ->assertNotFound();
+
+    $premiumUser = User::factory()->create();
+    $premiumStore = Store::create([
+        'user_id' => $premiumUser->id,
+        'name' => 'Tienda Premium con Subcategorias',
+        'slug' => 'tienda-premium-con-subcategorias',
+        'whatsapp' => '573001112244',
+        'plan' => Store::PLAN_PREMIUM,
+        'is_active' => true,
+    ]);
+    $premiumParent = StoreCategory::create([
+        'store_id' => $premiumStore->id,
+        'name' => 'Tecnologia',
+        'slug' => 'tecnologia',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($premiumUser)
+        ->post(route('admin.categories.store'), [
+            'name' => 'Audifonos',
+            'slug' => 'audifonos',
+            'parent_id' => $premiumParent->id,
+            'is_active' => 1,
+        ])
+        ->assertRedirect(route('admin.categories.index'));
+
+    $this->assertDatabaseHas('store_categories', [
+        'store_id' => $premiumStore->id,
+        'name' => 'Audifonos',
+        'parent_id' => $premiumParent->id,
+    ]);
+});
+
 test('admin can view store visits from the stores menu', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $storeUser = User::factory()->create();
@@ -7156,7 +7237,7 @@ test('store home groups products by three categories and category pages show the
         ->assertSee('id="categoria-gaming"', false)
         ->assertDontSee('id="categoria-accesorios"', false)
         ->assertSee('Audio Producto 4')
-        ->assertDontSee('Audio Producto 5')
+        ->assertSee('Audio Producto 5')
         ->assertSee('Producto sin categoria')
         ->assertSee('/tienda-categorias/productos', false)
         ->assertSee('Ver más de Audio')

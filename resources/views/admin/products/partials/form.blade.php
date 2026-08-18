@@ -71,7 +71,11 @@
                     <select name="category" id="category_select">
                         <option value="">Selecciona categoría</option>
                         @foreach ($categoryOptions as $categoryOption)
-                            <option value="{{ $categoryOption }}" @selected($selectedCategory === $categoryOption)>{{ $categoryOption }}</option>
+                            @php
+                                $categoryOptionValue = is_array($categoryOption) ? ($categoryOption['value'] ?? '') : $categoryOption;
+                                $categoryOptionLabel = is_array($categoryOption) ? ($categoryOption['label'] ?? $categoryOptionValue) : $categoryOption;
+                            @endphp
+                            <option value="{{ $categoryOptionValue }}" @selected($selectedCategory === $categoryOptionValue)>{{ $categoryOptionLabel }}</option>
                         @endforeach
                     </select>
                     <small>Para crear una categoría nueva, ve a la sección Categorías.</small>

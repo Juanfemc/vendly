@@ -12,6 +12,7 @@ class StoreCategory extends Model
 
     protected $fillable = [
         'store_id',
+        'parent_id',
         'name',
         'slug',
         'description',
@@ -23,6 +24,7 @@ class StoreCategory extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'parent_id' => 'integer',
         'sort_order' => 'integer',
     ];
 
@@ -57,12 +59,38 @@ class StoreCategory extends Model
     public function scopeOrderedForDisplay($query)
     {
         return $query
+            ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END')
             ->orderByRaw('CASE WHEN sort_order = 0 THEN 60 ELSE sort_order END')
             ->orderBy('name');
+    }
+
+    public function scopeRootCategories($query)
+    {
+        return $query->whereNull('parent_id');
     }
 
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderedForDisplay();
+    }
+
+    public function activeChildren()
+    {
+        return $this->children()->where('is_active', true);
+    }
+
+    public function displayName(): string
+    {
+        return $this->parent ? $this->parent->name . ' / ' . $this->name : $this->name;
     }
 }

@@ -1,5 +1,6 @@
 @php
     $homeCategories = ($activeCategories ?? collect())
+        ->when(! $store->isRestaurant(), fn ($categories) => $categories->filter(fn ($category) => ! $category->parent_id))
         ->filter(fn ($category) => (int) (($categoryProductCounts ?? collect())[$category->name] ?? 0) > 0)
         ->values();
     $homeCategoryItemsLabel = $itemsLabel ?? 'productos';

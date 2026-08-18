@@ -1,4 +1,4 @@
-﻿@php
+@php
     $subtotal = (float) $total;
     $tax = 0;
     $cartItems = collect($cart);
@@ -9,23 +9,9 @@
     $checkoutRequired = $checkoutRequired ?? fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
     $checkoutLocationEnabled = $checkoutLocationEnabled ?? $checkoutFieldEnabled('city');
     $checkoutLocationRequired = $checkoutLocationRequired ?? $checkoutFieldRequired('city');
-    $storeHomeUrl = app(\App\Services\StorefrontUrlService::class)->publicHome($store);
 @endphp
 
 <section class="fashion-checkout">
-    <nav class="fashion-checkout-breadcrumb" aria-label="Breadcrumb">
-        <a href="{{ $storeHomeUrl }}">Home</a>
-        <span aria-hidden="true">&rsaquo;</span>
-        <span>Checkout</span>
-    </nav>
-
-    <ol class="fashion-checkout-steps" aria-label="Checkout steps">
-        <li class="is-active"><span>1</span><strong>Shipping</strong></li>
-        <li><span>2</span><strong>Payment</strong></li>
-        <li><span>3</span><strong>Review</strong></li>
-        <li><span>4</span><strong>Confirmation</strong></li>
-    </ol>
-
     @if (session('error'))
         <div class="flash-error">{{ session('error') }}</div>
     @endif
@@ -45,74 +31,65 @@
     @endif
 
     <div class="fashion-checkout-grid">
-        <form class="fashion-checkout-form" action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}" method="POST">
+        <form id="checkoutForm" class="fashion-checkout-form" action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}" method="POST">
             @csrf
 
-            <section class="fashion-checkout-section">
-                <div class="fashion-checkout-section-head">
-                    <h1>Contact Information</h1>
-                    <p>Already have an account? <a href="{{ route('login') }}">Log in</a></p>
-                </div>
-
+            <section class="fashion-checkout-block">
                 @if($checkoutFieldEnabled('email'))
                     <label class="fashion-field fashion-field--full">
-                        <span>Email address{{ $checkoutFieldRequired('email') ? '' : ' (optional)' }}</span>
-                        <input type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com" {{ $checkoutRequired('email') }}>
+                        <span>Correo electrónico{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}</span>
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="correo@ejemplo.com" {{ $checkoutRequired('email') }}>
                     </label>
                 @endif
 
-                <label class="fashion-checkbox">
-                    <input type="checkbox" name="accepts_marketing" value="1" checked>
-                    <span>Email me with news and offers</span>
-                </label>
             </section>
 
-            <section class="fashion-checkout-section">
-                <h2>Shipping Address</h2>
+            <section class="fashion-checkout-block">
+                <h2>Datos de entrega</h2>
 
                 @if($usesColombiaLocations)
                     <label class="fashion-field fashion-field--full">
-                        <span>Country / Region</span>
+                        <span>País / Región</span>
                         <strong>Colombia</strong>
                     </label>
 
                     <div class="fashion-field-row">
                         <label class="fashion-field">
-                            <span>First name</span>
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="John" required>
+                            <span>Nombre</span>
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" required>
                         </label>
 
                         <label class="fashion-field">
-                            <span>Last name</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
+                            <span>Apellidos</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" required>
                         </label>
                     </div>
 
                     <label class="fashion-field fashion-field--full">
-                        <span>Phone</span>
-                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                        <span>WhatsApp</span>
+                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" required>
                     </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">
-                            <span>Address{{ $checkoutFieldRequired('address') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" {{ $checkoutRequired('address') }}>
+                            <span>Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}</span>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" {{ $checkoutRequired('address') }}>
                         </label>
                     @endif
 
                     @if($checkoutFieldEnabled('apartment'))
                         <label class="fashion-field fashion-field--full">
-                            <span>Apartment, suite, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc." {{ $checkoutRequired('apartment') }}>
+                            <span>Apartamento, interior, torre, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}</span>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." {{ $checkoutRequired('apartment') }}>
                         </label>
                     @endif
 
                     @if($checkoutLocationEnabled)
                     <div class="fashion-field-row fashion-field-row--three">
                         <label class="fashion-field">
-                            <span>Department{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
+                            <span>Departamento{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</span>
                             <select name="department_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-department-select>
-                                <option value="">Select department</option>
+                                <option value="">Selecciona un departamento</option>
                                 @foreach($colombiaDepartments as $department)
                                     <option value="{{ $department->department_code }}" @selected(old('department_code') === $department->department_code)>{{ $department->department_name }}</option>
                                 @endforeach
@@ -120,9 +97,9 @@
                         </label>
 
                         <label class="fashion-field">
-                            <span>City{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
+                            <span>Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</span>
                             <select name="city_code" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-select data-city-input disabled>
-                                <option value="">Select city</option>
+                                <option value="">Selecciona una ciudad</option>
                                 @foreach($colombiaLocations as $location)
                                     <option
                                         value="{{ $location->city_code }}"
@@ -134,65 +111,57 @@
                             </select>
                         </label>
 
-                        <label class="fashion-field">
-                            <span>ZIP Code</span>
-                            <input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="000000">
-                        </label>
                     </div>
                     @endif
                 @else
                     <label class="fashion-field fashion-field--full">
-                        <span>Country / Region</span>
+                        <span>País / Región</span>
                         <strong>Colombia</strong>
                     </label>
 
                     <div class="fashion-field-row">
                         <label class="fashion-field">
-                            <span>First name</span>
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="John" required>
+                            <span>Nombre</span>
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" required>
                         </label>
 
                         <label class="fashion-field">
-                            <span>Last name</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Doe" required>
+                            <span>Apellidos</span>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" required>
                         </label>
                     </div>
 
                     <label class="fashion-field fashion-field--full">
-                        <span>Phone</span>
-                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="(555) 123-4567" required>
+                        <span>WhatsApp</span>
+                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" required>
                     </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">
-                            <span>Address{{ $checkoutFieldRequired('address') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Main Street" {{ $checkoutRequired('address') }}>
+                            <span>Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}</span>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" {{ $checkoutRequired('address') }}>
                         </label>
                     @endif
 
                     @if($checkoutFieldEnabled('apartment'))
                         <label class="fashion-field fashion-field--full">
-                            <span>Apartment, suite, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (optional)' }}</span>
-                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apt 4B, Floor 2, etc." {{ $checkoutRequired('apartment') }}>
+                            <span>Apartamento, interior, torre, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}</span>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." {{ $checkoutRequired('apartment') }}>
                         </label>
                     @endif
 
                     @if($checkoutLocationEnabled)
                         <div class="fashion-field-row fashion-field-row--three">
                             <label class="fashion-field">
-                                <span>City{{ $checkoutLocationRequired ? '' : ' (optional)' }}</span>
-                                <input type="text" name="city" value="{{ old('city') }}" placeholder="New York" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
+                                <span>Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</span>
+                                <input type="text" name="city" value="{{ old('city') }}" placeholder="Bogotá" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
                             </label>
 
                             <label class="fashion-field">
-                                <span>State</span>
-                                <input type="text" name="region" value="{{ old('region') }}" placeholder="State">
+                                <span>Departamento</span>
+                                <input type="text" name="region" value="{{ old('region') }}" placeholder="Cundinamarca">
                             </label>
 
-                            <label class="fashion-field">
-                                <span>ZIP Code</span>
-                                <input type="text" name="postal_code" value="{{ old('postal_code') }}" placeholder="10001">
-                            </label>
                         </div>
                     @endif
                 @endif
@@ -211,13 +180,9 @@
                     </label>
                 @endif
 
-                <label class="fashion-checkbox">
-                    <input type="checkbox" name="save_information" value="1" checked>
-                    <span>Guardar esta información para la próxima vez</span>
-                </label>
             </section>
 
-            <section class="fashion-checkout-section">
+            <section class="fashion-checkout-block">
                 <h2>Método de envío</h2>
 
                 @if($hasLocalDelivery)
@@ -250,7 +215,7 @@
                 @endif
             </section>
 
-            <section class="fashion-checkout-section">
+            <section class="fashion-checkout-block">
                 <h2>Método de pago</h2>
                 <p class="fashion-checkout-muted">Todas las transacciones son seguras.</p>
 
@@ -262,7 +227,7 @@
                             value="whatsapp"
                             data-payment-choice
                             data-payment-action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}"
-                                        data-payment-label="Finalizar pedido por WhatsApp"
+                            data-payment-label="Finalizar pedido por WhatsApp"
                             checked
                         >
                         <span>Pedido por WhatsApp</span>
@@ -283,6 +248,21 @@
                             <b>MP</b>
                         </label>
                     @endif
+
+                    @if($wompiAvailable ?? false)
+                        <label class="fashion-payment-option">
+                            <input
+                                type="radio"
+                                name="checkout_payment_choice"
+                                value="wompi"
+                                data-payment-choice
+                                data-payment-action="{{ route('cart.wompi', ['store' => $store->slug]) }}"
+                                data-payment-label="Pagar con Wompi"
+                            >
+                            <span>Wompi</span>
+                            <b>W</b>
+                        </label>
+                    @endif
                 </div>
             </section>
 
@@ -294,7 +274,7 @@
             @endif
 
             @if($store?->allowsDiscountCoupons())
-                <section class="fashion-checkout-section">
+                <section class="fashion-checkout-block">
                     <h2>Cupón de descuento</h2>
                     <div class="checkout-coupon">
                         <div class="checkout-coupon-row">
@@ -309,8 +289,9 @@
             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => 'fashion'])
 
             <div class="fashion-checkout-actions">
-                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">&lsaquo; Volver al carrito</a>
-                <button type="submit" data-payment-submit>Finalizar pedido</button>
+                <button type="submit" form="checkoutForm" data-payment-submit>
+                    <span>Finalizar pedido por WhatsApp</span>
+                </button>
             </div>
         </form>
 
@@ -360,13 +341,13 @@
             <div class="fashion-summary-totals">
                 <p><span>Subtotal</span><strong data-role="total">$ {{ number_format($subtotal, 0, ',', '.') }}</strong></p>
                 <p class="{{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
-                    <span>Discount <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
+                    <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
                     <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
                 </p>
                 @if($hasShippingCost)
-                    <p><span>Shipping</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Free') }}</strong></p>
+                    <p><span>Envío</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong></p>
                 @endif
-                <p><span>Estimated Tax</span><strong>$ {{ number_format($tax, 0, ',', '.') }}</strong></p>
+                <p><span>Impuestos estimados</span><strong>$ {{ number_format($tax, 0, ',', '.') }}</strong></p>
                 <p class="fashion-summary-grand">
                     <span>Total</span>
                     <small>COP</small>
@@ -377,15 +358,15 @@
             <div class="fashion-summary-benefits">
                 <article>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-                    <div><strong>Free Shipping</strong><span>On all orders over $100</span></div>
+                    <div><strong>Envío gratis</strong><span>En pedidos que cumplan el mínimo de la tienda</span></div>
                 </article>
                 <article>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-                    <div><strong>Easy Returns</strong><span>30-day return policy</span></div>
+                    <div><strong>Cambios fáciles</strong><span>Según las políticas de la tienda</span></div>
                 </article>
                 <article>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-                    <div><strong>Secure Payment</strong><span>100% secure checkout</span></div>
+                    <div><strong>Pago seguro</strong><span>Compra protegida</span></div>
                 </article>
             </div>
         </aside>

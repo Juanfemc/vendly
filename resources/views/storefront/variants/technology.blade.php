@@ -1,5 +1,7 @@
 @php
-    $categoryLinks = ($activeCategories ?? collect())->values();
+    $categoryLinks = ($activeCategories ?? collect())
+        ->filter(fn ($category) => ! $category->parent_id)
+        ->values();
     $minimalProducts = ($allProducts ?? collect())->values();
     $minimalRecommendationProducts = $minimalProducts->skip(1)->take(8);
     $icons = \App\Support\MinimalShopIcons::class;

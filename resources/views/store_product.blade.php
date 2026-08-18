@@ -99,13 +99,12 @@
                 ltrim(\Illuminate\Support\Str::substr($text, $cutAt)),
             ];
         };
-        $compactProductText = fn (string $text): string => trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
         $productDescriptionFallback = $isRestaurant ? 'Este plato aún no tiene una descripción amplia, pero ya está disponible para pedir por WhatsApp.' : ($isReservationStore ? 'Este servicio aún no tiene una descripción amplia configurada, pero ya está listo para reservarse.' : 'Este producto aún no tiene una descripción amplia configurada, pero ya está listo para venderse.');
-        $productDescriptionText = $compactProductText(\App\Support\ProductText::plain($product->description) ?: $productDescriptionFallback);
+        $productDescriptionText = \App\Support\ProductText::plain($product->description) ?: $productDescriptionFallback;
         [$productDescriptionPreview, $productDescriptionMore] = $makeProductPreview($productDescriptionText);
         $hasLongProductDescription = $productDescriptionMore !== '';
         $productDescriptionExpandedPreview = preg_replace('/\.\.\.$/u', '', $productDescriptionPreview);
-        $productFeaturesText = $compactProductText(\App\Support\ProductText::featureLines($product->features));
+        $productFeaturesText = \App\Support\ProductText::featureLines($product->features);
         $productFeaturesRich = \App\Support\ProductText::rich($product->features);
         $hasProductFeatures = $productFeaturesText !== '' || \App\Support\ProductText::plain($productFeaturesRich) !== '';
         [$productFeaturesPreview, $productFeaturesMore] = $makeProductPreview($productFeaturesText);

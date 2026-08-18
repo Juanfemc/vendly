@@ -35,6 +35,7 @@ class StoreCategoryController extends Controller
                     'stores' => $stores,
                     'selectedStore' => null,
                     'categories' => collect(),
+                    'parentCategoryOptions' => collect(),
                 ]);
             }
         }
@@ -50,8 +51,13 @@ class StoreCategoryController extends Controller
         }
 
         $categories = $store->categories()
+            ->with(['parent', 'children'])
+            ->when(! $store->allowsSubcategories(), fn ($query) => $query->whereNull('parent_id'))
             ->orderedForDisplay()
             ->get();
+        $parentCategoryOptions = ! $store->allowsSubcategories()
+            ? collect()
+            : $categories->whereNull('parent_id')->values();
 
         $categoryProductCounts = Product::query()
             ->where('store_id', $store->id)
@@ -59,8 +65,17 @@ class StoreCategoryController extends Controller
             ->selectRaw('category, count(*) as products_count')
             ->groupBy('category')
             ->pluck('products_count', 'category');
+        if ($store->allowsSubcategories()) {
+            $categories
+                ->whereNull('parent_id')
+                ->each(function (StoreCategory $category) use ($categoryProductCounts) {
+                    $categoryProductCounts[$category->name] = collect([$category->name])
+                        ->concat($category->children->pluck('name'))
+                        ->sum(fn (string $name) => (int) ($categoryProductCounts[$name] ?? 0));
+                });
+        }
 
-        return view('admin.categories.index', compact('store', 'categories', 'selectedStore', 'categoryProductCounts'));
+        return view('admin.categories.index', compact('store', 'categories', 'selectedStore', 'categoryProductCounts', 'parentCategoryOptions'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -95,6 +110,7 @@ class StoreCategoryController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'image', 'max:8192'],
+            'parent_id' => $this->parentCategoryRules($store),
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ], [
@@ -107,6 +123,7 @@ class StoreCategoryController extends Controller
             'slug' => $validated['slug'] ?: StoreCategory::uniqueSlugFor((int) $store->id, $validated['name']),
             'description' => $validated['description'] ?? null,
             'image' => $request->hasFile('image') ? $request->file('image')->store('categories', 'public') : null,
+            'parent_id' => $store->allowsSubcategories() ? ($validated['parent_id'] ?? null) : null,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -128,8 +145,15 @@ class StoreCategoryController extends Controller
             : $this->currentStore();
         abort_unless($store && (int) $category->store_id === (int) $store->id, 404);
         abort_unless($store->allowsCategories(), 404);
+        $parentCategoryOptions = ! $store->allowsSubcategories()
+            ? collect()
+            : $store->categories()
+                ->rootCategories()
+                ->whereKeyNot($category->id)
+                ->orderedForDisplay()
+                ->get();
 
-        return view('admin.categories.edit', compact('store', 'category'));
+        return view('admin.categories.edit', compact('store', 'category', 'parentCategoryOptions'));
     }
 
     public function update(Request $request, StoreCategory $category): RedirectResponse
@@ -163,6 +187,7 @@ class StoreCategoryController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'image', 'max:8192'],
+            'parent_id' => $this->parentCategoryRules($store, $category),
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['nullable', 'boolean'],
         ], [
@@ -173,6 +198,13 @@ class StoreCategoryController extends Controller
         $oldName = $category->name;
         $newName = $validated['name'];
         $image = $category->image;
+        $parentId = $store->allowsSubcategories() ? ($validated['parent_id'] ?? null) : null;
+
+        if ($parentId && $category->children()->exists()) {
+            return back()
+                ->withInput()
+                ->with('error', 'Una categoría con subcategorías no puede convertirse en subcategoría.');
+        }
 
         if ($request->hasFile('image')) {
             $this->deleteCategoryImage($category->image);
@@ -184,6 +216,7 @@ class StoreCategoryController extends Controller
             'slug' => $validated['slug'] ?: StoreCategory::uniqueSlugFor((int) $store->id, $newName, $category->id),
             'description' => $validated['description'] ?? null,
             'image' => $image,
+            'parent_id' => $parentId,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -215,6 +248,7 @@ class StoreCategoryController extends Controller
         Product::where('store_id', $store->id)
             ->where('category', $category->name)
             ->update(['category' => null]);
+        $category->children()->update(['parent_id' => null]);
 
         $this->deleteCategoryImage($category->image);
 
@@ -258,5 +292,25 @@ class StoreCategoryController extends Controller
     private function deleteCategoryImage(?string $path): void
     {
         $this->publicFileService->delete($path);
+    }
+
+    private function parentCategoryRules(Store $store, ?StoreCategory $category = null): array
+    {
+        if (! $store->allowsSubcategories()) {
+            return ['prohibited'];
+        }
+
+        $parentExistsRule = Rule::exists('store_categories', 'id')
+            ->where(function ($query) use ($store, $category) {
+                $query
+                    ->where('store_id', $store->id)
+                    ->whereNull('parent_id');
+
+                if ($category) {
+                    $query->where('id', '!=', $category->id);
+                }
+            });
+
+        return ['nullable', 'integer', $parentExistsRule];
     }
 }

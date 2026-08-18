@@ -32,9 +32,19 @@ class StoreTemplateController extends Controller
         abort_unless($store, $stores->isEmpty() ? 403 : 404);
         abort_unless($templateData, 404);
 
+        if (! ($templateData['available'] ?? false)) {
+            return redirect()
+                ->route('admin.templates.index', ['store_id' => $store->id])
+                ->with('error', 'Esta plantilla estara disponible muy pronto.');
+        }
+
+        $store->forceFill([
+            'business_type' => $templateData['business_type'],
+        ])->save();
+
         return redirect()
             ->route('admin.templates.index', ['store_id' => $store->id])
-            ->with('error', 'La opcion de usar plantillas estara disponible muy pronto.');
+            ->with('success', 'Plantilla '.$templateData['name'].' aplicada correctamente.');
     }
 
     private function availableStores(): Collection

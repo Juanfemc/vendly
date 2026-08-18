@@ -296,7 +296,7 @@
 
                 <div class="onboarding-field onboarding-field--full">
                     <span class="template-picker-title">Plantilla inicial</span>
-                    <small style="display:block; margin:6px 0 10px; color:#64748b;">Muy pronto podrás iniciar tiendas desde plantillas prediseñadas.</small>
+                    <small style="display:block; margin:6px 0 10px; color:#64748b;">Elige una base visual para crear la tienda con el estilo correcto desde el inicio.</small>
                     <div class="template-picker">
                         <label class="template-option">
                             <input type="radio" name="template_key" value="" data-template-business="" @checked($selectedTemplate === '')>
@@ -304,17 +304,18 @@
                             <span>Usa el tipo de negocio elegido sin plantilla especializada.</span>
                         </label>
                         @foreach($templates as $template)
+                            @php($templateAvailable = (bool) ($template['available'] ?? false))
                             <label class="template-option">
                                 <input
                                     type="radio"
                                     name="template_key"
                                     value="{{ $template['key'] }}"
                                     data-template-business="{{ $template['business_type'] }}"
-                                    disabled
+                                    @disabled(! $templateAvailable)
                                     @checked($selectedTemplate === $template['key'])
                                 >
                                 <strong>{{ $template['name'] }}</strong>
-                                <span>{{ $template['subtitle'] }} Muy pronto.</span>
+                                <span>{{ $template['subtitle'] }} {{ $templateAvailable ? 'Disponible.' : 'Muy pronto.' }}</span>
                             </label>
                         @endforeach
                     </div>

@@ -102,7 +102,7 @@ class ProductController extends Controller
             : collect();
         $categoryOptions = auth()->user()?->isAdmin()
             ? StoreCategory::orderBy('name')->pluck('name')->unique()->values()->all()
-            : ($store?->productCategoryOptions() ?? []);
+            : ($store?->productCategorySelectOptions() ?? []);
 
         return view('admin.products.create', compact('store', 'stores', 'categoryOptions'));
     }
@@ -172,7 +172,7 @@ class ProductController extends Controller
             : collect();
         $categoryOptions = auth()->user()?->isAdmin()
             ? StoreCategory::orderBy('name')->pluck('name')->unique()->values()->all()
-            : ($product->store?->productCategoryOptions() ?? []);
+            : ($product->store?->productCategorySelectOptions() ?? []);
         $productReviews = ($product->store?->allowsProductReviews() ?? false)
             ? $product->reviews()->latest()->get()
             : collect();
@@ -347,17 +347,20 @@ class ProductController extends Controller
         abort_unless($store->allowsCategories(), 404);
 
         $category = $store->categories()
+            ->with(['parent', 'activeChildren'])
             ->where('slug', $categorySlug)
             ->where('is_active', true)
             ->firstOrFail();
 
+        abort_if($category->parent_id && ! $store->allowsSubcategories(), 404);
+
         $this->countStoreVisit($store);
 
-        $productSearchEnabled = $store->hasProductSearch();
+        $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
-            ->where('category', $category->name)
+            ->whereIn('category', $this->categoryNamesForStorefront($store, $category))
             ->paginate(8)
             ->withQueryString();
 
@@ -373,7 +376,7 @@ class ProductController extends Controller
     {
         $this->countStoreVisit($store);
 
-        $productSearchEnabled = $store->hasProductSearch();
+        $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
@@ -393,7 +396,7 @@ class ProductController extends Controller
 
         $this->countStoreVisit($store);
 
-        $productSearchEnabled = $store->hasProductSearch();
+        $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
@@ -453,7 +456,10 @@ class ProductController extends Controller
                 ->groupBy('category')
                 ->pluck('total', 'category');
 
+        $this->mergeParentCategoryProductCounts($store, $activeCategories, $categoryProductCounts);
+
         $categorySections = $activeCategories
+            ->filter(fn (StoreCategory $category) => $store->isRestaurant() || ! $category->parent_id)
             ->filter(fn (StoreCategory $category) => (int) ($categoryProductCounts[$category->name] ?? 0) > 0)
             ->take(3)
             ->map(function (StoreCategory $category) use ($store, $categoryProductCounts) {
@@ -461,7 +467,7 @@ class ProductController extends Controller
                     'category' => $category,
                     'products' => Product::where('store_id', $store->id)
                         ->withReviewStats()
-                        ->where('category', $category->name)
+                        ->whereIn('category', $this->categoryNamesForStorefront($store, $category))
                         ->latest()
                         ->take(5)
                         ->get(),
@@ -490,7 +496,7 @@ class ProductController extends Controller
             : null;
 
         $products = $this->publicProductsQuery($store)
-            ->when($selectedHomeCategory, fn ($query) => $query->where('category', $selectedHomeCategory->name))
+            ->when($selectedHomeCategory, fn ($query) => $query->whereIn('category', $this->categoryNamesForStorefront($store, $selectedHomeCategory)))
             ->when($selectedHomeBadge, fn ($query) => $query->whereJsonContains('custom_badges', $selectedHomeBadge))
             ->paginate($homeProductPageSize)
             ->withQueryString();
@@ -500,7 +506,7 @@ class ProductController extends Controller
             ->latest()
             ->take(12)
             ->get();
-        $productSearchEnabled = $store->hasProductSearch();
+        $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $storefrontUrls = app(StorefrontUrlService::class);
 
         return compact(
@@ -529,7 +535,7 @@ class ProductController extends Controller
             'activeCategories' => $this->activeCategories($store),
             'customBadgeFilters' => $this->customBadgeFilters($store),
             'showAboutSection' => $store->hasAboutContent(),
-            'productSearchEnabled' => $store->hasProductSearch(),
+            'productSearchEnabled' => $this->productSearchEnabledForStore($store),
         ];
     }
 
@@ -553,6 +559,11 @@ class ProductController extends Controller
     private function searchQuery(): string
     {
         return trim((string) request('q', ''));
+    }
+
+    private function productSearchEnabledForStore(Store $store): bool
+    {
+        return $store->hasProductSearch() || $store->isFashionStore();
     }
 
     private function applyProductSearch($query, string $searchQuery)
@@ -651,6 +662,40 @@ class ProductController extends Controller
             ->exists();
     }
 
+    private function categoryNamesForStorefront(Store $store, StoreCategory $category): array
+    {
+        if (! $store->allowsSubcategories() || $store->isRestaurant() || $category->parent_id) {
+            return [$category->name];
+        }
+
+        $childNames = $category->relationLoaded('activeChildren')
+            ? $category->activeChildren->pluck('name')
+            : $category->activeChildren()->pluck('name');
+
+        return collect([$category->name])
+            ->concat($childNames)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function mergeParentCategoryProductCounts(Store $store, $activeCategories, $categoryProductCounts): void
+    {
+        if (! $store->allowsSubcategories() || $store->isRestaurant()) {
+            return;
+        }
+
+        $activeCategories
+            ->filter(fn (StoreCategory $category) => ! $category->parent_id)
+            ->each(function (StoreCategory $category) use ($store, $categoryProductCounts) {
+                $total = collect($this->categoryNamesForStorefront($store, $category))
+                    ->sum(fn (string $name) => (int) ($categoryProductCounts[$name] ?? 0));
+
+                $categoryProductCounts[$category->name] = $total;
+            });
+    }
+
     private function activeCategories(Store $store)
     {
         if (! $store->allowsCategories()) {
@@ -658,6 +703,7 @@ class ProductController extends Controller
         }
 
         return $store->categories()
+            ->with(['parent', 'activeChildren'])
             ->where('is_active', true)
             ->orderedForDisplay()
             ->get();

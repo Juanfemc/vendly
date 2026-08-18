@@ -30,6 +30,20 @@
 
         <input type="text" name="name" value="{{ old('name', $category->name) }}" placeholder="Nombre de la categoría" required>
         <input type="text" name="slug" value="{{ old('slug', $category->slug) }}" placeholder="Slug">
+        @if($store->allowsSubcategories())
+            <label>
+                <span>Categoría principal</span>
+                <select name="parent_id">
+                    <option value="">Sin categoría principal</option>
+                    @foreach(($parentCategoryOptions ?? collect()) as $parentCategory)
+                        <option value="{{ $parentCategory->id }}" @selected((int) old('parent_id', $category->parent_id) === (int) $parentCategory->id)>
+                            {{ $parentCategory->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <small style="display:block; color:var(--muted);">Déjalo vacío si esta categoría debe ser principal.</small>
+            </label>
+        @endif
         <textarea name="description" rows="4" placeholder="Descripción corta">{{ old('description', $category->description) }}</textarea>
         <input type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1200" data-quality="0.84" data-output="webp" data-max-size="8388608">
         <small style="display:block; margin-top:-6px; color:var(--muted);">Imagen recomendada: JPG, PNG o WebP. Máximo 8 MB.</small>

@@ -163,7 +163,7 @@
         }
 
         shippingOptions.forEach((option) => {
-            const price = option.closest('.shipping-option')?.querySelector('[data-shipping-price]');
+            const price = option.closest('.shipping-option, .fashion-shipping-option')?.querySelector('[data-shipping-price]');
 
             if (!price) {
                 return;
@@ -366,13 +366,41 @@
         choice.addEventListener('change', syncPaymentChoice);
     });
 
-    checkoutForm?.addEventListener('submit', () => {
+    checkoutForm?.addEventListener('submit', (event) => {
         const selected = selectedPaymentChoice();
         const action = selected?.dataset.paymentAction;
 
         if (action) {
             checkoutForm.action = action;
         }
+
+        if (!checkoutForm.checkValidity()) {
+            event.preventDefault();
+            checkoutForm.reportValidity();
+
+            const invalidField = checkoutForm.querySelector(':invalid');
+            invalidField
+                ?.closest('.fashion-checkout-block, .fashion-field, .checkout-terms, .checkout-card')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const loadingLabel = selected?.value === 'whatsapp'
+            ? 'Preparando WhatsApp...'
+            : 'Redirigiendo al pago...';
+
+        paymentSubmitButtons.forEach((button) => {
+            button.disabled = true;
+            button.classList.add('is-loading');
+
+            const labelEl = button.querySelector('span');
+            if (labelEl) {
+                labelEl.textContent = loadingLabel;
+                return;
+            }
+
+            button.textContent = loadingLabel;
+        });
     });
 
     page.addEventListener('click', async (event) => {

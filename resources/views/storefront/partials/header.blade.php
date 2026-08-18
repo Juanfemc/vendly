@@ -85,17 +85,29 @@
                         <span>Ofertas</span>
                     </a>
                 @endif
-                @if(($activeCategories ?? collect())->isNotEmpty())
+                @php
+                    $navCategories = ($activeCategories ?? collect())
+                        ->when(! $store->isRestaurant(), fn ($categories) => $categories->filter(fn ($category) => ! $category->parent_id))
+                        ->values();
+                @endphp
+                @if($navCategories->isNotEmpty())
                     <div class="nav-dropdown">
                         <button type="button" class="nav-dropdown-button" aria-haspopup="true" aria-expanded="false" aria-controls="storefrontCategoryMenu">
                             <span>Categorías</span>
                             <span class="nav-dropdown-icon" aria-hidden="true"></span>
                         </button>
                         <div class="nav-dropdown-menu" id="storefrontCategoryMenu">
-                            @foreach(($activeCategories ?? collect()) as $categoryLink)
-                                <a href="{{ $storefrontUrls->category($store, $categoryLink) }}">
+                            @foreach($navCategories as $categoryLink)
+                                <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="nav-dropdown-link">
                                     {{ $categoryLink->name }}
                                 </a>
+                                @if($store->allowsSubcategories())
+                                    @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
+                                        <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="nav-dropdown-link nav-dropdown-link--child">
+                                            {{ $subcategoryLink->name }}
+                                        </a>
+                                    @endforeach
+                                @endif
                             @endforeach
                         </div>
                     </div>

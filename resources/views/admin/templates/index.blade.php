@@ -6,7 +6,7 @@
 <div class="header">
     <div>
         <h2>Plantillas</h2>
-        <p style="margin:6px 0 0; color:#64748b;">Muy pronto podrás cambiar el diseño principal de tu tienda desde aquí.</p>
+        <p style="margin:6px 0 0; color:#64748b;">Cambia el diseño principal de tu tienda sin tocar tus productos.</p>
     </div>
     <a href="/dashboard" class="btn btn-secondary">Volver al panel</a>
 </div>
@@ -18,10 +18,6 @@
 @if (session('error'))
     <div class="flash error">{{ session('error') }}</div>
 @endif
-
-<div class="flash info" style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;">
-    La opcion de usar plantillas esta temporalmente deshabilitada. Muy pronto estara disponible.
-</div>
 
 @if(($stores ?? collect())->count() > 1)
     <div class="list-card">
@@ -49,6 +45,7 @@
     @foreach($templates as $template)
         @php
             $isActive = $store->business_type === $template['business_type'];
+            $isAvailable = (bool) ($template['available'] ?? false);
         @endphp
 
         <article class="list-card resource-card">
@@ -60,7 +57,11 @@
                     </div>
                     <div class="resource-badges">
                         <span class="resource-badge">Pro y Premium</span>
-                        <span class="resource-badge">Muy pronto</span>
+                        @if($isAvailable)
+                            <span class="resource-badge resource-badge--active">Disponible</span>
+                        @else
+                            <span class="resource-badge">Muy pronto</span>
+                        @endif
                         @if($isActive)
                             <span class="resource-badge resource-badge--active">Activa</span>
                         @endif
@@ -82,6 +83,12 @@
             <div class="resource-actions">
                 @if($isActive)
                     <button type="button" class="btn btn-muted" disabled>Plantilla activa</button>
+                @elseif($isAvailable)
+                    <form method="POST" action="{{ route('admin.templates.apply', $template['key']) }}">
+                        @csrf
+                        <input type="hidden" name="store_id" value="{{ $store->id }}">
+                        <button type="submit" class="btn btn-primary">Usar plantilla</button>
+                    </form>
                 @else
                     <button type="button" class="btn btn-muted" disabled>Muy pronto</button>
                 @endif

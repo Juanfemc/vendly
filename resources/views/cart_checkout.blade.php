@@ -81,7 +81,7 @@
     @endif
 
     @if($isFashionStore && $store)
-        @include('storefront.partials.header-fashion')
+        @include('storefront.partials.fashion-checkout-header')
     @endif
 
     @if (empty($cart))

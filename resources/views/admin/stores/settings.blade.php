@@ -454,6 +454,125 @@
         line-height: 1.35;
     }
 
+    .fashion-preset-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .fashion-preset-head {
+        display: grid;
+        gap: 3px;
+        margin-bottom: 12px;
+    }
+
+    .fashion-preset-head strong,
+    .fashion-preset-head span {
+        display: block;
+    }
+
+    .fashion-preset-head strong {
+        color: #073241;
+        font-size: 14px;
+    }
+
+    .fashion-preset-head span {
+        color: #6c9d9c;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .fashion-preset-card {
+        position: relative;
+        display: grid;
+        gap: 12px;
+        min-height: 148px;
+        padding: 16px;
+        border: 1px solid #dce5ea;
+        border-radius: 18px;
+        background: #ffffff;
+        color: #073241;
+        cursor: pointer;
+        text-align: left;
+        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .fashion-preset-card:hover,
+    .fashion-preset-card.is-selected {
+        border-color: var(--vendly-brand);
+        box-shadow: 0 16px 38px rgba(255, 107, 0, .14);
+        transform: translateY(-1px);
+    }
+
+    .fashion-preset-card.is-selected::after {
+        content: "";
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: var(--vendly-brand);
+        box-shadow: 0 0 0 4px rgba(255, 107, 0, .16);
+    }
+
+    .fashion-preset-preview {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(7, 50, 65, .08);
+    }
+
+    .fashion-preset-top {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+    }
+
+    .fashion-preset-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(7, 50, 65, .12);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4);
+    }
+
+    .fashion-preset-line {
+        width: 72%;
+        height: 8px;
+        border-radius: 999px;
+        opacity: .7;
+    }
+
+    .fashion-preset-cta {
+        width: 46%;
+        height: 22px;
+        border-radius: 999px;
+    }
+
+    .fashion-preset-name {
+        display: grid;
+        gap: 3px;
+    }
+
+    .fashion-preset-name strong,
+    .fashion-preset-name span {
+        display: block;
+    }
+
+    .fashion-preset-name strong {
+        font-size: 14px;
+        line-height: 1.2;
+    }
+
+    .fashion-preset-name span {
+        color: #6c9d9c;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
     .catalog-color-item {
         display: grid;
         grid-template-columns: 58px minmax(0, 1fr);
@@ -788,6 +907,7 @@
         .catalog-settings-grid--three,
         .catalog-media-layout,
         .catalog-palette-grid,
+        .fashion-preset-grid,
         .catalog-color-grid,
         .catalog-font-grid,
         .catalog-social-grid,
@@ -1055,6 +1175,21 @@
                 </div>
 
                 @if(\App\Models\Store::supportsHeroOverlayColumns())
+                    <div class="catalog-toggle-row catalog-field--full">
+                        <div>
+                            <strong>Texto y boton sobre portada</strong>
+                            <p class="catalog-help" style="margin:4px 0 0;">Activalo para mostrar una capa de texto sobre el banner de la tienda de ropa.</p>
+                        </div>
+                        <label class="catalog-switch">
+                            <input type="checkbox" name="show_hero_overlay" value="1" @checked((bool) old('show_hero_overlay', $store->show_hero_overlay ?? false))>
+                            <i></i>
+                        </label>
+                    </div>
+                    <div class="catalog-field">
+                        <label for="hero_overlay_eyebrow">Texto pequeno</label>
+                        <input id="hero_overlay_eyebrow" type="text" name="hero_overlay_eyebrow" value="{{ old('hero_overlay_eyebrow', $store->hero_overlay_eyebrow) }}" maxlength="80" placeholder="Nueva coleccion">
+                        <small>Ej: Oferta especial, nueva coleccion o temporada.</small>
+                    </div>
                     <div class="catalog-field">
                         <label for="hero_overlay_title">Texto sobre portada</label>
                         <input id="hero_overlay_title" type="text" name="hero_overlay_title" value="{{ old('hero_overlay_title', $store->hero_overlay_title) }}" maxlength="120" placeholder="Nueva colección">
@@ -1101,6 +1236,14 @@
 	                    $selectedTextColor = \App\Models\Store::automaticTextColorFor($selectedBackgroundColor);
 	                    $selectedFontFamily = old('font_family', $store->font_family ?: 'system');
 	                    $selectedFontFamily = array_key_exists($selectedFontFamily, \App\Models\Store::FONT_FAMILIES) ? $selectedFontFamily : 'system';
+	                    $fashionStylePresets = [
+	                        ['name' => 'Urbano', 'description' => 'Streetwear, drops y energia comercial.', 'brand' => '#ff6b00', 'background' => '#ffffff', 'font' => 'system'],
+	                        ['name' => 'Boutique', 'description' => 'Suave, femenino y editorial.', 'brand' => '#d9799f', 'background' => '#fff7fa', 'font' => 'serif'],
+	                        ['name' => 'Minimal', 'description' => 'Limpio para catalogos premium.', 'brand' => '#111111', 'background' => '#ffffff', 'font' => 'system'],
+	                        ['name' => 'Premium', 'description' => 'Oscuro, sobrio y de alto contraste.', 'brand' => '#c99a3f', 'background' => '#111111', 'font' => 'serif'],
+	                        ['name' => 'Deportivo', 'description' => 'Activo, fresco y facil de escanear.', 'brand' => '#2563eb', 'background' => '#f8fbff', 'font' => 'system'],
+	                        ['name' => 'Outlet', 'description' => 'Directo para descuentos y remates.', 'brand' => '#ef233c', 'background' => '#fff7ed', 'font' => 'rounded'],
+	                    ];
 	                    $catalogPalettes = [
 	                        ['name' => 'Clasica', 'description' => 'Negro, blanco y contraste limpio.', 'brand' => '#111111', 'background' => '#ffffff'],
 	                        ['name' => 'Vendly', 'description' => 'Naranja comercial con fondo claro.', 'brand' => '#ff6b00', 'background' => '#ffffff'],
@@ -1112,6 +1255,45 @@
 	                        ['name' => 'Minimal', 'description' => 'Gris moderno y muy neutral.', 'brand' => '#334155', 'background' => '#f8fafc'],
 	                    ];
 	                @endphp
+
+                    @if(old('business_type', $store->business_type ?? 'store') === 'fashion')
+                        <div class="fashion-preset-head">
+                            <strong>Estilos prediseñados para ropa</strong>
+                            <span>Elige una combinacion de colores y tipografia para cambiar el look de la tienda rapido.</span>
+                        </div>
+                        <div class="fashion-preset-grid" data-fashion-preset-picker>
+                            @foreach($fashionStylePresets as $preset)
+                                @php
+                                    $presetText = \App\Models\Store::automaticTextColorFor($preset['background']);
+                                    $isSelectedFashionPreset = strcasecmp($selectedBrandColor, $preset['brand']) === 0
+                                        && strcasecmp($selectedBackgroundColor, $preset['background']) === 0
+                                        && $selectedFontFamily === $preset['font'];
+                                @endphp
+                                <button
+                                    type="button"
+                                    class="fashion-preset-card @if($isSelectedFashionPreset) is-selected @endif"
+                                    data-fashion-preset-brand="{{ $preset['brand'] }}"
+                                    data-fashion-preset-background="{{ $preset['background'] }}"
+                                    data-fashion-preset-text="{{ $presetText }}"
+                                    data-fashion-preset-font="{{ $preset['font'] }}"
+                                >
+                                    <span class="fashion-preset-preview" style="background: {{ $preset['background'] }}; color: {{ $presetText }};">
+                                        <span class="fashion-preset-top">
+                                            <span class="fashion-preset-dot" style="background: {{ $preset['brand'] }}"></span>
+                                            <span class="fashion-preset-dot" style="background: {{ $presetText }}"></span>
+                                            <span class="fashion-preset-dot" style="background: {{ $preset['background'] }}"></span>
+                                        </span>
+                                        <span class="fashion-preset-line" style="background: {{ $presetText }}"></span>
+                                        <span class="fashion-preset-cta" style="background: {{ $preset['brand'] }}"></span>
+                                    </span>
+                                    <span class="fashion-preset-name">
+                                        <strong>{{ $preset['name'] }}</strong>
+                                        <span>{{ $preset['description'] }}</span>
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
 
 	                <div class="catalog-palette-grid" data-palette-picker>
 	                    @foreach($catalogPalettes as $palette)
@@ -1143,7 +1325,7 @@
 	                <div class="catalog-color-grid">
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="brand_color" value="{{ $selectedBrandColor }}" data-theme-color-input="brand">
-                        <span><strong>Acento</strong><span>Precios, botónes, carrito y enlaces.</span></span>
+                        <span><strong>Acento</strong><span>Precios, botones, carrito y enlaces.</span></span>
                     </label>
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="background_color" value="{{ $selectedBackgroundColor }}" data-theme-color-input="background">
@@ -1646,15 +1828,21 @@
         });
 
         const fontSelect = document.getElementById('font_family');
-	        document.querySelectorAll('[data-font-value]').forEach((button) => {
-	            button.addEventListener('click', () => {
-	                if (fontSelect) {
-	                    fontSelect.value = button.dataset.fontValue;
-	                }
+        const fontButtons = document.querySelectorAll('[data-font-value]');
+        const setSelectedFont = (value) => {
+            if (fontSelect) {
+                fontSelect.value = value;
+            }
 
-                document.querySelectorAll('[data-font-value]').forEach((item) => {
-                    item.classList.toggle('is-selected', item === button);
-                });
+            fontButtons.forEach((item) => {
+                item.classList.toggle('is-selected', item.dataset.fontValue === value);
+            });
+        };
+
+	        fontButtons.forEach((button) => {
+	            button.addEventListener('click', () => {
+	                setSelectedFont(button.dataset.fontValue);
+                    syncSelectedFashionPreset();
 	            });
 	        });
 
@@ -1662,6 +1850,7 @@
 	        const backgroundInput = document.querySelector('[data-theme-color-input="background"]');
 	        const textInput = document.querySelector('[data-theme-color-input="text"]');
 	        const paletteButtons = document.querySelectorAll('[data-palette-brand]');
+            const fashionPresetButtons = document.querySelectorAll('[data-fashion-preset-brand]');
 
 	        const normalizeColor = (value) => String(value || '').trim().toLowerCase();
 	        const syncSelectedPalette = () => {
@@ -1672,6 +1861,15 @@
 	                button.classList.toggle('is-selected', isSelected);
 	            });
 	        };
+            const syncSelectedFashionPreset = () => {
+                fashionPresetButtons.forEach((button) => {
+                    const isSelected = normalizeColor(button.dataset.fashionPresetBrand) === normalizeColor(brandInput?.value)
+                        && normalizeColor(button.dataset.fashionPresetBackground) === normalizeColor(backgroundInput?.value)
+                        && String(button.dataset.fashionPresetFont || '') === String(fontSelect?.value || '');
+
+                    button.classList.toggle('is-selected', isSelected);
+                });
+            };
 
 	        paletteButtons.forEach((button) => {
 	            button.addEventListener('click', () => {
@@ -1680,19 +1878,42 @@
 	                if (textInput) textInput.value = button.dataset.paletteText;
 
 	                syncSelectedPalette();
+                    syncSelectedFashionPreset();
 	            });
 	        });
 
-	        brandInput?.addEventListener('input', syncSelectedPalette);
-	        backgroundInput?.addEventListener('input', syncSelectedPalette);
+            fashionPresetButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    if (brandInput) brandInput.value = button.dataset.fashionPresetBrand;
+                    if (backgroundInput) backgroundInput.value = button.dataset.fashionPresetBackground;
+                    if (textInput) textInput.value = button.dataset.fashionPresetText;
+                    setSelectedFont(button.dataset.fashionPresetFont);
+
+                    syncSelectedPalette();
+                    syncSelectedFashionPreset();
+                });
+            });
+
+	        brandInput?.addEventListener('input', () => {
+                syncSelectedPalette();
+                syncSelectedFashionPreset();
+            });
+	        backgroundInput?.addEventListener('input', () => {
+                syncSelectedPalette();
+                syncSelectedFashionPreset();
+            });
+            fontSelect?.addEventListener('change', syncSelectedFashionPreset);
 	        syncSelectedPalette();
+            syncSelectedFashionPreset();
 
 	        document.querySelectorAll('[data-reset-theme]').forEach((button) => {
 	            button.addEventListener('click', () => {
 	                if (brandInput) brandInput.value = '#111111';
 	                if (backgroundInput) backgroundInput.value = '#ffffff';
 	                if (textInput) textInput.value = '#111111';
+                    setSelectedFont('system');
 	                syncSelectedPalette();
+                    syncSelectedFashionPreset();
 	            });
 	        });
 

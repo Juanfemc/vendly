@@ -16,7 +16,6 @@ class ProductText
         $text = preg_replace('/&(?:amp;)?t?nbsp;?/i', ' ', $text) ?? $text;
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = preg_replace('/\x{00A0}/u', ' ', $text) ?? $text;
-        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
         $text = preg_replace('/\n[ \t]+/u', "\n", $text) ?? $text;
         $text = preg_replace('/[ \t]+\n/u', "\n", $text) ?? $text;
         $text = preg_replace('/\n{3,}/u', "\n\n", $text) ?? $text;
@@ -26,8 +25,11 @@ class ProductText
 
     public static function plain(?string $value): string
     {
-        $text = str_replace(['</li>', '</p>', '<br>', '<br/>', '<br />'], "\n", (string) $value);
-        $text = self::removeDangerousBlocks(self::normalize($text));
+        $text = self::normalize($value);
+        $text = self::removeDangerousBlocks($text);
+        $text = preg_replace('/<\s*br\s*\/?>/i', "\n", $text) ?? $text;
+        $text = preg_replace('/<\s*li\b[^>]*>/i', '- ', $text) ?? $text;
+        $text = preg_replace('/<\/\s*(li|p|div|section|article|blockquote|h[1-6]|tr)\s*>/i', "\n", $text) ?? $text;
 
         return self::normalize(strip_tags($text));
     }
@@ -47,10 +49,7 @@ class ProductText
 
     public static function featureLines(?string $value): string
     {
-        return collect(preg_split('/[\r\n;]+/', self::plain($value)) ?: [])
-            ->map(fn ($feature) => trim(preg_replace('/\s+/u', ' ', $feature) ?? $feature))
-            ->filter()
-            ->implode("\n");
+        return self::plain($value);
     }
 
     private static function removeDangerousBlocks(string $text): string

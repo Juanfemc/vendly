@@ -38,7 +38,7 @@
     const feedback = document.getElementById('cartFeedback');
     const cartDrawer = document.querySelector('[data-cart-drawer]');
     const cartDrawerToggle = document.getElementById('minimalShopCartToggle');
-    const storeCartBackdrop = document.querySelector('.store-cart-backdrop');
+    const storeCartBackdrop = document.querySelector('.store-cart-backdrop, .fashion-cart-backdrop');
     const cartDrawerItems = document.querySelector('[data-cart-drawer-items]');
     const cartDrawerCount = document.querySelector('[data-cart-drawer-count]');
     const cartDrawerSubtotal = document.querySelector('[data-cart-drawer-subtotal]');
@@ -54,25 +54,93 @@
     const fashionCategoryButtons = Array.from(document.querySelectorAll('[data-fashion-category-filter]'));
     const fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
     const fashionEmptyState = document.querySelector('[data-fashion-empty-state]');
+    const fashionEndMessage = document.querySelector('[data-fashion-end-message]');
+    const fashionSearchForms = Array.from(document.querySelectorAll('[data-fashion-search]'));
+    const fashionProductGrid = document.querySelector('[data-fashion-product-grid]');
+    const fashionSizeButtons = Array.from(document.querySelectorAll('[data-fashion-size-option]'));
+    const fashionSortSelect = document.querySelector('[data-fashion-sort]');
     const announcementMessages = Array.from(document.querySelectorAll('[data-announcement-message]'));
     const storefrontTopbar = document.querySelector('[data-storefront-topbar]');
+    const fashionCompactToggles = Array.from(document.querySelectorAll('[data-fashion-compact-toggle]'));
     const csrfToken = page.dataset.csrf || '';
     const addingText = page.dataset.addingText || 'Agregando...';
     const addedText = page.dataset.feedbackAdded || 'Producto agregado al carrito';
     const addErrorText = page.dataset.feedbackError || 'No pudimos agregar el producto';
+    const compactFashionCartDelay = 1000;
     let feedbackTimer;
+    let activeFashionCategory = 'all';
+    let activeFashionSize = 'all';
 
     resolveBrandContrast();
 
-    const syncFashionCategory = (category) => {
-        if (!fashionCategoryButtons.length || !fashionProducts.length) {
+    fashionCompactToggles.forEach((toggle) => {
+        const card = toggle.closest('[data-fashion-compact-card]');
+        const rest = card?.querySelector('.fashion-product-compact-rest');
+        const ellipsis = card?.querySelector('.fashion-product-compact-ellipsis');
+
+        if (!card || !rest) {
+            toggle.hidden = true;
+            return;
+        }
+
+        toggle.addEventListener('click', () => {
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            const nextExpanded = !isExpanded;
+
+            toggle.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+            card.classList.toggle('is-expanded', nextExpanded);
+            rest.hidden = !nextExpanded;
+
+            if (ellipsis) {
+                ellipsis.hidden = nextExpanded;
+            }
+        });
+    });
+
+    const applyFashionCatalogFilters = () => {
+        if (!fashionProducts.length) {
             return;
         }
 
         let visibleCount = 0;
+        const sortedProducts = [...fashionProducts];
+
+        sortedProducts.sort((first, second) => {
+            const sort = fashionSortSelect?.value || 'default';
+            const firstName = first.dataset.fashionName || '';
+            const secondName = second.dataset.fashionName || '';
+            const firstPrice = Number.parseFloat(first.dataset.fashionPrice || '0');
+            const secondPrice = Number.parseFloat(second.dataset.fashionPrice || '0');
+
+            if (sort === 'name-asc') {
+                return firstName.localeCompare(secondName, 'es');
+            }
+
+            if (sort === 'name-desc') {
+                return secondName.localeCompare(firstName, 'es');
+            }
+
+            if (sort === 'price-desc') {
+                return secondPrice - firstPrice;
+            }
+
+            if (sort === 'price-asc') {
+                return firstPrice - secondPrice;
+            }
+
+            return fashionProducts.indexOf(first) - fashionProducts.indexOf(second);
+        });
+
+        if (fashionProductGrid) {
+            sortedProducts.forEach((product) => fashionProductGrid.appendChild(product));
+        }
 
         fashionProducts.forEach((product) => {
-            const isVisible = product.dataset.fashionCategory === category;
+            const productSizes = (product.dataset.fashionSizes || '').split(',').filter(Boolean);
+            const matchesCategory = activeFashionCategory === 'all' || product.dataset.fashionCategory === activeFashionCategory;
+            const matchesSize = activeFashionSize === 'all' || productSizes.includes(activeFashionSize);
+            const isVisible = matchesCategory && matchesSize;
+
             product.hidden = !isVisible;
 
             if (isVisible) {
@@ -81,7 +149,13 @@
         });
 
         fashionCategoryButtons.forEach((button) => {
-            const isActive = button.dataset.fashionCategoryFilter === category;
+            const isActive = button.dataset.fashionCategoryFilter === activeFashionCategory;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        fashionSizeButtons.forEach((button) => {
+            const isActive = button.dataset.fashionSizeOption === activeFashionSize;
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
@@ -89,7 +163,99 @@
         if (fashionEmptyState) {
             fashionEmptyState.hidden = visibleCount > 0;
         }
+
+        if (fashionEndMessage) {
+            fashionEndMessage.hidden = visibleCount === 0;
+        }
     };
+
+    const syncFashionCategory = (category) => {
+        activeFashionCategory = category || 'all';
+        applyFashionCatalogFilters();
+    };
+
+    const normalizeSearchText = (value) => String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const setupFashionSearchSuggestions = () => {
+        if (!fashionSearchForms.length) {
+            return;
+        }
+
+        fashionSearchForms.forEach((form) => {
+            const input = form.querySelector('[data-fashion-search-input]');
+            const clearButton = form.querySelector('[data-fashion-search-clear]');
+            const results = form.querySelector('[data-fashion-search-results]');
+            const allLink = form.querySelector('[data-fashion-search-all]');
+            const items = Array.from(form.querySelectorAll('[data-fashion-search-item]'));
+
+            if (!input) {
+                return;
+            }
+
+            const sync = () => {
+                const query = input.value.trim();
+                const normalizedQuery = normalizeSearchText(query);
+                let visibleCount = 0;
+
+                form.classList.toggle('has-value', query !== '');
+
+                if (clearButton) {
+                    clearButton.hidden = query === '';
+                }
+
+                if (!results) {
+                    return;
+                }
+
+                if (query === '') {
+                    results.hidden = true;
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const matches = normalizeSearchText(item.dataset.searchName).includes(normalizedQuery);
+                    item.hidden = !matches;
+
+                    if (matches) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (allLink) {
+                    const action = form.getAttribute('action') || window.location.pathname;
+                    allLink.href = `${action}?q=${encodeURIComponent(query)}`;
+                    allLink.style.display = 'block';
+                    allLink.textContent = visibleCount > 0
+                        ? 'Ver todos los resultados'
+                        : `Buscar "${query}"`;
+                }
+
+                results.hidden = visibleCount === 0 && !allLink;
+            };
+
+            input.addEventListener('input', sync);
+            input.addEventListener('focus', sync);
+
+            clearButton?.addEventListener('click', () => {
+                input.value = '';
+                input.focus();
+                sync();
+            });
+
+            document.addEventListener('click', (event) => {
+                if (results && !form.contains(event.target)) {
+                    results.hidden = true;
+                }
+            });
+
+            sync();
+        });
+    };
+
+    setupFashionSearchSuggestions();
 
     if (fashionCategoryTabs && fashionCategoryButtons.length && fashionProducts.length) {
         fashionCategoryTabs.addEventListener('click', (event) => {
@@ -103,6 +269,19 @@
             syncFashionCategory(button.dataset.fashionCategoryFilter);
         });
     }
+
+    if (fashionSizeButtons.length && fashionProducts.length) {
+        fashionSizeButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeFashionSize = button.dataset.fashionSizeOption || 'all';
+                applyFashionCatalogFilters();
+            });
+        });
+    }
+
+    fashionSortSelect?.addEventListener('change', applyFashionCatalogFilters);
+
+    applyFashionCatalogFilters();
 
     const syncTopbarHeight = () => {
         if (!storefrontTopbar) {
@@ -176,23 +355,31 @@
             .replace(/'/g, '&#039;');
 
     const syncStoreCartDrawer = () => {
-        if (!cartDrawer?.classList.contains('store-cart-drawer') || !cartDrawerToggle) {
+        if (!cartDrawer || !cartDrawerToggle) {
             return;
         }
 
         const isOpen = cartDrawerToggle.checked;
         cartDrawer.classList.toggle('is-open', isOpen);
+        page.classList.toggle('is-cart-open', isOpen);
         storeCartBackdrop?.classList.toggle('is-open', isOpen);
-        if (isOpen) {
-            cartDrawer.style.setProperty('right', '0', 'important');
-            cartDrawer.style.setProperty('transform', 'none', 'important');
-        } else {
-            cartDrawer.style.removeProperty('right');
-            cartDrawer.style.removeProperty('transform');
-        }
+        cartDrawer.style.removeProperty('right');
+        cartDrawer.style.removeProperty('transform');
     };
 
     cartDrawerToggle?.addEventListener('change', syncStoreCartDrawer);
+    document.querySelectorAll('label[for="minimalShopCartToggle"].cart-link').forEach((trigger) => {
+        trigger.addEventListener('click', (event) => {
+            if (!cartDrawerToggle || !cartDrawer) {
+                return;
+            }
+
+            event.stopPropagation();
+            event.preventDefault();
+            cartDrawerToggle.checked = true;
+            syncStoreCartDrawer();
+        }, true);
+    });
     syncStoreCartDrawer();
 
     const updateCartBadge = (count) => {
@@ -450,11 +637,22 @@
 
             const button = form.querySelector('button[type="submit"]');
             const originalText = button ? button.textContent : '';
+            const originalHtml = button ? button.innerHTML : '';
+            const isCompactFashionCart = form.matches('[data-compact-fashion-cart]');
+            const startedAt = Date.now();
 
             if (button) {
                 button.disabled = true;
                 button.classList.add('is-loading');
-                button.textContent = addingText;
+                const label = button.querySelector('[data-variant-label]');
+
+                if (isCompactFashionCart) {
+                    button.setAttribute('aria-busy', 'true');
+                } else if (label) {
+                    label.textContent = addingText;
+                } else {
+                    button.textContent = addingText;
+                }
             }
 
             try {
@@ -480,14 +678,25 @@
                     cartDrawerToggle.checked = true;
                     syncStoreCartDrawer();
                 }
-                showFeedback(data.message || addedText);
+
+                if (!isCompactFashionCart) {
+                    showFeedback(data.message || addedText);
+                }
             } catch (error) {
                 showFeedback(error.message || addErrorText);
             } finally {
+                if (isCompactFashionCart) {
+                    const elapsed = Date.now() - startedAt;
+                    if (elapsed < compactFashionCartDelay) {
+                        await new Promise((resolve) => setTimeout(resolve, compactFashionCartDelay - elapsed));
+                    }
+                }
+
                 if (button) {
                     button.disabled = false;
                     button.classList.remove('is-loading');
-                    button.textContent = originalText;
+                    button.removeAttribute('aria-busy');
+                    button.innerHTML = originalHtml || originalText;
                 }
             }
         });

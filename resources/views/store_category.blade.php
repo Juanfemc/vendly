@@ -46,6 +46,7 @@
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
         $categoryImageUrl = $storageAssetUrl($category->image);
         $categoryInitial = mb_strtoupper(mb_substr($category->name, 0, 1));
+        $categoryChildren = ! $store->isRestaurant() ? ($category->activeChildren ?? collect()) : collect();
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -87,6 +88,16 @@
                 @if($category->description)
                     <small>{{ $category->description }}</small>
                 @endif
+                @if($store->allowsSubcategories() && ($category->parent || $categoryChildren->isNotEmpty()))
+                    <div class="category-page-subcategories" aria-label="Subcategorías">
+                        @if($category->parent)
+                            <a href="{{ $storefrontUrls->category($store, $category->parent) }}">Ver {{ $category->parent->name }}</a>
+                        @endif
+                        @foreach($categoryChildren as $subcategory)
+                            <a href="{{ $storefrontUrls->category($store, $subcategory) }}">{{ $subcategory->name }}</a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -107,6 +118,10 @@
                     <div class="store-pagination">
                         {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
                     </div>
+                @endif
+
+                @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
+                    <p class="catalog-end-message">Has visto todos los productos</p>
                 @endif
             @else
                 <div class="empty-state">
@@ -135,4 +150,3 @@
 </body>
 
 </html>
-

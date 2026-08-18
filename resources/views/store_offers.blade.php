@@ -94,6 +94,10 @@
                         {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
                     </div>
                 @endif
+
+                @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
+                    <p class="catalog-end-message">Has visto todos los productos</p>
+                @endif
             @else
                 <div class="empty-state">
                     No encontramos {{ $itemsLabel }} en oferta para esa búsqueda.

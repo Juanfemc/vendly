@@ -114,6 +114,8 @@ trait ValidatesStoreProfile
             'font_family' => ['nullable', Rule::in(array_keys(Store::fontFamilyOptions()))],
             'responsive_product_columns' => ['nullable', 'integer', 'in:1,2,3'],
             'show_hero_products_action' => ['nullable', 'boolean'],
+            'show_hero_overlay' => ['nullable', 'boolean'],
+            'hero_overlay_eyebrow' => ['nullable', 'string', 'max:80'],
             'hero_overlay_title' => ['nullable', 'string', 'max:120'],
             'hero_overlay_button_text' => ['nullable', 'string', 'max:60'],
             'hero_overlay_button_url' => ['nullable', 'string', 'max:255'],
@@ -160,17 +162,27 @@ trait ValidatesStoreProfile
         $data['responsive_product_columns'] = (int) ($data['responsive_product_columns'] ?? 2);
         $data['show_hero_products_action'] = $this->boolean('show_hero_products_action', false);
         $usesHeroOverlay = (bool) array_intersect($fields, [
+            'show_hero_overlay',
+            'hero_overlay_eyebrow',
             'hero_overlay_title',
             'hero_overlay_button_text',
             'hero_overlay_button_url',
         ]);
 
         if ($usesHeroOverlay && Store::supportsHeroOverlayColumns()) {
+            $data['show_hero_overlay'] = $this->boolean('show_hero_overlay', false);
+            $data['hero_overlay_eyebrow'] = trim((string) ($data['hero_overlay_eyebrow'] ?? '')) ?: null;
             $data['hero_overlay_title'] = trim((string) ($data['hero_overlay_title'] ?? '')) ?: null;
             $data['hero_overlay_button_text'] = trim((string) ($data['hero_overlay_button_text'] ?? '')) ?: null;
             $data['hero_overlay_button_url'] = $this->normalizeHeroOverlayUrl($data['hero_overlay_button_url'] ?? null);
         } elseif ($usesHeroOverlay) {
-            unset($data['hero_overlay_title'], $data['hero_overlay_button_text'], $data['hero_overlay_button_url']);
+            unset(
+                $data['show_hero_overlay'],
+                $data['hero_overlay_eyebrow'],
+                $data['hero_overlay_title'],
+                $data['hero_overlay_button_text'],
+                $data['hero_overlay_button_url']
+            );
         }
 
         if ($effectivePlan === Store::PLAN_BASIC) {
@@ -188,7 +200,13 @@ trait ValidatesStoreProfile
             $data['font_family'] = 'system';
             $data['responsive_product_columns'] = 2;
             $data['show_hero_products_action'] = false;
-            unset($data['hero_overlay_title'], $data['hero_overlay_button_text'], $data['hero_overlay_button_url']);
+            unset(
+                $data['show_hero_overlay'],
+                $data['hero_overlay_eyebrow'],
+                $data['hero_overlay_title'],
+                $data['hero_overlay_button_text'],
+                $data['hero_overlay_button_url']
+            );
 
             if (Store::supportsCommercialNoticeColumns()) {
                 $data['announcement_items'] = [];

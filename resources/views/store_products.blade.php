@@ -47,6 +47,10 @@
         $seo = \App\Support\SeoMeta::category($store, $collectionLabelTitle, null, $metaUrl, $seoImage, $fallbackDescription, $faviconImage);
         $brandTheme = \App\Support\BrandTheme::from($store->brand_color);
         $responsiveProductColumns = in_array((int) $store->responsive_product_columns, [1, 2, 3], true) ? (int) $store->responsive_product_columns : 2;
+        $catalogSearchQuery = trim((string) ($searchQuery ?? request('q', '')));
+        $isCatalogSearch = $catalogSearchQuery !== '';
+        $catalogSearchTotal = method_exists($products, 'total') ? $products->total() : $products->count();
+        $catalogSearchWhatsAppUrl = $store->whatsappInfoUrl();
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -73,16 +77,30 @@
     @endif
 
     <main class="shell">
-        <section class="category-page-hero category-page-hero--catalog">
-            <div class="category-page-copy">
-                <span class="eyebrow">{{ $businessLabel }}</span>
-                <h1>{{ $collectionLabelTitle }}</h1>
-                <p>{{ $fallbackDescription }}</p>
-            </div>
-        </section>
+        @if($storefrontVariant !== 'fashion' && ! $isCatalogSearch)
+            <section class="category-page-hero category-page-hero--catalog">
+                <div class="category-page-copy">
+                    <span class="eyebrow">{{ $businessLabel }}</span>
+                    <h1>{{ $collectionLabelTitle }}</h1>
+                    <span class="category-page-count">{{ $catalogSearchTotal }} {{ $itemsLabel }}</span>
+                    <p>{{ $fallbackDescription }}</p>
+                </div>
+            </section>
+        @endif
 
         <section class="catalog-section" id="catalogo">
             @include('storefront.partials.product-search', ['productSearchId' => 'catalog'])
+
+            @if($isCatalogSearch)
+                <div class="catalog-search-summary" aria-live="polite">
+                    <div>
+                        <span>Resultados para</span>
+                        <strong>"{{ $catalogSearchQuery }}"</strong>
+                        <small>{{ $catalogSearchTotal === 1 ? '1 resultado encontrado' : $catalogSearchTotal . ' resultados encontrados' }}</small>
+                    </div>
+                    <a href="{{ $storefrontUrls->products($store) }}">Ver todos</a>
+                </div>
+            @endif
 
             @if($products->isNotEmpty())
                 <div class="products-grid">
@@ -96,10 +114,22 @@
                         {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
                     </div>
                 @endif
+
+                @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
+                    <p class="catalog-end-message">Has visto todos los productos</p>
+                @endif
             @else
-                <div class="empty-state">
-                    @if(($searchQuery ?? '') !== '')
-                        No encontramos {{ $itemsLabel }} para esa búsqueda.
+                <div class="empty-state {{ $isCatalogSearch ? 'catalog-search-empty' : '' }}">
+                    @if($isCatalogSearch)
+                        <span>No encontramos resultados</span>
+                        <h2>No encontramos {{ $itemsLabel }} para "{{ $catalogSearchQuery }}"</h2>
+                        <p>Prueba con otro nombre, una categoria o una palabra mas corta.</p>
+                        <div class="catalog-search-empty-actions">
+                            <a href="{{ $storefrontUrls->products($store) }}">Ver todos los {{ $itemsLabel }}</a>
+                            @if($catalogSearchWhatsAppUrl)
+                                <a href="{{ $catalogSearchWhatsAppUrl }}" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
+                            @endif
+                        </div>
                     @else
                         Aún no hay {{ $itemsLabel }} publicados.
                     @endif
@@ -123,4 +153,3 @@
 </body>
 
 </html>
-

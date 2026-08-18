@@ -228,6 +228,12 @@
         box-shadow: 0 10px 24px rgba(15, 23, 42, .04);
     }
 
+    .category-row--child {
+        margin-left: 32px;
+        border-color: #d9e5ea;
+        background: #ffffff;
+    }
+
     .category-row-order {
         display: grid;
         gap: 2px;
@@ -274,6 +280,13 @@
         font-size: 15px;
         font-weight: 900;
         line-height: 1.2;
+    }
+
+    .category-row-parent {
+        color: #6a8588;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .category-row-count {
@@ -585,6 +598,21 @@
                             <input type="text" name="slug" value="{{ old('slug') }}" placeholder="camisetas">
                         </label>
 
+                        @if($store->allowsSubcategories())
+                            <label>
+                                Categoría principal
+                                <select name="parent_id">
+                                    <option value="">Sin categoría principal</option>
+                                    @foreach(($parentCategoryOptions ?? collect()) as $parentCategory)
+                                        <option value="{{ $parentCategory->id }}" @selected((int) old('parent_id') === (int) $parentCategory->id)>
+                                            {{ $parentCategory->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="category-form-help">Úsalo para crear subcategorías como Ropa / Camisetas.</span>
+                            </label>
+                        @endif
+
                         <label class="category-field-wide">
                             Descripción corta
                             <textarea name="description" rows="3" placeholder="Texto breve para mostrar en la tienda">{{ old('description') }}</textarea>
@@ -643,7 +671,7 @@
                             $categoryProductsCount = (int) ($categoryProductCounts[$category->name] ?? 0);
                         @endphp
 
-                        <article class="category-row">
+                        <article class="category-row {{ $category->parent_id ? 'category-row--child' : '' }}">
                             <span class="category-row-order" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6 6-6-6"></path></svg>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 9-6-6-6 6"></path></svg>
@@ -659,6 +687,9 @@
 
                             <div class="category-row-content">
                                 <h3 class="category-row-title">{{ $category->name }}</h3>
+                                @if($category->parent)
+                                    <span class="category-row-parent">Subcategoría de {{ $category->parent->name }}</span>
+                                @endif
                                 <span class="category-row-count">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-9 5-9-5"></path><path d="m12 3 9 5-9 5-9-5 9-5Z"></path></svg>
                                     {{ $categoryProductsCount }} {{ $categoryProductsCount === 1 ? 'producto' : 'productos' }}

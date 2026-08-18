@@ -123,6 +123,8 @@ class Store extends Model
         'font_family',
         'responsive_product_columns',
         'show_hero_products_action',
+        'show_hero_overlay',
+        'hero_overlay_eyebrow',
         'hero_overlay_title',
         'hero_overlay_button_text',
         'hero_overlay_button_url',
@@ -150,6 +152,7 @@ class Store extends Model
         'reservation_available_days' => 'array',
         'responsive_product_columns' => 'integer',
         'show_hero_products_action' => 'boolean',
+        'show_hero_overlay' => 'boolean',
         'require_terms_acceptance' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'whatsapp_verified_at' => 'datetime',
@@ -519,6 +522,12 @@ class Store extends Model
         return ! $this->isBasicPlan();
     }
 
+    public function allowsSubcategories(): bool
+    {
+        return ! $this->isRestaurant()
+            && ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM;
+    }
+
     public function allowsCommercialNotices(): bool
     {
         return ! $this->isBasicPlan();
@@ -766,7 +775,9 @@ class Store extends Model
 
     public static function supportsHeroOverlayColumns(): bool
     {
-        return self::$supportsHeroOverlayColumns ??= Schema::hasColumn('stores', 'hero_overlay_title')
+        return self::$supportsHeroOverlayColumns ??= Schema::hasColumn('stores', 'show_hero_overlay')
+            && Schema::hasColumn('stores', 'hero_overlay_eyebrow')
+            && Schema::hasColumn('stores', 'hero_overlay_title')
             && Schema::hasColumn('stores', 'hero_overlay_button_text')
             && Schema::hasColumn('stores', 'hero_overlay_button_url');
     }
@@ -1231,6 +1242,29 @@ class Store extends Model
             ->pluck('name')
             ->filter()
             ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function productCategorySelectOptions(): array
+    {
+        if (! $this->allowsCategories() || ! $this->exists) {
+            return [];
+        }
+
+        if ($this->isRestaurant()) {
+            return $this->productCategoryOptions();
+        }
+
+        return $this->categories()
+            ->with('parent')
+            ->when(! $this->allowsSubcategories(), fn ($query) => $query->whereNull('parent_id'))
+            ->orderedForDisplay()
+            ->get()
+            ->map(fn (StoreCategory $category) => [
+                'value' => $category->name,
+                'label' => $category->displayName(),
+            ])
             ->values()
             ->all();
     }

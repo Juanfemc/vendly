@@ -1,5 +1,6 @@
 @php
-    $fashionGallery = $productGallery->isNotEmpty() ? $productGallery : collect([null]);
+    $fashionGalleryImages = $productGallery->filter()->values();
+    $fashionGallery = $fashionGalleryImages->isNotEmpty() ? $fashionGalleryImages : collect([null]);
     $fashionRelated = $relatedProducts->take(4);
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
@@ -51,17 +52,38 @@
     $fashionDescription = $productDescriptionText ?? \App\Support\ProductText::plain($product->description);
     $fashionDescription = $fashionDescription ?: 'Este producto aún no tiene una descripción amplia configurada.';
     $fashionFeaturesText = $productFeaturesText ?? \App\Support\ProductText::featureLines($product->features);
-    $fashionFeatureItems = collect(preg_split('/\R+/', $fashionFeaturesText) ?: [])
-        ->map(fn ($item) => trim($item, " \t\n\r\0\x0B-*•"))
-        ->filter()
-        ->values();
+    $splitFashionCompactText = function (string $text, int $limit = 150): array {
+        $text = trim($text);
+
+        if ($text === '' || \Illuminate\Support\Str::length($text) <= $limit) {
+            return ['intro' => $text, 'rest' => ''];
+        }
+
+        $intro = \Illuminate\Support\Str::substr($text, 0, $limit);
+        $lastSpace = max((int) strrpos($intro, ' '), (int) strrpos($intro, "\n"));
+
+        if ($lastSpace !== false && $lastSpace > 80) {
+            $intro = rtrim(substr($intro, 0, $lastSpace));
+        }
+
+        $rest = ltrim(\Illuminate\Support\Str::substr($text, \Illuminate\Support\Str::length($intro)));
+
+        return ['intro' => $intro, 'rest' => $rest];
+    };
+    $fashionDescriptionParts = $splitFashionCompactText($fashionDescription, 155);
+    $fashionFeaturesParts = $splitFashionCompactText($fashionFeaturesText, 140);
+    $fashionWhatsappNumber = $store->whatsappNumber();
+    $fashionProductUrl = $storefrontUrls->product($store, $product);
+    $fashionWhatsappUrl = $fashionWhatsappNumber !== ''
+        ? 'https://wa.me/' . $fashionWhatsappNumber . '?text=' . rawurlencode("Hola, quiero comprar {$product->name}. {$fashionProductUrl}")
+        : null;
 @endphp
 
 <main class="fashion-product-shell">
     <nav class="fashion-product-breadcrumb" aria-label="Ruta de navegacion">
-        <a href="{{ $storefrontUrls->home($store) }}">Home</a>
+        <a href="{{ $storefrontUrls->home($store) }}">Inicio</a>
         <span>&rsaquo;</span>
-        <a href="{{ $storefrontUrls->products($store) }}">Shop</a>
+        <a href="{{ $storefrontUrls->products($store) }}">Tienda</a>
         @if($product->category)
             <span>&rsaquo;</span>
             <a href="{{ $storefrontUrls->products($store) }}">{{ $product->category }}</a>
@@ -72,30 +94,21 @@
 
     <section class="fashion-product-hero">
         <div class="fashion-product-gallery product-carousel" data-product-carousel>
-            <div class="fashion-product-thumbs" aria-label="Imagenes del producto">
-                @foreach($fashionGallery as $index => $galleryImage)
-                    <button
-                        type="button"
-                        class="fashion-product-thumb {{ $index === 0 ? 'is-active' : '' }}"
-                        data-carousel-thumb="{{ $index }}"
-                        aria-label="Ver imagen {{ $index + 1 }}"
-                        aria-current="{{ $index === 0 ? 'true' : 'false' }}"
-                    >
-                        @if($galleryImage)
+            @if($fashionGalleryImages->isNotEmpty())
+                <div class="fashion-product-thumbs" aria-label="Imagenes del producto">
+                    @foreach($fashionGalleryImages as $index => $galleryImage)
+                        <button
+                            type="button"
+                            class="fashion-product-thumb {{ $index === 0 ? 'is-active' : '' }}"
+                            data-carousel-thumb="{{ $index }}"
+                            aria-label="Ver imagen {{ $index + 1 }}"
+                            aria-current="{{ $index === 0 ? 'true' : 'false' }}"
+                        >
                             <img src="{{ asset('storage/' . $galleryImage) }}" alt="" loading="lazy" decoding="async">
-                        @else
-                            <span>{{ substr($product->name, 0, 1) }}</span>
-                        @endif
-                    </button>
-                @endforeach
-                @if($fashionGallery->count() < 4)
-                    @for($thumbIndex = $fashionGallery->count(); $thumbIndex < 4; $thumbIndex++)
-                        <button type="button" class="fashion-product-thumb" disabled aria-hidden="true">
-                            <span>{{ substr($product->name, 0, 1) }}</span>
                         </button>
-                    @endfor
-                @endif
-            </div>
+                    @endforeach
+                </div>
+            @endif
 
             <div class="fashion-product-stage">
                 @foreach($fashionGallery as $index => $galleryImage)
@@ -136,14 +149,64 @@
                 <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
             </div>
 
-            <p class="fashion-product-summary">{{ $fashionDescription }}</p>
+            <div class="fashion-product-compact-info" aria-label="Informacion rapida del producto">
+                <div class="fashion-product-compact-card" data-fashion-compact-card>
+                    <div class="fashion-product-compact-row">
+                        <span class="fashion-product-compact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 4h7l3 3v13H7z"></path>
+                                <path d="M14 4v4h4"></path>
+                                <path d="M9 12h6"></path>
+                                <path d="M9 15h5"></path>
+                            </svg>
+                        </span>
+                        <span class="fashion-product-compact-copy">
+                            <strong>Descripción</strong>
+                            <em>
+                                <span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionDescriptionParts['rest'] }}</span>@endif
+                            </em>
+                        </span>
+                        @if($fashionDescriptionParts['rest'] !== '')
+                            <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
+                                <span>Ver más</span>
+                                <span>Ver menos</span>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                @if($fashionFeaturesParts['intro'] !== '')
+                    <div class="fashion-product-compact-card" data-fashion-compact-card>
+                        <div class="fashion-product-compact-row">
+                            <span class="fashion-product-compact-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 12l4 4L19 6"></path>
+                                    <path d="M5 19h14"></path>
+                                </svg>
+                            </span>
+                            <span class="fashion-product-compact-copy">
+                                <strong>Características</strong>
+                                <em>
+                                    <span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionFeaturesParts['rest'] }}</span>@endif
+                                </em>
+                            </span>
+                            @if($fashionFeaturesParts['rest'] !== '')
+                                <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
+                                    <span>Ver más</span>
+                                    <span>Ver menos</span>
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
 
             @if($isProductSoldOut)
                 <div class="fashion-product-unavailable">Este producto está agotado por ahora.</div>
             @else
-                <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-form add-to-cart-form">
+                <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-form add-to-cart-form" data-role="minimal-add-form">
                     @csrf
-                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" data-role="buy-now-quantity" value="1">
 
                     @if($fashionColorOptions->isNotEmpty())
                     <div class="fashion-option-group">
@@ -164,7 +227,7 @@
                     @if($fashionSizes->isNotEmpty())
                         <div class="fashion-option-group">
                             <div class="fashion-option-head">
-                                <span>SIZE</span>
+                                <span>TALLA</span>
                             </div>
                             <div class="fashion-size-options">
                                 @foreach($fashionSizes as $size)
@@ -178,56 +241,41 @@
                     @endif
 
                     <div class="fashion-product-actions">
+                        <div class="fashion-quantity-control" aria-label="Cantidad">
+                            <button type="button" data-quantity-minus aria-label="Disminuir cantidad">-</button>
+                            <input id="quantity" type="number" name="quantity" value="1" min="1" max="99" inputmode="numeric" aria-label="Cantidad">
+                            <button type="button" data-quantity-plus aria-label="Aumentar cantidad">+</button>
+                        </div>
                         <button
                             type="submit"
+                            class="fashion-product-cart-action"
                             data-variant-action
                             data-variant-add-action
                             data-enabled-label="Agregar al carrito"
                             @disabled($product->hasVariants())
                         >
                             {!! $fashionCartIcon !!}
-                            <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : 'Agregar al carrito' }}</span>
+                            <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opción' : 'Agregar al carrito' }}</span>
                         </button>
-                        <a href="{{ $storefrontUrls->products($store) }}" aria-label="Agregar a favoritos">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z"></path>
-                            </svg>
-                        </a>
+                        @if($fashionWhatsappUrl)
+                            <a class="fashion-product-whatsapp-action" href="{{ $fashionWhatsappUrl }}" target="_blank" rel="noopener" aria-label="Pedir por WhatsApp">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M5.2 19.2l1-3.5a7.4 7.4 0 1 1 2.6 2.5z"></path>
+                                    <path d="M9.7 8.7c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.4l.8 1.8c.1.2.1.4 0 .6l-.4.5c-.1.2-.2.3 0 .6.4.8 1.5 2.1 2.9 2.7.3.2.5.1.7-.1l.7-.8c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .6-.5 1.4-1.1 1.6-.8.4-2.6.3-4.8-1.1-2.4-1.4-4-3.7-4.2-5.3-.1-.8.1-1.4.3-1.6z"></path>
+                                </svg>
+                                <span>WhatsApp</span>
+                            </a>
+                        @endif
                     </div>
                 </form>
             @endif
 
-            <ul class="fashion-product-benefits">
-                <li>Free Shipping on orders over $100</li>
-                <li>Easy 30-Day Returns</li>
-                <li>Secure Payments</li>
-            </ul>
         </aside>
-    </section>
-
-    <section class="fashion-product-story" aria-label="Informacion del producto">
-        <div class="fashion-product-story-grid fashion-product-story-grid--text-only">
-            <article id="fashionDescription" class="fashion-product-text-block">
-                <h2>Descripcion</h2>
-                <p>{{ $fashionDescription }}</p>
-            </article>
-
-            @if($fashionFeatureItems->isNotEmpty())
-                <article id="fashionFeatures" class="fashion-product-text-block">
-                    <h2>Caracteristicas</h2>
-                    <ul>
-                        @foreach($fashionFeatureItems as $item)
-                            <li>{{ $item }}</li>
-                        @endforeach
-                    </ul>
-                </article>
-            @endif
-        </div>
     </section>
 
     @if($fashionRelated->isNotEmpty())
         <section class="fashion-related">
-            <h2>You May Also Like</h2>
+            <h2>También te puede interesar</h2>
             <div class="fashion-related-grid">
                 @foreach($fashionRelated as $relatedProduct)
                     <article class="fashion-related-card">
@@ -238,7 +286,7 @@
                                 <span>{{ $relatedProduct->name }}</span>
                             @endif
                         </a>
-                        <p>{{ $relatedProduct->category ?: 'Jackets' }}</p>
+                        <p>{{ $relatedProduct->category ?: 'Ropa' }}</p>
                         <h3>{{ $relatedProduct->name }}</h3>
                         <strong>${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</strong>
                     </article>

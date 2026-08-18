@@ -22,8 +22,12 @@ class StoreWithUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $template = StoreTemplateCatalog::find((string) $this->input('template_key'));
+
         $this->merge([
-            'template_key' => null,
+            'business_type' => ($template['available'] ?? false)
+                ? $template['business_type']
+                : $this->input('business_type'),
             'slug' => app(StoreSlugService::class)->normalize($this->input('slug')),
             'subdomain' => Store::normalizeSubdomain($this->input('subdomain')),
             'custom_domain' => Store::normalizeCustomDomain($this->input('custom_domain')),
@@ -85,6 +89,11 @@ class StoreWithUserRequest extends FormRequest
             'font_family',
             'responsive_product_columns',
             'show_hero_products_action',
+            'show_hero_overlay',
+            'hero_overlay_eyebrow',
+            'hero_overlay_title',
+            'hero_overlay_button_text',
+            'hero_overlay_button_url',
             'instagram_url',
             'facebook_url',
             'tiktok_url',

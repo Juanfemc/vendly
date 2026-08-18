@@ -28,6 +28,9 @@
                 </div>
             </div>
         </div>
+        <p class="minimal-shop-footer-credit">
+            Desarrollado por <a href="https://vendlysuite.com" target="_blank" rel="noopener noreferrer">Vendlysuite.com</a>
+        </p>
     </div>
 </footer>
 

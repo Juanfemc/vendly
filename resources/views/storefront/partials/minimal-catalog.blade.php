@@ -20,4 +20,8 @@
             {{ $catalogProducts->fragment('catalogo')->links('storefront.partials.pagination') }}
         </div>
     @endif
+
+    @if($minimalCatalogProducts->isNotEmpty() && (! method_exists($catalogProducts, 'hasMorePages') || ! $catalogProducts->hasMorePages()))
+        <p class="catalog-end-message minimal-shop-end-message">Has visto todos los productos</p>
+    @endif
 </div>
