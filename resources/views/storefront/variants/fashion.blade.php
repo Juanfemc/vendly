@@ -27,26 +27,30 @@
         ->unique()
         ->take(5)
         ->values();
-    $fashionTabs = $fashionCategoryLinks->isNotEmpty()
-        ? $fashionCategoryLinks->map(fn ($category) => [
-            'name' => $category->name,
-            'slug' => $category->slug ?: \Illuminate\Support\Str::slug($category->name),
-        ])
-        : ($fashionProductCategoryTabs->isNotEmpty()
-        ? $fashionProductCategoryTabs->map(fn ($category) => [
-            'name' => $category,
-            'slug' => \Illuminate\Support\Str::slug($category),
-        ])
-        : ($fashionProducts->isEmpty()
-        ? $fashionPlaceholderCategoryTabs->map(fn ($category) => [
-            'name' => $category,
-            'slug' => \Illuminate\Support\Str::slug($category),
-        ])
-        : collect()));
-    $fashionTabs = collect([[
-        'name' => 'Todos',
-        'slug' => 'all',
-    ]])->concat($fashionTabs)->values();
+$fashionTabs = $fashionCategoryLinks->isNotEmpty()
+    ? $fashionCategoryLinks->map(fn ($category) => [
+        'name' => $category->name,
+        'slug' => $category->slug ?: \Illuminate\Support\Str::slug($category->name),
+        'url' => $storefrontUrls->category($store, $category),
+    ])
+    : ($fashionProductCategoryTabs->isNotEmpty()
+    ? $fashionProductCategoryTabs->map(fn ($category) => [
+        'name' => $category,
+        'slug' => \Illuminate\Support\Str::slug($category),
+        'url' => '#catalogo',
+    ])
+    : ($fashionProducts->isEmpty()
+    ? $fashionPlaceholderCategoryTabs->map(fn ($category) => [
+        'name' => $category,
+        'slug' => \Illuminate\Support\Str::slug($category),
+        'url' => '#catalogo',
+    ])
+    : collect()));
+$fashionTabs = collect([[
+    'name' => 'Todos',
+    'slug' => 'all',
+    'url' => '#catalogo',
+]])->concat($fashionTabs)->values();
     $fashionSizeOptions = $fashionProducts
         ->flatMap(fn ($product) => collect(is_array($product->sizes) ? $product->sizes : []))
         ->map(fn ($size) => trim((string) $size))
@@ -114,16 +118,16 @@
 
 <section class="fashion-arrivals" id="catalogo">
     <div class="fashion-section-head">
-        <nav aria-label="Categorias destacadas" data-fashion-category-tabs>
+        <nav class="fashion-category-tabs" aria-label="Categorias destacadas" data-fashion-category-tabs>
             @foreach($fashionTabs as $tab)
-                <button
-                    type="button"
+                <a
+                    href="{{ $tab['url'] ?? '#catalogo' }}"
                     data-fashion-category-filter="{{ $tab['slug'] }}"
                     aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
                     @class(['is-active' => $loop->first])
                 >
                     {{ $tab['name'] }}
-                </button>
+                </a>
             @endforeach
         </nav>
     </div>

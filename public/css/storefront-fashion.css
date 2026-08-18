@@ -854,7 +854,7 @@
     background: rgba(17, 17, 17, .24);
 }
 
-.fashion-section-head button {
+.fashion-section-head [data-fashion-category-filter] {
     flex: 0 0 auto;
     border: 0;
     background: transparent;
@@ -865,10 +865,11 @@
     cursor: pointer;
     padding: 0 0 6px;
     position: relative;
+    text-decoration: none;
     transition: color .18s ease;
 }
 
-.fashion-section-head button::after {
+.fashion-section-head [data-fashion-category-filter]::after {
     content: "";
     position: absolute;
     left: 0;
@@ -881,19 +882,19 @@
     transition: transform .18s ease;
 }
 
-.fashion-section-head button:hover,
-.fashion-section-head button:focus-visible,
-.fashion-section-head button.is-active {
+.fashion-section-head [data-fashion-category-filter]:hover,
+.fashion-section-head [data-fashion-category-filter]:focus-visible,
+.fashion-section-head [data-fashion-category-filter].is-active {
     color: #111111;
 }
 
-.fashion-section-head button:focus-visible {
+.fashion-section-head [data-fashion-category-filter]:focus-visible {
     outline: none;
 }
 
-.fashion-section-head button.is-active::after,
-.fashion-section-head button:hover::after,
-.fashion-section-head button:focus-visible::after {
+.fashion-section-head [data-fashion-category-filter].is-active::after,
+.fashion-section-head [data-fashion-category-filter]:hover::after,
+.fashion-section-head [data-fashion-category-filter]:focus-visible::after {
     transform: scaleX(1);
 }
 
@@ -3497,7 +3498,7 @@
         padding-bottom: 4px;
     }
 
-    .fashion-section-head button {
+    .fashion-section-head [data-fashion-category-filter] {
         white-space: nowrap;
     }
 
@@ -3960,7 +3961,7 @@
         scrollbar-width: thin;
     }
 
-    .storefront-page--fashion .fashion-section-head button {
+    .storefront-page--fashion .fashion-section-head [data-fashion-category-filter] {
         flex: 0 0 auto;
     }
 
@@ -4986,7 +4987,7 @@
 }
 
 .storefront-page--fashion .fashion-nav-links a::after,
-.storefront-page--fashion .fashion-section-head button::after,
+.storefront-page--fashion .fashion-section-head [data-fashion-category-filter]::after,
 .storefront-page--fashion .fashion-nav-dropdown-trigger::after {
     background: var(--brand-color, #111111);
 }
@@ -4995,9 +4996,9 @@
 .storefront-page--fashion .fashion-nav-links a:focus-visible,
 .storefront-page--fashion .fashion-nav-dropdown-trigger:hover,
 .storefront-page--fashion .fashion-nav-dropdown-trigger:focus-visible,
-.storefront-page--fashion .fashion-section-head button:hover,
-.storefront-page--fashion .fashion-section-head button:focus-visible,
-.storefront-page--fashion .fashion-section-head button.is-active,
+.storefront-page--fashion .fashion-section-head [data-fashion-category-filter]:hover,
+.storefront-page--fashion .fashion-section-head [data-fashion-category-filter]:focus-visible,
+.storefront-page--fashion .fashion-section-head [data-fashion-category-filter].is-active,
 .storefront-page--fashion .fashion-product-kicker,
 .storefront-page--fashion .fashion-product-price,
 .storefront-page--fashion .fashion-footer-credit a,
@@ -5165,7 +5166,7 @@
 }
 
 .storefront-page--fashion .fashion-nav-links a::after,
-.storefront-page--fashion .fashion-category-tabs button::after,
+.storefront-page--fashion .fashion-category-tabs [data-fashion-category-filter]::after,
 .storefront-page--fashion .fashion-size-filter button.is-active,
 .storefront-page--fashion .fashion-sort-control select:focus,
 .storefront-page--fashion .fashion-field input:focus,
@@ -5174,7 +5175,7 @@
     border-color: var(--brand-color, #111111);
 }
 
-.storefront-page--fashion .fashion-category-tabs button.is-active,
+.storefront-page--fashion .fashion-category-tabs [data-fashion-category-filter].is-active,
 .storefront-page--fashion .fashion-product-price,
 .storefront-page--fashion .fashion-product-kicker,
 .storefront-page--fashion .fashion-search-clear-button,
@@ -6690,7 +6691,7 @@
         padding-bottom: 10px;
     }
 
-    .storefront-page--fashion .fashion-section-head button {
+    .storefront-page--fashion .fashion-section-head [data-fashion-category-filter] {
         font-size: 11px;
         padding-bottom: 7px;
     }

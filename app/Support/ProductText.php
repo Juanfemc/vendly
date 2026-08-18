@@ -16,6 +16,7 @@ class ProductText
         $text = preg_replace('/&(?:amp;)?t?nbsp;?/i', ' ', $text) ?? $text;
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = preg_replace('/\x{00A0}/u', ' ', $text) ?? $text;
+        $text = preg_replace('/[ \t]{2,}/u', ' ', $text) ?? $text;
         $text = preg_replace('/\n[ \t]+/u', "\n", $text) ?? $text;
         $text = preg_replace('/[ \t]+\n/u', "\n", $text) ?? $text;
         $text = preg_replace('/\n{3,}/u', "\n\n", $text) ?? $text;
