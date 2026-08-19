@@ -59,7 +59,7 @@
 </head>
 
 <body
-    class="storefront-page storefront-page--{{ $storefrontVariant }} {{ $storefrontVariant === 'technology' ? 'storefront-page--minimal-grid' : '' }}"
+    class="storefront-page storefront-page--{{ $storefrontVariant }} storefront-cols-{{ $responsiveProductColumns }} {{ $storefrontVariant === 'technology' ? 'storefront-page--minimal-grid' : '' }}"
     data-csrf="{{ csrf_token() }}"
     data-adding-text="{{ $isRestaurant ? 'Agregando al pedido...' : ($isReservationStore ? 'Agregando a la reserva...' : 'Agregando...') }}"
     data-feedback-added="{{ $isRestaurant ? 'Plato agregado al pedido' : ($isReservationStore ? 'Servicio agregado a la reserva' : 'Producto agregado al carrito') }}"

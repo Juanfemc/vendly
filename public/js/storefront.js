@@ -50,7 +50,6 @@
     const navBackdrop = document.querySelector('.nav-backdrop');
     const navPanelLinks = document.querySelectorAll('.nav-panel a');
     const navDropdowns = document.querySelectorAll('.nav-dropdown');
-    const fashionCategoryTabs = document.querySelector('[data-fashion-category-tabs]');
     const fashionCategoryButtons = Array.from(document.querySelectorAll('[data-fashion-category-filter]'));
     const fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
     const fashionEmptyState = document.querySelector('[data-fashion-empty-state]');
@@ -137,7 +136,8 @@
 
         fashionProducts.forEach((product) => {
             const productSizes = (product.dataset.fashionSizes || '').split(',').filter(Boolean);
-            const matchesCategory = activeFashionCategory === 'all' || product.dataset.fashionCategory === activeFashionCategory;
+            const productCategories = (product.dataset.fashionCategories || product.dataset.fashionCategory || '').split(',').filter(Boolean);
+            const matchesCategory = activeFashionCategory === 'all' || productCategories.includes(activeFashionCategory);
             const matchesSize = activeFashionSize === 'all' || productSizes.includes(activeFashionSize);
             const isVisible = matchesCategory && matchesSize;
 
@@ -257,16 +257,12 @@
 
     setupFashionSearchSuggestions();
 
-    if (fashionCategoryTabs && fashionCategoryButtons.length && fashionProducts.length) {
-        fashionCategoryTabs.addEventListener('click', (event) => {
-            const button = event.target.closest('[data-fashion-category-filter]');
-
-            if (!button) {
-                return;
-            }
-
+    if (fashionCategoryButtons.length && fashionProducts.length) {
+        fashionCategoryButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
             event.preventDefault();
             syncFashionCategory(button.dataset.fashionCategoryFilter);
+            });
         });
     }
 

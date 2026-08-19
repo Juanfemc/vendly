@@ -162,9 +162,7 @@
                         </span>
                         <span class="fashion-product-compact-copy">
                             <strong>Descripción</strong>
-                            <em>
-                                <span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionDescriptionParts['rest'] }}</span>@endif
-                            </em>
+                            <em><span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionDescriptionParts['rest'] }}</span>@endif</em>
                         </span>
                         @if($fashionDescriptionParts['rest'] !== '')
                             <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
@@ -186,9 +184,7 @@
                             </span>
                             <span class="fashion-product-compact-copy">
                                 <strong>Características</strong>
-                                <em>
-                                    <span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionFeaturesParts['rest'] }}</span>@endif
-                                </em>
+                                <em><span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionFeaturesParts['rest'] }}</span>@endif</em>
                             </span>
                             @if($fashionFeaturesParts['rest'] !== '')
                                 <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
@@ -286,7 +282,9 @@
                                 <span>{{ $relatedProduct->name }}</span>
                             @endif
                         </a>
-                        <p>{{ $relatedProduct->category ?: 'Ropa' }}</p>
+                        @if($relatedProduct->category)
+                            <p>{{ $relatedProduct->category }}</p>
+                        @endif
                         <h3>{{ $relatedProduct->name }}</h3>
                         <strong>${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</strong>
                     </article>

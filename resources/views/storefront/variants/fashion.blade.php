@@ -10,13 +10,22 @@
         ['category' => 'Jackets', 'name' => 'Rug Pull t-shirt, white', 'price' => 69000],
         ['category' => 'Jackets', 'name' => 'Knock Knock Sweat', 'price' => 130000],
     ]);
-    $fashionCategoryLinks = ($activeCategories ?? collect())
-        ->filter(fn ($category) => ! $category->parent_id)
-        ->values();
-    $fashionCategorySlugByName = $fashionCategoryLinks
-        ->mapWithKeys(fn ($category) => [
-            mb_strtolower(trim((string) $category->name)) => $category->slug ?: \Illuminate\Support\Str::slug($category->name),
-        ]);
+    $fashionCategoryLinks = ($activeCategories ?? collect())->values();
+    $fashionCategorySlugsByName = $fashionCategoryLinks
+        ->mapWithKeys(function ($category) {
+            $slugs = collect([
+                $category->slug,
+                \Illuminate\Support\Str::slug($category->name),
+                $category->parent?->slug,
+                $category->parent ? \Illuminate\Support\Str::slug($category->parent->name) : null,
+            ])
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            return [mb_strtolower(trim((string) $category->name)) => $slugs];
+        });
     $fashionProductCategoryTabs = $fashionProducts
         ->pluck('category')
         ->filter()
@@ -160,10 +169,15 @@ $fashionTabs = collect([[
     <div class="fashion-product-grid" data-fashion-product-grid>
         @forelse($fashionProducts as $product)
             @php
-                $fashionProductCategorySlug = $fashionCategorySlugByName->get(
+                $fashionProductCategorySlugs = collect($fashionCategorySlugsByName->get(
                     mb_strtolower(trim((string) $product->category)),
-                    \Illuminate\Support\Str::slug($product->category ?: 'Jackets')
-                );
+                    [\Illuminate\Support\Str::slug($product->category ?: 'Jackets')]
+                ))
+                    ->push(\Illuminate\Support\Str::slug($product->category ?: 'Jackets'))
+                    ->filter()
+                    ->unique()
+                    ->values();
+                $fashionProductCategorySlug = $fashionProductCategorySlugs->first() ?: 'productos';
                 $fashionProductSizes = collect(is_array($product->sizes) ? $product->sizes : [])
                     ->map(fn ($size) => \Illuminate\Support\Str::slug((string) $size))
                     ->filter()
@@ -173,6 +187,7 @@ $fashionTabs = collect([[
                 class="fashion-product"
                 data-fashion-product
                 data-fashion-category="{{ $fashionProductCategorySlug }}"
+                data-fashion-categories="{{ $fashionProductCategorySlugs->implode(',') }}"
                 data-fashion-name="{{ \Illuminate\Support\Str::lower($product->name) }}"
                 data-fashion-price="{{ (float) $product->price }}"
                 data-fashion-sizes="{{ $fashionProductSizes }}"
@@ -212,13 +227,6 @@ $fashionTabs = collect([[
                     </h3>
                     <div class="fashion-product-foot">
                         <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
-                        @if($product->hasVariants())
-                            <span>Opciones</span>
-                        @elseif($product->isSoldOut())
-                            <span>Agotado</span>
-                        @else
-                            <span>Disponible</span>
-                        @endif
                     </div>
                 </div>
             </article>
@@ -228,6 +236,7 @@ $fashionTabs = collect([[
                     class="fashion-product"
                     data-fashion-product
                     data-fashion-category="{{ \Illuminate\Support\Str::slug($placeholder['category']) }}"
+                    data-fashion-categories="{{ \Illuminate\Support\Str::slug($placeholder['category']) }}"
                     data-fashion-name="{{ \Illuminate\Support\Str::lower($placeholder['name']) }}"
                     data-fashion-price="{{ (float) $placeholder['price'] }}"
                     data-fashion-sizes=""
@@ -240,7 +249,6 @@ $fashionTabs = collect([[
                         <h3>{{ $placeholder['name'] }}</h3>
                         <div class="fashion-product-foot">
                             <strong>${{ number_format($placeholder['price'], 0, ',', '.') }}</strong>
-                            <span>Disponible</span>
                         </div>
                     </div>
                 </article>

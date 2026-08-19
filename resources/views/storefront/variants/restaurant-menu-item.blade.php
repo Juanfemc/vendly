@@ -15,13 +15,20 @@
     </a>
 
     <div class="restaurant-menu-item-copy">
-        <div class="restaurant-menu-item-line">
-            <h3><a href="{{ $productUrl }}">{{ $product->name }}</a></h3>
-            <span></span>
-            <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
-        </div>
+        @if($product->category)
+            <span class="restaurant-menu-category">{{ $product->category }}</span>
+        @endif
+        <h3><a href="{{ $productUrl }}">{{ $product->name }}</a></h3>
 
         <p>{{ $productDescription }}</p>
+
+        <div class="restaurant-menu-rating" aria-label="Producto destacado">
+            <span>&#9733;</span>
+            <span>&#9733;</span>
+            <span>&#9733;</span>
+            <span>&#9733;</span>
+            <span>&#9733;</span>
+        </div>
 
         @if($product->hasVariants())
             <div class="restaurant-menu-tags">
@@ -33,6 +40,8 @@
                 @endif
             </div>
         @endif
+
+        <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
     </div>
 
     @if($isSoldOut)

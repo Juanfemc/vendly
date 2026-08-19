@@ -3444,6 +3444,80 @@ body.storefront-page .product-detail-copy h1 {
         flex-basis: 14px;
     }
 
+    .storefront-cols-3 .products-grid {
+        gap: 8px;
+    }
+
+    .storefront-cols-3 .product-card {
+        padding: 6px;
+        border-radius: 9px;
+        box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
+    }
+
+    .storefront-cols-3 .product-image {
+        aspect-ratio: 1 / 1.02;
+        margin: -6px -6px 8px;
+        border-radius: 9px 9px 7px 7px;
+    }
+
+    .storefront-cols-3 .product-card h3 {
+        display: -webkit-box;
+        min-height: 28px;
+        margin-bottom: 7px;
+        overflow: hidden;
+        font-size: 11px;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .storefront-cols-3 .price-row {
+        margin-bottom: 9px;
+    }
+
+    .storefront-cols-3 .price {
+        font-size: 12px;
+        line-height: 1.15;
+    }
+
+    .storefront-cols-3 .price-before {
+        font-size: 10px;
+    }
+
+    .storefront-cols-3 .product-stock-badge {
+        min-height: 18px;
+        margin-bottom: 7px;
+        font-size: 9px;
+        line-height: 1.1;
+    }
+
+    .storefront-cols-3 .product-card-actions {
+        gap: 6px;
+    }
+
+    .storefront-cols-3 .product-card-add-link,
+    .storefront-cols-3 .product-card-actions button,
+    .storefront-cols-3 .product-preview-link {
+        min-height: 32px;
+        padding: 0 6px;
+        gap: 0;
+        border-radius: 999px;
+        font-size: 8.5px;
+        font-weight: 800;
+        line-height: 1.05;
+    }
+
+    .storefront-cols-3 .product-card-actions svg {
+        display: none;
+    }
+
+    .storefront-cols-3 .product-card-add-link span,
+    .storefront-cols-3 .product-card-actions button span,
+    .storefront-cols-3 .product-preview-link span {
+        -webkit-line-clamp: 2;
+    }
+
     .product-options--card select {
         font-size: 13px;
     }
