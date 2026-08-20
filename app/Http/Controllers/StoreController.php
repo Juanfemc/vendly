@@ -15,6 +15,7 @@ use App\Services\CustomerFollowupScheduler;
 use App\Services\StoreFileService;
 use App\Services\StorefrontUrlService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -35,13 +36,20 @@ class StoreController extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('create', Store::class);
 
-        $stores = Store::with(['user', 'creatorAdmin'])->latest()->get();
+        $storeStatus = $this->normalizeStoreStatus($request->query('store_status'));
+        $storeFilterOptions = $this->storeStatusLabels();
+        $storesQuery = Store::with(['user', 'creatorAdmin'])->latest();
 
-        return view('admin.stores.index', compact('stores'));
+        $this->applyStoreStatusFilter($storesQuery, $storeStatus);
+
+        $stores = $storesQuery->get();
+        $storesCount = $stores->count();
+
+        return view('admin.stores.index', compact('stores', 'storeStatus', 'storeFilterOptions', 'storesCount'));
     }
 
     public function create()
@@ -374,6 +382,63 @@ class StoreController extends Controller
         };
 
         return $limit === null || $store->products()->count() <= $limit;
+    }
+
+    private function normalizeStoreStatus(?string $status): string
+    {
+        return array_key_exists($status, $this->storeStatusLabels()) ? $status : 'all';
+    }
+
+    private function storeStatusLabels(): array
+    {
+        return [
+            'all' => 'Todas',
+            'active' => 'Activas',
+            'trial' => 'En prueba',
+            'paid' => 'Pagas',
+        ];
+    }
+
+    private function applyStoreStatusFilter(Builder $query, string $status): void
+    {
+        if ($status === 'all') {
+            return;
+        }
+
+        $today = now()->toDateString();
+
+        if (! Store::supportsSubscriptionColumns()) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+
+            return;
+        }
+
+        match ($status) {
+            'active' => $query->publiclyAvailable(),
+            'trial' => $query
+                ->publiclyAvailable()
+                ->where('subscription_status', Store::SUBSCRIPTION_TRIALING)
+                ->whereNotNull('trial_ends_at')
+                ->whereDate('trial_ends_at', '>=', $today),
+            'paid' => $query
+                ->publiclyAvailable()
+                ->whereIn('plan', [Store::PLAN_PRO, Store::PLAN_PREMIUM])
+                ->where(function (Builder $statusQuery) {
+                    $statusQuery
+                        ->whereNull('subscription_status')
+                        ->orWhere('subscription_status', Store::SUBSCRIPTION_ACTIVE);
+                })
+                ->where(function (Builder $dateQuery) use ($today) {
+                    $dateQuery
+                        ->whereNull('subscription_ends_at')
+                        ->orWhereDate('subscription_ends_at', '>=', $today);
+                }),
+            default => null,
+        };
     }
 
     private function activePeriodData(Request $request): array

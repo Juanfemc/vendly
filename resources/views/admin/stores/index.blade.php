@@ -15,17 +15,111 @@
     <div class="flash success">{{ session('success') }}</div>
 @endif
 
-@if($stores->isEmpty())
-    <div class="panel-empty">
-        <h3>No hay tiendas registradas</h3>
-        <p>Crea una tienda para asociarla a un usuario y publicar su catálogo.</p>
-        <a href="{{ route('admin.stores.create-with-user') }}" class="btn">Crear cliente + tienda</a>
-    </div>
-@endif
+<style>
+    .store-filter-card {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
 
-<div class="panel-list">
-    @foreach($stores as $store)
-        <article class="list-card resource-card {{ $store->cover_image ? 'resource-card--with-media' : '' }}">
+    .store-filter-head strong {
+        display: block;
+        color: #111827;
+        font-size: 17px;
+    }
+
+    .store-filter-head span {
+        display: block;
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .store-filter-segmented {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+
+    .store-filter-segment {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        color: #4b5563;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    .store-filter-segment:hover,
+    .store-filter-segment.is-active {
+        background: #111827;
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    .store-filter-card.is-loading {
+        opacity: .72;
+        pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+        .store-filter-segmented {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .store-filter-segment {
+            flex: 0 0 auto;
+        }
+    }
+</style>
+
+<div data-store-filter-region>
+    <div class="list-card store-filter-card" data-store-filter-card>
+        <div class="store-filter-head">
+            <strong>Filtrar tiendas</strong>
+            <span>{{ number_format($storesCount ?? $stores->count(), 0, ',', '.') }} resultado(s) · Activas, en prueba o pagas</span>
+        </div>
+
+        <div class="store-filter-segmented" aria-label="Filtrar tiendas por estado">
+            @foreach (($storeFilterOptions ?? []) as $statusKey => $statusLabel)
+                <a
+                    href="{{ request()->fullUrlWithQuery(['store_status' => $statusKey]) }}"
+                    class="store-filter-segment {{ ($storeStatus ?? 'all') === $statusKey ? 'is-active' : '' }}"
+                    data-store-filter-link
+                >
+                    {{ $statusLabel }}
+                </a>
+            @endforeach
+        </div>
+    </div>
+
+    @if($stores->isEmpty())
+        <div class="panel-empty">
+            <h3>{{ ($storeStatus ?? 'all') === 'all' ? 'No hay tiendas registradas' : 'No hay tiendas para este filtro' }}</h3>
+            <p>{{ ($storeStatus ?? 'all') === 'all' ? 'Crea una tienda para asociarla a un usuario y publicar su catálogo.' : 'Prueba con otro estado o revisa las suscripciones desde el listado completo.' }}</p>
+            @if (($storeStatus ?? 'all') === 'all')
+                <a href="{{ route('admin.stores.create-with-user') }}" class="btn">Crear cliente + tienda</a>
+            @else
+                <a href="{{ request()->fullUrlWithQuery(['store_status' => 'all']) }}" class="btn btn-secondary" data-store-filter-link>Ver todas</a>
+            @endif
+        </div>
+    @endif
+
+    <div class="panel-list">
+        @foreach($stores as $store)
+            <article class="list-card resource-card {{ $store->cover_image ? 'resource-card--with-media' : '' }}">
             @if ($store->cover_image)
                 <div class="resource-card__media">
                     <img src="{{ asset('storage/' . $store->cover_image) }}" alt="{{ $store->name }}">
@@ -139,44 +233,101 @@
                     <button type="submit" class="btn btn-danger">Eliminar</button>
                 </form>
             </div>
-        </article>
-    @endforeach
+            </article>
+        @endforeach
+    </div>
 </div>
 
 @push('scripts')
     <script>
         (() => {
-            document.querySelectorAll('[data-ai-credit-form]').forEach((form) => {
-                form.addEventListener('submit', (event) => {
-                    const select = form.querySelector('select[name="package_key"]');
-                    const packageLabel = select?.selectedOptions[0]?.textContent?.trim() || 'este paquete';
-                    const storeName = form.dataset.storeName || 'esta tienda';
-                    const confirmed = window.confirm(`Confirmar que el pago fue validado y sumar ${packageLabel} a ${storeName}?`);
+            const bindAdminForms = () => {
+                document.querySelectorAll('[data-ai-credit-form]:not([data-bound])').forEach((form) => {
+                    form.dataset.bound = 'true';
+                    form.addEventListener('submit', (event) => {
+                        const select = form.querySelector('select[name="package_key"]');
+                        const packageLabel = select?.selectedOptions[0]?.textContent?.trim() || 'este paquete';
+                        const storeName = form.dataset.storeName || 'esta tienda';
+                        const confirmed = window.confirm(`Confirmar que el pago fue validado y sumar ${packageLabel} a ${storeName}?`);
 
-                    if (!confirmed) {
-                        event.preventDefault();
-                        return;
-                    }
+                        if (!confirmed) {
+                            event.preventDefault();
+                            return;
+                        }
 
-                    form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+                        form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+                    });
                 });
-            });
 
-            document.querySelectorAll('[data-subscription-form]').forEach((form) => {
-                form.addEventListener('submit', (event) => {
-                    const duration = form.querySelector('select[name="duration_days"]')?.selectedOptions[0]?.textContent?.trim() || 'esta duracion';
-                    const plan = form.querySelector('select[name="plan"]')?.selectedOptions[0]?.textContent?.trim() || 'este plan';
-                    const storeName = form.dataset.storeName || 'esta tienda';
-                    const confirmed = window.confirm(`Confirmar pago validado y activar ${storeName} en ${plan} por ${duration}?`);
+                document.querySelectorAll('[data-subscription-form]:not([data-bound])').forEach((form) => {
+                    form.dataset.bound = 'true';
+                    form.addEventListener('submit', (event) => {
+                        const duration = form.querySelector('select[name="duration_days"]')?.selectedOptions[0]?.textContent?.trim() || 'esta duracion';
+                        const plan = form.querySelector('select[name="plan"]')?.selectedOptions[0]?.textContent?.trim() || 'este plan';
+                        const storeName = form.dataset.storeName || 'esta tienda';
+                        const confirmed = window.confirm(`Confirmar pago validado y activar ${storeName} en ${plan} por ${duration}?`);
 
-                    if (!confirmed) {
-                        event.preventDefault();
-                        return;
-                    }
+                        if (!confirmed) {
+                            event.preventDefault();
+                            return;
+                        }
 
-                    form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+                        form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+                    });
                 });
-            });
+            };
+
+            const bindStoreFilters = () => {
+                document.querySelectorAll('[data-store-filter-link]:not([data-bound])').forEach((link) => {
+                    link.dataset.bound = 'true';
+                    link.addEventListener('click', async (event) => {
+                        const region = document.querySelector('[data-store-filter-region]');
+
+                        if (!region || !window.DOMParser || !window.fetch) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        const filterCard = region.querySelector('[data-store-filter-card]');
+                        filterCard?.classList.add('is-loading');
+
+                        try {
+                            const response = await fetch(link.href, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'text/html',
+                                },
+                            });
+
+                            if (!response.ok) {
+                                window.location.href = link.href;
+                                return;
+                            }
+
+                            const html = await response.text();
+                            const doc = new DOMParser().parseFromString(html, 'text/html');
+                            const nextRegion = doc.querySelector('[data-store-filter-region]');
+
+                            if (!nextRegion) {
+                                window.location.href = link.href;
+                                return;
+                            }
+
+                            region.replaceWith(nextRegion);
+                            window.history.pushState({}, '', link.href);
+                            bindStoreFilters();
+                            bindAdminForms();
+                        } catch (error) {
+                            window.location.href = link.href;
+                        }
+                    });
+                });
+            };
+
+            window.addEventListener('popstate', () => window.location.reload());
+            bindStoreFilters();
+            bindAdminForms();
         })();
     </script>
 @endpush

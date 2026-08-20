@@ -12,7 +12,7 @@ class SubscriptionStatsService
         Store::PLAN_PREMIUM => 25000,
     ];
 
-    public function summary(): array
+    public function summary(?array $dateRange = null): array
     {
         if (! Store::supportsSubscriptionColumns()) {
             return [
@@ -45,10 +45,10 @@ class SubscriptionStatsService
             ->latest()
             ->get();
 
-        $trialActive = $stores->filter(fn (Store $store) => $this->isPublishedStore($store) && $store->isTrialing());
-        $trialExpired = $stores->filter(fn (Store $store) => $this->isPublishedStore($store) && $this->isTrialExpired($store));
-        $paidActive = $stores->filter(fn (Store $store) => $this->isPaidActive($store));
-        $paidExpired = $stores->filter(fn (Store $store) => $this->isPaidExpired($store));
+        $trialActive = $stores->filter(fn (Store $store) => $this->isPublishedStore($store) && $store->isTrialing() && $this->matchesSubscriptionPeriod($store, $dateRange));
+        $trialExpired = $stores->filter(fn (Store $store) => $this->isPublishedStore($store) && $this->isTrialExpired($store) && $this->matchesSubscriptionPeriod($store, $dateRange));
+        $paidActive = $stores->filter(fn (Store $store) => $this->isPaidActive($store) && $this->matchesSubscriptionPeriod($store, $dateRange));
+        $paidExpired = $stores->filter(fn (Store $store) => $this->isPaidExpired($store) && $this->matchesSubscriptionPeriod($store, $dateRange));
         $trialEndingSoon = $trialActive->filter(fn (Store $store) => $store->subscriptionEndsSoon(3));
         $paidEndingSoon = $paidActive->filter(fn (Store $store) => $store->subscriptionEndsSoon(3));
 
@@ -106,6 +106,54 @@ class SubscriptionStatsService
     private function monthlyRecurringRevenue(Collection $paidActive): int
     {
         return (int) $paidActive->sum(fn (Store $store) => self::MONTHLY_PLAN_PRICES[$store->plan] ?? 0);
+    }
+
+    private function matchesSubscriptionPeriod(Store $store, ?array $dateRange): bool
+    {
+        if (! $dateRange) {
+            return true;
+        }
+
+        [$periodStartsAt, $periodEndsAt] = $dateRange;
+        $status = $store->subscriptionStatus();
+
+        if ($status === Store::SUBSCRIPTION_EXPIRED || $this->isTrialExpired($store)) {
+            return $this->dateWithinPeriod(
+                $store->subscription_ends_at ?: $store->trial_ends_at ?: $store->created_at,
+                $periodStartsAt,
+                $periodEndsAt,
+            );
+        }
+
+        $subscriptionStartsAt = $status === Store::SUBSCRIPTION_TRIALING
+            ? ($store->trial_starts_at ?: $store->created_at)
+            : $store->created_at;
+        $subscriptionEndsAt = $status === Store::SUBSCRIPTION_TRIALING
+            ? $store->trial_ends_at
+            : $store->subscription_ends_at;
+
+        return $this->periodsOverlap($subscriptionStartsAt, $subscriptionEndsAt, $periodStartsAt, $periodEndsAt);
+    }
+
+    private function periodsOverlap($startsAt, $endsAt, $periodStartsAt, $periodEndsAt): bool
+    {
+        if (! $startsAt) {
+            return false;
+        }
+
+        $startsAt = $startsAt->copy()->startOfDay();
+        $endsAt = $endsAt?->copy()->endOfDay();
+
+        return $startsAt->lte($periodEndsAt) && (! $endsAt || $endsAt->gte($periodStartsAt));
+    }
+
+    private function dateWithinPeriod($date, $periodStartsAt, $periodEndsAt): bool
+    {
+        if (! $date) {
+            return false;
+        }
+
+        return $date->betweenIncluded($periodStartsAt, $periodEndsAt);
     }
 
     private function attentionStores(Collection $stores): Collection

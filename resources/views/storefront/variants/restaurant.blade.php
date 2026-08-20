@@ -51,7 +51,7 @@
     <span class="restaurant-food-pattern restaurant-food-pattern--pizza" aria-hidden="true"></span>
     <span class="restaurant-hero-word" aria-hidden="true">Menu</span>
 
-    <div class="restaurant-menu-hero-top">
+    <div class="restaurant-menu-hero-top shell navbar-inner">
         <a href="#catalogo" class="restaurant-menu-button" aria-label="Abrir menu">
             <span></span>
             <span></span>

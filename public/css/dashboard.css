@@ -10,6 +10,89 @@
     border: 1px solid #dbe4ff;
 }
 
+.dashboard-filter-card {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.dashboard-filter-card.is-loading {
+    opacity: .72;
+    pointer-events: none;
+}
+
+.dashboard-filter-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.dashboard-filter-head strong,
+.dashboard-users-head strong {
+    display: block;
+    color: #111827;
+    font-size: 17px;
+}
+
+.dashboard-filter-head span {
+    display: block;
+    margin-top: 4px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.dashboard-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.dashboard-filter-group {
+    display: grid;
+    gap: 8px;
+}
+
+.dashboard-filter-label {
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.dashboard-segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.dashboard-segment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+
+.dashboard-segment:hover,
+.dashboard-segment.is-active {
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.12);
+}
+
 .dashboard-stat-label {
     display: block;
     margin-bottom: 10px;
@@ -25,6 +108,14 @@
     line-height: 1;
 }
 
+.dashboard-stat-note {
+    display: block;
+    margin-top: 10px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 800;
+}
+
 .dashboard-stat-card--sales {
     background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
     border-color: #111827;
@@ -37,6 +128,10 @@
 .dashboard-stat-card--sales .dashboard-stat-value {
     color: #ffffff;
     font-size: clamp(28px, 4vw, 38px);
+}
+
+.dashboard-stat-card--sales .dashboard-stat-note {
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .dashboard-subscription-card {
@@ -483,6 +578,20 @@
 @media (max-width: 720px) {
     .dashboard-admin-stats {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-segmented {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+    }
+
+    .dashboard-segment {
+        flex: 0 0 auto;
     }
 
     .dashboard-subscription-grid {

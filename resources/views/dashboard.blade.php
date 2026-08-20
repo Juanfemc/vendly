@@ -103,25 +103,54 @@
         </div>
     @endif
 
+    <div data-dashboard-metrics-region>
+    <div class="list-card dashboard-filter-card" data-dashboard-metrics-card>
+        <div class="dashboard-filter-head">
+            <div>
+                <strong>Periodo de estadísticas</strong>
+                <span>Aplica a ventas, visitas y estadísticas de planes.</span>
+            </div>
+        </div>
+
+        <div class="dashboard-filter-group">
+            <span class="dashboard-filter-label">Métricas</span>
+            <div class="dashboard-segmented">
+                @foreach (($metricsPeriodOptions ?? []) as $periodKey => $periodLabel)
+                    <a
+                        href="{{ route('dashboard', array_merge(request()->query(), ['metrics_period' => $periodKey])) }}"
+                        class="dashboard-segment {{ ($metricsPeriod ?? 'month') === $periodKey ? 'is-active' : '' }}"
+                        data-dashboard-metrics-link
+                    >
+                        {{ $periodLabel }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-admin-stats">
         <div class="card dashboard-stat-card dashboard-stat-card--sales">
             <span class="dashboard-stat-label">Total de ventas</span>
             <strong class="dashboard-stat-value">$ {{ number_format($totalSales ?? 0, 0, ',', '.') }}</strong>
+            <small class="dashboard-stat-note">{{ $metricsPeriodLabel ?? 'Mensual' }}</small>
         </div>
 
         <div class="card dashboard-stat-card">
             <span class="dashboard-stat-label">Usuarios de tienda</span>
             <strong class="dashboard-stat-value">{{ $storeUsersCount ?? 0 }}</strong>
+            <small class="dashboard-stat-note">{{ $metricsPeriodLabel ?? 'Mensual' }}</small>
         </div>
 
         <div class="card dashboard-stat-card">
             <span class="dashboard-stat-label">Tiendas creadas</span>
             <strong class="dashboard-stat-value">{{ $storesCount ?? 0 }}</strong>
+            <small class="dashboard-stat-note">{{ $metricsPeriodLabel ?? 'Mensual' }}</small>
         </div>
 
         <div class="card dashboard-stat-card">
             <span class="dashboard-stat-label">Total de visitas</span>
             <strong class="dashboard-stat-value">{{ number_format($totalVisits ?? 0, 0, ',', '.') }}</strong>
+            <small class="dashboard-stat-note">{{ $metricsPeriodLabel ?? 'Mensual' }}</small>
         </div>
     </div>
 
@@ -130,7 +159,7 @@
             <div class="dashboard-users-head">
                 <div>
                     <strong>Estadísticas de planes</strong>
-                    <span>Pruebas, pagos activos y vencimientos</span>
+                    <span>{{ $metricsPeriodLabel ?? 'Mensual' }} · Pruebas, pagos activos y vencimientos</span>
                 </div>
                 <a href="{{ url('/admin/stores') }}" class="btn btn-secondary">Gestionar tiendas</a>
             </div>
@@ -209,6 +238,7 @@
             @endif
         </div>
     @endif
+    </div>
 
     <div class="list-card">
         <p>Desde aquí puedes crear usuarios de tienda, asignar tiendas y publicar banners/noticias.</p>
@@ -421,4 +451,60 @@
         <script src="{{ asset('js/dashboard.js') }}" defer></script>
     @endif
 @endif
+
+@push('scripts')
+    <script>
+        (() => {
+            const bindDashboardMetrics = () => {
+                document.querySelectorAll('[data-dashboard-metrics-link]:not([data-bound])').forEach((link) => {
+                    link.dataset.bound = 'true';
+                    link.addEventListener('click', async (event) => {
+                        const region = document.querySelector('[data-dashboard-metrics-region]');
+
+                        if (!region || !window.DOMParser || !window.fetch) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        const card = region.querySelector('[data-dashboard-metrics-card]');
+                        card?.classList.add('is-loading');
+
+                        try {
+                            const response = await fetch(link.href, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'text/html',
+                                },
+                            });
+
+                            if (!response.ok) {
+                                window.location.href = link.href;
+                                return;
+                            }
+
+                            const html = await response.text();
+                            const doc = new DOMParser().parseFromString(html, 'text/html');
+                            const nextRegion = doc.querySelector('[data-dashboard-metrics-region]');
+
+                            if (!nextRegion) {
+                                window.location.href = link.href;
+                                return;
+                            }
+
+                            region.replaceWith(nextRegion);
+                            window.history.pushState({}, '', link.href);
+                            bindDashboardMetrics();
+                        } catch (error) {
+                            window.location.href = link.href;
+                        }
+                    });
+                });
+            };
+
+            window.addEventListener('popstate', () => window.location.reload());
+            bindDashboardMetrics();
+        })();
+    </script>
+@endpush
 @endsection

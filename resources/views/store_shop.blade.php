@@ -100,7 +100,11 @@
     @elseif($storefrontVariant === 'fashion')
         @include('storefront.partials.header-fashion')
     @else
-        @include('storefront.partials.header')
+        @if($storefrontVariant === 'restaurant')
+            <input class="store-cart-state" type="checkbox" id="minimalShopCartToggle" aria-hidden="true">
+        @else
+            @include('storefront.partials.header')
+        @endif
     @endif
 
     <main class="shell">
@@ -111,8 +115,14 @@
         @include('storefront.partials.footer-minimal-grid')
     @elseif($storefrontVariant === 'fashion')
         @include('storefront.partials.footer-fashion')
+    @elseif($storefrontVariant === 'restaurant')
+        @include('storefront.partials.footer-restaurant')
     @else
         @include('storefront.partials.footer')
+    @endif
+
+    @if($storefrontVariant === 'restaurant')
+        @include('storefront.partials.cart-drawer')
     @endif
 
     <div class="cart-feedback" id="cartFeedback" aria-live="polite">{{ $isRestaurant ? 'Plato agregado al pedido' : ($isReservationStore ? 'Servicio agregado a la reserva' : 'Producto agregado al carrito') }}</div>

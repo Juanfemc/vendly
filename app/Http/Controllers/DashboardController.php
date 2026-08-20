@@ -7,21 +7,28 @@ use App\Models\AdminUpdate;
 use App\Models\Order;
 use App\Models\Store;
 use App\Models\StoreBanner;
+use App\Models\StoreVisit;
 use App\Models\User;
 use App\Services\SubscriptionStatsService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
         $hasVisitsColumn = Schema::hasColumn('stores', 'views_count');
 
         if ($user?->isAdmin()) {
-            $storeUsersCount = User::where('role', 'store')->count();
-            $storesCount = Store::count();
+            $metricsPeriod = $this->normalizeMetricsPeriod($request->query('metrics_period'));
+            $dateRange = $this->metricsDateRange($metricsPeriod);
+            $metricsPeriodLabel = $this->metricsPeriodLabels()[$metricsPeriod];
+
+            $storeUsersCount = $this->applyDateRange(User::where('role', 'store'), $dateRange)->count();
+            $storesCount = $this->applyDateRange(Store::query(), $dateRange)->count();
             $storeUsers = User::where('role', 'store')->latest()->get();
             $expiringStores = Store::with('user')
                 ->subscriptionsEndingWithin(3)
@@ -39,13 +46,15 @@ class DashboardController extends Controller
                 ->whereDate('active_ends_at', '<=', now()->addDays(7)->toDateString())
                 ->orderBy('active_ends_at')
                 ->get();
-            $totalSales = (float) Order::whereIn('status', ['pagado', 'enviado'])->sum('total')
-                - (float) Order::where('status', 'devuelto')->sum('total');
-            $totalVisits = $hasVisitsColumn ? (int) Store::sum('views_count') : 0;
+            $paidSalesQuery = $this->applyDateRange(Order::whereIn('status', ['pagado', 'enviado']), $dateRange);
+            $returnedSalesQuery = $this->applyDateRange(Order::where('status', 'devuelto'), $dateRange);
+            $totalSales = (float) $paidSalesQuery->sum('total') - (float) $returnedSalesQuery->sum('total');
+            $totalVisits = $this->visitsForPeriod($metricsPeriod, $dateRange, $hasVisitsColumn);
             $adminUpdates = Schema::hasTable('admin_updates')
                 ? AdminUpdate::orderByDesc('id')->take(10)->get()
                 : collect();
-            $subscriptionStats = app(SubscriptionStatsService::class)->summary();
+            $subscriptionStats = app(SubscriptionStatsService::class)->summary($dateRange);
+            $metricsPeriodOptions = $this->metricsPeriodLabels();
 
             return view('dashboard', compact(
                 'storeUsersCount',
@@ -57,7 +66,10 @@ class DashboardController extends Controller
                 'totalSales',
                 'totalVisits',
                 'adminUpdates',
-                'subscriptionStats'
+                'subscriptionStats',
+                'metricsPeriod',
+                'metricsPeriodLabel',
+                'metricsPeriodOptions',
             ));
         }
 
@@ -120,4 +132,54 @@ class DashboardController extends Controller
             'accountExpiresSoon'
         ));
     }
+
+    private function normalizeMetricsPeriod(mixed $period): string
+    {
+        $period = (string) $period;
+
+        return array_key_exists($period, $this->metricsPeriodLabels()) ? $period : 'month';
+    }
+
+    private function metricsPeriodLabels(): array
+    {
+        return [
+            'week' => 'Semanal',
+            'month' => 'Mensual',
+            'total' => 'Total',
+        ];
+    }
+
+    private function metricsDateRange(string $period): ?array
+    {
+        return match ($period) {
+            'week' => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
+            'month' => [now()->startOfMonth(), now()->endOfDay()],
+            default => null,
+        };
+    }
+
+    private function applyDateRange(Builder $query, ?array $dateRange): Builder
+    {
+        if (! $dateRange) {
+            return $query;
+        }
+
+        return $query->whereBetween('created_at', $dateRange);
+    }
+
+    private function visitsForPeriod(string $period, ?array $dateRange, bool $hasVisitsColumn): int
+    {
+        if (Schema::hasTable('store_visits')) {
+            $visitsQuery = StoreVisit::query();
+
+            if ($dateRange) {
+                $visitsQuery->whereBetween('visited_at', $dateRange);
+            }
+
+            return $visitsQuery->count();
+        }
+
+        return $period === 'total' && $hasVisitsColumn ? (int) Store::sum('views_count') : 0;
+    }
+
 }

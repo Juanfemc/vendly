@@ -135,7 +135,11 @@
         @include('storefront.partials.header-fashion')
         @include('storefront.partials.fashion-product-detail')
     @else
-        @include('storefront.partials.header')
+        @if($storefrontVariant === 'restaurant')
+            <input class="store-cart-state" type="checkbox" id="minimalShopCartToggle" aria-hidden="true">
+        @else
+            @include('storefront.partials.header')
+        @endif
 
     <main class="shell product-shell">
         <section class="product-breadcrumb">
@@ -530,8 +534,14 @@
         @include('storefront.partials.footer-minimal-grid')
     @elseif($storefrontVariant === 'fashion')
         @include('storefront.partials.footer-fashion')
+    @elseif($storefrontVariant === 'restaurant')
+        @include('storefront.partials.footer-restaurant')
     @else
         @include('storefront.partials.footer')
+    @endif
+
+    @if($storefrontVariant === 'restaurant')
+        @include('storefront.partials.cart-drawer')
     @endif
 
     <div class="cart-feedback" id="cartFeedback" aria-live="polite">{{ $isReservationStore ? 'Servicio agregado a la reserva' : 'Producto agregado al carrito' }}</div>
