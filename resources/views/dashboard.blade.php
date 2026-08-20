@@ -117,7 +117,7 @@
             <div class="dashboard-segmented">
                 @foreach (($metricsPeriodOptions ?? []) as $periodKey => $periodLabel)
                     <a
-                        href="{{ route('dashboard', array_merge(request()->query(), ['metrics_period' => $periodKey])) }}"
+                        href="{{ route('dashboard', array_merge(request()->except('metrics_month'), ['metrics_period' => $periodKey])) }}"
                         class="dashboard-segment {{ ($metricsPeriod ?? 'month') === $periodKey ? 'is-active' : '' }}"
                         data-dashboard-metrics-link
                     >
@@ -126,6 +126,32 @@
                 @endforeach
             </div>
         </div>
+
+        <form
+            class="dashboard-month-form"
+            action="{{ route('dashboard') }}"
+            method="GET"
+            data-dashboard-metrics-form
+        >
+            @foreach (request()->except(['metrics_period', 'metrics_month']) as $queryKey => $queryValue)
+                @if (is_scalar($queryValue))
+                    <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                @endif
+            @endforeach
+            <input type="hidden" name="metrics_period" value="custom_month">
+            <label class="dashboard-filter-label" for="metrics_month">Mes específico</label>
+            <div class="dashboard-month-control">
+                <input
+                    id="metrics_month"
+                    type="month"
+                    name="metrics_month"
+                    value="{{ $metricsMonthValue ?? now()->format('Y-m') }}"
+                    max="{{ now()->format('Y-m') }}"
+                    data-dashboard-metrics-month
+                >
+                <button type="submit" class="btn btn-secondary">Ver mes</button>
+            </div>
+        </form>
     </div>
 
     <div class="dashboard-admin-stats">
@@ -455,50 +481,72 @@
 @push('scripts')
     <script>
         (() => {
+            const loadDashboardMetrics = async (url) => {
+                const region = document.querySelector('[data-dashboard-metrics-region]');
+
+                if (!region || !window.DOMParser || !window.fetch) {
+                    window.location.href = url;
+                    return;
+                }
+
+                const card = region.querySelector('[data-dashboard-metrics-card]');
+                card?.classList.add('is-loading');
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const nextRegion = doc.querySelector('[data-dashboard-metrics-region]');
+
+                    if (!nextRegion) {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    region.replaceWith(nextRegion);
+                    window.history.pushState({}, '', url);
+                    bindDashboardMetrics();
+                } catch (error) {
+                    window.location.href = url;
+                }
+            };
+
             const bindDashboardMetrics = () => {
                 document.querySelectorAll('[data-dashboard-metrics-link]:not([data-bound])').forEach((link) => {
                     link.dataset.bound = 'true';
-                    link.addEventListener('click', async (event) => {
-                        const region = document.querySelector('[data-dashboard-metrics-region]');
-
-                        if (!region || !window.DOMParser || !window.fetch) {
-                            return;
-                        }
-
+                    link.addEventListener('click', (event) => {
                         event.preventDefault();
-
-                        const card = region.querySelector('[data-dashboard-metrics-card]');
-                        card?.classList.add('is-loading');
-
-                        try {
-                            const response = await fetch(link.href, {
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Accept': 'text/html',
-                                },
-                            });
-
-                            if (!response.ok) {
-                                window.location.href = link.href;
-                                return;
-                            }
-
-                            const html = await response.text();
-                            const doc = new DOMParser().parseFromString(html, 'text/html');
-                            const nextRegion = doc.querySelector('[data-dashboard-metrics-region]');
-
-                            if (!nextRegion) {
-                                window.location.href = link.href;
-                                return;
-                            }
-
-                            region.replaceWith(nextRegion);
-                            window.history.pushState({}, '', link.href);
-                            bindDashboardMetrics();
-                        } catch (error) {
-                            window.location.href = link.href;
-                        }
+                        loadDashboardMetrics(link.href);
                     });
+                });
+
+                document.querySelectorAll('[data-dashboard-metrics-form]:not([data-bound])').forEach((form) => {
+                    form.dataset.bound = 'true';
+                    const monthInput = form.querySelector('[data-dashboard-metrics-month]');
+
+                    const submitForm = () => {
+                        const formData = new FormData(form);
+                        const searchParams = new URLSearchParams(formData);
+                        loadDashboardMetrics(`${form.action}?${searchParams.toString()}`);
+                    };
+
+                    form.addEventListener('submit', (event) => {
+                        event.preventDefault();
+                        submitForm();
+                    });
+
+                    monthInput?.addEventListener('change', submitForm);
                 });
             };
 

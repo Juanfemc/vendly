@@ -54,6 +54,35 @@
     gap: 8px;
 }
 
+.dashboard-month-form {
+    display: grid;
+    gap: 8px;
+    max-width: 360px;
+}
+
+.dashboard-month-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-month-control input {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+    font-weight: 800;
+}
+
+.dashboard-month-control .btn {
+    flex: 0 0 auto;
+    min-height: 42px;
+}
+
 .dashboard-filter-label {
     color: #4b5563;
     font-size: 12px;
@@ -584,6 +613,10 @@
         grid-template-columns: 1fr;
     }
 
+    .dashboard-month-form {
+        max-width: none;
+    }
+
     .dashboard-segmented {
         overflow-x: auto;
         flex-wrap: nowrap;
@@ -658,6 +691,15 @@
 @media (max-width: 480px) {
     .dashboard-subscription-grid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-month-control {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .dashboard-month-control .btn {
+        width: 100%;
     }
 
     .dashboard-slide-media {

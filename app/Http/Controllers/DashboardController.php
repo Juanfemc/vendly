@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\SubscriptionStatsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -23,9 +24,11 @@ class DashboardController extends Controller
         $hasVisitsColumn = Schema::hasColumn('stores', 'views_count');
 
         if ($user?->isAdmin()) {
-            $metricsPeriod = $this->normalizeMetricsPeriod($request->query('metrics_period'));
-            $dateRange = $this->metricsDateRange($metricsPeriod);
-            $metricsPeriodLabel = $this->metricsPeriodLabels()[$metricsPeriod];
+            $metricsMonth = $this->normalizeMetricsMonth($request->query('metrics_month'));
+            $metricsPeriod = $this->normalizeMetricsPeriod($request->query('metrics_period'), $metricsMonth);
+            $dateRange = $this->metricsDateRange($metricsPeriod, $metricsMonth);
+            $metricsPeriodLabel = $this->metricsPeriodLabel($metricsPeriod, $metricsMonth);
+            $metricsMonthValue = $metricsMonth ?: now()->format('Y-m');
 
             $storeUsersCount = $this->applyDateRange(User::where('role', 'store'), $dateRange)->count();
             $storesCount = $this->applyDateRange(Store::query(), $dateRange)->count();
@@ -70,6 +73,7 @@ class DashboardController extends Controller
                 'metricsPeriod',
                 'metricsPeriodLabel',
                 'metricsPeriodOptions',
+                'metricsMonthValue',
             ));
         }
 
@@ -133,9 +137,13 @@ class DashboardController extends Controller
         ));
     }
 
-    private function normalizeMetricsPeriod(mixed $period): string
+    private function normalizeMetricsPeriod(mixed $period, ?string $metricsMonth = null): string
     {
         $period = (string) $period;
+
+        if ($period === 'custom_month' && $metricsMonth) {
+            return 'custom_month';
+        }
 
         return array_key_exists($period, $this->metricsPeriodLabels()) ? $period : 'month';
     }
@@ -149,13 +157,43 @@ class DashboardController extends Controller
         ];
     }
 
-    private function metricsDateRange(string $period): ?array
+    private function metricsDateRange(string $period, ?string $metricsMonth = null): ?array
     {
         return match ($period) {
             'week' => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
             'month' => [now()->startOfMonth(), now()->endOfDay()],
+            'custom_month' => $metricsMonth
+                ? [
+                    Carbon::createFromFormat('Y-m', $metricsMonth)->startOfMonth(),
+                    Carbon::createFromFormat('Y-m', $metricsMonth)->endOfMonth(),
+                ]
+                : [now()->startOfMonth(), now()->endOfDay()],
             default => null,
         };
+    }
+
+    private function metricsPeriodLabel(string $period, ?string $metricsMonth = null): string
+    {
+        if ($period === 'custom_month' && $metricsMonth) {
+            return 'Mes ' . Carbon::createFromFormat('Y-m', $metricsMonth)->format('m/Y');
+        }
+
+        return $this->metricsPeriodLabels()[$period] ?? 'Mensual';
+    }
+
+    private function normalizeMetricsMonth(mixed $month): ?string
+    {
+        $month = trim((string) $month);
+
+        if (! preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m', $month)->format('Y-m');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function applyDateRange(Builder $query, ?array $dateRange): Builder
