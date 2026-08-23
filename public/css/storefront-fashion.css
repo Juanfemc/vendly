@@ -1881,7 +1881,7 @@
 
 .fashion-product-compact-copy {
     min-width: 0;
-    text-align: left;
+    text-align: left !important;
 }
 
 .fashion-product-compact-copy strong {
@@ -1899,9 +1899,14 @@
     font-size: 13px;
     font-style: normal;
     line-height: 1.55;
-    text-align: left;
-    white-space: pre-line;
+    text-align: left !important;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+
+.fashion-product-compact-copy em span {
+    text-align: inherit;
 }
 
 .fashion-product-compact-toggle {

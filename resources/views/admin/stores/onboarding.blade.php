@@ -11,6 +11,11 @@
     $storefrontHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost();
     $currentSubdomain = old('subdomain', $store->subdomain);
     $canUseSubdomain = $store->allowsSubdomain();
+    $supportsHeroOverlay = \App\Models\Store::supportsHeroOverlayColumns();
+    $coverPreview = $store->cover_image ? asset('storage/' . $store->cover_image) : null;
+    $heroOverlayTitle = old('hero_overlay_title', $store->hero_overlay_title ?: 'Nueva colección');
+    $heroOverlayButtonText = old('hero_overlay_button_text', $store->hero_overlay_button_text ?: 'Ver productos');
+    $heroOverlayButtonUrl = old('hero_overlay_button_url', $store->hero_overlay_button_url ?: '/productos');
 @endphp
 <style>
     .onboarding-page {
@@ -228,7 +233,118 @@
         background: #f9fafb;
     }
 
-    .onboarding-logo-tools {
+    .onboarding-cover-card {
+        display: grid;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid #fed7aa;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #fff7ed, #ffffff 52%, #f9fafb);
+    }
+
+    .onboarding-cover-card__head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .onboarding-cover-card__head h3 {
+        margin: 0;
+        color: #111827;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+    }
+
+    .onboarding-cover-card__head p {
+        margin: 5px 0 0;
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .onboarding-cover-preview {
+        position: relative;
+        min-height: 220px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        background:
+            linear-gradient(135deg, rgba(17, 24, 39, 0.28), rgba(255, 107, 0, 0.26)),
+            linear-gradient(135deg, #111827, var(--onboarding-brand, #ff6b00));
+        color: #ffffff;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    .onboarding-cover-preview img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .onboarding-cover-preview::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.08));
+    }
+
+    .onboarding-cover-preview__copy {
+        position: relative;
+        z-index: 1;
+        width: min(78%, 420px);
+        padding: clamp(22px, 5vw, 42px);
+    }
+
+    .onboarding-cover-preview__copy strong {
+        display: block;
+        font-size: clamp(26px, 5vw, 46px);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+    }
+
+    .onboarding-cover-preview__copy span {
+        display: inline-flex;
+        margin-top: 16px;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 0 18px;
+        background: #ffffff;
+        color: #111827;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .onboarding-cover-tools {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 0.65fr);
+        gap: 14px;
+        align-items: start;
+    }
+
+    .onboarding-upload-box {
+        display: grid;
+        gap: 8px;
+        align-content: center;
+        min-height: 118px;
+        border: 1px dashed #fdba74;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.76);
+        padding: 16px;
+        color: #9a3412;
+    }
+
+    .onboarding-cover-fields {
+        display: grid;
+        gap: 10px;
+    }
+
+    .onboarding-logo-tools,
+    .onboarding-ai-tools {
         display: grid;
         gap: 10px;
         padding: 12px;
@@ -371,8 +487,17 @@
 
         .onboarding-form-grid,
         .onboarding-verification-grid,
-        .onboarding-code-row {
+        .onboarding-code-row,
+        .onboarding-cover-tools {
             grid-template-columns: 1fr;
+        }
+
+        .onboarding-cover-preview {
+            min-height: 180px;
+        }
+
+        .onboarding-cover-preview__copy {
+            width: 100%;
         }
     }
 </style>
@@ -514,6 +639,92 @@
                 </div>
 
                 <div class="onboarding-field onboarding-field--full">
+                    <div class="onboarding-cover-card" style="--onboarding-brand: {{ old('brand_color', $store->brand_color ?: '#ff6b00') }}">
+                        <div class="onboarding-cover-card__head">
+                            <div>
+                                <h3>Portada de tu tienda</h3>
+                                <p>Se verá en la parte superior de tu tienda. Puedes subir una imagen, generar una con IA u omitirla por ahora.</p>
+                            </div>
+                            <span class="onboarding-status-pill">{{ $store->cover_image ? 'Lista' : 'Opcional' }}</span>
+                        </div>
+
+                        <div class="onboarding-cover-preview" data-onboarding-cover-preview>
+                            @if($coverPreview)
+                                <img src="{{ $coverPreview }}" alt="{{ $store->name }}" data-onboarding-cover-image>
+                            @else
+                                <img src="" alt="" data-onboarding-cover-image hidden>
+                            @endif
+                            <div class="onboarding-cover-preview__copy">
+                                <strong data-onboarding-cover-title>{{ $heroOverlayTitle }}</strong>
+                                <span data-onboarding-cover-button>{{ $heroOverlayButtonText }}</span>
+                            </div>
+                        </div>
+
+                        <div class="onboarding-cover-tools">
+                            <label class="onboarding-upload-box" for="onboarding_cover">
+                                <strong>Subir portada</strong>
+                                <span>JPG, PNG o WebP. Recomendado 1536 x 512 px. Máx. 4 MB.</span>
+                                <input id="onboarding_cover" type="file" name="cover_image" accept="image/*" data-onboarding-cover-input data-optimize-image data-max-width="1920" data-max-height="1080" data-quality="0.82" data-output="webp" data-max-size="4194304">
+                            </label>
+
+                            <div class="onboarding-cover-fields">
+                                @if($supportsHeroOverlay)
+                                    <label class="onboarding-field">
+                                        <span>Texto sobre portada</span>
+                                        <input name="hero_overlay_title" value="{{ $heroOverlayTitle }}" maxlength="120" placeholder="Nueva colección" data-onboarding-cover-title-input>
+                                    </label>
+                                    <label class="onboarding-field">
+                                        <span>Texto del botón</span>
+                                        <input name="hero_overlay_button_text" value="{{ $heroOverlayButtonText }}" maxlength="60" placeholder="Ver productos" data-onboarding-cover-button-input>
+                                    </label>
+                                    <label class="onboarding-field">
+                                        <span>Enlace del botón</span>
+                                        <input name="hero_overlay_button_url" value="{{ $heroOverlayButtonUrl }}" maxlength="255" placeholder="/productos">
+                                    </label>
+                                    <label class="onboarding-field" style="display:flex; align-items:center; gap:10px;">
+                                        <input type="checkbox" name="show_hero_overlay" value="1" @checked(old('show_hero_overlay', $store->show_hero_overlay ?? true)) style="width:auto; min-height:auto;">
+                                        <span>Mostrar texto y botón sobre la portada</span>
+                                    </label>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if($store->allowsAiContent())
+                            @php($aiCreditService = isset($aiCreditService) ? $aiCreditService : app(\App\Services\AiCreditService::class))
+                            <div
+                                class="onboarding-ai-tools"
+                                data-ai-panel
+                                data-ai-context="store_cover"
+                                data-ai-endpoint="{{ route('admin.ai.content') }}"
+                                data-ai-image-endpoint="{{ route('admin.ai.images') }}"
+                                data-store-id="{{ $store->id }}"
+                            >
+                                <div class="onboarding-logo-tools__head">
+                                    <strong>Crear portada con IA</strong>
+                                    <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos</span>
+                                </div>
+                                <div class="onboarding-logo-actions">
+                                    <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image">Generar portada</button>
+                                    @if($store->cover_image)
+                                        <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image_enhance">Mejorar portada actual</button>
+                                    @endif
+                                    <small>Consume {{ $aiCreditService->cost(\App\Services\AiContentService::STORE_COVER_IMAGE) }} créditos. Guarda para publicarla.</small>
+                                </div>
+                                <p class="ai-assistant-status" data-ai-status>Ideal si quieres una imagen profesional sin diseñarla manualmente.</p>
+                                <div class="ai-assistant-preview" data-ai-preview hidden></div>
+                            </div>
+                        @else
+                            <small>Generar portada con IA está disponible en plan Premium.</small>
+                        @endif
+
+                        @error('cover_image')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        @error('hero_overlay_title')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        @error('hero_overlay_button_text')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        @error('hero_overlay_button_url')<span class="onboarding-error">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+
+                <div class="onboarding-field onboarding-field--full">
                     <label for="onboarding_shop_copy">Descripción corta</label>
                     <textarea id="onboarding_shop_copy" name="shop_copy" placeholder="Cuenta en una frase que vendes y por qué deberían comprarte.">{{ old('shop_copy', $store->shop_copy) }}</textarea>
                     @error('shop_copy')<span class="onboarding-error">{{ $message }}</span>@enderror
@@ -544,6 +755,44 @@
 </div>
 
 <script>
+    (() => {
+        const coverInput = document.querySelector('[data-onboarding-cover-input]');
+        const coverImage = document.querySelector('[data-onboarding-cover-image]');
+        const titleInput = document.querySelector('[data-onboarding-cover-title-input]');
+        const buttonInput = document.querySelector('[data-onboarding-cover-button-input]');
+        const titlePreview = document.querySelector('[data-onboarding-cover-title]');
+        const buttonPreview = document.querySelector('[data-onboarding-cover-button]');
+        const brandColorInput = document.getElementById('onboarding_brand_color');
+        const coverCard = document.querySelector('.onboarding-cover-card');
+
+        titleInput?.addEventListener('input', () => {
+            if (titlePreview) {
+                titlePreview.textContent = titleInput.value.trim() || 'Nueva colección';
+            }
+        });
+
+        buttonInput?.addEventListener('input', () => {
+            if (buttonPreview) {
+                buttonPreview.textContent = buttonInput.value.trim() || 'Ver productos';
+            }
+        });
+
+        brandColorInput?.addEventListener('input', () => {
+            coverCard?.style.setProperty('--onboarding-brand', brandColorInput.value || '#ff6b00');
+        });
+
+        coverInput?.addEventListener('change', () => {
+            const file = coverInput.files?.[0];
+
+            if (!file || !coverImage) {
+                return;
+            }
+
+            coverImage.src = URL.createObjectURL(file);
+            coverImage.hidden = false;
+        });
+    })();
+
     (() => {
         const nameInput = document.querySelector('[data-onboarding-store-name]');
         const subdomainInput = document.querySelector('[data-onboarding-subdomain]');

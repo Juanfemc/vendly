@@ -96,7 +96,7 @@
 
             return [
                 rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt)) . '...',
-                ltrim(\Illuminate\Support\Str::substr($text, $cutAt)),
+                \Illuminate\Support\Str::substr($text, $cutAt),
             ];
         };
         $productDescriptionFallback = $isRestaurant ? 'Este plato aún no tiene una descripción amplia, pero ya está disponible para pedir por WhatsApp.' : ($isReservationStore ? 'Este servicio aún no tiene una descripción amplia configurada, pero ya está listo para reservarse.' : 'Este producto aún no tiene una descripción amplia configurada, pero ya está listo para venderse.');

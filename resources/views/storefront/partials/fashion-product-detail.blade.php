@@ -60,13 +60,17 @@
         }
 
         $intro = \Illuminate\Support\Str::substr($text, 0, $limit);
-        $lastSpace = max((int) strrpos($intro, ' '), (int) strrpos($intro, "\n"));
+        $lastSpace = mb_strrpos($intro, ' ', 0, 'UTF-8');
+        $lastNewline = mb_strrpos($intro, "\n", 0, 'UTF-8');
+        $lastBreak = max($lastSpace === false ? -1 : $lastSpace, $lastNewline === false ? -1 : $lastNewline);
+        $cutAt = $limit;
 
-        if ($lastSpace !== false && $lastSpace > 80) {
-            $intro = rtrim(substr($intro, 0, $lastSpace));
+        if ($lastBreak > 80) {
+            $cutAt = $lastBreak;
+            $intro = rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt));
         }
 
-        $rest = ltrim(\Illuminate\Support\Str::substr($text, \Illuminate\Support\Str::length($intro)));
+        $rest = \Illuminate\Support\Str::substr($text, $cutAt);
 
         return ['intro' => $intro, 'rest' => $rest];
     };
@@ -162,7 +166,7 @@
                         </span>
                         <span class="fashion-product-compact-copy">
                             <strong>Descripción</strong>
-                            <em><span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionDescriptionParts['rest'] }}</span>@endif</em>
+                            <em><span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden>{{ $fashionDescriptionParts['rest'] }}</span>@endif</em>
                         </span>
                         @if($fashionDescriptionParts['rest'] !== '')
                             <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
@@ -184,7 +188,7 @@
                             </span>
                             <span class="fashion-product-compact-copy">
                                 <strong>Características</strong>
-                                <em><span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden> {{ $fashionFeaturesParts['rest'] }}</span>@endif</em>
+                                <em><span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden>{{ $fashionFeaturesParts['rest'] }}</span>@endif</em>
                             </span>
                             @if($fashionFeaturesParts['rest'] !== '')
                                 <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">

@@ -465,6 +465,19 @@ class Store extends Model
                 'description' => 'Sube una imagen que haga tu tienda mas confiable.',
                 'complete' => trim((string) $this->logo_image) !== '',
             ],
+            'cover' => [
+                'label' => 'Portada configurada',
+                'description' => 'Agrega una portada o deja una portada simple con tu color de marca.',
+                'complete' => trim((string) $this->cover_image) !== ''
+                    || (
+                        self::supportsHeroOverlayColumns()
+                        && (bool) $this->show_hero_overlay
+                        && (
+                            trim((string) $this->hero_overlay_title) !== ''
+                            || trim((string) $this->hero_overlay_button_text) !== ''
+                        )
+                    ),
+            ],
             'description' => [
                 'label' => 'Descripcion corta',
                 'description' => 'Cuenta en una frase que vendes y por que comprarte.',
