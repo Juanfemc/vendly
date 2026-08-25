@@ -2,6 +2,10 @@
     $fashionGalleryImages = $productGallery->filter()->values();
     $fashionGallery = $fashionGalleryImages->isNotEmpty() ? $fashionGalleryImages : collect([null]);
     $fashionRelated = $relatedProducts->take(4);
+    $fashionPriceList = $activePriceList ?? null;
+    $fashionPriceResolver = app(\App\Services\PriceListService::class);
+    $fashionProductPrice = $fashionPriceResolver->priceFor($product, $fashionPriceList);
+    $fashionUsesPriceListPrice = $fashionPriceList && (float) $fashionProductPrice !== (float) $product->price;
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
     $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
@@ -147,11 +151,16 @@
             @endif
             <h1>{{ $product->name }}</h1>
             <div class="fashion-product-price">
-                @if($showsOfferPricing)
+                @if($fashionUsesPriceListPrice)
+                    <span>${{ number_format((float) $product->price, 0, ',', '.') }}</span>
+                @elseif($showsOfferPricing)
                     <span>${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
                 @endif
-                <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
+                <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
             </div>
+            @if($fashionUsesPriceListPrice)
+                <span class="store-price-list-badge store-price-list-badge--detail">Lista: {{ $fashionPriceList->name }}</span>
+            @endif
 
             <div class="fashion-product-compact-info" aria-label="Informacion rapida del producto">
                 <div class="fashion-product-compact-card" data-fashion-compact-card>
@@ -206,6 +215,9 @@
             @else
                 <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-form add-to-cart-form" data-role="minimal-add-form">
                     @csrf
+                    @if($fashionPriceList)
+                        <input type="hidden" name="lista" value="{{ $fashionPriceList->access_code ?: $fashionPriceList->slug }}">
+                    @endif
                     <input type="hidden" data-role="buy-now-quantity" value="1">
 
                     @if($fashionColorOptions->isNotEmpty())
@@ -278,6 +290,7 @@
             <h2>También te puede interesar</h2>
             <div class="fashion-related-grid">
                 @foreach($fashionRelated as $relatedProduct)
+                    @php($relatedPrice = $fashionPriceResolver->priceFor($relatedProduct, $fashionPriceList))
                     <article class="fashion-related-card">
                         <a href="{{ $storefrontUrls->product($store, $relatedProduct) }}" class="fashion-related-media">
                             @if($relatedProduct->image)
@@ -290,7 +303,7 @@
                             <p>{{ $relatedProduct->category }}</p>
                         @endif
                         <h3>{{ $relatedProduct->name }}</h3>
-                        <strong>${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</strong>
+                        <strong>${{ number_format((float) $relatedPrice, 0, ',', '.') }}</strong>
                     </article>
                 @endforeach
             </div>

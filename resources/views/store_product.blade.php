@@ -68,7 +68,11 @@
         $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
         $detailBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
         $quantityMax = $product->stock_quantity !== null && ! $isReservationStore ? max(1, min(99, (int) $product->stock_quantity)) : 99;
-        $showsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
+        $activePriceList = $activePriceList ?? null;
+        $priceListResolver = app(\App\Services\PriceListService::class);
+        $productDisplayPrice = $priceListResolver->priceFor($product, $activePriceList);
+        $usesPriceListPrice = $activePriceList && (float) $productDisplayPrice !== (float) $product->price;
+        $showsOfferPricing = ! $usesPriceListPrice && $store->allowsOfferBadges() && $product->hasOfferPricing();
         $productBadges = $product->displayBadges($store);
         $productReviewsEnabled = $store->allowsProductReviews();
         $productReviews = $productReviewsEnabled
@@ -95,7 +99,7 @@
             }
 
             return [
-                rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt)) . '...',
+                rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt)),
                 \Illuminate\Support\Str::substr($text, $cutAt),
             ];
         };
@@ -103,13 +107,11 @@
         $productDescriptionText = \App\Support\ProductText::plain($product->description) ?: $productDescriptionFallback;
         [$productDescriptionPreview, $productDescriptionMore] = $makeProductPreview($productDescriptionText);
         $hasLongProductDescription = $productDescriptionMore !== '';
-        $productDescriptionExpandedPreview = preg_replace('/\.\.\.$/u', '', $productDescriptionPreview);
         $productFeaturesText = \App\Support\ProductText::featureLines($product->features);
         $productFeaturesRich = \App\Support\ProductText::rich($product->features);
         $hasProductFeatures = $productFeaturesText !== '' || \App\Support\ProductText::plain($productFeaturesRich) !== '';
         [$productFeaturesPreview, $productFeaturesMore] = $makeProductPreview($productFeaturesText);
         $hasLongProductFeatures = $productFeaturesMore !== '';
-        $productFeaturesExpandedPreview = preg_replace('/\.\.\.$/u', '', $productFeaturesPreview);
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -223,11 +225,16 @@
                 </div>
 
                 <div class="product-detail-price">
-                    @if($showsOfferPricing)
+                    @if($usesPriceListPrice)
+                        <span class="product-detail-price-before">${{ number_format((float) $product->price, 0, ',', '.') }}</span>
+                    @elseif($showsOfferPricing)
                         <span class="product-detail-price-before">${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
                     @endif
-                    <span>${{ number_format((float) $product->price, 0, ',', '.') }}</span>
+                    <span>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</span>
                 </div>
+                @if($usesPriceListPrice)
+                    <span class="store-price-list-badge store-price-list-badge--detail">Lista: {{ $activePriceList->name }}</span>
+                @endif
 
                 @if($product->stockLabel())
                     <div class="product-stock-state {{ $isProductSoldOut ? 'is-sold-out' : '' }}">{{ $product->stockLabel() }}</div>
@@ -242,12 +249,7 @@
 
                 <div class="product-detail-description">
                     <h2>{{ $isRestaurant ? 'Sobre este plato' : 'Descripción' }}</h2>
-                    <p>
-                        <span data-product-more-preview data-collapsed-text="{{ $productDescriptionPreview }}" data-expanded-text="{{ $productDescriptionExpandedPreview }}">{{ $productDescriptionPreview }}</span>
-                        @if($hasLongProductDescription)
-                            <span class="product-detail-more-text" data-product-more-text hidden>{{ $productDescriptionMore }}</span>
-                        @endif
-                    </p>
+                    <p><span class="product-detail-text-segment">{{ $productDescriptionPreview }}</span>@if($hasLongProductDescription)<span class="product-detail-more-ellipsis" data-product-more-ellipsis aria-hidden="true">...</span><span class="product-detail-more-text product-detail-text-segment" data-product-more-text hidden>{{ $productDescriptionMore }}</span>@endif</p>
                     @if($hasLongProductDescription)
                         <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos">Ver más</button>
                     @endif
@@ -257,12 +259,7 @@
                     <div class="product-detail-description product-detail-features">
                         <h2>{{ $isRestaurant ? 'Ingredientes y detalles' : 'Características' }}</h2>
                         @if($productFeaturesText !== '')
-                            <p>
-                                <span data-product-more-preview data-collapsed-text="{{ $productFeaturesPreview }}" data-expanded-text="{{ $productFeaturesExpandedPreview }}">{{ $productFeaturesPreview }}</span>
-                                @if($hasLongProductFeatures)
-                                    <span class="product-detail-more-text" data-product-more-text hidden>{{ $productFeaturesMore }}</span>
-                                @endif
-                            </p>
+                            <p><span class="product-detail-text-segment">{{ $productFeaturesPreview }}</span>@if($hasLongProductFeatures)<span class="product-detail-more-ellipsis" data-product-more-ellipsis aria-hidden="true">...</span><span class="product-detail-more-text product-detail-text-segment" data-product-more-text hidden>{{ $productFeaturesMore }}</span>@endif</p>
                             @if($hasLongProductFeatures)
                                 <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos">Ver más</button>
                             @endif
@@ -277,6 +274,9 @@
                 @else
                     <form action="{{ route('cart.add', $product->id) }}" method="POST" class="product-detail-form add-to-cart-form">
                         @csrf
+                        @if($activePriceList)
+                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
+                        @endif
                         @if($product->hasSizes() || $product->hasColors())
                             <div class="product-options product-options--detail">
                                 @if($product->hasSizes())
@@ -332,6 +332,9 @@
 
                     <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" class="product-detail-form product-detail-buy-now-form {{ $productWhatsappUrl ? 'product-detail-buy-now-form--with-whatsapp' : '' }}" data-role="buy-now-form">
                         @csrf
+                        @if($activePriceList)
+                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
+                        @endif
                         <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
                         <input type="hidden" name="size" value="" data-role="buy-now-size">
                         <input type="hidden" name="color" value="" data-role="buy-now-color">
@@ -474,6 +477,8 @@
                         <article class="product-card">
                             @php($relatedBadges = $relatedProduct->displayBadges($store))
                             @php($relatedProductUrl = $storefrontUrls->product($store, $relatedProduct))
+                            @php($relatedDisplayPrice = $priceListResolver->priceFor($relatedProduct, $activePriceList))
+                            @php($relatedUsesPriceListPrice = $activePriceList && (float) $relatedDisplayPrice !== (float) $relatedProduct->price)
                             <a href="{{ $relatedProductUrl }}" class="product-image" aria-label="Ver detalle de {{ $relatedProduct->name }}">
                                 @if($relatedBadges !== [])
                                     <div class="product-badges">
@@ -490,13 +495,18 @@
                             <h3><a href="{{ $relatedProductUrl }}">{{ $relatedProduct->name }}</a></h3>
 
                             <div class="price-row">
-                                @if($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
+                                @if($relatedUsesPriceListPrice)
+                                    <span class="price-stack">
+                                        <span class="price-before">${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</span>
+                                        <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
+                                    </span>
+                                @elseif($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
                                     <span class="price-stack">
                                         <span class="price-before">${{ number_format((float) $relatedProduct->offer_original_price, 0, ',', '.') }}</span>
-                                        <span class="price">${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</span>
+                                        <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
                                     </span>
                                 @else
-                                    <span class="price">${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</span>
+                                    <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
                                 @endif
                             </div>
 
@@ -511,6 +521,9 @@
                                 @else
                                     <form action="{{ route('cart.add', $relatedProduct->id) }}" method="POST" class="add-to-cart-form">
                                         @csrf
+                                        @if($activePriceList)
+                                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
+                                        @endif
                                         <button type="submit">
                                             {!! $detailCartIcon !!}
                                             <span>{{ $isRestaurant ? 'Agregar pedido' : 'Agregar al carrito' }}</span>
@@ -872,12 +885,12 @@
         (() => {
             document.querySelectorAll('[data-product-more-toggle]').forEach((button) => {
                 const container = button.closest('.product-detail-description');
-                const preview = container?.querySelector('[data-product-more-preview]');
                 const moreText = container?.querySelector('[data-product-more-text]');
+                const ellipsis = container?.querySelector('[data-product-more-ellipsis]');
                 const collapsedLabel = button.textContent.trim();
                 const expandedLabel = button.dataset.expandedLabel || 'Ver menos';
 
-                if (!preview || !moreText) {
+                if (!moreText) {
                     return;
                 }
 
@@ -885,7 +898,9 @@
                     const isExpanded = !moreText.hidden;
 
                     moreText.hidden = isExpanded;
-                    preview.textContent = isExpanded ? preview.dataset.collapsedText : preview.dataset.expandedText;
+                    if (ellipsis) {
+                        ellipsis.hidden = !isExpanded;
+                    }
                     button.textContent = isExpanded ? collapsedLabel : expandedLabel;
                     button.classList.toggle('is-expanded', !isExpanded);
                     button.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');

@@ -1198,6 +1198,11 @@
             min-height: 180px;
             resize: vertical;
             line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: normal;
+            text-align: left;
+            direction: ltr;
         }
 
         .field-label {
@@ -1413,6 +1418,11 @@
             min-height: 150px;
             padding: 12px;
             line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: normal;
+            text-align: left;
+            direction: ltr;
             outline: none;
         }
 
@@ -1707,6 +1717,11 @@
         .product-editor-field textarea {
             min-height: 132px;
             resize: vertical;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: normal;
+            text-align: left;
+            direction: ltr;
         }
 
         .product-editor-field input:focus,
@@ -1733,7 +1748,11 @@
         .product-editor-rich .rich-content {
             min-height: 150px;
             max-width: 100%;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: normal;
+            white-space: pre-wrap;
+            text-align: left;
+            direction: ltr;
             padding: 14px 15px;
         }
 

@@ -101,7 +101,7 @@
                     <button type="button" data-command="insertUnorderedList">Lista</button>
                     <button type="button" data-command="insertOrderedList">1. Lista</button>
                 </div>
-                <div id="features_editor" class="rich-content" contenteditable="true" data-rich-content>{!! $featuresEditorValue !!}</div>
+                <div id="features_editor" class="rich-content" contenteditable="true" data-rich-content>{{ $featuresEditorValue }}</div>
                 <textarea name="features" data-rich-input hidden>{{ $featuresInputValue }}</textarea>
             </div>
             <small>Agrega beneficios o detalles en frases cortas.</small>

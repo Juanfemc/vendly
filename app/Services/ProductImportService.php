@@ -198,7 +198,7 @@ class ProductImportService
             'name' => $this->cleanText($raw['nombre'] ?? ''),
             'price' => $this->parseMoney($raw['precio'] ?? ''),
             'description' => ProductText::plain($raw['descripcion'] ?? null) ?: null,
-            'features' => $this->cleanText($raw['caracteristicas'] ?? '') ?: null,
+            'features' => ProductText::featureLines($raw['caracteristicas'] ?? null) ?: null,
             'category' => $this->cleanText($raw['categoria'] ?? '') ?: null,
             'material' => $this->cleanText($raw['material'] ?? '') ?: null,
             'stock_quantity' => $this->parseInteger($raw['stock'] ?? ''),

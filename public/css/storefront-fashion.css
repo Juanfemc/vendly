@@ -1901,8 +1901,9 @@
     line-height: 1.55;
     text-align: left !important;
     white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    unicode-bidi: plaintext;
+    overflow-wrap: break-word;
+    word-break: normal;
+    direction: ltr;
 }
 
 .fashion-product-compact-copy em span {
@@ -4068,6 +4069,77 @@
     .storefront-page--fashion .fashion-product-cart-action {
         font-size: 10.5px;
         gap: 6px;
+    }
+}
+
+/* Final product-detail guard: avoid image/content overlap on tablet and narrow desktop. */
+.storefront-page--fashion .fashion-product-hero,
+.storefront-page--fashion .fashion-product-gallery,
+.storefront-page--fashion .fashion-product-stage,
+.storefront-page--fashion .fashion-product-info {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.storefront-page--fashion .fashion-product-stage img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+}
+
+.storefront-page--fashion .fashion-product-compact-copy,
+.storefront-page--fashion .fashion-product-compact-copy *,
+.storefront-page--fashion .fashion-product-compact-copy em,
+.storefront-page--fashion .fashion-product-compact-rest:not([hidden]) {
+    text-align: left !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+}
+
+@media (max-width: 1180px) {
+    .storefront-page--fashion .fashion-product-shell {
+        width: min(100% - 32px, 820px) !important;
+    }
+
+    .storefront-page--fashion .fashion-product-hero {
+        grid-template-columns: 1fr !important;
+        gap: 28px !important;
+    }
+
+    .storefront-page--fashion .fashion-product-gallery {
+        width: 100% !important;
+        max-width: 760px !important;
+        justify-self: center !important;
+    }
+
+    .storefront-page--fashion .fashion-product-stage {
+        aspect-ratio: 1 / .92 !important;
+        max-height: 680px !important;
+    }
+
+    .storefront-page--fashion .fashion-product-info {
+        width: 100% !important;
+        padding-top: 0 !important;
+    }
+}
+
+@media (min-width: 1181px) {
+    .storefront-page--fashion .fashion-product-hero {
+        grid-template-columns: minmax(0, min(52%, 620px)) minmax(0, 1fr) !important;
+        gap: clamp(36px, 4vw, 64px) !important;
+    }
+
+    .storefront-page--fashion .fashion-product-gallery {
+        width: 100% !important;
+        max-width: 620px !important;
+        justify-self: start !important;
+    }
+
+    .storefront-page--fashion .fashion-product-stage {
+        aspect-ratio: 1 / .96 !important;
+        max-height: min(68vh, 590px) !important;
     }
 }
 
@@ -6857,7 +6929,7 @@
     }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1181px) {
     .storefront-page--fashion .fashion-product-hero {
         grid-template-columns: minmax(0, .94fr) minmax(360px, 1.06fr);
         gap: clamp(40px, 5vw, 72px);

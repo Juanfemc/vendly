@@ -64,12 +64,14 @@ class CartService
             $cart[$cartKey] = [
                 'product_id' => $product->id,
                 'name' => $product->name,
-                'price' => $product->price,
+                'price' => $options['price'] ?? $product->price,
                 'quantity' => $quantity,
                 'store_id' => $product->store_id,
                 'image' => $product->image,
                 'size' => $options['size'] ?? null,
                 'color' => $options['color'] ?? null,
+                'price_list_id' => $options['price_list_id'] ?? null,
+                'price_list_name' => $options['price_list_name'] ?? null,
             ];
         }
 
@@ -376,7 +378,7 @@ class CartService
 
     private function cartKey(Product $product, array $options): string
     {
-        $variant = trim(($options['size'] ?? '') . '|' . ($options['color'] ?? ''), '|');
+        $variant = trim(($options['size'] ?? '') . '|' . ($options['color'] ?? '') . '|' . ($options['price_list_id'] ?? ''), '|');
 
         if ($variant === '') {
             return (string) $product->id;

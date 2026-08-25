@@ -24,6 +24,7 @@ use App\Http\Controllers\LandingTestimonialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentSettingsController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PriceListController;
 use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use App\Http\Controllers\WhatsAppInboxController;
@@ -133,6 +134,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/admin/coupons', [DiscountCouponController::class, 'store'])->name('admin.coupons.store');
     Route::patch('/admin/coupons/{coupon}/toggle', [DiscountCouponController::class, 'toggle'])->name('admin.coupons.toggle');
     Route::delete('/admin/coupons/{coupon}', [DiscountCouponController::class, 'destroy'])->name('admin.coupons.destroy');
+    Route::get('/admin/price-lists', [PriceListController::class, 'index'])->name('admin.price-lists.index');
+    Route::post('/admin/price-lists', [PriceListController::class, 'store'])->name('admin.price-lists.store');
+    Route::put('/admin/price-lists/{priceList}', [PriceListController::class, 'update'])->name('admin.price-lists.update');
+    Route::delete('/admin/price-lists/{priceList}', [PriceListController::class, 'destroy'])->name('admin.price-lists.destroy');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -175,6 +180,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/stores/{store}/products', [ProductController::class, 'index'])->name('admin.stores.products.index');
     Route::get('/admin/stores/{store}/categories', [StoreCategoryController::class, 'index'])->name('admin.stores.categories.index');
     Route::get('/admin/stores/{store}/coupons', [DiscountCouponController::class, 'index'])->name('admin.stores.coupons.index');
+    Route::get('/admin/stores/{store}/price-lists', [PriceListController::class, 'index'])->name('admin.stores.price-lists.index');
     Route::get('/admin/stores/{store}/edit', [StoreController::class, 'edit'])->name('admin.stores.edit');
     Route::put('/admin/stores/{store}', [StoreController::class, 'update'])->name('admin.stores.update');
     Route::post('/admin/stores/{store}/ai-credits', [StoreController::class, 'addAiCredits'])->name('admin.stores.ai-credits.store');

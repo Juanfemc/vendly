@@ -16,12 +16,25 @@
                 });
             });
 
+            content.addEventListener('paste', (event) => {
+                const clipboard = event.clipboardData || window.clipboardData;
+                const text = clipboard?.getData('text/plain');
+
+                if (!text) {
+                    return;
+                }
+
+                event.preventDefault();
+                document.execCommand('insertText', false, text);
+                input.value = content.innerText;
+            });
+
             content.addEventListener('input', () => {
-                input.value = content.innerHTML;
+                input.value = content.innerText;
             });
 
             content.closest('form')?.addEventListener('submit', () => {
-                input.value = content.innerHTML;
+                input.value = content.innerText;
             });
         });
     })();

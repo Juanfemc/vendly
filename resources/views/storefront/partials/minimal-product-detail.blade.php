@@ -17,6 +17,11 @@
     $minimalSwatches = ['#111111', '#ffffff', '#33415f'];
     $minimalCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $minimalBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
+    $minimalPriceList = $activePriceList ?? null;
+    $minimalPriceResolver = app(\App\Services\PriceListService::class);
+    $minimalDisplayPrice = $minimalPriceResolver->priceFor($product, $minimalPriceList);
+    $minimalUsesPriceListPrice = $minimalPriceList && (float) $minimalDisplayPrice !== (float) $product->price;
+    $minimalShowsOfferPricing = ! $minimalUsesPriceListPrice && $store->allowsOfferBadges() && $product->hasOfferPricing();
     $minimalDescription = \App\Support\ProductText::plain($product->description) ?: 'Disfruta ' . $product->name . ' con una experiencia pensada para comprar fácil, rápido y con confianza.';
     $minimalFeatureItems = collect(preg_split('/\R+/', \App\Support\ProductText::featureLines($product->features)) ?: [])
         ->map(fn ($feature) => trim($feature, " \t\n\r\0\x0B-*"))
@@ -198,11 +203,16 @@
                     <div class="minimal-product-rating"><span aria-hidden="true">&#9733;</span> {{ $minimalReviewLabel }}</div>
                 @endif
                 <div class="minimal-product-price">
-                    @if($store->allowsOfferBadges() && $product->hasOfferPricing())
+                    @if($minimalUsesPriceListPrice)
+                        <span class="minimal-product-price-before">${{ number_format((float) $product->price, 2, '.', ',') }}</span>
+                    @elseif($minimalShowsOfferPricing)
                         <span class="minimal-product-price-before">${{ number_format((float) $product->offer_original_price, 2, '.', ',') }}</span>
                     @endif
-                    <span>${{ number_format((float) $product->price, 2, '.', ',') }}</span>
+                    <span>${{ number_format((float) $minimalDisplayPrice, 2, '.', ',') }}</span>
                 </div>
+                @if($minimalUsesPriceListPrice)
+                    <span class="store-price-list-badge store-price-list-badge--detail">Lista: {{ $minimalPriceList->name }}</span>
+                @endif
                 <p>{{ $minimalDescription }}</p>
 
                 <div class="minimal-product-divider"></div>
@@ -266,6 +276,9 @@
                             <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="add-quantity">
                             <input type="hidden" name="size" value="" data-role="add-size">
                             <input type="hidden" name="color" value="" data-role="add-color">
+                            @if($minimalPriceList)
+                                <input type="hidden" name="lista" value="{{ $minimalPriceList->access_code ?: $minimalPriceList->slug }}">
+                            @endif
                             <button
                                 type="submit"
                                 class="minimal-product-add"
@@ -284,6 +297,9 @@
                             <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
                             <input type="hidden" name="size" value="" data-role="buy-now-size">
                             <input type="hidden" name="color" value="" data-role="buy-now-color">
+                            @if($minimalPriceList)
+                                <input type="hidden" name="lista" value="{{ $minimalPriceList->access_code ?: $minimalPriceList->slug }}">
+                            @endif
                             <button type="submit" class="minimal-product-buy" data-variant-action @disabled($product->hasVariants())>
                                 {!! $minimalBuyIcon !!}
                                 <span>Comprar ahora</span>

@@ -113,6 +113,11 @@ class Product extends Model
         return $this->hasMany(ProductReview::class);
     }
 
+    public function priceListPrices()
+    {
+        return $this->hasMany(PriceListProductPrice::class);
+    }
+
     public function approvedReviews()
     {
         return $this->reviews()->where('is_approved', true);

@@ -1,5 +1,7 @@
 @php
     $fashionProducts = ($allProducts ?? collect())->values();
+    $fashionPriceList = $activePriceList ?? null;
+    $fashionPriceResolver = app(\App\Services\PriceListService::class);
     $placeholderProducts = collect([
         ['category' => 'Jackets', 'name' => 'Urban Pop Polo shirt, navy / blue', 'price' => 69000],
         ['category' => 'Jackets', 'name' => 'Pop TRX Vintage, navy / white', 'price' => 69000],
@@ -71,7 +73,7 @@ $fashionTabs = collect([[
     $fashionRecommended = $fashionProducts->take(6)->map(fn ($product, $index) => [
         'category' => $product->category ?: 'Jackets',
         'name' => $product->name,
-        'price' => (float) $product->price,
+        'price' => (float) $fashionPriceResolver->priceFor($product, $fashionPriceList),
         'image' => $product->image ? asset('storage/' . $product->image) : null,
         'url' => $storefrontUrls->product($store, $product),
         'reviews' => 12 + $index,
@@ -182,6 +184,8 @@ $fashionTabs = collect([[
                     ->map(fn ($size) => \Illuminate\Support\Str::slug((string) $size))
                     ->filter()
                     ->implode(',');
+                $fashionProductPrice = $fashionPriceResolver->priceFor($product, $fashionPriceList);
+                $fashionUsesPriceListPrice = $fashionPriceList && (float) $fashionProductPrice !== (float) $product->price;
             @endphp
             <article
                 class="fashion-product"
@@ -189,7 +193,7 @@ $fashionTabs = collect([[
                 data-fashion-category="{{ $fashionProductCategorySlug }}"
                 data-fashion-categories="{{ $fashionProductCategorySlugs->implode(',') }}"
                 data-fashion-name="{{ \Illuminate\Support\Str::lower($product->name) }}"
-                data-fashion-price="{{ (float) $product->price }}"
+                data-fashion-price="{{ (float) $fashionProductPrice }}"
                 data-fashion-sizes="{{ $fashionProductSizes }}"
             >
                 <div class="fashion-product-media-shell">
@@ -211,6 +215,9 @@ $fashionTabs = collect([[
                     @else
                         <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-cart-form add-to-cart-form" data-compact-fashion-cart>
                             @csrf
+                            @if($fashionPriceList)
+                                <input type="hidden" name="lista" value="{{ $fashionPriceList->access_code ?: $fashionPriceList->slug }}">
+                            @endif
                             <button type="submit" class="fashion-product-cart-float" aria-label="Agregar {{ $product->name }} al carrito">
                                 {!! $fashionCartIcon !!}
                                 <span>Agregar al carrito</span>
@@ -226,8 +233,11 @@ $fashionTabs = collect([[
                         </a>
                     </h3>
                     <div class="fashion-product-foot">
-                        <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
+                        <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
                     </div>
+                    @if($fashionUsesPriceListPrice)
+                        <span class="store-price-list-badge">Lista: {{ $fashionPriceList->name }}</span>
+                    @endif
                 </div>
             </article>
         @empty
