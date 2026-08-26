@@ -42,6 +42,9 @@
         @endif
 
         <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
+        @if($product->hasWholesalePricing($store))
+            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+        @endif
     </div>
 
     @if($isSoldOut)

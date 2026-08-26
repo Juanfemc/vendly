@@ -174,7 +174,7 @@
         <p>{{ $store->short_description ?: 'Carta sencilla, productos claros y compra directa desde tu tienda.' }}</p>
         <div class="restaurant-menu-hero-actions">
             <a href="#catalogo" class="restaurant-primary-link">Pedir ahora</a>
-            <a href="{{ $storefrontUrls->products($store) }}" class="restaurant-secondary-link">Ver menu</a>
+            <a href="{{ $storefrontUrls->products($store) }}" class="restaurant-secondary-link">Carta completa</a>
         </div>
     </section>
 </section>

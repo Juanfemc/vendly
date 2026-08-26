@@ -27,7 +27,6 @@ class Store extends Model
     private static ?bool $supportsHeroOverlayColumns = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
-    private static ?bool $supportsPriceListsTables = null;
 
     public const PRODUCT_SEARCH_THRESHOLD = 20;
     public const TRIAL_DAYS = 7;
@@ -759,9 +758,10 @@ class Store extends Model
             && DiscountCoupon::supportsTable();
     }
 
-    public function allowsPriceLists(): bool
+    public function allowsWholesalePricing(): bool
     {
-        return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM;
+        return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM
+            && Product::supportsWholesalePricingColumns();
     }
 
     public function hasOfferProducts(): bool
@@ -785,12 +785,6 @@ class Store extends Model
     public static function supportsDiscountCouponsTable(): bool
     {
         return self::$supportsDiscountCouponsTable ??= Schema::hasTable('discount_coupons');
-    }
-
-    public static function supportsPriceListsTables(): bool
-    {
-        return self::$supportsPriceListsTables ??= Schema::hasTable('price_lists')
-            && Schema::hasTable('price_list_product_prices');
     }
 
     public static function supportsCheckoutFieldsColumn(): bool
@@ -1353,11 +1347,6 @@ class Store extends Model
     public function discountCoupons()
     {
         return $this->hasMany(DiscountCoupon::class);
-    }
-
-    public function priceLists()
-    {
-        return $this->hasMany(PriceList::class);
     }
 
     public function notifications()

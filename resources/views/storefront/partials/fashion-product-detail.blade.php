@@ -2,10 +2,7 @@
     $fashionGalleryImages = $productGallery->filter()->values();
     $fashionGallery = $fashionGalleryImages->isNotEmpty() ? $fashionGalleryImages : collect([null]);
     $fashionRelated = $relatedProducts->take(4);
-    $fashionPriceList = $activePriceList ?? null;
-    $fashionPriceResolver = app(\App\Services\PriceListService::class);
-    $fashionProductPrice = $fashionPriceResolver->priceFor($product, $fashionPriceList);
-    $fashionUsesPriceListPrice = $fashionPriceList && (float) $fashionProductPrice !== (float) $product->price;
+    $fashionProductPrice = (float) $product->price;
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
     $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
@@ -56,30 +53,7 @@
     $fashionDescription = $productDescriptionText ?? \App\Support\ProductText::plain($product->description);
     $fashionDescription = $fashionDescription ?: 'Este producto aún no tiene una descripción amplia configurada.';
     $fashionFeaturesText = $productFeaturesText ?? \App\Support\ProductText::featureLines($product->features);
-    $splitFashionCompactText = function (string $text, int $limit = 150): array {
-        $text = trim($text);
-
-        if ($text === '' || \Illuminate\Support\Str::length($text) <= $limit) {
-            return ['intro' => $text, 'rest' => ''];
-        }
-
-        $intro = \Illuminate\Support\Str::substr($text, 0, $limit);
-        $lastSpace = mb_strrpos($intro, ' ', 0, 'UTF-8');
-        $lastNewline = mb_strrpos($intro, "\n", 0, 'UTF-8');
-        $lastBreak = max($lastSpace === false ? -1 : $lastSpace, $lastNewline === false ? -1 : $lastNewline);
-        $cutAt = $limit;
-
-        if ($lastBreak > 80) {
-            $cutAt = $lastBreak;
-            $intro = rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt));
-        }
-
-        $rest = \Illuminate\Support\Str::substr($text, $cutAt);
-
-        return ['intro' => $intro, 'rest' => $rest];
-    };
-    $fashionDescriptionParts = $splitFashionCompactText($fashionDescription, 155);
-    $fashionFeaturesParts = $splitFashionCompactText($fashionFeaturesText, 140);
+    $renderFashionProductText = fn (string $text): string => nl2br(e($text), false);
     $fashionWhatsappNumber = $store->whatsappNumber();
     $fashionProductUrl = $storefrontUrls->product($store, $product);
     $fashionWhatsappUrl = $fashionWhatsappNumber !== ''
@@ -151,15 +125,13 @@
             @endif
             <h1>{{ $product->name }}</h1>
             <div class="fashion-product-price">
-                @if($fashionUsesPriceListPrice)
-                    <span>${{ number_format((float) $product->price, 0, ',', '.') }}</span>
-                @elseif($showsOfferPricing)
+                @if($showsOfferPricing)
                     <span>${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
                 @endif
                 <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
             </div>
-            @if($fashionUsesPriceListPrice)
-                <span class="store-price-list-badge store-price-list-badge--detail">Lista: {{ $fashionPriceList->name }}</span>
+            @if($product->hasWholesalePricing($store))
+                <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
             @endif
 
             <div class="fashion-product-compact-info" aria-label="Informacion rapida del producto">
@@ -175,18 +147,16 @@
                         </span>
                         <span class="fashion-product-compact-copy">
                             <strong>Descripción</strong>
-                            <em><span>{{ $fashionDescriptionParts['intro'] }}</span>@if($fashionDescriptionParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden>{{ $fashionDescriptionParts['rest'] }}</span>@endif</em>
+                            <em data-fashion-collapsible>{!! $renderFashionProductText($fashionDescription) !!}</em>
                         </span>
-                        @if($fashionDescriptionParts['rest'] !== '')
-                            <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
-                                <span>Ver más</span>
-                                <span>Ver menos</span>
-                            </button>
-                        @endif
+                        <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false" hidden>
+                            <span>Ver más</span>
+                            <span>Ver menos</span>
+                        </button>
                     </div>
                 </div>
 
-                @if($fashionFeaturesParts['intro'] !== '')
+                @if($fashionFeaturesText !== '')
                     <div class="fashion-product-compact-card" data-fashion-compact-card>
                         <div class="fashion-product-compact-row">
                             <span class="fashion-product-compact-icon" aria-hidden="true">
@@ -197,14 +167,12 @@
                             </span>
                             <span class="fashion-product-compact-copy">
                                 <strong>Características</strong>
-                                <em><span>{{ $fashionFeaturesParts['intro'] }}</span>@if($fashionFeaturesParts['rest'] !== '')<span class="fashion-product-compact-ellipsis" aria-hidden="true">...</span><span class="fashion-product-compact-rest" hidden>{{ $fashionFeaturesParts['rest'] }}</span>@endif</em>
+                                <em data-fashion-collapsible>{!! $renderFashionProductText($fashionFeaturesText) !!}</em>
                             </span>
-                            @if($fashionFeaturesParts['rest'] !== '')
-                                <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false">
-                                    <span>Ver más</span>
-                                    <span>Ver menos</span>
-                                </button>
-                            @endif
+                            <button type="button" class="fashion-product-compact-toggle" data-fashion-compact-toggle aria-expanded="false" hidden>
+                                <span>Ver más</span>
+                                <span>Ver menos</span>
+                            </button>
                         </div>
                     </div>
                 @endif
@@ -215,9 +183,6 @@
             @else
                 <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-form add-to-cart-form" data-role="minimal-add-form">
                     @csrf
-                    @if($fashionPriceList)
-                        <input type="hidden" name="lista" value="{{ $fashionPriceList->access_code ?: $fashionPriceList->slug }}">
-                    @endif
                     <input type="hidden" data-role="buy-now-quantity" value="1">
 
                     @if($fashionColorOptions->isNotEmpty())
@@ -290,7 +255,7 @@
             <h2>También te puede interesar</h2>
             <div class="fashion-related-grid">
                 @foreach($fashionRelated as $relatedProduct)
-                    @php($relatedPrice = $fashionPriceResolver->priceFor($relatedProduct, $fashionPriceList))
+                    @php($relatedPrice = (float) $relatedProduct->price)
                     <article class="fashion-related-card">
                         <a href="{{ $storefrontUrls->product($store, $relatedProduct) }}" class="fashion-related-media">
                             @if($relatedProduct->image)

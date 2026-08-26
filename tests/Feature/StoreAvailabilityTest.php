@@ -8192,3 +8192,80 @@ test('product reviews are blocked on basic stores', function () {
         ->assertDontSee('Publicar resena')
         ->assertDontSee('Resenas (');
 });
+
+test('premium stores can configure wholesale pricing and cart applies it by quantity', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Mayorista Premium',
+        'slug' => 'tienda-mayorista-premium',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Producto mayorista',
+        'price' => 10000,
+        'has_wholesale_price' => true,
+        'wholesale_min_quantity' => 3,
+        'wholesale_price' => 7000,
+    ]);
+
+    $this->get('/tienda-mayorista-premium')
+        ->assertOk()
+        ->assertSee('Mayorista desde 3 unidades');
+
+    $this->post(route('cart.add', $product->id), ['quantity' => 2])->assertRedirect();
+
+    $cart = session('carts.' . $store->id);
+
+    expect((int) $cart[(string) $product->id]['quantity'])->toBe(2)
+        ->and((float) $cart[(string) $product->id]['price'])->toBe(10000.0);
+
+    $this->patch(route('cart.item.update', $product->id), ['quantity' => 3])->assertOk();
+
+    $cart = session('carts.' . $store->id);
+
+    expect((int) $cart[(string) $product->id]['quantity'])->toBe(3)
+        ->and((float) $cart[(string) $product->id]['price'])->toBe(7000.0);
+});
+
+test('non premium stores cannot keep wholesale pricing from crafted product requests', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Mayorista Pro',
+        'slug' => 'tienda-mayorista-pro',
+        'plan' => Store::PLAN_PRO,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('admin.products.store'), [
+            'name' => 'Producto Pro',
+            'price' => 10000,
+            'stock_quantity' => 10,
+            'has_wholesale_price' => '1',
+            'wholesale_min_quantity' => 3,
+            'wholesale_price' => 7000,
+        ])
+        ->assertRedirect('/admin/products');
+
+    $product = Product::where('store_id', $store->id)->firstOrFail();
+
+    expect($product->has_wholesale_price)->toBeFalse()
+        ->and($product->wholesale_min_quantity)->toBeNull()
+        ->and($product->wholesale_price)->toBeNull();
+});

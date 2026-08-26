@@ -89,6 +89,8 @@
                     $navCategories = ($activeCategories ?? collect())
                         ->when(! $store->isRestaurant(), fn ($categories) => $categories->filter(fn ($category) => ! $category->parent_id))
                         ->values();
+                    $navHasSubcategories = $store->allowsSubcategories()
+                        && $navCategories->contains(fn ($category) => ($category->activeChildren ?? collect())->isNotEmpty());
                 @endphp
                 @if($navCategories->isNotEmpty())
                     <div class="nav-dropdown">
@@ -96,17 +98,23 @@
                             <span>Categorías</span>
                             <span class="nav-dropdown-icon" aria-hidden="true"></span>
                         </button>
-                        <div class="nav-dropdown-menu" id="storefrontCategoryMenu">
+                        <div class="nav-dropdown-menu {{ $navHasSubcategories ? 'nav-dropdown-menu--grouped' : '' }}" id="storefrontCategoryMenu">
                             @foreach($navCategories as $categoryLink)
-                                <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="nav-dropdown-link">
-                                    {{ $categoryLink->name }}
-                                </a>
-                                @if($store->allowsSubcategories())
-                                    @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
-                                        <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="nav-dropdown-link nav-dropdown-link--child">
-                                            {{ $subcategoryLink->name }}
+                                @if($navHasSubcategories)
+                                    <div class="nav-dropdown-group">
+                                        <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="nav-dropdown-group-title">
+                                            {{ $categoryLink->name }}
                                         </a>
-                                    @endforeach
+                                        @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
+                                            <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="nav-dropdown-link nav-dropdown-link--child">
+                                                {{ $subcategoryLink->name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="nav-dropdown-link">
+                                        {{ $categoryLink->name }}
+                                    </a>
                                 @endif
                             @endforeach
                         </div>

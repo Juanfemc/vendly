@@ -12,6 +12,7 @@
     $featuresInputValue = old('features') !== null ? \App\Support\ProductText::rich(old('features')) : $featuresEditorValue;
     $galleryAllowed = auth()->user()->isAdmin() || ($formStore?->allowsProductGallery() ?? true);
     $categoriesAllowed = auth()->user()->isAdmin() || ($formStore?->allowsCategories() ?? true);
+    $wholesaleAllowed = $formStore?->allowsWholesalePricing() ?? false;
     $showInventory = ! ($formStore?->isReservationStore() ?? false);
 @endphp
 
@@ -220,6 +221,17 @@
         </div>
 
         <div class="product-editor-options">
+            @if($wholesaleAllowed)
+                <label class="product-editor-switch">
+                    <span>
+                        <strong>Activar precio mayorista</strong>
+                        <small>Se aplica automáticamente cuando el cliente alcanza la cantidad mínima.</small>
+                    </span>
+                    <input type="checkbox" name="has_wholesale_price" value="1" @checked(old('has_wholesale_price', $formProduct?->has_wholesale_price))>
+                    <i></i>
+                </label>
+            @endif
+
             @if($formStore?->allowsOfferBadges())
                 <label class="product-editor-switch">
                     <span>
@@ -242,6 +254,24 @@
                 </label>
             @endif
         </div>
+
+        @if($wholesaleAllowed)
+            <div class="product-editor-grid">
+                <div class="product-editor-field">
+                    <label for="wholesale_min_quantity">Cantidad mínima mayorista</label>
+                    <input id="wholesale_min_quantity" type="number" name="wholesale_min_quantity" min="2" step="1" value="{{ old('wholesale_min_quantity', $formProduct?->wholesale_min_quantity) }}" placeholder="Ej: 6">
+                    <small>Desde esta cantidad se aplica el precio mayorista.</small>
+                </div>
+
+                <div class="product-editor-field">
+                    <label for="wholesale_price">Precio mayorista</label>
+                    <input id="wholesale_price" type="number" step="0.01" name="wholesale_price" value="{{ old('wholesale_price', $formProduct?->wholesale_price) }}" placeholder="Ej: 42000">
+                    <small>Debe ser menor al precio normal del producto.</small>
+                </div>
+            </div>
+        @elseif($formStore && ! $formStore->isBasicPlan())
+            <div class="product-editor-note">Los precios mayoristas están disponibles sólo en plan Premium.</div>
+        @endif
 
         @if($formStore?->allowsCustomProductBadges())
             <div class="product-editor-field">

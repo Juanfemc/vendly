@@ -117,6 +117,8 @@
                         $fashionNavCategories = ($activeCategories ?? collect())
                             ->when(! $store->isRestaurant(), fn ($categories) => $categories->filter(fn ($category) => ! $category->parent_id))
                             ->values();
+                        $fashionNavHasSubcategories = $store->allowsSubcategories()
+                            && $fashionNavCategories->contains(fn ($category) => ($category->activeChildren ?? collect())->isNotEmpty());
                     @endphp
                     @if($fashionNavCategories->isNotEmpty())
                         <div class="fashion-nav-dropdown">
@@ -124,17 +126,23 @@
                                 <span>Categorías</span>
                                 <span class="fashion-nav-chevron" aria-hidden="true"></span>
                             </button>
-                            <div class="fashion-nav-dropdown-menu">
+                            <div class="fashion-nav-dropdown-menu {{ $fashionNavHasSubcategories ? 'fashion-nav-dropdown-menu--grouped' : '' }}">
                                 @foreach($fashionNavCategories as $categoryLink)
-                                    <a href="{{ $storefrontUrls->category($store, $categoryLink) }}">
-                                        {{ $categoryLink->name }}
-                                    </a>
-                                    @if($store->allowsSubcategories())
-                                        @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
-                                            <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="fashion-nav-subcategory-link">
-                                                {{ $subcategoryLink->name }}
+                                    @if($fashionNavHasSubcategories)
+                                        <div class="fashion-nav-dropdown-group">
+                                            <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="fashion-nav-dropdown-title">
+                                                {{ $categoryLink->name }}
                                             </a>
-                                        @endforeach
+                                            @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
+                                                <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="fashion-nav-subcategory-link">
+                                                    {{ $subcategoryLink->name }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <a href="{{ $storefrontUrls->category($store, $categoryLink) }}">
+                                            {{ $categoryLink->name }}
+                                        </a>
                                     @endif
                                 @endforeach
                             </div>
@@ -187,17 +195,23 @@
                                     </span>
                                     <span class="fashion-nav-chevron" aria-hidden="true"></span>
                                 </summary>
-                                <div>
+                                <div class="{{ $fashionNavHasSubcategories ? 'fashion-mobile-category-groups' : '' }}">
                                     @foreach($fashionNavCategories as $categoryLink)
-                                        <a href="{{ $storefrontUrls->category($store, $categoryLink) }}">
-                                            {{ $categoryLink->name }}
-                                        </a>
-                                        @if($store->allowsSubcategories())
-                                            @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
-                                                <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="fashion-nav-subcategory-link">
-                                                    {{ $subcategoryLink->name }}
+                                        @if($fashionNavHasSubcategories)
+                                            <div class="fashion-mobile-category-group">
+                                                <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="fashion-mobile-category-title">
+                                                    {{ $categoryLink->name }}
                                                 </a>
-                                            @endforeach
+                                                @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
+                                                    <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="fashion-nav-subcategory-link">
+                                                        {{ $subcategoryLink->name }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <a href="{{ $storefrontUrls->category($store, $categoryLink) }}">
+                                                {{ $categoryLink->name }}
+                                            </a>
                                         @endif
                                     @endforeach
                                 </div>

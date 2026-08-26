@@ -7,7 +7,6 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Services\AdminUpdateService;
-use App\Services\PriceListService;
 use App\Services\ProductContentService;
 use App\Services\ProductFileService;
 use App\Services\StoreSubdomainService;
@@ -23,7 +22,6 @@ class ProductController extends Controller
         private ProductFileService $productFileService,
         private AdminUpdateService $adminUpdateService,
         private StoreVisitService $storeVisitService,
-        private PriceListService $priceListService,
     ) {
     }
 
@@ -510,12 +508,10 @@ class ProductController extends Controller
             ->get();
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $storefrontUrls = app(StorefrontUrlService::class);
-        $activePriceList = $this->priceListService->current($store, request());
 
         return compact(
             'store',
             'storefrontUrls',
-            'activePriceList',
             'products',
             'allProducts',
             'activeCategories',
@@ -540,7 +536,6 @@ class ProductController extends Controller
             'customBadgeFilters' => $this->customBadgeFilters($store),
             'showAboutSection' => $store->hasAboutContent(),
             'productSearchEnabled' => $this->productSearchEnabledForStore($store),
-            'activePriceList' => $this->priceListService->current($store, request()),
         ];
     }
 
@@ -609,6 +604,14 @@ class ProductController extends Controller
         if (! $store->allowsOfferBadges()) {
             $data['has_offer'] = false;
             $data['offer_original_price'] = null;
+        }
+
+        if (! Product::supportsWholesalePricingColumns()) {
+            unset($data['has_wholesale_price'], $data['wholesale_min_quantity'], $data['wholesale_price']);
+        } elseif (! $store->allowsWholesalePricing()) {
+            $data['has_wholesale_price'] = false;
+            $data['wholesale_min_quantity'] = null;
+            $data['wholesale_price'] = null;
         }
 
         if (! Product::supportsCustomBadgesColumn()) {

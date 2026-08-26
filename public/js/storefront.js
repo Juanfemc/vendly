@@ -60,7 +60,7 @@
     const fashionSortSelect = document.querySelector('[data-fashion-sort]');
     const announcementMessages = Array.from(document.querySelectorAll('[data-announcement-message]'));
     const storefrontTopbar = document.querySelector('[data-storefront-topbar]');
-    const fashionCompactToggles = Array.from(document.querySelectorAll('[data-fashion-compact-toggle]'));
+    const fashionCompactBlocks = Array.from(document.querySelectorAll('[data-fashion-collapsible]'));
     const csrfToken = page.dataset.csrf || '';
     const addingText = page.dataset.addingText || 'Agregando...';
     const addedText = page.dataset.feedbackAdded || 'Producto agregado al carrito';
@@ -72,28 +72,130 @@
 
     resolveBrandContrast();
 
-    fashionCompactToggles.forEach((toggle) => {
-        const card = toggle.closest('[data-fashion-compact-card]');
-        const rest = card?.querySelector('.fashion-product-compact-rest');
-        const ellipsis = card?.querySelector('.fashion-product-compact-ellipsis');
+    const getRenderedLineHeight = (element) => {
+        const styles = window.getComputedStyle(element);
+        const parsedLineHeight = Number.parseFloat(styles.lineHeight);
+        const fontSize = Number.parseFloat(styles.fontSize) || 14;
 
-        if (!card || !rest) {
-            toggle.hidden = true;
+        return Number.isFinite(parsedLineHeight) ? parsedLineHeight : fontSize * 1.5;
+    };
+
+    const measureRenderedTextHeight = (element) => {
+        const width = element.getBoundingClientRect().width;
+
+        if (width <= 0) {
+            return 0;
+        }
+
+        const textValue = element.innerText.trim();
+
+        if (!textValue) {
+            return 0;
+        }
+
+        const styles = window.getComputedStyle(element);
+        const meter = document.createElement('div');
+        meter.textContent = textValue;
+        Object.assign(meter.style, {
+            position: 'absolute',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            left: '-9999px',
+            top: '0',
+            width: `${width}px`,
+            height: 'auto',
+            maxHeight: 'none',
+            overflow: 'visible',
+            boxSizing: 'border-box',
+            margin: '0',
+            padding: '0',
+            border: '0',
+            fontFamily: styles.fontFamily,
+            fontSize: styles.fontSize,
+            fontStyle: styles.fontStyle,
+            fontWeight: styles.fontWeight,
+            lineHeight: styles.lineHeight,
+            letterSpacing: styles.letterSpacing,
+            textTransform: styles.textTransform,
+            wordSpacing: styles.wordSpacing,
+            whiteSpace: 'pre-line',
+            overflowWrap: styles.overflowWrap,
+            wordBreak: styles.wordBreak,
+            hyphens: styles.hyphens,
+        });
+        document.body.appendChild(meter);
+
+        const height = meter.getBoundingClientRect().height;
+        meter.remove();
+
+        return height;
+    };
+
+    const syncFashionCompactBlock = (copy) => {
+        const card = copy.closest('[data-fashion-compact-card]');
+        const toggle = card?.querySelector('[data-fashion-compact-toggle]');
+
+        if (!card || !toggle) {
             return;
         }
 
+        const isExpanded = copy.dataset.expanded === 'true';
+        copy.classList.remove('is-collapsed');
+        copy.style.removeProperty('--fashion-collapsed-height');
+
+        const lineHeight = getRenderedLineHeight(copy);
+        const maxThreeLinesHeight = lineHeight * 3;
+        const measuredTextHeight = measureRenderedTextHeight(copy);
+        const needsReadMore = measuredTextHeight > maxThreeLinesHeight + 2;
+
+        if (!needsReadMore) {
+            copy.dataset.expanded = 'false';
+            copy.classList.remove('is-collapsed');
+            copy.style.removeProperty('--fashion-collapsed-height');
+            card.classList.remove('is-expanded');
+            toggle.hidden = true;
+            toggle.style.display = 'none';
+            toggle.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        toggle.hidden = false;
+        toggle.style.removeProperty('display');
+        copy.style.setProperty('--fashion-collapsed-height', `${maxThreeLinesHeight}px`);
+        copy.classList.toggle('is-collapsed', !isExpanded);
+        card.classList.toggle('is-expanded', isExpanded);
+        toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    };
+
+    let fashionCompactResizeTimer;
+
+    fashionCompactBlocks.forEach((copy) => {
+        const card = copy.closest('[data-fashion-compact-card]');
+        const toggle = card?.querySelector('[data-fashion-compact-toggle]');
+
+        if (!toggle) {
+            return;
+        }
+
+        copy.dataset.expanded = 'false';
         toggle.addEventListener('click', () => {
-            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-            const nextExpanded = !isExpanded;
-
-            toggle.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
-            card.classList.toggle('is-expanded', nextExpanded);
-            rest.hidden = !nextExpanded;
-
-            if (ellipsis) {
-                ellipsis.hidden = nextExpanded;
-            }
+            copy.dataset.expanded = copy.dataset.expanded === 'true' ? 'false' : 'true';
+            syncFashionCompactBlock(copy);
         });
+        window.requestAnimationFrame(() => syncFashionCompactBlock(copy));
+    });
+
+    if (document.fonts?.ready) {
+        document.fonts.ready.then(() => {
+            fashionCompactBlocks.forEach(syncFashionCompactBlock);
+        }).catch(() => {});
+    }
+
+    window.addEventListener('resize', () => {
+        window.clearTimeout(fashionCompactResizeTimer);
+        fashionCompactResizeTimer = window.setTimeout(() => {
+            fashionCompactBlocks.forEach(syncFashionCompactBlock);
+        }, 120);
     });
 
     const applyFashionCatalogFilters = () => {

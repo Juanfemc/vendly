@@ -7,10 +7,8 @@
     $productCategory = trim((string) $product->category) !== '' ? $product->category : 'Otros';
     $placeholderText = strtoupper(substr($product->name, 0, 2));
     $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge();
-    $cardPriceList = $activePriceList ?? null;
-    $cardPrice = app(\App\Services\PriceListService::class)->priceFor($product, $cardPriceList);
-    $usesPriceListPrice = $cardPriceList && (float) $cardPrice !== (float) $product->price;
-    $showsOfferPricing = ! $usesPriceListPrice && $showsOfferBadge && $product->hasOfferPricing();
+    $cardPrice = (float) $product->price;
+    $showsOfferPricing = $showsOfferBadge && $product->hasOfferPricing();
     $displayBadges = $product->displayBadges($store ?? null);
     $reviewsEnabled = isset($store) && $store->allowsProductReviews();
     $reviewCount = $reviewsEnabled ? $product->reviewCount() : 0;
@@ -55,14 +53,12 @@
             <span class="minimal-shop-price-stack">
                 @if($showsOfferPricing)
                     <span class="minimal-shop-price-before">${{ number_format((float) $product->offer_original_price, 2, '.', ',') }}</span>
-                @elseif($usesPriceListPrice)
-                    <span class="minimal-shop-price-before">${{ number_format((float) $product->price, 2, '.', ',') }}</span>
                 @endif
                 <strong>${{ number_format((float) $cardPrice, 2, '.', ',') }}</strong>
             </span>
         </div>
-        @if($usesPriceListPrice)
-            <span class="store-price-list-badge">Lista: {{ $cardPriceList->name }}</span>
+        @if($product->hasWholesalePricing($store ?? null))
+            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
         @endif
     </div>
 
@@ -77,9 +73,6 @@
         @else
             <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
                 @csrf
-                @if($cardPriceList)
-                    <input type="hidden" name="lista" value="{{ $cardPriceList->access_code ?: $cardPriceList->slug }}">
-                @endif
                 <button type="submit">
                     {!! $cartIcon !!}
                     <span>Agregar al carrito</span>

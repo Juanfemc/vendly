@@ -60,18 +60,17 @@ class CartService
 
         if (isset($cart[$cartKey])) {
             $cart[$cartKey]['quantity'] = $requestedQuantity;
+            $cart[$cartKey]['price'] = $this->priceForQuantity($product, $requestedQuantity);
         } else {
             $cart[$cartKey] = [
                 'product_id' => $product->id,
                 'name' => $product->name,
-                'price' => $options['price'] ?? $product->price,
+                'price' => $options['price'] ?? $this->priceForQuantity($product, $quantity),
                 'quantity' => $quantity,
                 'store_id' => $product->store_id,
                 'image' => $product->image,
                 'size' => $options['size'] ?? null,
                 'color' => $options['color'] ?? null,
-                'price_list_id' => $options['price_list_id'] ?? null,
-                'price_list_name' => $options['price_list_name'] ?? null,
             ];
         }
 
@@ -160,6 +159,7 @@ class CartService
         }
 
         $cart[$cartKey]['quantity'] = $quantity;
+        $cart[$cartKey]['price'] = $this->priceForQuantity($product, $quantity);
         $this->saveCart($storeId, $cart);
 
         return [$cart, null];
@@ -378,7 +378,7 @@ class CartService
 
     private function cartKey(Product $product, array $options): string
     {
-        $variant = trim(($options['size'] ?? '') . '|' . ($options['color'] ?? '') . '|' . ($options['price_list_id'] ?? ''), '|');
+        $variant = trim(($options['size'] ?? '') . '|' . ($options['color'] ?? ''), '|');
 
         if ($variant === '') {
             return (string) $product->id;
@@ -390,5 +390,10 @@ class CartService
     private function productIdFromCartKey(string $key): int
     {
         return (int) explode(':', $key)[0];
+    }
+
+    private function priceForQuantity(Product $product, int $quantity): float
+    {
+        return $product->priceForQuantity($quantity);
     }
 }

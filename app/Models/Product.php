@@ -14,6 +14,7 @@ class Product extends Model
     private static ?bool $supportsInventoryColumns = null;
     private static ?bool $supportsOfferColumn = null;
     private static ?bool $supportsOfferPricingColumn = null;
+    private static ?bool $supportsWholesalePricingColumns = null;
     private static ?bool $supportsCustomBadgesColumn = null;
 
     protected $fillable = [
@@ -26,6 +27,9 @@ class Product extends Model
         'is_sold_out',
         'has_offer',
         'offer_original_price',
+        'has_wholesale_price',
+        'wholesale_min_quantity',
+        'wholesale_price',
         'custom_badges',
         'description',
         'features',
@@ -46,6 +50,9 @@ class Product extends Model
         'is_sold_out' => 'boolean',
         'has_offer' => 'boolean',
         'offer_original_price' => 'decimal:2',
+        'has_wholesale_price' => 'boolean',
+        'wholesale_min_quantity' => 'integer',
+        'wholesale_price' => 'decimal:2',
         'custom_badges' => 'array',
     ];
 
@@ -111,11 +118,6 @@ class Product extends Model
     public function reviews()
     {
         return $this->hasMany(ProductReview::class);
-    }
-
-    public function priceListPrices()
-    {
-        return $this->hasMany(PriceListProductPrice::class);
     }
 
     public function approvedReviews()
@@ -212,6 +214,13 @@ class Product extends Model
         return self::$supportsOfferPricingColumn ??= Schema::hasColumn('products', 'offer_original_price');
     }
 
+    public static function supportsWholesalePricingColumns(): bool
+    {
+        return self::$supportsWholesalePricingColumns ??= Schema::hasColumn('products', 'has_wholesale_price')
+            && Schema::hasColumn('products', 'wholesale_min_quantity')
+            && Schema::hasColumn('products', 'wholesale_price');
+    }
+
     public static function supportsCustomBadgesColumn(): bool
     {
         return self::$supportsCustomBadgesColumn ??= Schema::hasColumn('products', 'custom_badges');
@@ -229,6 +238,26 @@ class Product extends Model
         }
 
         return (float) $this->offer_original_price > (float) $this->price;
+    }
+
+    public function hasWholesalePricing(?Store $store = null): bool
+    {
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        return self::supportsWholesalePricingColumns()
+            && ($store?->allowsWholesalePricing() ?? false)
+            && (bool) $this->has_wholesale_price
+            && (int) $this->wholesale_min_quantity > 1
+            && (float) $this->wholesale_price > 0;
+    }
+
+    public function priceForQuantity(int $quantity): float
+    {
+        if ($this->hasWholesalePricing() && $quantity >= (int) $this->wholesale_min_quantity) {
+            return (float) $this->wholesale_price;
+        }
+
+        return (float) $this->price;
     }
 
     public function customBadges(): array

@@ -13,9 +13,10 @@
 
 .product-detail {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
-    gap: 38px;
+    grid-template-columns: minmax(0, clamp(520px, 46vw, 600px)) minmax(320px, 440px);
+    gap: clamp(16px, 2vw, 26px);
     align-items: start;
+    justify-content: center;
     padding-bottom: 40px;
     width: 100%;
     max-width: 100%;
@@ -40,15 +41,19 @@
 .product-carousel {
     display: grid;
     gap: 14px;
+    justify-items: center;
     min-width: 0;
-    max-width: 100%;
+    width: 100%;
+    max-width: 600px;
 }
 
 .product-carousel-stage {
     position: relative;
-    aspect-ratio: 1.08 / 1;
+    justify-self: center;
+    width: min(100%, 560px);
+    aspect-ratio: 1 / 1;
     min-height: 0;
-    max-height: min(70vh, 640px);
+    max-height: min(72vh, 600px);
     overflow: hidden;
     border-radius: 26px;
     background: transparent;
@@ -62,7 +67,7 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
     display: block;
     opacity: 0;
@@ -168,9 +173,11 @@
 
 .product-carousel-thumbs {
     display: grid;
+    justify-self: center;
     grid-auto-flow: column;
     grid-auto-columns: clamp(74px, 12vw, 104px);
     grid-template-columns: none;
+    width: min(100%, 560px);
     gap: 12px;
     overflow-x: auto;
     padding: 2px 2px 8px;
@@ -439,16 +446,24 @@
     direction: ltr;
 }
 
-.product-detail-description p,
-.product-detail-text-segment,
-.product-detail-more-text:not([hidden]) {
-    unicode-bidi: isolate;
+.product-detail-copy {
+    margin: 0;
+    overflow: visible;
 }
 
-.product-detail-text-segment {
-    display: inline;
-    text-align: inherit;
-    white-space: pre-wrap;
+.product-detail-description .product-detail-copy,
+.product-detail-description .product-detail-copy p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.product-detail-copy.is-collapsed {
+    max-height: var(--product-collapsed-height);
+    overflow: hidden;
+}
+
+.product-detail-description p {
+    unicode-bidi: isolate;
 }
 
 .product-detail-description {
@@ -466,7 +481,7 @@
     font-size: 15px;
     line-height: 1.8;
     text-align: left !important;
-    white-space: pre-line;
+    white-space: normal;
     overflow-wrap: break-word;
     word-break: normal;
     direction: ltr;
@@ -934,7 +949,7 @@
 
 .product-detail-panel .product-detail-description {
     margin-top: 6px;
-    padding: 14px 0;
+    padding: 12px 0;
 }
 
 .product-detail-panel .product-detail-description h2 {
@@ -945,12 +960,21 @@
 .product-detail-panel .product-detail-description p {
     margin-bottom: 0;
     font-size: 14px;
-    line-height: 1.55;
+    line-height: 1.48;
     text-align: left !important;
     white-space: normal;
     overflow-wrap: break-word;
     word-break: normal;
     direction: ltr;
+}
+
+.product-detail-panel .product-detail-copy {
+    overflow: visible;
+}
+
+.product-detail-panel .product-detail-copy.is-collapsed {
+    max-height: var(--product-collapsed-height);
+    overflow: hidden;
 }
 
 .product-detail-more {
@@ -999,29 +1023,12 @@
     display: block;
 }
 
-.product-detail-more-text:not([hidden]) {
-    display: inline;
-    white-space: pre-line;
-}
-
-.product-detail-more-ellipsis {
-    display: inline;
-}
-
-.product-detail-more-ellipsis[hidden] {
-    display: none !important;
-}
-
-.product-detail-more-text:not([hidden])::before {
-    content: "";
-}
-
 .product-detail-more-toggle {
     width: max-content;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    margin-top: 6px;
+    margin-top: 8px;
     padding: 0;
     border: 0;
     background: transparent;

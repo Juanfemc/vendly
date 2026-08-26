@@ -68,11 +68,8 @@
         $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
         $detailBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
         $quantityMax = $product->stock_quantity !== null && ! $isReservationStore ? max(1, min(99, (int) $product->stock_quantity)) : 99;
-        $activePriceList = $activePriceList ?? null;
-        $priceListResolver = app(\App\Services\PriceListService::class);
-        $productDisplayPrice = $priceListResolver->priceFor($product, $activePriceList);
-        $usesPriceListPrice = $activePriceList && (float) $productDisplayPrice !== (float) $product->price;
-        $showsOfferPricing = ! $usesPriceListPrice && $store->allowsOfferBadges() && $product->hasOfferPricing();
+        $productDisplayPrice = (float) $product->price;
+        $showsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
         $productBadges = $product->displayBadges($store);
         $productReviewsEnabled = $store->allowsProductReviews();
         $productReviews = $productReviewsEnabled
@@ -83,35 +80,12 @@
         $productReviewLabel = $productReviewCount > 0
             ? number_format($productReviewAverage, 1) . ' (' . $productReviewCount . ' ' . \Illuminate\Support\Str::plural('reseña', $productReviewCount) . ')'
             : null;
-        $productPreviewLimit = 170;
-        $makeProductPreview = function (string $text) use ($productPreviewLimit): array {
-            $text = trim($text);
-
-            if (\Illuminate\Support\Str::length($text) <= $productPreviewLimit) {
-                return [$text, ''];
-            }
-
-            $slice = \Illuminate\Support\Str::substr($text, 0, $productPreviewLimit);
-            $cutAt = $productPreviewLimit;
-
-            if (preg_match('/^(.+)\s+\S*$/us', $slice, $matches)) {
-                $cutAt = \Illuminate\Support\Str::length($matches[1]);
-            }
-
-            return [
-                rtrim(\Illuminate\Support\Str::substr($text, 0, $cutAt)),
-                \Illuminate\Support\Str::substr($text, $cutAt),
-            ];
-        };
+        $renderProductText = fn (string $text): string => nl2br(e($text), false);
         $productDescriptionFallback = $isRestaurant ? 'Este plato aún no tiene una descripción amplia, pero ya está disponible para pedir por WhatsApp.' : ($isReservationStore ? 'Este servicio aún no tiene una descripción amplia configurada, pero ya está listo para reservarse.' : 'Este producto aún no tiene una descripción amplia configurada, pero ya está listo para venderse.');
         $productDescriptionText = \App\Support\ProductText::plain($product->description) ?: $productDescriptionFallback;
-        [$productDescriptionPreview, $productDescriptionMore] = $makeProductPreview($productDescriptionText);
-        $hasLongProductDescription = $productDescriptionMore !== '';
         $productFeaturesText = \App\Support\ProductText::featureLines($product->features);
         $productFeaturesRich = \App\Support\ProductText::rich($product->features);
         $hasProductFeatures = $productFeaturesText !== '' || \App\Support\ProductText::plain($productFeaturesRich) !== '';
-        [$productFeaturesPreview, $productFeaturesMore] = $makeProductPreview($productFeaturesText);
-        $hasLongProductFeatures = $productFeaturesMore !== '';
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -225,15 +199,13 @@
                 </div>
 
                 <div class="product-detail-price">
-                    @if($usesPriceListPrice)
-                        <span class="product-detail-price-before">${{ number_format((float) $product->price, 0, ',', '.') }}</span>
-                    @elseif($showsOfferPricing)
+                    @if($showsOfferPricing)
                         <span class="product-detail-price-before">${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
                     @endif
                     <span>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</span>
                 </div>
-                @if($usesPriceListPrice)
-                    <span class="store-price-list-badge store-price-list-badge--detail">Lista: {{ $activePriceList->name }}</span>
+                @if($product->hasWholesalePricing($store))
+                    <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
                 @endif
 
                 @if($product->stockLabel())
@@ -249,20 +221,16 @@
 
                 <div class="product-detail-description">
                     <h2>{{ $isRestaurant ? 'Sobre este plato' : 'Descripción' }}</h2>
-                    <p><span class="product-detail-text-segment">{{ $productDescriptionPreview }}</span>@if($hasLongProductDescription)<span class="product-detail-more-ellipsis" data-product-more-ellipsis aria-hidden="true">...</span><span class="product-detail-more-text product-detail-text-segment" data-product-more-text hidden>{{ $productDescriptionMore }}</span>@endif</p>
-                    @if($hasLongProductDescription)
-                        <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos">Ver más</button>
-                    @endif
+                    <p class="product-detail-copy" data-product-collapsible>{!! $renderProductText($productDescriptionText) !!}</p>
+                    <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos" hidden>Ver más</button>
                 </div>
 
                 @if($hasProductFeatures)
                     <div class="product-detail-description product-detail-features">
                         <h2>{{ $isRestaurant ? 'Ingredientes y detalles' : 'Características' }}</h2>
                         @if($productFeaturesText !== '')
-                            <p><span class="product-detail-text-segment">{{ $productFeaturesPreview }}</span>@if($hasLongProductFeatures)<span class="product-detail-more-ellipsis" data-product-more-ellipsis aria-hidden="true">...</span><span class="product-detail-more-text product-detail-text-segment" data-product-more-text hidden>{{ $productFeaturesMore }}</span>@endif</p>
-                            @if($hasLongProductFeatures)
-                                <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos">Ver más</button>
-                            @endif
+                            <p class="product-detail-copy" data-product-collapsible>{!! $renderProductText($productFeaturesText) !!}</p>
+                            <button type="button" class="product-detail-more-toggle" data-product-more-toggle data-expanded-label="Ver menos" hidden>Ver más</button>
                         @else
                             <div class="product-rich-content">{!! $productFeaturesRich !!}</div>
                         @endif
@@ -274,9 +242,6 @@
                 @else
                     <form action="{{ route('cart.add', $product->id) }}" method="POST" class="product-detail-form add-to-cart-form">
                         @csrf
-                        @if($activePriceList)
-                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
-                        @endif
                         @if($product->hasSizes() || $product->hasColors())
                             <div class="product-options product-options--detail">
                                 @if($product->hasSizes())
@@ -332,9 +297,6 @@
 
                     <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" class="product-detail-form product-detail-buy-now-form {{ $productWhatsappUrl ? 'product-detail-buy-now-form--with-whatsapp' : '' }}" data-role="buy-now-form">
                         @csrf
-                        @if($activePriceList)
-                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
-                        @endif
                         <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
                         <input type="hidden" name="size" value="" data-role="buy-now-size">
                         <input type="hidden" name="color" value="" data-role="buy-now-color">
@@ -477,8 +439,7 @@
                         <article class="product-card">
                             @php($relatedBadges = $relatedProduct->displayBadges($store))
                             @php($relatedProductUrl = $storefrontUrls->product($store, $relatedProduct))
-                            @php($relatedDisplayPrice = $priceListResolver->priceFor($relatedProduct, $activePriceList))
-                            @php($relatedUsesPriceListPrice = $activePriceList && (float) $relatedDisplayPrice !== (float) $relatedProduct->price)
+                            @php($relatedDisplayPrice = (float) $relatedProduct->price)
                             <a href="{{ $relatedProductUrl }}" class="product-image" aria-label="Ver detalle de {{ $relatedProduct->name }}">
                                 @if($relatedBadges !== [])
                                     <div class="product-badges">
@@ -495,12 +456,7 @@
                             <h3><a href="{{ $relatedProductUrl }}">{{ $relatedProduct->name }}</a></h3>
 
                             <div class="price-row">
-                                @if($relatedUsesPriceListPrice)
-                                    <span class="price-stack">
-                                        <span class="price-before">${{ number_format((float) $relatedProduct->price, 0, ',', '.') }}</span>
-                                        <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
-                                    </span>
-                                @elseif($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
+                                @if($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
                                     <span class="price-stack">
                                         <span class="price-before">${{ number_format((float) $relatedProduct->offer_original_price, 0, ',', '.') }}</span>
                                         <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
@@ -509,6 +465,9 @@
                                     <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
                                 @endif
                             </div>
+                            @if($relatedProduct->hasWholesalePricing($store))
+                                <span class="product-wholesale-note">Mayorista desde {{ $relatedProduct->wholesale_min_quantity }} unidades: ${{ number_format((float) $relatedProduct->wholesale_price, 0, ',', '.') }}</span>
+                            @endif
 
                             <div class="product-card-actions">
                                 @if($relatedProduct->isSoldOut())
@@ -521,9 +480,6 @@
                                 @else
                                     <form action="{{ route('cart.add', $relatedProduct->id) }}" method="POST" class="add-to-cart-form">
                                         @csrf
-                                        @if($activePriceList)
-                                            <input type="hidden" name="lista" value="{{ $activePriceList->access_code ?: $activePriceList->slug }}">
-                                        @endif
                                         <button type="submit">
                                             {!! $detailCartIcon !!}
                                             <span>{{ $isRestaurant ? 'Agregar pedido' : 'Agregar al carrito' }}</span>
@@ -883,30 +839,134 @@
         })();
 
         (() => {
-            document.querySelectorAll('[data-product-more-toggle]').forEach((button) => {
-                const container = button.closest('.product-detail-description');
-                const moreText = container?.querySelector('[data-product-more-text]');
-                const ellipsis = container?.querySelector('[data-product-more-ellipsis]');
-                const collapsedLabel = button.textContent.trim();
-                const expandedLabel = button.dataset.expandedLabel || 'Ver menos';
+            const collapsibleBlocks = Array.from(document.querySelectorAll('[data-product-collapsible]'));
+            const getLineHeight = (element) => {
+                const styles = window.getComputedStyle(element);
+                const parsedLineHeight = Number.parseFloat(styles.lineHeight);
+                const fontSize = Number.parseFloat(styles.fontSize) || 14;
 
-                if (!moreText) {
+                return Number.isFinite(parsedLineHeight) ? parsedLineHeight : fontSize * 1.5;
+            };
+            const measureTextHeight = (element) => {
+                const width = element.getBoundingClientRect().width;
+
+                if (width <= 0) {
+                    return 0;
+                }
+
+                const textValue = element.innerText.trim();
+
+                if (!textValue) {
+                    return 0;
+                }
+
+                const styles = window.getComputedStyle(element);
+                const meter = document.createElement('div');
+                meter.textContent = textValue;
+                Object.assign(meter.style, {
+                    position: 'absolute',
+                    visibility: 'hidden',
+                    pointerEvents: 'none',
+                    left: '-9999px',
+                    top: '0',
+                    width: `${width}px`,
+                    height: 'auto',
+                    maxHeight: 'none',
+                    overflow: 'visible',
+                    boxSizing: 'border-box',
+                    margin: '0',
+                    padding: '0',
+                    border: '0',
+                    fontFamily: styles.fontFamily,
+                    fontSize: styles.fontSize,
+                    fontStyle: styles.fontStyle,
+                    fontWeight: styles.fontWeight,
+                    lineHeight: styles.lineHeight,
+                    letterSpacing: styles.letterSpacing,
+                    textTransform: styles.textTransform,
+                    wordSpacing: styles.wordSpacing,
+                    whiteSpace: 'pre-line',
+                    overflowWrap: styles.overflowWrap,
+                    wordBreak: styles.wordBreak,
+                    hyphens: styles.hyphens,
+                });
+                document.body.appendChild(meter);
+
+                const height = meter.getBoundingClientRect().height;
+                meter.remove();
+
+                return height;
+            };
+            const syncBlock = (text) => {
+                const container = text.closest('.product-detail-description');
+                const button = container?.querySelector('[data-product-more-toggle]');
+
+                if (!button) {
                     return;
                 }
 
-                button.addEventListener('click', () => {
-                    const isExpanded = !moreText.hidden;
+                const isExpanded = text.dataset.expanded === 'true';
+                text.classList.remove('is-collapsed');
+                text.style.removeProperty('--product-collapsed-height');
 
-                    moreText.hidden = isExpanded;
-                    if (ellipsis) {
-                        ellipsis.hidden = !isExpanded;
-                    }
-                    button.textContent = isExpanded ? collapsedLabel : expandedLabel;
-                    button.classList.toggle('is-expanded', !isExpanded);
-                    button.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+                const lineHeight = getLineHeight(text);
+                const maxThreeLinesHeight = lineHeight * 3;
+                const measuredTextHeight = measureTextHeight(text);
+                const needsReadMore = measuredTextHeight > maxThreeLinesHeight + 2;
+
+                if (!needsReadMore) {
+                    text.dataset.expanded = 'false';
+                    text.classList.remove('is-collapsed');
+                    text.style.removeProperty('--product-collapsed-height');
+                    button.hidden = true;
+                    button.style.display = 'none';
+                    button.classList.remove('is-expanded');
+                    button.setAttribute('aria-expanded', 'false');
+                    button.textContent = button.dataset.collapsedLabel || 'Ver más';
+                    return;
+                }
+
+                button.hidden = false;
+                button.style.removeProperty('display');
+                text.style.setProperty('--product-collapsed-height', `${maxThreeLinesHeight}px`);
+                text.classList.toggle('is-collapsed', !isExpanded);
+                button.classList.toggle('is-expanded', isExpanded);
+                button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+                button.textContent = isExpanded
+                    ? (button.dataset.expandedLabel || 'Ver menos')
+                    : (button.dataset.collapsedLabel || 'Ver más');
+            };
+            let resizeTimer;
+
+            collapsibleBlocks.forEach((text) => {
+                const container = text.closest('.product-detail-description');
+                const button = container?.querySelector('[data-product-more-toggle]');
+
+                if (!button) {
+                    return;
+                }
+
+                button.dataset.collapsedLabel = button.textContent.trim() || 'Ver más';
+                text.dataset.expanded = 'false';
+                button.addEventListener('click', () => {
+                    text.dataset.expanded = text.dataset.expanded === 'true' ? 'false' : 'true';
+                    syncBlock(text);
                 });
 
-                button.setAttribute('aria-expanded', 'false');
+                window.requestAnimationFrame(() => syncBlock(text));
+            });
+
+            if (document.fonts?.ready) {
+                document.fonts.ready.then(() => {
+                    collapsibleBlocks.forEach(syncBlock);
+                }).catch(() => {});
+            }
+
+            window.addEventListener('resize', () => {
+                window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(() => {
+                    collapsibleBlocks.forEach(syncBlock);
+                }, 120);
             });
         })();
 

@@ -1895,6 +1895,7 @@
 
 .fashion-product-compact-copy em {
     display: block;
+    margin: 0;
     color: #646a73;
     font-size: 13px;
     font-style: normal;
@@ -1908,6 +1909,11 @@
 
 .fashion-product-compact-copy em span {
     text-align: inherit;
+}
+
+.fashion-product-compact-copy em.is-collapsed {
+    max-height: var(--fashion-collapsed-height);
+    overflow: hidden;
 }
 
 .fashion-product-compact-toggle {
@@ -1948,10 +1954,6 @@
 
 .fashion-product-compact-toggle[aria-expanded="true"] {
     color: var(--brand-color, #111111);
-}
-
-.fashion-product-compact-card.is-expanded .fashion-product-compact-ellipsis {
-    display: none;
 }
 
 .fashion-product-compact-card > p,
@@ -4091,8 +4093,7 @@
 
 .storefront-page--fashion .fashion-product-compact-copy,
 .storefront-page--fashion .fashion-product-compact-copy *,
-.storefront-page--fashion .fashion-product-compact-copy em,
-.storefront-page--fashion .fashion-product-compact-rest:not([hidden]) {
+.storefront-page--fashion .fashion-product-compact-copy em {
     text-align: left !important;
     overflow-wrap: break-word !important;
     word-break: normal !important;
@@ -6035,6 +6036,14 @@
     transition: opacity .16s ease, transform .16s ease;
 }
 
+.storefront-page--fashion .fashion-nav-dropdown-menu--grouped {
+    width: min(720px, calc(100vw - 32px));
+    max-width: min(720px, calc(100vw - 32px));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    padding: 16px;
+}
+
 .storefront-page--fashion .fashion-nav-dropdown:hover .fashion-nav-dropdown-menu,
 .storefront-page--fashion .fashion-nav-dropdown:focus-within .fashion-nav-dropdown-menu {
     opacity: 1;
@@ -6052,6 +6061,21 @@
     font-weight: 700;
 }
 
+.storefront-page--fashion .fashion-nav-dropdown-group {
+    display: grid;
+    align-content: start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.storefront-page--fashion .fashion-nav-dropdown-menu .fashion-nav-dropdown-title {
+    min-height: auto;
+    padding: 8px 10px 10px;
+    color: #111111;
+    font-size: 14px;
+    font-weight: 900;
+}
+
 .storefront-page--fashion .fashion-nav-dropdown-menu a::after {
     display: none;
 }
@@ -6062,16 +6086,36 @@
 }
 
 .storefront-page--fashion .fashion-nav-dropdown-menu .fashion-nav-subcategory-link {
-    padding-left: 24px;
+    min-height: 34px;
+    padding: 8px 10px;
     color: #6b7280;
     font-size: 12px;
     font-weight: 700;
 }
 
-.storefront-page--fashion .fashion-nav-dropdown-menu .fashion-nav-subcategory-link::before,
-.storefront-page--fashion .fashion-mobile-category-menu .fashion-nav-subcategory-link::before {
+.storefront-page--fashion .fashion-nav-dropdown-menu:not(.fashion-nav-dropdown-menu--grouped) .fashion-nav-subcategory-link::before {
     content: "- ";
     color: currentColor;
+}
+
+.storefront-page--fashion .fashion-mobile-category-groups {
+    display: grid;
+    gap: 10px;
+}
+
+.storefront-page--fashion .fashion-mobile-category-group {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid rgba(17, 17, 17, .08);
+    border-radius: 16px;
+    background: rgba(17, 17, 17, .025);
+}
+
+.storefront-page--fashion .fashion-mobile-category-menu .fashion-mobile-category-title {
+    color: #111111;
+    font-size: 14px;
+    font-weight: 900;
 }
 
 /* Mobile cart hard lock: keep the drawer tied to the visible viewport, even if a page section overflows. */
@@ -6183,10 +6227,15 @@
         transform: translateY(2px) rotate(225deg);
     }
 
-    .storefront-page--fashion .fashion-mobile-category-menu div {
+    .storefront-page--fashion .fashion-mobile-category-menu > div {
         display: grid;
         gap: 4px;
         padding: 6px 0 10px 36px;
+    }
+
+    .storefront-page--fashion .fashion-mobile-category-menu > .fashion-mobile-category-groups {
+        gap: 10px;
+        padding: 10px 0 10px 0;
     }
 
     .storefront-page--fashion .fashion-mobile-category-menu a {

@@ -14,7 +14,6 @@ use App\Services\CheckoutService;
 use App\Services\DiscountCouponService;
 use App\Services\MercadoPagoCheckoutService;
 use App\Services\MercadoPagoOAuthService;
-use App\Services\PriceListService;
 use App\Services\StoreNotificationService;
 use App\Services\StorefrontUrlService;
 use App\Services\WompiCheckoutService;
@@ -42,18 +41,16 @@ class CartController extends Controller
         private MercadoPagoOAuthService $mercadoPagoOAuthService,
         private WompiCheckoutService $wompiCheckoutService,
         private StorefrontUrlService $storefrontUrls,
-        private PriceListService $priceListService,
     ) {
     }
 
     public function add(Request $request, $id)
     {
         $product = Product::with('store.user')->findOrFail($id);
-        $priceList = $product->store ? $this->priceListService->current($product->store, $request) : null;
         [$cart, $message] = $this->cartService->addProduct(
             $product,
             $this->cartService->requestedQuantity($request),
-            $this->priceListService->cartOptionsFor($product, $this->cartService->requestedOptions($request, $product), $priceList),
+            $this->cartService->requestedOptions($request, $product),
         );
 
         if ($message) {
@@ -74,11 +71,10 @@ class CartController extends Controller
     public function buyNow(Request $request, $id)
     {
         $product = Product::with('store.user')->findOrFail($id);
-        $priceList = $product->store ? $this->priceListService->current($product->store, $request) : null;
         [, $message] = $this->cartService->addProduct(
             $product,
             $this->cartService->requestedQuantity($request),
-            $this->priceListService->cartOptionsFor($product, $this->cartService->requestedOptions($request, $product), $priceList),
+            $this->cartService->requestedOptions($request, $product),
         );
 
         if ($message) {
