@@ -1463,7 +1463,7 @@ test('pro store users cannot see or open payment methods', function () {
         ->assertForbidden();
 });
 
-test('pro store users can apply available templates', function () {
+test('store users cannot manage templates even on paid plans', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1481,33 +1481,28 @@ test('pro store users can apply available templates', function () {
     $this->actingAs($storeUser)
         ->get('/dashboard')
         ->assertOk()
-        ->assertSee('Plantillas')
-        ->assertSee(route('admin.templates.index'), false);
+        ->assertDontSee(route('admin.templates.index'), false);
 
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
-        ->assertOk()
-        ->assertSee('Plantilla Tienda normal')
-        ->assertSee('Plantilla Ropa')
-        ->assertSee('Plantilla Tecnología')
-        ->assertSee('Pro y Premium')
-        ->assertSee('Disponible')
-        ->assertSee('Muy pronto')
-        ->assertSee('Usar plantilla');
+        ->assertForbidden();
 
     $this->actingAs($storeUser)
         ->post(route('admin.templates.apply', 'fashion'))
-        ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
-        ->assertSessionHas('success');
+        ->assertForbidden();
 
-    expect($store->fresh()->business_type)->toBe('fashion');
+    expect($store->fresh()->business_type)->toBe('store');
     $this->assertDatabaseMissing('store_categories', [
         'store_id' => $store->id,
         'name' => 'Audio',
     ]);
 });
 
-test('premium store users can apply the normal store template', function () {
+test('admin users can apply available templates', function () {
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'is_active' => true,
+    ]);
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1522,15 +1517,18 @@ test('premium store users can apply the normal store template', function () {
         'is_active' => true,
     ]);
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->get(route('admin.templates.index'))
         ->assertOk()
         ->assertSee('Plantilla Tienda normal')
+        ->assertSee('Plantilla Ropa')
         ->assertSee('Plantilla Tecnología')
         ->assertSee('Pro y Premium')
+        ->assertSee('Disponible')
+        ->assertSee('Muy pronto')
         ->assertSee('Usar plantilla');
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->post(route('admin.templates.apply', 'store'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
         ->assertSessionHas('success');
@@ -1539,10 +1537,11 @@ test('premium store users can apply the normal store template', function () {
 });
 
 test('unavailable templates stay disabled', function () {
-    $storeUser = User::factory()->create([
-        'active_starts_at' => now()->subDay(),
-        'active_ends_at' => now()->addDay(),
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'is_active' => true,
     ]);
+    $storeUser = User::factory()->create();
     $store = Store::create([
         'user_id' => $storeUser->id,
         'name' => 'Mixtas',
@@ -1553,14 +1552,14 @@ test('unavailable templates stay disabled', function () {
         'is_active' => true,
     ]);
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->get(route('admin.templates.index'))
         ->assertOk()
         ->assertSee('Tecnología')
         ->assertSee('Plantilla minimalista para catálogos de tecnología.')
         ->assertSee('Muy pronto');
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->post(route('admin.templates.apply', 'technology'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
         ->assertSessionHas('error');
@@ -1572,13 +1571,12 @@ test('unavailable templates stay disabled', function () {
     ]);
 });
 
-test('template selection applies to the selected owned store', function () {
-    $storeUser = User::factory()->create([
-        'active_starts_at' => now()->subDay(),
-        'active_ends_at' => now()->addDay(),
+test('admin template selection applies to the selected store', function () {
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'is_active' => true,
     ]);
     $firstStore = Store::create([
-        'user_id' => $storeUser->id,
         'name' => 'Primera Tienda',
         'slug' => 'primera-tienda',
         'whatsapp' => '573001112233',
@@ -1587,7 +1585,6 @@ test('template selection applies to the selected owned store', function () {
         'is_active' => true,
     ]);
     $secondStore = Store::create([
-        'user_id' => $storeUser->id,
         'name' => 'Segunda Tienda',
         'slug' => 'segunda-tienda',
         'whatsapp' => '573001112233',
@@ -1596,13 +1593,13 @@ test('template selection applies to the selected owned store', function () {
         'is_active' => true,
     ]);
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->get(route('admin.templates.index', ['store_id' => $secondStore->id]))
         ->assertOk()
         ->assertSee('Segunda Tienda')
         ->assertSee('Primera Tienda');
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $secondStore->id,
         ])
@@ -1613,7 +1610,11 @@ test('template selection applies to the selected owned store', function () {
         ->and($secondStore->fresh()->business_type)->toBe('fashion');
 });
 
-test('template panel defaults to an eligible store when user also has a basic store', function () {
+test('admin template panel defaults to an eligible store', function () {
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'is_active' => true,
+    ]);
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1637,19 +1638,20 @@ test('template panel defaults to an eligible store when user also has a basic st
         'is_active' => true,
     ]);
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->get(route('admin.templates.index'))
         ->assertOk()
         ->assertSee('Tienda Pro Elegible')
         ->assertSee(route('admin.templates.index'), false);
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $basicStore->id,
         ])
-        ->assertNotFound();
+        ->assertRedirect(route('admin.templates.index', ['store_id' => $basicStore->id]))
+        ->assertSessionHas('error');
 
-    $this->actingAs($storeUser)
+    $this->actingAs($admin)
         ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $proStore->id,
         ])
@@ -1690,13 +1692,13 @@ test('template selection cannot target another users store', function () {
 
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index', ['store_id' => $otherStore->id]))
-        ->assertNotFound();
+        ->assertForbidden();
 
     $this->actingAs($storeUser)
         ->post(route('admin.templates.apply', 'technology'), [
             'store_id' => $otherStore->id,
         ])
-        ->assertNotFound();
+        ->assertForbidden();
 
     expect($otherStore->fresh()->business_type)->toBe('store');
 });

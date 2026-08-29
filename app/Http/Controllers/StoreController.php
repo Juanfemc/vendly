@@ -287,11 +287,10 @@ class StoreController extends Controller
         abort_if(! $store, 404);
         $this->authorize('update', $store);
 
-        $businessTypeOptions = Store::businessTypeOptions();
         $colombiaLocations = ColombiaLocation::citiesForSelect();
         $storeUrl = $this->storefrontUrls->publicHome($store);
 
-        return view('admin.stores.settings', compact('store', 'businessTypeOptions', 'colombiaLocations', 'storeUrl'));
+        return view('admin.stores.settings', compact('store', 'colombiaLocations', 'storeUrl'));
     }
 
     public function updateSettings(StoreSettingsRequest $request)

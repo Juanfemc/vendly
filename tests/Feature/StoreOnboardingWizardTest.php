@@ -56,7 +56,6 @@ test('onboarding wizard saves basic step and resumes from next step', function (
             'step' => 'basic',
             'intent' => 'continue',
             'name' => 'Mi Tienda Guiada',
-            'business_type' => 'fashion',
             'subdomain' => 'mi-tienda-guiada',
             'whatsapp' => '3001234567',
             'location' => 'Cali',
@@ -66,7 +65,7 @@ test('onboarding wizard saves basic step and resumes from next step', function (
     $store->refresh();
 
     expect($store->name)->toBe('Mi Tienda Guiada')
-        ->and($store->business_type)->toBe('fashion')
+        ->and($store->business_type)->toBe('store')
         ->and($store->subdomain)->toBe('mi-tienda-guiada')
         ->and($store->whatsapp)->toBe('573001234567')
         ->and($store->location)->toBe('Cali')
@@ -77,6 +76,40 @@ test('onboarding wizard saves basic step and resumes from next step', function (
         ->assertOk()
         ->assertSee('Identidad visual')
         ->assertSee('Paso 2 de 5');
+});
+
+test('onboarding wizard starts at basic information when there is no saved progress', function () {
+    [$user] = createOnboardingStore([
+        'name' => 'Tienda ya nombrada',
+        'subdomain' => 'tienda-ya-nombrada',
+        'whatsapp' => '573001234567',
+        'logo_image' => 'stores/logo.webp',
+        'brand_color' => '#ff6b00',
+        'onboarding_last_step' => null,
+        'onboarding_completed_at' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.store.onboarding'))
+        ->assertOk()
+        ->assertSee('Paso 1 de 5')
+        ->assertSee('Información básica')
+        ->assertSee('Nombre de tienda')
+        ->assertDontSee('Tipo de negocio')
+        ->assertDontSee('name="business_type"', false);
+});
+
+test('onboarding wizard still resumes saved progress', function () {
+    [$user] = createOnboardingStore([
+        'onboarding_last_step' => 'product',
+        'onboarding_completed_at' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.store.onboarding'))
+        ->assertOk()
+        ->assertSee('Paso 3 de 5')
+        ->assertSee('Primer producto');
 });
 
 test('onboarding wizard cannot be finished when required steps are incomplete', function () {
@@ -135,11 +168,11 @@ test('onboarding wizard does not validate fields from unavailable steps', functi
                 ['name' => 'Envío local', 'cost' => 'costo inválido'],
             ],
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'identity']))
+        ->assertRedirect(route('admin.store.onboarding', ['step' => 'basic']))
         ->assertSessionHasNoErrors();
 
     expect($store->fresh()->onboarding_completed_at)->toBeNull()
-        ->and($store->fresh()->onboarding_last_step)->toBe('identity');
+        ->and($store->fresh()->onboarding_last_step)->toBe('basic');
 });
 
 test('onboarding wizard can create the first product inline', function () {

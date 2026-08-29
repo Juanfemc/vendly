@@ -592,16 +592,6 @@
                             @error('name')<span class="onboarding-error">{{ $message }}</span>@enderror
                         </label>
 
-                        <label class="onboarding-field">
-                            <span>Tipo de negocio</span>
-                            <select name="business_type" required>
-                                @foreach(Store::businessTypeOptions() as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('business_type', $store->business_type) === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('business_type')<span class="onboarding-error">{{ $message }}</span>@enderror
-                        </label>
-
                         @if($canUseSubdomain)
                             <label class="onboarding-field">
                                 <span>URL de tienda</span>
@@ -738,23 +728,6 @@
                                     @endforeach
                                 </select>
                             </label>
-                        @endif
-
-                        @if($availableTemplates)
-                            <div class="onboarding-field onboarding-field--full">
-                                <span>Plantilla</span>
-                                <div class="onboarding-grid">
-                                    @foreach($availableTemplates as $template)
-                                        <label class="onboarding-option">
-                                            <input type="radio" name="template_key" value="{{ $template['key'] }}" @checked(old('template_key', $store->business_type) === $template['key'] || $store->business_type === $template['business_type'])>
-                                            <span>
-                                                <strong>{{ $template['name'] }}</strong>
-                                                <small>{{ $template['subtitle'] }}</small>
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </div>
                         @endif
 
                         @if($supportsHeroOverlay)

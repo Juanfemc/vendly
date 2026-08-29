@@ -1056,7 +1056,6 @@
 
     <form method="POST" action="/admin/store-settings" enctype="multipart/form-data" class="catalog-settings-form">
         @csrf
-        <input type="hidden" name="business_type" value="{{ old('business_type', $store->business_type ?? 'store') }}">
 
         <section class="catalog-settings-card">
             <div class="catalog-card-head">
@@ -1256,7 +1255,7 @@
 	                    ];
 	                @endphp
 
-                    @if(old('business_type', $store->business_type ?? 'store') === 'fashion')
+                    @if(($store->business_type ?? 'store') === 'fashion')
                         <div class="fashion-preset-head">
                             <strong>Estilos prediseñados para ropa</strong>
                             <span>Elige una combinacion de colores y tipografia para cambiar el look de la tienda rapido.</span>

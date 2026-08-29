@@ -17,7 +17,10 @@ class StoreSettingsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $store = $this->user()?->store ?? $this->user()?->stores()->first();
+
         $this->merge([
+            'business_type' => $store?->business_type ?: 'store',
             'subdomain' => Store::normalizeSubdomain($this->input('subdomain')),
             'custom_domain' => Store::normalizeCustomDomain($this->input('custom_domain')),
         ]);

@@ -131,7 +131,6 @@ class StoreOnboardingSteps
     public static function basicComplete(Store $store): bool
     {
         return trim((string) $store->name) !== ''
-            && trim((string) $store->business_type) !== ''
             && trim((string) $store->whatsapp) !== ''
             && (
                 ! Store::supportsSubdomainColumn()

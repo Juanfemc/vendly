@@ -88,6 +88,8 @@ test('trial signup always creates a normal store', function () {
 
     $this->get(route('admin.store.onboarding'))
         ->assertOk()
+        ->assertSee('Paso 1 de')
+        ->assertSee('Información básica')
         ->assertDontSee('Tipo de negocio')
         ->assertDontSee('name="business_type"', false);
 });

@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Models\ColombiaLocation;
 use App\Models\Store;
 use App\Support\StoreOnboardingSteps;
-use App\Support\StoreTemplateCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +28,6 @@ class StoreOnboardingRequest extends FormRequest
         }
 
         $this->merge([
-            'business_type' => $this->input('business_type') ?: $store?->business_type ?: 'store',
             'whatsapp' => $phone,
             'subdomain' => $subdomain,
             'step' => in_array($this->input('step'), StoreOnboardingSteps::allKeys(), true)
@@ -55,7 +53,6 @@ class StoreOnboardingRequest extends FormRequest
         if ($step === 'basic') {
             return $base + [
                 'name' => ['required', 'string', 'max:255'],
-                'business_type' => ['required', Rule::in(array_keys(Store::businessTypeOptions()))],
                 'subdomain' => array_filter([
                     $allowsSubdomain ? 'required' : 'nullable',
                     'string',
@@ -77,7 +74,6 @@ class StoreOnboardingRequest extends FormRequest
                 'brand_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
                 'background_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
                 'font_family' => ['nullable', Rule::in(array_keys(Store::fontFamilyOptions()))],
-                'template_key' => ['nullable', Rule::in(array_keys(StoreTemplateCatalog::all()))],
                 'logo_image' => ['nullable', 'image', 'max:4096'],
                 'cover_image' => ['nullable', 'image', 'max:4096'],
                 'ai_generated_logo_path' => ['nullable', 'string', 'max:255'],
@@ -172,7 +168,6 @@ class StoreOnboardingRequest extends FormRequest
         if ($step === 'basic') {
             $data = [
                 'name' => $validated['name'],
-                'business_type' => $validated['business_type'],
                 'whatsapp' => $validated['whatsapp'],
                 'location' => $validated['location'] ?? null,
             ];

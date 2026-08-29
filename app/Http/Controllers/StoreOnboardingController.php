@@ -16,7 +16,6 @@ use App\Services\StorefrontUrlService;
 use App\Services\TrialPhoneHashService;
 use App\Services\WhatsAppPhoneVerificationService;
 use App\Support\StoreOnboardingSteps;
-use App\Support\StoreTemplateCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +53,6 @@ class StoreOnboardingController extends Controller
             'steps' => $steps,
             'currentStep' => $currentStep,
             'currentStepIndex' => $stepIndex,
-            'availableTemplates' => $this->availableTemplates($store),
             'categoryOptions' => $this->categoryOptions($store),
             'paymentAccounts' => $this->paymentAccounts($store),
         ]);
@@ -84,12 +82,6 @@ class StoreOnboardingController extends Controller
         $data = $request->onboardingData($step, $store);
 
         if ($step === 'identity') {
-            $template = StoreTemplateCatalog::find((string) $request->input('template_key'));
-
-            if ($store->allowsTemplates() && ($template['available'] ?? false)) {
-                $data['business_type'] = $template['business_type'];
-            }
-
             $data = $this->storeFileService->replaceUploadedImages($store, $request, $data);
         }
 
@@ -279,12 +271,6 @@ class StoreOnboardingController extends Controller
             return $savedStep;
         }
 
-        foreach ($steps as $key => $step) {
-            if (! ($step['complete'] ?? false)) {
-                return $key;
-            }
-        }
-
         return array_key_first($steps);
     }
 
@@ -412,17 +398,6 @@ class StoreOnboardingController extends Controller
     private function categoriesAvailable(Store $store): bool
     {
         return StoreOnboardingSteps::categoriesAvailable($store);
-    }
-
-    private function availableTemplates(Store $store): array
-    {
-        if (! $store->allowsTemplates()) {
-            return [];
-        }
-
-        return collect(StoreTemplateCatalog::all())
-            ->filter(fn (array $template) => (bool) ($template['available'] ?? false))
-            ->all();
     }
 
     private function normalizedPhone(string $phone): string
