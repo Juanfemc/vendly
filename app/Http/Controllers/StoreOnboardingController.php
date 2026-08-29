@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\TrialPhoneHashConfigurationException;
 use App\Http\Requests\StoreOnboardingRequest;
+use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreCategory;
 use App\Models\TrialSignupClaim;
 use App\Services\AdminUpdateService;
+use App\Services\ProductContentService;
+use App\Services\ProductFileService;
 use App\Services\StoreFileService;
 use App\Services\StorefrontUrlService;
 use App\Services\TrialPhoneHashService;
 use App\Services\WhatsAppPhoneVerificationService;
+use App\Support\StoreOnboardingSteps;
+use App\Support\StoreTemplateCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +29,8 @@ class StoreOnboardingController extends Controller
 {
     public function __construct(
         private StoreFileService $storeFileService,
+        private ProductFileService $productFileService,
+        private ProductContentService $productContentService,
         private StorefrontUrlService $storefrontUrls,
         private AdminUpdateService $adminUpdateService,
         private WhatsAppPhoneVerificationService $phoneVerification,
@@ -30,35 +38,79 @@ class StoreOnboardingController extends Controller
     ) {
     }
 
-    public function edit(): View
+    public function edit(Request $request): View
     {
         $store = $this->currentStore();
+        $steps = $this->availableSteps($store);
+        $currentStep = $this->currentStep($store, $steps, (string) $request->query('step', ''));
+        $stepIndex = array_search($currentStep, array_keys($steps), true);
+        $stepIndex = $stepIndex === false ? 0 : $stepIndex;
 
         return view('admin.stores.onboarding', [
             'store' => $store,
             'storeUrl' => $this->storefrontUrls->publicHome($store),
             'checklist' => $store->onboardingChecklist(),
             'progress' => $store->onboardingProgress(),
+            'steps' => $steps,
+            'currentStep' => $currentStep,
+            'currentStepIndex' => $stepIndex,
+            'availableTemplates' => $this->availableTemplates($store),
+            'categoryOptions' => $this->categoryOptions($store),
+            'paymentAccounts' => $this->paymentAccounts($store),
         ]);
     }
 
     public function update(StoreOnboardingRequest $request): RedirectResponse
     {
         $store = $this->currentStore();
+        $steps = $this->availableSteps($store);
+        $requestedStep = $request->stepKey();
+
+        if (! array_key_exists($requestedStep, $steps)) {
+            $step = $this->currentStep($store, $steps, '');
+
+            if (Store::supportsOnboardingStateColumns()) {
+                $store->forceFill(['onboarding_last_step' => $step])->save();
+            }
+
+            return redirect()
+                ->route('admin.store.onboarding', ['step' => $step])
+                ->with('error', 'Ese paso no está disponible para esta tienda.');
+        }
+
+        $step = $requestedStep;
         $previousWhatsApp = (string) $store->whatsapp;
 
-        $data = $this->storeFileService->replaceUploadedImages(
-            $store,
-            $request,
-            $request->onboardingData()
-        );
+        $data = $request->onboardingData($step, $store);
 
-        if ($previousWhatsApp !== (string) ($data['whatsapp'] ?? '')) {
+        if ($step === 'identity') {
+            $template = StoreTemplateCatalog::find((string) $request->input('template_key'));
+
+            if ($store->allowsTemplates() && ($template['available'] ?? false)) {
+                $data['business_type'] = $template['business_type'];
+            }
+
+            $data = $this->storeFileService->replaceUploadedImages($store, $request, $data);
+        }
+
+        if ($step === 'product') {
+            $this->createOnboardingProduct($request, $store);
+        }
+
+        if (array_key_exists('whatsapp', $data) && $previousWhatsApp !== (string) $data['whatsapp']) {
             $this->ensurePhoneIsAvailableForStore((string) $data['whatsapp'], $store);
             $data['whatsapp_verified_at'] = null;
         }
 
-        $store->update($data);
+        if ($data !== []) {
+            $store->update($data);
+        }
+
+        $store = $store->refresh();
+        $intent = (string) $request->input('intent', 'continue');
+        $nextStep = $intent === 'back'
+            ? $this->previousStep($steps, $step)
+            : $this->nextStep($steps, $step);
 
         $this->adminUpdateService->record(
             'Onboarding actualizado',
@@ -67,9 +119,52 @@ class StoreOnboardingController extends Controller
             route('admin.store.onboarding')
         );
 
+        if ($intent === 'exit') {
+            if (Store::supportsOnboardingStateColumns()) {
+                $store->forceFill([
+                    'onboarding_last_step' => $step,
+                ])->save();
+            }
+
+            return redirect()
+                ->route('dashboard')
+                ->with('success', 'Progreso guardado. Puedes continuar la configuración cuando quieras.');
+        }
+
+        if (Store::supportsOnboardingStateColumns() && $intent !== 'finish') {
+            $store->forceFill([
+                'onboarding_last_step' => $nextStep ?: $step,
+            ])->save();
+        }
+
+        if ($intent === 'finish' || ! $nextStep) {
+            $blockingStep = $this->firstIncompleteRequiredStep($store->refresh(), $steps);
+
+            if ($blockingStep) {
+                if (Store::supportsOnboardingStateColumns()) {
+                    $store->forceFill(['onboarding_last_step' => $blockingStep])->save();
+                }
+
+                return redirect()
+                    ->route('admin.store.onboarding', ['step' => $blockingStep])
+                    ->with('error', 'Completa primero la información necesaria para finalizar.');
+            }
+
+            if (Store::supportsOnboardingStateColumns()) {
+                $store->forceFill([
+                    'onboarding_completed_at' => $store->onboarding_completed_at ?: now(),
+                    'onboarding_last_step' => null,
+                ])->save();
+            }
+
+            return redirect()
+                ->route('dashboard')
+                ->with('success', 'Configuración finalizada. Tu tienda está lista para compartir.');
+        }
+
         return redirect()
-            ->route('dashboard')
-            ->with('success', 'Primeros pasos guardados. Ahora puedes agregar productos.');
+            ->route('admin.store.onboarding', ['step' => $nextStep])
+            ->with('success', 'Paso guardado.');
     }
 
     public function sendWhatsAppVerificationCode(Request $request): JsonResponse
@@ -163,6 +258,171 @@ class StoreOnboardingController extends Controller
         $this->authorize('update', $store);
 
         return $store;
+    }
+
+    private function availableSteps(Store $store): array
+    {
+        return StoreOnboardingSteps::available($store);
+    }
+
+    private function currentStep(Store $store, array $steps, string $requestedStep): string
+    {
+        if (array_key_exists($requestedStep, $steps)) {
+            return $requestedStep;
+        }
+
+        $savedStep = Store::supportsOnboardingStateColumns()
+            ? (string) $store->onboarding_last_step
+            : '';
+
+        if (array_key_exists($savedStep, $steps)) {
+            return $savedStep;
+        }
+
+        foreach ($steps as $key => $step) {
+            if (! ($step['complete'] ?? false)) {
+                return $key;
+            }
+        }
+
+        return array_key_first($steps);
+    }
+
+    private function nextStep(array $steps, string $currentStep): ?string
+    {
+        $keys = array_keys($steps);
+        $index = array_search($currentStep, $keys, true);
+
+        return $index === false ? null : ($keys[$index + 1] ?? null);
+    }
+
+    private function previousStep(array $steps, string $currentStep): ?string
+    {
+        $keys = array_keys($steps);
+        $index = array_search($currentStep, $keys, true);
+
+        return $index === false ? null : ($keys[$index - 1] ?? null);
+    }
+
+    private function firstIncompleteRequiredStep(Store $store, array $steps): ?string
+    {
+        $step = StoreOnboardingSteps::firstIncompleteRequiredStep($store);
+
+        if ($step && array_key_exists($step, $steps)) {
+            return $step;
+        }
+
+        return null;
+    }
+
+    private function createOnboardingProduct(StoreOnboardingRequest $request, Store $store): void
+    {
+        if ($store->products()->exists() || ! $request->filled('product_name')) {
+            return;
+        }
+
+        if (! $store->canCreateMoreProducts()) {
+            throw ValidationException::withMessages([
+                'product_name' => 'El plan ' . $store->planLabel() . ' permite hasta ' . $store->productLimit() . ' productos.',
+            ]);
+        }
+
+        $category = trim((string) $request->input('product_category'));
+
+        if (! $this->categoryBelongsToStore($store, $category)) {
+            throw ValidationException::withMessages([
+                'product_category' => 'Crea la categoría en la sección Categorías antes de asignarla a un producto.',
+            ]);
+        }
+
+        $productData = [
+            'name' => trim((string) $request->input('product_name')),
+            'slug' => Product::uniqueSlugFor((int) $store->id, (string) $request->input('product_name')),
+            'price' => (float) $request->input('product_price'),
+            'description' => \App\Support\ProductText::plain($request->input('product_description')) ?: null,
+            'features' => $this->productContentService->cleanRichText($request->input('product_features')),
+            'category' => $this->categoriesAvailable($store) ? ($category ?: null) : null,
+            'image' => $this->productFileService->storeImage($request, $store),
+            'sizes' => $this->productContentService->optionList($request->input('product_sizes')),
+            'colors' => $this->productContentService->optionList($request->input('product_colors')),
+            'user_id' => $store->user_id,
+            'store_id' => $store->id,
+        ];
+
+        if (Product::supportsInventoryColumns()) {
+            $productData['is_sold_out'] = false;
+        }
+
+        if (Product::supportsOfferColumn()) {
+            $productData['has_offer'] = false;
+        }
+
+        if (Product::supportsWholesalePricingColumns()) {
+            $productData['has_wholesale_price'] = false;
+        }
+
+        if (Product::supportsCustomBadgesColumn()) {
+            $productData['custom_badges'] = [];
+        }
+
+        Product::create($productData);
+    }
+
+    private function categoryBelongsToStore(Store $store, ?string $categoryName): bool
+    {
+        $categoryName = trim((string) $categoryName);
+
+        if ($categoryName === '' || ! $this->categoriesAvailable($store)) {
+            return true;
+        }
+
+        return StoreCategory::where('store_id', $store->id)
+            ->where('name', $categoryName)
+            ->exists();
+    }
+
+    private function productsAvailable(): bool
+    {
+        return StoreOnboardingSteps::productsAvailable();
+    }
+
+    private function paymentsAvailable(): bool
+    {
+        return StoreOnboardingSteps::paymentsAvailable();
+    }
+
+    private function paymentAccounts(Store $store)
+    {
+        if (! $this->paymentsAvailable()) {
+            return collect();
+        }
+
+        return $store->paymentAccounts()->get()->keyBy('provider');
+    }
+
+    private function categoryOptions(Store $store): array
+    {
+        if (! $this->categoriesAvailable($store)) {
+            return [];
+        }
+
+        return $store->productCategorySelectOptions();
+    }
+
+    private function categoriesAvailable(Store $store): bool
+    {
+        return StoreOnboardingSteps::categoriesAvailable($store);
+    }
+
+    private function availableTemplates(Store $store): array
+    {
+        if (! $store->allowsTemplates()) {
+            return [];
+        }
+
+        return collect(StoreTemplateCatalog::all())
+            ->filter(fn (array $template) => (bool) ($template['available'] ?? false))
+            ->all();
     }
 
     private function normalizedPhone(string $phone): string

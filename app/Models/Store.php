@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasAdminRouteKey;
 use App\Support\BrandTheme;
+use App\Support\StoreOnboardingSteps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
@@ -25,6 +26,7 @@ class Store extends Model
     private static ?bool $supportsTermsAcceptanceColumns = null;
     private static ?bool $supportsCheckoutFieldsColumn = null;
     private static ?bool $supportsHeroOverlayColumns = null;
+    private static ?bool $supportsOnboardingStateColumns = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
 
@@ -128,6 +130,8 @@ class Store extends Model
         'hero_overlay_title',
         'hero_overlay_button_text',
         'hero_overlay_button_url',
+        'onboarding_completed_at',
+        'onboarding_last_step',
         'instagram_url',
         'facebook_url',
         'tiktok_url',
@@ -160,6 +164,7 @@ class Store extends Model
         'trial_ends_at' => 'datetime',
         'subscription_ends_at' => 'datetime',
         'whatsapp_consent_at' => 'datetime',
+        'onboarding_completed_at' => 'datetime',
     ];
 
     public function isRestaurant(): bool
@@ -438,75 +443,17 @@ class Store extends Model
 
     public function onboardingChecklist(): array
     {
-        return [
-            'account' => [
-                'label' => 'Cuenta creada',
-                'description' => 'Tu usuario y tienda ya estan activos.',
-                'complete' => $this->exists && (bool) $this->user_id,
-            ],
-            'whatsapp_verified' => [
-                'label' => 'WhatsApp verificado',
-                'description' => 'Confirma el numero para activar seguridad y mensajes automaticos.',
-                'complete' => filled($this->whatsapp_verified_at),
-            ],
-            'profile' => [
-                'label' => 'Nombre y enlace configurados',
-                'description' => 'Usa un nombre claro y un subdominio facil de compartir.',
-                'complete' => trim((string) $this->name) !== ''
-                    && trim((string) $this->business_type) !== ''
-                    && (
-                        ! self::supportsSubdomainColumn()
-                        || ! $this->allowsSubdomain()
-                        || trim((string) $this->subdomain) !== ''
-                    ),
-            ],
-            'identity' => [
-                'label' => 'Logo agregado',
-                'description' => 'Sube una imagen que haga tu tienda mas confiable.',
-                'complete' => trim((string) $this->logo_image) !== '',
-            ],
-            'cover' => [
-                'label' => 'Portada configurada',
-                'description' => 'Agrega una portada o deja una portada simple con tu color de marca.',
-                'complete' => trim((string) $this->cover_image) !== ''
-                    || (
-                        self::supportsHeroOverlayColumns()
-                        && (bool) $this->show_hero_overlay
-                        && (
-                            trim((string) $this->hero_overlay_title) !== ''
-                            || trim((string) $this->hero_overlay_button_text) !== ''
-                        )
-                    ),
-            ],
-            'description' => [
-                'label' => 'Descripcion corta',
-                'description' => 'Cuenta en una frase que vendes y por que comprarte.',
-                'complete' => trim((string) $this->shop_copy) !== '',
-            ],
-            'catalog' => [
-                'label' => 'Primer producto',
-                'description' => 'Publica al menos un producto para abrir ventas.',
-                'complete' => $this->exists && $this->products()->exists(),
-            ],
-        ];
+        return StoreOnboardingSteps::checklist($this);
     }
 
     public function onboardingProgress(): int
     {
-        $checklist = collect($this->onboardingChecklist());
-
-        if ($checklist->isEmpty()) {
-            return 100;
-        }
-
-        $completed = $checklist->filter(fn (array $item) => (bool) ($item['complete'] ?? false))->count();
-
-        return (int) round(($completed / $checklist->count()) * 100);
+        return StoreOnboardingSteps::progress($this);
     }
 
     public function needsOnboarding(): bool
     {
-        return $this->onboardingProgress() < 100;
+        return StoreOnboardingSteps::needsOnboarding($this);
     }
 
     public function isBasicPlan(): bool
@@ -799,6 +746,12 @@ class Store extends Model
             && Schema::hasColumn('stores', 'hero_overlay_title')
             && Schema::hasColumn('stores', 'hero_overlay_button_text')
             && Schema::hasColumn('stores', 'hero_overlay_button_url');
+    }
+
+    public static function supportsOnboardingStateColumns(): bool
+    {
+        return self::$supportsOnboardingStateColumns ??= Schema::hasColumn('stores', 'onboarding_completed_at')
+            && Schema::hasColumn('stores', 'onboarding_last_step');
     }
 
     public static function supportsLocalDeliveryColumns(): bool

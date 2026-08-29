@@ -8,173 +8,241 @@
 
 @section('content')
 @php
+    use App\Models\Store;
+    use App\Models\StorePaymentAccount;
+    use App\Services\AiContentService;
+    use App\Services\AiCreditService;
+
+    $stepKeys = array_keys($steps);
+    $totalSteps = count($steps);
+    $displayStep = $currentStepIndex + 1;
+    $wizardProgress = $totalSteps > 0 ? (int) round(($displayStep / $totalSteps) * 100) : 100;
+    $currentMeta = $steps[$currentStep] ?? [];
+    $previousStep = $stepKeys[$currentStepIndex - 1] ?? null;
+    $nextStep = $stepKeys[$currentStepIndex + 1] ?? null;
     $storefrontHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost();
     $currentSubdomain = old('subdomain', $store->subdomain);
-    $canUseSubdomain = $store->allowsSubdomain();
-    $supportsHeroOverlay = \App\Models\Store::supportsHeroOverlayColumns();
+    $canUseSubdomain = Store::supportsSubdomainColumn() && $store->allowsSubdomain();
+    $supportsHeroOverlay = Store::supportsHeroOverlayColumns();
+    $supportsCheckoutFields = Store::supportsCheckoutFieldsColumn();
     $coverPreview = $store->cover_image ? asset('storage/' . $store->cover_image) : null;
     $heroOverlayTitle = old('hero_overlay_title', $store->hero_overlay_title ?: 'Nueva colección');
     $heroOverlayButtonText = old('hero_overlay_button_text', $store->hero_overlay_button_text ?: 'Ver productos');
     $heroOverlayButtonUrl = old('hero_overlay_button_url', $store->hero_overlay_button_url ?: '/productos');
+    $shippingMethods = old('shipping_methods', $store->shipping_methods ?? []);
+    $shippingRows = collect($shippingMethods)->pad(3, ['name' => '', 'cost' => ''])->take(5)->values();
+    $checkoutFieldsInput = $supportsCheckoutFields ? old('checkout_fields', $store->checkoutFields()) : [];
+    $aiCreditService = $store->allowsAiContent() ? app(AiCreditService::class) : null;
+    $mercadoPagoAccount = $paymentAccounts[StorePaymentAccount::PROVIDER_MERCADOPAGO] ?? null;
+    $wompiAccount = $paymentAccounts[StorePaymentAccount::PROVIDER_WOMPI] ?? null;
 @endphp
+
 <style>
-    .onboarding-page {
+    .onboarding-wizard {
+        min-height: calc(100vh - 132px);
+        display: grid;
+        grid-template-columns: minmax(210px, 280px) minmax(0, 1fr);
+        gap: 22px;
+        padding: clamp(16px, 3vw, 30px);
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at top left, rgba(255, 107, 0, .16), transparent 28%),
+            linear-gradient(135deg, #fff7ed, #ffffff 42%, #f8fafc);
+    }
+
+    .onboarding-rail,
+    .onboarding-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, .86);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, .08);
+    }
+
+    .onboarding-rail {
+        position: sticky;
+        top: 18px;
+        align-self: start;
         display: grid;
         gap: 18px;
-    }
-
-    .onboarding-hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
-        gap: 18px;
-        align-items: stretch;
-        padding: 22px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #111827, #24140a);
-        color: #ffffff;
-        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
-    }
-
-    .onboarding-hero h1 {
-        margin: 0 0 8px;
-        font-size: clamp(28px, 4vw, 42px);
-        line-height: 1.04;
-        letter-spacing: -0.04em;
-    }
-
-    .onboarding-hero p {
-        max-width: 620px;
-        margin: 0;
-        color: rgba(255, 255, 255, 0.76);
-        line-height: 1.6;
-    }
-
-    .onboarding-progress-card {
-        display: grid;
-        align-content: center;
-        gap: 12px;
         padding: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.08);
     }
 
-    .onboarding-progress-card strong {
-        font-size: 34px;
-        line-height: 1;
+    .onboarding-brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
     }
 
-    .onboarding-progress-card small {
-        color: rgba(255, 255, 255, 0.72);
+    .onboarding-brand__mark {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: #111827;
+        color: #ff6b00;
+        font-weight: 900;
     }
 
-    .onboarding-progress-track {
+    .onboarding-brand strong,
+    .onboarding-card h1,
+    .onboarding-section h2 {
+        margin: 0;
+        color: #111827;
+        letter-spacing: 0;
+    }
+
+    .onboarding-brand span,
+    .onboarding-card__lead,
+    .onboarding-step small,
+    .onboarding-help,
+    .onboarding-field small,
+    .onboarding-summary span {
+        color: #64748b;
+    }
+
+    .onboarding-progress {
+        display: grid;
+        gap: 9px;
+    }
+
+    .onboarding-progress__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: #111827;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .onboarding-progress__bar {
         height: 9px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.14);
         overflow: hidden;
+        border-radius: 999px;
+        background: #e5e7eb;
     }
 
-    .onboarding-progress-track span {
+    .onboarding-progress__bar span {
         display: block;
-        width: var(--progress, 0%);
+        width: var(--wizard-progress, 0%);
         height: 100%;
         border-radius: inherit;
         background: #ff6b00;
     }
 
-    .onboarding-layout {
+    .onboarding-steps {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-        gap: 18px;
-        align-items: start;
+        gap: 8px;
     }
 
-    .onboarding-form,
-    .onboarding-checklist,
-    .onboarding-verification-card {
+    .onboarding-step {
         display: grid;
-        gap: 16px;
-        padding: 20px;
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
-        background: #ffffff;
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 10px;
+        padding: 10px;
+        border-radius: 14px;
+        color: inherit;
+        text-decoration: none;
     }
 
-    .onboarding-verification-card {
-        border-color: #fed7aa;
-        background: linear-gradient(135deg, #fff7ed, #ffffff);
+    .onboarding-step.is-active {
+        background: #fff7ed;
+        box-shadow: inset 0 0 0 1px #fed7aa;
     }
 
-    .onboarding-verification-card.is-complete {
-        border-color: #bbf7d0;
-        background: linear-gradient(135deg, #f0fdf4, #ffffff);
+    .onboarding-step.is-complete .onboarding-step__dot {
+        background: #16a34a;
+        color: #fff;
     }
 
-    .onboarding-verification-head {
-        display: flex;
-        justify-content: space-between;
-        gap: 14px;
-        align-items: flex-start;
-    }
-
-    .onboarding-verification-head h2,
-    .onboarding-checklist h2 {
-        margin: 0;
-        font-size: 18px;
-        letter-spacing: -0.02em;
-    }
-
-    .onboarding-verification-head p {
-        margin: 5px 0 0;
-        color: #6b7280;
-        font-size: 13px;
-        line-height: 1.45;
-    }
-
-    .onboarding-status-pill {
-        flex: 0 0 auto;
-        min-height: 28px;
+    .onboarding-step__dot {
+        width: 32px;
+        height: 32px;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         border-radius: 999px;
-        padding: 0 10px;
-        background: #ffedd5;
-        color: #9a3412;
+        background: #f1f5f9;
+        color: #64748b;
         font-size: 12px;
         font-weight: 900;
     }
 
-    .onboarding-verification-card.is-complete .onboarding-status-pill {
-        background: #dcfce7;
-        color: #166534;
+    .onboarding-step strong {
+        display: block;
+        color: #111827;
+        font-size: 13px;
     }
 
-    .onboarding-verification-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 10px;
-        align-items: end;
-    }
-
-    .onboarding-code-row {
-        display: grid;
-        grid-template-columns: minmax(120px, 180px) auto;
-        gap: 10px;
-        align-items: end;
-    }
-
-    .onboarding-inline-status {
-        min-height: 18px;
-        color: #6b7280;
+    .onboarding-step small {
+        display: block;
+        margin-top: 2px;
         font-size: 12px;
-        line-height: 1.4;
+        line-height: 1.35;
     }
 
-    .onboarding-form-grid {
+    .onboarding-card {
+        min-width: 0;
+        display: grid;
+        align-content: start;
+        gap: 22px;
+        padding: clamp(18px, 4vw, 34px);
+    }
+
+    .onboarding-card__head {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-start;
+    }
+
+    .onboarding-card h1 {
+        font-size: clamp(28px, 4vw, 46px);
+        line-height: 1.05;
+    }
+
+    .onboarding-card__lead {
+        max-width: 650px;
+        margin: 9px 0 0;
+        line-height: 1.55;
+    }
+
+    .onboarding-pill {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 13px;
+        border-radius: 999px;
+        background: #111827;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .onboarding-form {
+        display: grid;
+        gap: 20px;
+    }
+
+    .onboarding-section {
+        display: grid;
+        gap: 16px;
+    }
+
+    .onboarding-section h2 {
+        font-size: 18px;
+    }
+
+    .onboarding-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
+    }
+
+    .onboarding-grid--three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .onboarding-field {
@@ -187,93 +255,67 @@
         grid-column: 1 / -1;
     }
 
+    .onboarding-field > span,
     .onboarding-field label {
         color: #111827;
         font-size: 13px;
-        font-weight: 800;
-    }
-
-    .onboarding-field small {
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.4;
+        font-weight: 850;
     }
 
     .onboarding-field input,
     .onboarding-field select,
     .onboarding-field textarea {
         width: 100%;
-        min-height: 46px;
-        margin: 0;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        background: #f9fafb;
+        min-height: 48px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #f8fafc;
         color: #111827;
-        padding: 0 12px;
+        padding: 0 13px;
         font: inherit;
     }
 
     .onboarding-field textarea {
-        min-height: 96px;
-        padding: 12px;
+        min-height: 108px;
+        padding: 12px 13px;
         resize: vertical;
     }
 
     .onboarding-field input[type="color"] {
-        height: 46px;
+        height: 48px;
         padding: 5px;
     }
 
-    .onboarding-current-logo {
-        width: 74px;
-        height: 74px;
-        border-radius: 16px;
-        object-fit: cover;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
+    .onboarding-error {
+        color: #b42318;
+        font-size: 12px;
     }
 
-    .onboarding-cover-card {
+    .onboarding-media {
         display: grid;
-        gap: 16px;
-        padding: 16px;
-        border: 1px solid #fed7aa;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #fff7ed, #ffffff 52%, #f9fafb);
+        grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
+        gap: 14px;
+        align-items: stretch;
     }
 
-    .onboarding-cover-card__head {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: flex-start;
-    }
-
-    .onboarding-cover-card__head h3 {
-        margin: 0;
-        color: #111827;
-        font-size: 18px;
-        letter-spacing: -0.02em;
-    }
-
-    .onboarding-cover-card__head p {
-        margin: 5px 0 0;
-        color: #6b7280;
-        font-size: 13px;
-        line-height: 1.45;
+    .onboarding-logo-preview {
+        width: 96px;
+        height: 96px;
+        border-radius: 20px;
+        object-fit: cover;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
     }
 
     .onboarding-cover-preview {
         position: relative;
-        min-height: 220px;
+        min-height: 260px;
         overflow: hidden;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
+        border-radius: 20px;
         background:
-            linear-gradient(135deg, rgba(17, 24, 39, 0.28), rgba(255, 107, 0, 0.26)),
+            linear-gradient(135deg, rgba(17, 24, 39, .48), rgba(255, 107, 0, .22)),
             linear-gradient(135deg, #111827, var(--onboarding-brand, #ff6b00));
-        color: #ffffff;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+        color: #fff;
     }
 
     .onboarding-cover-preview img {
@@ -288,104 +330,121 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(90deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.08));
+        background: linear-gradient(90deg, rgba(0,0,0,.48), rgba(0,0,0,.08));
     }
 
     .onboarding-cover-preview__copy {
         position: relative;
         z-index: 1;
-        width: min(78%, 420px);
+        width: min(76%, 430px);
         padding: clamp(22px, 5vw, 42px);
     }
 
     .onboarding-cover-preview__copy strong {
         display: block;
-        font-size: clamp(26px, 5vw, 46px);
-        line-height: 1.02;
-        letter-spacing: -0.04em;
+        font-size: clamp(25px, 4vw, 44px);
+        line-height: 1.05;
+        letter-spacing: 0;
     }
 
     .onboarding-cover-preview__copy span {
         display: inline-flex;
-        margin-top: 16px;
-        min-height: 42px;
         align-items: center;
         justify-content: center;
-        border-radius: 999px;
+        min-height: 42px;
+        margin-top: 16px;
         padding: 0 18px;
-        background: #ffffff;
+        border-radius: 999px;
+        background: #fff;
         color: #111827;
         font-size: 13px;
         font-weight: 900;
     }
 
-    .onboarding-cover-tools {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(220px, 0.65fr);
-        gap: 14px;
-        align-items: start;
+    .onboarding-upload,
+    .onboarding-option,
+    .onboarding-summary,
+    .onboarding-status-card,
+    .onboarding-ai-tools {
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        background: #fff;
     }
 
-    .onboarding-upload-box {
+    .onboarding-upload {
         display: grid;
         gap: 8px;
         align-content: center;
-        min-height: 118px;
-        border: 1px dashed #fdba74;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.76);
         padding: 16px;
-        color: #9a3412;
+        cursor: pointer;
     }
 
-    .onboarding-cover-fields {
+    .onboarding-option {
         display: grid;
-        gap: 10px;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px;
     }
 
-    .onboarding-logo-tools,
+    .onboarding-option:has(input:checked) {
+        border-color: #ff6b00;
+        box-shadow: 0 0 0 3px rgba(255, 107, 0, .12);
+    }
+
+    .onboarding-summary,
+    .onboarding-status-card,
     .onboarding-ai-tools {
         display: grid;
         gap: 10px;
-        padding: 12px;
-        border: 1px solid #fed7aa;
-        border-radius: 14px;
-        background: #fff7ed;
+        padding: 16px;
     }
 
-    .onboarding-logo-tools__head {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: flex-start;
-    }
-
-    .onboarding-logo-tools__head strong {
+    .onboarding-summary strong,
+    .onboarding-status-card strong {
         color: #111827;
-        font-size: 13px;
     }
 
-    .onboarding-logo-tools__head span {
-        color: #9a3412;
-        font-size: 12px;
-        font-weight: 800;
-        white-space: nowrap;
+    .onboarding-status-card.is-complete {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
     }
 
-    .onboarding-logo-actions {
+    .onboarding-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 4;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 8px -8px -8px;
+        padding: 12px 8px 8px;
+        background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.96) 38%);
     }
 
-    .onboarding-logo-actions .btn {
-        min-height: 38px;
+    .onboarding-actions__group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    .ai-assistant-status {
+    .onboarding-help {
         margin: 0;
-        color: #7c2d12;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .onboarding-inline-status {
+        min-height: 18px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .ai-assistant-status,
+    .ai-assistant-preview p {
+        margin: 0;
+        color: #9a3412;
         font-size: 12px;
         line-height: 1.4;
     }
@@ -400,361 +459,550 @@
     }
 
     .ai-assistant-preview img {
-        width: 108px;
-        height: 108px;
+        width: 112px;
+        height: 112px;
         border-radius: 18px;
         object-fit: cover;
-        border: 1px solid #fdba74;
-        background: #ffffff;
+        border: 1px solid #fed7aa;
     }
 
-    .ai-assistant-preview p {
-        margin: 0;
-        color: #9a3412;
-        font-size: 12px;
-        line-height: 1.4;
+    @media (max-width: 920px) {
+        .onboarding-wizard {
+            grid-template-columns: 1fr;
+            padding: 14px;
+            border-radius: 0;
+        }
+
+        .onboarding-rail {
+            position: static;
+        }
+
+        .onboarding-steps {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
     }
 
-    .onboarding-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px;
-        padding-top: 4px;
-    }
+    @media (max-width: 640px) {
+        .onboarding-card,
+        .onboarding-rail {
+            border-radius: 18px;
+            padding: 16px;
+        }
 
-    .onboarding-error {
-        color: #b42318;
-        font-size: 12px;
-    }
-
-    .onboarding-task {
-        display: grid;
-        grid-template-columns: 34px minmax(0, 1fr);
-        gap: 10px;
-        align-items: start;
-        padding: 12px;
-        border-radius: 14px;
-        background: #f9fafb;
-    }
-
-    .onboarding-task-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #e5e7eb;
-        color: #6b7280;
-        font-weight: 900;
-    }
-
-    .onboarding-task.is-complete .onboarding-task-icon {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .onboarding-task strong {
-        display: block;
-        color: #111827;
-        font-size: 14px;
-    }
-
-    .onboarding-task span:last-child {
-        display: block;
-        margin-top: 3px;
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.45;
-    }
-
-    @media (max-width: 900px) {
-        .onboarding-hero,
-        .onboarding-layout {
+        .onboarding-card__head,
+        .onboarding-actions,
+        .onboarding-actions__group {
+            display: grid;
             grid-template-columns: 1fr;
         }
-    }
 
-    @media (max-width: 620px) {
-        .onboarding-hero,
-        .onboarding-form,
-        .onboarding-checklist,
-        .onboarding-verification-card {
-            padding: 16px;
-            border-radius: 14px;
+        .onboarding-pill {
+            width: max-content;
         }
 
-        .onboarding-form-grid,
-        .onboarding-verification-grid,
-        .onboarding-code-row,
-        .onboarding-cover-tools {
+        .onboarding-grid,
+        .onboarding-grid--three,
+        .onboarding-media {
             grid-template-columns: 1fr;
         }
 
         .onboarding-cover-preview {
-            min-height: 180px;
+            min-height: 210px;
         }
 
         .onboarding-cover-preview__copy {
             width: 100%;
         }
+
+        .onboarding-actions .btn,
+        .onboarding-actions button {
+            width: 100%;
+        }
     }
 </style>
 
-<div class="onboarding-page">
-    @if (session('success'))
-        <div class="flash success">{{ session('success') }}</div>
-    @endif
-
-    <section class="onboarding-hero">
-        <div>
-            <h1>Tu tienda ya está creada</h1>
-            <p>Completa estos pasos para activar seguridad, preparar tu imagen y publicar tu primer producto.</p>
-        </div>
-
-        <aside class="onboarding-progress-card">
-            <span>Progreso</span>
-            <strong>{{ $progress }}%</strong>
-            <div class="onboarding-progress-track" aria-hidden="true">
-                <span style="--progress: {{ $progress }}%"></span>
-            </div>
-            <small>{{ collect($checklist)->where('complete', true)->count() }} de {{ count($checklist) }} completados</small>
-        </aside>
-    </section>
-
-    <section class="onboarding-verification-card {{ $store->whatsapp_verified_at ? 'is-complete' : '' }}">
-        <div class="onboarding-verification-head">
+<div class="onboarding-wizard">
+    <aside class="onboarding-rail" aria-label="Progreso del onboarding">
+        <div class="onboarding-brand">
+            <span class="onboarding-brand__mark">V</span>
             <div>
-                <h2>Verifica tu WhatsApp</h2>
-                <p>Este número protege tu prueba gratis y permite enviar bienvenida, recordatorios y avisos importantes.</p>
+                <strong>Vendly Suite</strong>
+                <span>Configuración guiada</span>
             </div>
-            <span class="onboarding-status-pill">{{ $store->whatsapp_verified_at ? 'Verificado' : 'Pendiente' }}</span>
         </div>
 
-        @if($store->whatsapp_verified_at)
-            <p class="onboarding-inline-status">Tu WhatsApp {{ $store->whatsapp }} fue verificado correctamente.</p>
-        @else
-            <div class="onboarding-verification-grid">
-                <div class="onboarding-field">
-                    <label for="verify_whatsapp">WhatsApp a verificar</label>
-                    <input id="verify_whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" inputmode="tel" autocomplete="tel">
-                    <small>Si quieres cambiarlo, guárdalo también en el formulario de configuración.</small>
-                </div>
-                <button type="button" class="btn" data-send-whatsapp-code>Enviar código</button>
+        <div class="onboarding-progress">
+            <div class="onboarding-progress__top">
+                <span>Paso {{ $displayStep }} de {{ $totalSteps }}</span>
+                <span>{{ $wizardProgress }}%</span>
             </div>
-
-            <div class="onboarding-code-row">
-                <div class="onboarding-field">
-                    <label for="verify_whatsapp_code">Código de 6 dígitos</label>
-                    <input id="verify_whatsapp_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
-                    <input id="verify_whatsapp_token" type="hidden">
-                </div>
-                <button type="button" class="btn btn-secondary" data-confirm-whatsapp-code>Verificar número</button>
+            <div class="onboarding-progress__bar" aria-hidden="true">
+                <span style="--wizard-progress: {{ $wizardProgress }}%"></span>
             </div>
+        </div>
 
-            <div class="onboarding-inline-status" data-whatsapp-status aria-live="polite"></div>
+        <nav class="onboarding-steps">
+            @foreach($steps as $stepKey => $step)
+                <a
+                    href="{{ route('admin.store.onboarding', ['step' => $stepKey]) }}"
+                    class="onboarding-step {{ $currentStep === $stepKey ? 'is-active' : '' }} {{ ($step['complete'] ?? false) ? 'is-complete' : '' }}"
+                >
+                    <span class="onboarding-step__dot">{{ ($step['complete'] ?? false) ? 'OK' : $loop->iteration }}</span>
+                    <span>
+                        <strong>{{ $step['label'] }}</strong>
+                        <small>{{ $step['summary'] }}</small>
+                    </span>
+                </a>
+            @endforeach
+        </nav>
+
+        <p class="onboarding-help">Puedes guardar y salir sin perder avances. El panel seguirá disponible para completar lo pendiente.</p>
+    </aside>
+
+    <main class="onboarding-card">
+        @if (session('success'))
+            <div class="flash success">{{ session('success') }}</div>
         @endif
-    </section>
 
-    <div class="onboarding-layout">
-        <form method="POST" action="{{ route('admin.store.onboarding.update') }}" enctype="multipart/form-data" class="onboarding-form">
+        @if ($errors->any())
+            <div class="flash error">{{ $errors->first() }}</div>
+        @endif
+
+        <header class="onboarding-card__head">
+            <div>
+                <h1>{{ $currentMeta['label'] ?? 'Configura tu tienda' }}</h1>
+                <p class="onboarding-card__lead">{{ $currentMeta['summary'] ?? 'Completa la información clave de tu tienda.' }}</p>
+            </div>
+            <span class="onboarding-pill">Paso {{ $displayStep }} de {{ $totalSteps }}</span>
+        </header>
+
+        <form method="POST" action="{{ route('admin.store.onboarding.update') }}" enctype="multipart/form-data" class="onboarding-form" data-onboarding-form>
             @csrf
+            <input type="hidden" name="step" value="{{ $currentStep }}">
+            <input type="hidden" name="intent" value="continue" data-onboarding-intent>
 
-            <div class="onboarding-form-grid">
-                <div class="onboarding-field">
-                    <label for="onboarding_name">Nombre de tienda</label>
-                    <input id="onboarding_name" name="name" value="{{ old('name', $store->name) }}" required data-onboarding-store-name>
-                    <small>El nombre debe ser fácil de recordar y reconocer.</small>
-                    @error('name')<span class="onboarding-error">{{ $message }}</span>@enderror
-                </div>
+            @if($currentStep === 'basic')
+                <section class="onboarding-section">
+                    <h2>Datos principales</h2>
+                    <div class="onboarding-grid">
+                        <label class="onboarding-field">
+                            <span>Nombre de tienda</span>
+                            <input name="name" value="{{ old('name', $store->name) }}" required data-onboarding-store-name>
+                            <small>Debe ser fácil de recordar.</small>
+                            @error('name')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </label>
 
-                @if($canUseSubdomain)
-                    <div class="onboarding-field">
-                        <label for="onboarding_subdomain">Enlace de tienda</label>
-                        <input id="onboarding_subdomain" name="subdomain" value="{{ $currentSubdomain }}" required placeholder="mitienda" inputmode="url" data-onboarding-subdomain>
-                        <small>Tu URL sera <span data-onboarding-subdomain-preview>{{ $currentSubdomain ?: 'mitienda' }}</span>.{{ $storefrontHost }}. Cambiala solo si quieres otro enlace publico.</small>
-                        @error('subdomain')<span class="onboarding-error">{{ $message }}</span>@enderror
-                    </div>
-                @else
-                    <div class="onboarding-field">
-                        <label>Enlace de tienda</label>
-                        <input value="{{ $storeUrl }}" readonly>
-                        <small>Los subdominios personalizados estan disponibles en planes Pro y Premium.</small>
-                    </div>
-                @endif
+                        <label class="onboarding-field">
+                            <span>Tipo de negocio</span>
+                            <select name="business_type" required>
+                                @foreach(Store::businessTypeOptions() as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('business_type', $store->business_type) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('business_type')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </label>
 
-                <div class="onboarding-field">
-                    <label for="onboarding_whatsapp">WhatsApp de pedidos</label>
-                    <input id="onboarding_whatsapp" name="whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" required inputmode="tel">
-                    <small>Si cambias este número tendrás que verificarlo nuevamente.</small>
-                    @error('whatsapp')<span class="onboarding-error">{{ $message }}</span>@enderror
-                </div>
-
-                <div class="onboarding-field">
-                    <label for="onboarding_location">Ciudad o dirección</label>
-                    <input id="onboarding_location" name="location" value="{{ old('location', $store->location) }}" placeholder="Ej: Cali, Colombia">
-                    <small>Opcional. Puedes completarlo cuando configures envíos.</small>
-                    @error('location')<span class="onboarding-error">{{ $message }}</span>@enderror
-                </div>
-
-                <div class="onboarding-field">
-                    <label for="onboarding_brand_color">Color principal</label>
-                    <input id="onboarding_brand_color" type="color" name="brand_color" value="{{ old('brand_color', $store->brand_color ?: '#ff6b00') }}">
-                    @error('brand_color')<span class="onboarding-error">{{ $message }}</span>@enderror
-                </div>
-
-                <div class="onboarding-field">
-                    <label for="onboarding_logo">Logo</label>
-                    @if($store->logo_image)
-                        <img class="onboarding-current-logo" src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}">
-                    @endif
-                    <input id="onboarding_logo" type="file" name="logo_image" accept="image/*" data-optimize-image data-max-width="720" data-max-height="720" data-quality="0.86" data-output="webp" data-max-size="4194304">
-                    @if($store->allowsAiContent())
-                        @php($aiCreditService = app(\App\Services\AiCreditService::class))
-                        <div
-                            class="onboarding-logo-tools"
-                            data-ai-panel
-                            data-ai-context="store_logo"
-                            data-ai-endpoint="{{ route('admin.ai.content') }}"
-                            data-ai-image-endpoint="{{ route('admin.ai.images') }}"
-                            data-store-id="{{ $store->id }}"
-                        >
-                            <div class="onboarding-logo-tools__head">
-                                <strong>Crear logo con IA</strong>
-                                <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos</span>
-                            </div>
-                            <div class="onboarding-logo-actions">
-                                <button type="button" class="btn btn-secondary" data-ai-image-type="store_logo_image">Generar logo</button>
-                                <small>Consume {{ $aiCreditService->cost(\App\Services\AiContentService::STORE_LOGO_IMAGE) }} créditos. Guarda para publicarlo.</small>
-                            </div>
-                            <p class="ai-assistant-status" data-ai-status>Ideal si todavía no tienes identidad visual.</p>
-                            <div class="ai-assistant-preview" data-ai-preview hidden></div>
-                        </div>
-                    @else
-                        <small>Generar logo con IA está disponible en plan Premium.</small>
-                    @endif
-                    <small>Usa una imagen cuadrada para que se vea mejor.</small>
-                    @error('logo_image')<span class="onboarding-error">{{ $message }}</span>@enderror
-                </div>
-
-                <div class="onboarding-field onboarding-field--full">
-                    <div class="onboarding-cover-card" style="--onboarding-brand: {{ old('brand_color', $store->brand_color ?: '#ff6b00') }}">
-                        <div class="onboarding-cover-card__head">
-                            <div>
-                                <h3>Portada de tu tienda</h3>
-                                <p>Se verá en la parte superior de tu tienda. Puedes subir una imagen, generar una con IA u omitirla por ahora.</p>
-                            </div>
-                            <span class="onboarding-status-pill">{{ $store->cover_image ? 'Lista' : 'Opcional' }}</span>
-                        </div>
-
-                        <div class="onboarding-cover-preview" data-onboarding-cover-preview>
-                            @if($coverPreview)
-                                <img src="{{ $coverPreview }}" alt="{{ $store->name }}" data-onboarding-cover-image>
-                            @else
-                                <img src="" alt="" data-onboarding-cover-image hidden>
-                            @endif
-                            <div class="onboarding-cover-preview__copy">
-                                <strong data-onboarding-cover-title>{{ $heroOverlayTitle }}</strong>
-                                <span data-onboarding-cover-button>{{ $heroOverlayButtonText }}</span>
-                            </div>
-                        </div>
-
-                        <div class="onboarding-cover-tools">
-                            <label class="onboarding-upload-box" for="onboarding_cover">
-                                <strong>Subir portada</strong>
-                                <span>JPG, PNG o WebP. Recomendado 1536 x 512 px. Máx. 4 MB.</span>
-                                <input id="onboarding_cover" type="file" name="cover_image" accept="image/*" data-onboarding-cover-input data-optimize-image data-max-width="1920" data-max-height="1080" data-quality="0.82" data-output="webp" data-max-size="4194304">
+                        @if($canUseSubdomain)
+                            <label class="onboarding-field">
+                                <span>URL de tienda</span>
+                                <input name="subdomain" value="{{ $currentSubdomain }}" required placeholder="mitienda" inputmode="url" data-onboarding-subdomain>
+                                <small>Será <b><span data-onboarding-subdomain-preview>{{ $currentSubdomain ?: 'mitienda' }}</span>.{{ $storefrontHost }}</b></small>
+                                @error('subdomain')<span class="onboarding-error">{{ $message }}</span>@enderror
                             </label>
-
-                            <div class="onboarding-cover-fields">
-                                @if($supportsHeroOverlay)
-                                    <label class="onboarding-field">
-                                        <span>Texto sobre portada</span>
-                                        <input name="hero_overlay_title" value="{{ $heroOverlayTitle }}" maxlength="120" placeholder="Nueva colección" data-onboarding-cover-title-input>
-                                    </label>
-                                    <label class="onboarding-field">
-                                        <span>Texto del botón</span>
-                                        <input name="hero_overlay_button_text" value="{{ $heroOverlayButtonText }}" maxlength="60" placeholder="Ver productos" data-onboarding-cover-button-input>
-                                    </label>
-                                    <label class="onboarding-field">
-                                        <span>Enlace del botón</span>
-                                        <input name="hero_overlay_button_url" value="{{ $heroOverlayButtonUrl }}" maxlength="255" placeholder="/productos">
-                                    </label>
-                                    <label class="onboarding-field" style="display:flex; align-items:center; gap:10px;">
-                                        <input type="checkbox" name="show_hero_overlay" value="1" @checked(old('show_hero_overlay', $store->show_hero_overlay ?? true)) style="width:auto; min-height:auto;">
-                                        <span>Mostrar texto y botón sobre la portada</span>
-                                    </label>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if($store->allowsAiContent())
-                            @php($aiCreditService = isset($aiCreditService) ? $aiCreditService : app(\App\Services\AiCreditService::class))
-                            <div
-                                class="onboarding-ai-tools"
-                                data-ai-panel
-                                data-ai-context="store_cover"
-                                data-ai-endpoint="{{ route('admin.ai.content') }}"
-                                data-ai-image-endpoint="{{ route('admin.ai.images') }}"
-                                data-store-id="{{ $store->id }}"
-                            >
-                                <div class="onboarding-logo-tools__head">
-                                    <strong>Crear portada con IA</strong>
-                                    <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos</span>
-                                </div>
-                                <div class="onboarding-logo-actions">
-                                    <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image">Generar portada</button>
-                                    @if($store->cover_image)
-                                        <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image_enhance">Mejorar portada actual</button>
-                                    @endif
-                                    <small>Consume {{ $aiCreditService->cost(\App\Services\AiContentService::STORE_COVER_IMAGE) }} créditos. Guarda para publicarla.</small>
-                                </div>
-                                <p class="ai-assistant-status" data-ai-status>Ideal si quieres una imagen profesional sin diseñarla manualmente.</p>
-                                <div class="ai-assistant-preview" data-ai-preview hidden></div>
-                            </div>
                         @else
-                            <small>Generar portada con IA está disponible en plan Premium.</small>
+                            <label class="onboarding-field">
+                                <span>URL de tienda</span>
+                                <input value="{{ $storeUrl }}" readonly>
+                                <small>El subdominio editable no está disponible en este plan.</small>
+                            </label>
                         @endif
 
-                        @error('cover_image')<span class="onboarding-error">{{ $message }}</span>@enderror
-                        @error('hero_overlay_title')<span class="onboarding-error">{{ $message }}</span>@enderror
-                        @error('hero_overlay_button_text')<span class="onboarding-error">{{ $message }}</span>@enderror
-                        @error('hero_overlay_button_url')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        <label class="onboarding-field">
+                            <span>WhatsApp de pedidos</span>
+                            <input name="whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" required inputmode="tel" autocomplete="tel">
+                            <small>Si lo cambias tendrás que verificarlo otra vez.</small>
+                            @error('whatsapp')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </label>
+
+                        <label class="onboarding-field onboarding-field--full">
+                            <span>Ciudad o dirección</span>
+                            <input name="location" value="{{ old('location', $store->location) }}" placeholder="Ej: Cali, Colombia">
+                            @error('location')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </label>
                     </div>
+                </section>
+
+                <section class="onboarding-status-card {{ $store->whatsapp_verified_at ? 'is-complete' : '' }}">
+                    <strong>{{ $store->whatsapp_verified_at ? 'WhatsApp verificado' : 'Verifica tu WhatsApp' }}</strong>
+                    @if($store->whatsapp_verified_at)
+                        <span>Tu número {{ $store->whatsapp }} ya está verificado.</span>
+                    @else
+                        <p class="onboarding-help">La verificación protege la prueba gratis y evita que otro usuario use el mismo número.</p>
+                        <div class="onboarding-grid">
+                            <label class="onboarding-field">
+                                <span>WhatsApp a verificar</span>
+                                <input id="verify_whatsapp" value="{{ old('whatsapp', $store->whatsapp) }}" inputmode="tel">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Código de 6 dígitos</span>
+                                <input id="verify_whatsapp_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+                                <input id="verify_whatsapp_token" type="hidden">
+                            </label>
+                        </div>
+                        <div class="onboarding-actions__group">
+                            <button type="button" class="btn btn-secondary" data-send-whatsapp-code>Enviar código</button>
+                            <button type="button" class="btn btn-secondary" data-confirm-whatsapp-code>Verificar número</button>
+                        </div>
+                        <div class="onboarding-inline-status" data-whatsapp-status aria-live="polite"></div>
+                    @endif
+                </section>
+            @elseif($currentStep === 'identity')
+                <section class="onboarding-section">
+                    <h2>Imagen de marca</h2>
+                    <div class="onboarding-media">
+                        <div class="onboarding-status-card">
+                            <strong>Logo</strong>
+                            @if($store->logo_image)
+                                <img class="onboarding-logo-preview" src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}">
+                            @endif
+                            <label class="onboarding-upload" for="onboarding_logo">
+                                <strong>Subir logo</strong>
+                                <span>Recomendado cuadrado. Máximo 4 MB.</span>
+                                <input id="onboarding_logo" type="file" name="logo_image" accept="image/*" data-optimize-image data-max-width="720" data-max-height="720" data-quality="0.86" data-output="webp" data-max-size="4194304">
+                            </label>
+                            @error('logo_image')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="onboarding-status-card">
+                            <strong>Portada</strong>
+                            <div class="onboarding-cover-preview" style="--onboarding-brand: {{ old('brand_color', $store->brand_color ?: '#ff6b00') }}" data-onboarding-cover-preview>
+                                @if($coverPreview)
+                                    <img src="{{ $coverPreview }}" alt="{{ $store->name }}" data-onboarding-cover-image>
+                                @else
+                                    <img src="" alt="" data-onboarding-cover-image hidden>
+                                @endif
+                                <div class="onboarding-cover-preview__copy">
+                                    <strong data-onboarding-cover-title>{{ $heroOverlayTitle }}</strong>
+                                    <span data-onboarding-cover-button>{{ $heroOverlayButtonText }}</span>
+                                </div>
+                            </div>
+                            <label class="onboarding-upload" for="onboarding_cover">
+                                <strong>Subir portada</strong>
+                                <span>Recomendado horizontal. Máximo 4 MB.</span>
+                                <input id="onboarding_cover" type="file" name="cover_image" accept="image/*" data-onboarding-cover-input data-optimize-image data-max-width="1920" data-max-height="1080" data-quality="0.82" data-output="webp" data-max-size="4194304">
+                            </label>
+                            @error('cover_image')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
+                </section>
+
+                @if($store->allowsAiContent())
+                    <section class="onboarding-section">
+                        <h2>Generar con IA</h2>
+                        <div class="onboarding-grid">
+                            <div class="onboarding-ai-tools" data-ai-panel data-ai-context="store_logo" data-ai-endpoint="{{ route('admin.ai.content') }}" data-ai-image-endpoint="{{ route('admin.ai.images') }}" data-store-id="{{ $store->id }}">
+                                <strong>Logo con IA</strong>
+                                <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos disponibles</span>
+                                <button type="button" class="btn btn-secondary" data-ai-image-type="store_logo_image">Generar logo</button>
+                                <p class="ai-assistant-status" data-ai-status>Consume {{ $aiCreditService->cost(AiContentService::STORE_LOGO_IMAGE) }} créditos.</p>
+                                <div class="ai-assistant-preview" data-ai-preview hidden></div>
+                            </div>
+                            <div class="onboarding-ai-tools" data-ai-panel data-ai-context="store_cover" data-ai-endpoint="{{ route('admin.ai.content') }}" data-ai-image-endpoint="{{ route('admin.ai.images') }}" data-store-id="{{ $store->id }}">
+                                <strong>Portada con IA</strong>
+                                <span><span data-ai-credit-balance>{{ $aiCreditService->balance($store) }}</span> créditos disponibles</span>
+                                <button type="button" class="btn btn-secondary" data-ai-image-type="store_cover_image">Generar portada</button>
+                                <p class="ai-assistant-status" data-ai-status>Consume {{ $aiCreditService->cost(AiContentService::STORE_COVER_IMAGE) }} créditos.</p>
+                                <div class="ai-assistant-preview" data-ai-preview hidden></div>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
+                <section class="onboarding-section">
+                    <h2>Estilo y portada</h2>
+                    <div class="onboarding-grid">
+                        @if($store->allowsFullCustomization())
+                            <label class="onboarding-field">
+                                <span>Color principal</span>
+                                <input id="onboarding_brand_color" type="color" name="brand_color" value="{{ old('brand_color', $store->brand_color ?: '#ff6b00') }}">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Fondo de tienda</span>
+                                <input type="color" name="background_color" value="{{ old('background_color', $store->background_color ?: '#ffffff') }}">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Tipografía</span>
+                                <select name="font_family">
+                                    @foreach(Store::fontFamilyOptions() as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('font_family', $store->font_family ?: 'system') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                        @endif
+
+                        @if($availableTemplates)
+                            <div class="onboarding-field onboarding-field--full">
+                                <span>Plantilla</span>
+                                <div class="onboarding-grid">
+                                    @foreach($availableTemplates as $template)
+                                        <label class="onboarding-option">
+                                            <input type="radio" name="template_key" value="{{ $template['key'] }}" @checked(old('template_key', $store->business_type) === $template['key'] || $store->business_type === $template['business_type'])>
+                                            <span>
+                                                <strong>{{ $template['name'] }}</strong>
+                                                <small>{{ $template['subtitle'] }}</small>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($supportsHeroOverlay)
+                            <label class="onboarding-field">
+                                <span>Texto sobre portada</span>
+                                <input name="hero_overlay_title" value="{{ $heroOverlayTitle }}" maxlength="120" data-onboarding-cover-title-input>
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Texto del botón</span>
+                                <input name="hero_overlay_button_text" value="{{ $heroOverlayButtonText }}" maxlength="60" data-onboarding-cover-button-input>
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Enlace del botón</span>
+                                <input name="hero_overlay_button_url" value="{{ $heroOverlayButtonUrl }}" maxlength="255" placeholder="/productos">
+                            </label>
+                            <label class="onboarding-option">
+                                <input type="checkbox" name="show_hero_overlay" value="1" @checked(old('show_hero_overlay', $store->show_hero_overlay ?? true))>
+                                <span>
+                                    <strong>Mostrar texto en portada</strong>
+                                    <small>Útil para destacar una colección o promoción.</small>
+                                </span>
+                            </label>
+                        @endif
+
+                        <label class="onboarding-field onboarding-field--full">
+                            <span>Descripción corta</span>
+                            <textarea name="shop_copy" maxlength="320" placeholder="Cuenta en una frase qué vendes y por qué deberían comprarte.">{{ old('shop_copy', $store->shop_copy) }}</textarea>
+                        </label>
+                    </div>
+                </section>
+            @elseif($currentStep === 'product')
+                <section class="onboarding-section">
+                    <h2>Primer producto</h2>
+                    @if($store->products()->exists())
+                        @php
+                            $firstProduct = $store->products()->latest()->first();
+                        @endphp
+                        <div class="onboarding-status-card is-complete">
+                            <strong>Ya tienes productos publicados</strong>
+                            <span>{{ $firstProduct?->name }} está listo en tu catálogo.</span>
+                            <a href="{{ route('admin.products.edit', $firstProduct) }}" class="btn btn-secondary">Revisar producto</a>
+                        </div>
+                    @else
+                        <div class="onboarding-status-card">
+                            <strong>Crea tu primer producto</strong>
+                            <span>Agrega lo mínimo para abrir el catálogo. Luego puedes editar variantes, inventario o galería desde Productos.</span>
+                        </div>
+                        <div class="onboarding-grid">
+                            <label class="onboarding-field">
+                                <span>Nombre del producto</span>
+                                <input name="product_name" value="{{ old('product_name') }}" required placeholder="Ej: Camiseta básica">
+                                @error('product_name')<span class="onboarding-error">{{ $message }}</span>@enderror
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Precio</span>
+                                <input type="number" step="0.01" min="0" name="product_price" value="{{ old('product_price') }}" required placeholder="0">
+                                @error('product_price')<span class="onboarding-error">{{ $message }}</span>@enderror
+                            </label>
+
+                            @if($store->allowsCategories() && $categoryOptions)
+                                <label class="onboarding-field">
+                                    <span>Categoría</span>
+                                    <select name="product_category">
+                                        <option value="">Sin categoría</option>
+                                        @foreach($categoryOptions as $categoryOption)
+                                            @php
+                                                $categoryOptionValue = is_array($categoryOption) ? ($categoryOption['value'] ?? '') : $categoryOption;
+                                                $categoryOptionLabel = is_array($categoryOption) ? ($categoryOption['label'] ?? $categoryOptionValue) : $categoryOption;
+                                            @endphp
+                                            <option value="{{ $categoryOptionValue }}" @selected(old('product_category') === $categoryOptionValue)>{{ $categoryOptionLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('product_category')<span class="onboarding-error">{{ $message }}</span>@enderror
+                                </label>
+                            @endif
+
+                            <label class="onboarding-field">
+                                <span>Imagen</span>
+                                <input type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1600" data-quality="0.82" data-output="webp" data-max-size="2097152">
+                                @error('image')<span class="onboarding-error">{{ $message }}</span>@enderror
+                            </label>
+
+                            <label class="onboarding-field onboarding-field--full">
+                                <span>Descripción</span>
+                                <textarea name="product_description" placeholder="Describe materiales, beneficios o detalles importantes.">{{ old('product_description') }}</textarea>
+                            </label>
+
+                            <label class="onboarding-field">
+                                <span>Tallas</span>
+                                <input name="product_sizes" value="{{ old('product_sizes') }}" placeholder="S, M, L">
+                            </label>
+
+                            <label class="onboarding-field">
+                                <span>Colores</span>
+                                <input name="product_colors" value="{{ old('product_colors') }}" placeholder="Negro, Blanco">
+                            </label>
+                        </div>
+                        <a href="{{ route('admin.products.create') }}" class="btn btn-secondary">Abrir formulario completo</a>
+                    @endif
+                </section>
+            @elseif($currentStep === 'orders')
+                <section class="onboarding-section">
+                    <h2>Entregas</h2>
+                    <div class="onboarding-grid">
+                        @foreach($shippingRows as $index => $method)
+                            <label class="onboarding-field">
+                                <span>Método {{ $index + 1 }}</span>
+                                <input name="shipping_methods[{{ $index }}][name]" value="{{ $method['name'] ?? '' }}" maxlength="80" placeholder="{{ ['Recoger en tienda', 'Envío local', 'Envío nacional'][$index] ?? 'Método de entrega' }}">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Costo</span>
+                                <input type="number" name="shipping_methods[{{ $index }}][cost]" value="{{ $method['cost'] ?? '' }}" min="0" step="1" placeholder="0">
+                            </label>
+                        @endforeach
+
+                        @if(Store::supportsLocalDeliveryColumns())
+                            <label class="onboarding-field">
+                                <span>Ciudad local</span>
+                                <input name="local_delivery_area" value="{{ old('local_delivery_area', $store->local_delivery_area) }}" maxlength="120" placeholder="Ej: Cali">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Precio local</span>
+                                <input type="number" name="local_delivery_cost" value="{{ old('local_delivery_cost', $store->local_delivery_cost) }}" min="0" step="1" placeholder="5000">
+                            </label>
+                            <label class="onboarding-field">
+                                <span>Precio fuera de ciudad</span>
+                                <input type="number" name="outside_delivery_cost" value="{{ old('outside_delivery_cost', $store->outside_delivery_cost) }}" min="0" step="1" placeholder="12000">
+                            </label>
+                        @endif
+                    </div>
+                </section>
+
+                @if($supportsCheckoutFields)
+                    <section class="onboarding-section">
+                        <h2>Campos del checkout</h2>
+                        <div class="onboarding-grid">
+                            @foreach(Store::checkoutFieldDefinitions() as $fieldKey => $fieldDefinition)
+                                @php
+                                    $fieldState = $checkoutFieldsInput[$fieldKey] ?? $store->checkoutField($fieldKey);
+                                @endphp
+                                <label class="onboarding-option">
+                                    <input type="checkbox" name="checkout_fields[{{ $fieldKey }}][enabled]" value="1" @checked($fieldState['enabled'] ?? false)>
+                                    <span>
+                                        <strong>{{ $fieldDefinition['label'] }}</strong>
+                                        <small>{{ $fieldDefinition['description'] }}</small>
+                                    </span>
+                                </label>
+                                <input type="hidden" name="checkout_fields[{{ $fieldKey }}][required]" value="{{ ($fieldState['required'] ?? false) ? '1' : '0' }}">
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+            @elseif($currentStep === 'payments')
+                <section class="onboarding-section">
+                    <h2>Métodos disponibles</h2>
+                    <div class="onboarding-grid onboarding-grid--three">
+                        <div class="onboarding-status-card is-complete">
+                            <strong>WhatsApp</strong>
+                            <span>Activo para pedidos manuales.</span>
+                        </div>
+                        <div class="onboarding-status-card {{ $mercadoPagoAccount?->isConnected() ? 'is-complete' : '' }}">
+                            <strong>Mercado Pago</strong>
+                            <span>{{ $mercadoPagoAccount?->isConnected() ? 'Conectado' : 'Pendiente de conexión' }}</span>
+                        </div>
+                        <div class="onboarding-status-card {{ $wompiAccount?->isWompiReady() ? 'is-complete' : '' }}">
+                            <strong>Wompi</strong>
+                            <span>{{ $wompiAccount?->isWompiReady() ? 'Activo' : 'No activo' }}</span>
+                        </div>
+                    </div>
+                    <p class="onboarding-help">Las credenciales se configuran en el módulo de pagos para mantener seguridad y no duplicar formularios sensibles.</p>
+                    <a href="{{ route('admin.payments.index') }}" class="btn btn-secondary">Configurar pagos</a>
+                </section>
+            @else
+                <section class="onboarding-section">
+                    <h2>Resumen</h2>
+                    <div class="onboarding-grid">
+                        <div class="onboarding-summary">
+                            <strong>{{ $store->name }}</strong>
+                            <span>{{ $store->businessTypeLabel() }} · {{ $store->whatsapp ?: 'Sin WhatsApp' }}</span>
+                        </div>
+                        <div class="onboarding-summary">
+                            <strong>Identidad</strong>
+                            <span>{{ $store->logo_image ? 'Logo listo' : 'Sin logo' }} · {{ $store->cover_image ? 'Portada lista' : 'Sin portada' }}</span>
+                        </div>
+                        <div class="onboarding-summary">
+                            <strong>Catálogo</strong>
+                            <span>{{ $store->products()->count() }} producto(s)</span>
+                        </div>
+                        <div class="onboarding-summary">
+                            <strong>Enlace público</strong>
+                            <span>{{ $storeUrl }}</span>
+                        </div>
+                    </div>
+                    <div class="onboarding-actions__group">
+                        <a href="{{ $storeUrl }}" class="btn" target="_blank" rel="noopener noreferrer">Ver mi tienda</a>
+                        <button type="button" class="btn btn-secondary" data-copy-store-url="{{ $storeUrl }}">Copiar enlace</button>
+                        @if($store->whatsappNumber())
+                            <a class="btn btn-secondary" href="https://wa.me/?text={{ rawurlencode('Mira mi tienda: ' . $storeUrl) }}" target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a>
+                        @endif
+                    </div>
+                </section>
+            @endif
+
+            <footer class="onboarding-actions">
+                <div class="onboarding-actions__group">
+                    @if($previousStep)
+                        <a href="{{ route('admin.store.onboarding', ['step' => $previousStep]) }}" class="btn btn-secondary">Atrás</a>
+                    @endif
+                    <button type="submit" class="btn btn-secondary" data-intent-submit="exit">Guardar y salir</button>
                 </div>
 
-                <div class="onboarding-field onboarding-field--full">
-                    <label for="onboarding_shop_copy">Descripción corta</label>
-                    <textarea id="onboarding_shop_copy" name="shop_copy" placeholder="Cuenta en una frase que vendes y por qué deberían comprarte.">{{ old('shop_copy', $store->shop_copy) }}</textarea>
-                    @error('shop_copy')<span class="onboarding-error">{{ $message }}</span>@enderror
+                <div class="onboarding-actions__group">
+                    @if($currentStep === 'review')
+                        <button type="submit" class="btn" data-intent-submit="finish">Finalizar configuración</button>
+                    @else
+                        <button type="submit" class="btn" data-intent-submit="continue">Guardar y continuar</button>
+                    @endif
                 </div>
-            </div>
-
-            <div class="onboarding-actions">
-                <button type="submit" class="btn">Guardar y continuar</button>
-                <a href="{{ $storeUrl }}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Ver tienda</a>
-            </div>
+            </footer>
         </form>
-
-        <aside class="onboarding-checklist">
-            <h2>Checklist</h2>
-            @foreach($checklist as $task)
-                <div class="onboarding-task {{ $task['complete'] ? 'is-complete' : '' }}">
-                    <span class="onboarding-task-icon">{{ $task['complete'] ? 'OK' : '-' }}</span>
-                    <span>
-                        <strong>{{ $task['label'] }}</strong>
-                        <span>{{ $task['description'] }}</span>
-                    </span>
-                </div>
-            @endforeach
-
-            <a href="{{ route('admin.products.create') }}" class="btn btn-secondary">Agregar primer producto</a>
-        </aside>
-    </div>
+    </main>
 </div>
 
 <script>
+    (() => {
+        const form = document.querySelector('[data-onboarding-form]');
+        const intentInput = document.querySelector('[data-onboarding-intent]');
+
+        form?.querySelectorAll('[data-intent-submit]').forEach((button) => {
+            button.addEventListener('click', () => {
+                intentInput.value = button.dataset.intentSubmit || 'continue';
+            });
+        });
+
+        form?.addEventListener('submit', () => {
+            form.querySelectorAll('[data-intent-submit]').forEach((button) => {
+                button.disabled = true;
+            });
+        });
+
+        document.querySelectorAll('[data-copy-store-url]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                await navigator.clipboard?.writeText(button.dataset.copyStoreUrl || '');
+                button.textContent = 'Enlace copiado';
+            });
+        });
+    })();
+
     (() => {
         const coverInput = document.querySelector('[data-onboarding-cover-input]');
         const coverImage = document.querySelector('[data-onboarding-cover-image]');
@@ -763,31 +1011,23 @@
         const titlePreview = document.querySelector('[data-onboarding-cover-title]');
         const buttonPreview = document.querySelector('[data-onboarding-cover-button]');
         const brandColorInput = document.getElementById('onboarding_brand_color');
-        const coverCard = document.querySelector('.onboarding-cover-card');
+        const coverPreview = document.querySelector('[data-onboarding-cover-preview]');
 
         titleInput?.addEventListener('input', () => {
-            if (titlePreview) {
-                titlePreview.textContent = titleInput.value.trim() || 'Nueva colección';
-            }
+            if (titlePreview) titlePreview.textContent = titleInput.value.trim() || 'Nueva colección';
         });
 
         buttonInput?.addEventListener('input', () => {
-            if (buttonPreview) {
-                buttonPreview.textContent = buttonInput.value.trim() || 'Ver productos';
-            }
+            if (buttonPreview) buttonPreview.textContent = buttonInput.value.trim() || 'Ver productos';
         });
 
         brandColorInput?.addEventListener('input', () => {
-            coverCard?.style.setProperty('--onboarding-brand', brandColorInput.value || '#ff6b00');
+            coverPreview?.style.setProperty('--onboarding-brand', brandColorInput.value || '#ff6b00');
         });
 
         coverInput?.addEventListener('change', () => {
             const file = coverInput.files?.[0];
-
-            if (!file || !coverImage) {
-                return;
-            }
-
+            if (!file || !coverImage) return;
             coverImage.src = URL.createObjectURL(file);
             coverImage.hidden = false;
         });
@@ -798,13 +1038,10 @@
         const subdomainInput = document.querySelector('[data-onboarding-subdomain]');
         const preview = document.querySelector('[data-onboarding-subdomain-preview]');
 
-        if (! nameInput || ! subdomainInput) {
-            return;
-        }
+        if (!nameInput || !subdomainInput) return;
 
         const initialSubdomain = subdomainInput.value;
-        let subdomainTouched = Boolean({{ old('subdomain') ? 'true' : 'false' }});
-
+        let subdomainTouched = Boolean(@json((bool) old('subdomain')));
         const normalizeSubdomain = (value) => String(value || '')
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
@@ -813,11 +1050,8 @@
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '')
             .slice(0, 63);
-
         const syncPreview = () => {
-            if (preview) {
-                preview.textContent = subdomainInput.value || 'mitienda';
-            }
+            if (preview) preview.textContent = subdomainInput.value || 'mitienda';
         };
 
         subdomainInput.addEventListener('input', () => {
@@ -827,10 +1061,7 @@
         });
 
         nameInput.addEventListener('input', () => {
-            if (subdomainTouched && subdomainInput.value !== initialSubdomain) {
-                return;
-            }
-
+            if (subdomainTouched && subdomainInput.value !== initialSubdomain) return;
             subdomainInput.value = normalizeSubdomain(nameInput.value) || initialSubdomain || 'mitienda';
             syncPreview();
         });
@@ -839,7 +1070,7 @@
     })();
 </script>
 
-@if(! $store->whatsapp_verified_at)
+@if($currentStep === 'basic' && ! $store->whatsapp_verified_at)
     <script>
         (() => {
             const status = document.querySelector('[data-whatsapp-status]');
@@ -861,7 +1092,7 @@
                 });
                 const data = await response.json().catch(() => ({}));
 
-                if (! response.ok) {
+                if (!response.ok) {
                     const message = data.message
                         || data.errors?.whatsapp?.[0]
                         || data.errors?.whatsapp_verification_code?.[0]
@@ -877,16 +1108,10 @@
                 status.textContent = 'Enviando código...';
 
                 try {
-                    const data = await postJson(@json(route('admin.store.onboarding.whatsapp.send')), {
-                        whatsapp: phoneInput.value,
-                    });
-
+                    const data = await postJson(@json(route('admin.store.onboarding.whatsapp.send')), { whatsapp: phoneInput.value });
                     tokenInput.value = data.verification_token || '';
                     status.textContent = data.message || 'Código enviado.';
-                    if (! tokenInput.value) {
-                        window.location.reload();
-                        return;
-                    }
+                    if (!tokenInput.value) window.location.reload();
                     codeInput.focus();
                 } catch (error) {
                     status.textContent = error.message;
@@ -905,7 +1130,6 @@
                         whatsapp_verification_code: codeInput.value,
                         whatsapp_verification_token: tokenInput.value,
                     });
-
                     status.textContent = data.message || 'WhatsApp verificado.';
                     window.location.reload();
                 } catch (error) {
@@ -918,7 +1142,7 @@
     </script>
 @endif
 
-@if($store->allowsAiContent())
+@if($currentStep === 'identity' && $store->allowsAiContent())
     <script src="{{ asset('js/admin-ai-content.js') }}?v={{ filemtime(public_path('js/admin-ai-content.js')) }}" defer></script>
 @endif
 @endsection
