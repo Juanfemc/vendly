@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+  <title id="title">Mercado Pago</title>
+  <desc id="desc">Icono azul de Mercado Pago para metodos de pago.</desc>
+  <rect width="48" height="48" rx="16" fill="#00a8e8"/>
+  <path fill="#fff" d="M13.5 22.1c2.4-4 6.2-6.2 10.5-6.2s8.1 2.2 10.5 6.2c-2.4 4-6.2 6.2-10.5 6.2s-8.1-2.2-10.5-6.2Z" opacity=".25"/>
+  <path fill="#fff" d="M16.2 21.2c1.8-2.2 4.5-3.5 7.8-3.5s6 1.3 7.8 3.5l-2.6 2.2c-1.3-1.5-3-2.2-5.2-2.2s-3.9.7-5.2 2.2l-2.6-2.2Z"/>
+  <path fill="#fff" d="M15.2 25.3c1.7 3.2 5 5.1 8.8 5.1s7.1-1.9 8.8-5.1l-3.1-1.6c-1.1 2.1-3.2 3.2-5.7 3.2s-4.6-1.1-5.7-3.2l-3.1 1.6Z"/>
+  <path fill="#fff" d="M21.4 22.6h5.2a2.2 2.2 0 0 1 0 4.4h-5.2a2.2 2.2 0 1 1 0-4.4Z"/>
+</svg>

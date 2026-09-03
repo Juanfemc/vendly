@@ -68,27 +68,6 @@ $fashionTabs = collect([[
         ->sortBy(fn ($size) => mb_strtolower($size))
         ->values();
     $fashionHeroImage = $heroImage;
-    $fashionRecommended = $fashionProducts->take(6)->map(fn ($product, $index) => [
-        'category' => $product->category ?: 'Jackets',
-        'name' => $product->name,
-        'price' => (float) $product->price,
-        'image' => $product->image ? asset('storage/' . $product->image) : null,
-        'url' => $storefrontUrls->product($store, $product),
-        'reviews' => 12 + $index,
-    ])->values();
-
-    if ($fashionRecommended->count() < 6) {
-        $fashionRecommended = $fashionRecommended
-            ->concat($placeholderProducts->skip($fashionRecommended->count())->take(6 - $fashionRecommended->count())->map(fn ($product, $index) => [
-                'category' => $product['category'],
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'image' => null,
-                'url' => $storefrontUrls->products($store),
-                'reviews' => 12 + $index,
-            ]))
-            ->values();
-    }
     $fashionHeroOverlayEnabled = $supportsHeroOverlay && (bool) ($store->show_hero_overlay ?? false);
     $fashionHeroEyebrow = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_eyebrow ?? '')) : '';
     $fashionHeroTitle = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_title ?? '')) : '';
@@ -98,7 +77,7 @@ $fashionTabs = collect([[
         : $storefrontUrls->products($store);
     $fashionHeroHasCopy = $fashionHeroOverlayEnabled
         && ($fashionHeroEyebrow !== '' || $fashionHeroTitle !== '' || $fashionHeroButtonText !== '');
-    $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/><path d="M12 11h5"/><path d="M14.5 8.5v5"/></svg>';
+    $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 9.2h9.6l-.7 10a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8l-.7-10Z"/><path d="M9.5 9.2V7.4a2.5 2.5 0 0 1 5 0v1.8"/><path d="M12 13.1v4.2"/><path d="M9.9 15.2h4.2"/></svg>';
 @endphp
 
 <section class="fashion-hero">
@@ -168,72 +147,7 @@ $fashionTabs = collect([[
 
     <div class="fashion-product-grid" data-fashion-product-grid>
         @forelse($fashionProducts as $product)
-            @php
-                $fashionProductCategorySlugs = collect($fashionCategorySlugsByName->get(
-                    mb_strtolower(trim((string) $product->category)),
-                    [\Illuminate\Support\Str::slug($product->category ?: 'Jackets')]
-                ))
-                    ->push(\Illuminate\Support\Str::slug($product->category ?: 'Jackets'))
-                    ->filter()
-                    ->unique()
-                    ->values();
-                $fashionProductCategorySlug = $fashionProductCategorySlugs->first() ?: 'productos';
-                $fashionProductSizes = collect(is_array($product->sizes) ? $product->sizes : [])
-                    ->map(fn ($size) => \Illuminate\Support\Str::slug((string) $size))
-                    ->filter()
-                    ->implode(',');
-                $fashionProductPrice = (float) $product->price;
-            @endphp
-            <article
-                class="fashion-product"
-                data-fashion-product
-                data-fashion-category="{{ $fashionProductCategorySlug }}"
-                data-fashion-categories="{{ $fashionProductCategorySlugs->implode(',') }}"
-                data-fashion-name="{{ \Illuminate\Support\Str::lower($product->name) }}"
-                data-fashion-price="{{ (float) $fashionProductPrice }}"
-                data-fashion-sizes="{{ $fashionProductSizes }}"
-            >
-                <div class="fashion-product-media-shell">
-                    <a class="fashion-product-media" href="{{ $storefrontUrls->product($store, $product) }}">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy" decoding="async">
-                        @else
-                            <span>{{ $product->name }}</span>
-                        @endif
-                    </a>
-
-                    @if($product->isSoldOut())
-                        <span class="fashion-product-cart-float fashion-product-cart-float--disabled">Agotado</span>
-                    @elseif($product->hasVariants())
-                        <a class="fashion-product-cart-float" href="{{ $storefrontUrls->product($store, $product) }}" aria-label="Ver opciones de {{ $product->name }}">
-                            {!! $fashionCartIcon !!}
-                            <span>Ver opciones</span>
-                        </a>
-                    @else
-                        <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-cart-form add-to-cart-form" data-compact-fashion-cart>
-                            @csrf
-                            <button type="submit" class="fashion-product-cart-float" aria-label="Agregar {{ $product->name }} al carrito">
-                                {!! $fashionCartIcon !!}
-                                <span>Agregar al carrito</span>
-                            </button>
-                        </form>
-                    @endif
-                </div>
-                <div class="fashion-product-copy">
-                    <p class="fashion-product-category">{{ $product->category ?: 'Productos' }}</p>
-                    <h3>
-                        <a href="{{ $storefrontUrls->product($store, $product) }}">
-                            {{ $product->name }}
-                        </a>
-                    </h3>
-                    <div class="fashion-product-foot">
-                        <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
-                    </div>
-                    @if($product->hasWholesalePricing($store))
-                        <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
-                    @endif
-                </div>
-            </article>
+            @include('storefront.partials.fashion-product-card')
         @empty
             @foreach($placeholderProducts as $placeholder)
                 <article
@@ -261,7 +175,11 @@ $fashionTabs = collect([[
     </div>
 
     @if($fashionProducts->isNotEmpty())
-        <p class="catalog-end-message fashion-end-message" data-fashion-end-message>Has visto todos los productos</p>
+        @if(($storeProductsTotal ?? $fashionProducts->count()) > $fashionProducts->count())
+            <a class="fashion-catalog-more-link" href="{{ $storefrontUrls->products($store) }}">Ver catálogo completo</a>
+        @else
+            <p class="catalog-end-message fashion-end-message" data-fashion-end-message>Has visto todos los productos</p>
+        @endif
     @endif
     <p class="fashion-empty-state" data-fashion-empty-state hidden>No hay productos en esta categoria por ahora.</p>
 </section>

@@ -518,6 +518,7 @@
         const subtotal = Number(data.total || 0);
         const shipping = Number(cartDrawer.dataset.cartShipping || 0);
         const count = Number(data.cart_count || 0);
+        const hideItemMeta = cartDrawer.dataset.cartHideItemMeta === '1';
 
         if (cartDrawerCount) {
             cartDrawerCount.textContent = count;
@@ -559,6 +560,7 @@
                 : `<span>${escapeHtml(String(item.name || 'P').charAt(0).toUpperCase())}</span>`;
             const detail = escapeHtml(item.color || item.size || 'Sin variante');
             const badge = escapeHtml(item.color || 'Otros');
+            const itemMeta = hideItemMeta ? '' : `<small>${detail}</small>`;
 
             return `
                 <article class="minimal-shop-cart-item" data-cart-drawer-item data-cart-key="${key}">
@@ -566,7 +568,7 @@
                     <div class="minimal-shop-cart-info">
                         <span>${badge}</span>
                         <strong>${name}</strong>
-                        <small>${detail}</small>
+                        ${itemMeta}
                         <b data-cart-item-total>${formatMoney(item.item_total || 0)}</b>
                     </div>
                     <div class="minimal-shop-cart-controls">
@@ -731,6 +733,10 @@
 
     forms.forEach((form) => {
         form.addEventListener('submit', async (event) => {
+            if (event.submitter?.matches('[data-direct-submit]')) {
+                return;
+            }
+
             event.preventDefault();
 
             const button = form.querySelector('button[type="submit"]');

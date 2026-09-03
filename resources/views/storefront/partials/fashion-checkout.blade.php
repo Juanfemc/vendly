@@ -1,6 +1,5 @@
 @php
     $subtotal = (float) $total;
-    $tax = 0;
     $cartItems = collect($cart);
     $discountAmount = (float) ($discount['amount'] ?? 0);
     $checkoutTotal = max(0, $subtotal + (float) $shippingCost - $discountAmount);
@@ -33,18 +32,19 @@
     <div class="fashion-checkout-grid">
         <form id="checkoutForm" class="fashion-checkout-form" action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}" method="POST">
             @csrf
+            <input type="hidden" name="store" value="{{ $store->slug }}">
+            <input type="hidden" name="shipping_cost" value="{{ $hasSelectedDeliveryCity || ! $hasLocalDelivery ? $shippingCost : 0 }}" data-shipping-cost-field>
 
-            <section class="fashion-checkout-block">
-                @if($checkoutFieldEnabled('email'))
+            @if($checkoutFieldEnabled('email'))
+                <section>
                     <label class="fashion-field fashion-field--full">
                         <span>Correo electrónico{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}</span>
                         <input type="email" name="email" value="{{ old('email') }}" placeholder="correo@ejemplo.com" {{ $checkoutRequired('email') }}>
                     </label>
-                @endif
+                </section>
+            @endif
 
-            </section>
-
-            <section class="fashion-checkout-block">
+            <section>
                 <h2>Datos de entrega</h2>
 
                 @if($usesColombiaLocations)
@@ -182,7 +182,7 @@
 
             </section>
 
-            <section class="fashion-checkout-block">
+            <section>
                 <h2>Método de envío</h2>
 
                 @if($hasLocalDelivery)
@@ -215,7 +215,7 @@
                 @endif
             </section>
 
-            <section class="fashion-checkout-block">
+            <section>
                 <h2>Método de pago</h2>
                 <p class="fashion-checkout-muted">Todas las transacciones son seguras.</p>
 
@@ -231,7 +231,9 @@
                             checked
                         >
                         <span>Pedido por WhatsApp</span>
-                        <b>WA</b>
+                        <b class="fashion-payment-icon" aria-hidden="true">
+                            <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
+                        </b>
                     </label>
 
                     @if($mercadoPagoAvailable)
@@ -245,7 +247,9 @@
                                 data-payment-label="Pagar con Mercado Pago"
                             >
                             <span>Mercado Pago</span>
-                            <b>MP</b>
+                            <b class="fashion-payment-icon" aria-hidden="true">
+                                <img src="{{ asset('images/icons/payment-mercadopago.svg') }}" alt="">
+                            </b>
                         </label>
                     @endif
 
@@ -260,7 +264,9 @@
                                 data-payment-label="Pagar con Wompi"
                             >
                             <span>Wompi</span>
-                            <b>W</b>
+                            <b class="fashion-payment-icon" aria-hidden="true">
+                                <img src="{{ asset('images/icons/payment-wompi.svg') }}" alt="">
+                            </b>
                         </label>
                     @endif
                 </div>
@@ -274,7 +280,7 @@
             @endif
 
             @if($store?->allowsDiscountCoupons())
-                <section class="fashion-checkout-block">
+                <section>
                     <h2>Cupón de descuento</h2>
                     <div class="checkout-coupon">
                         <div class="checkout-coupon-row">
@@ -298,79 +304,77 @@
         <aside class="fashion-checkout-summary">
             <div class="fashion-checkout-summary-head">
                 <h2>Resumen del pedido ({{ $cartCount }})</h2>
-                <a href="{{ route('cart.index', ['store' => $store->slug]) }}">Editar carrito</a>
+                <strong class="fashion-checkout-summary-total" data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                <button
+                    type="button"
+                    class="fashion-checkout-summary-toggle"
+                    aria-expanded="false"
+                    aria-controls="fashionCheckoutSummaryBody"
+                    data-checkout-summary-toggle
+                >
+                    <span data-checkout-summary-toggle-label>Ver detalle</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"></path>
+                    </svg>
+                </button>
             </div>
 
-            <div class="fashion-summary-items">
-                @foreach ($cartItems as $productId => $item)
-                    <article class="fashion-summary-item" data-cart-item="{{ $productId }}">
-                        <div class="fashion-summary-media">
-                            @if (!empty($item['image']))
-                                <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
-                            @else
-                                <span>{{ substr($item['name'], 0, 1) }}</span>
-                            @endif
-                            <b data-role="quantity-badge">{{ $item['quantity'] }}</b>
-                        </div>
-
-                        <div>
-                            <h3>{{ $item['name'] }}</h3>
-                            @if (!empty($item['color']) || !empty($item['size']))
-                                <p>
-                                    {{ $item['color'] ?? 'Navy' }}
-                                    @if (!empty($item['size']))
-                                        / {{ $item['size'] }}
+            <div class="fashion-checkout-summary-body" id="fashionCheckoutSummaryBody" data-checkout-summary-body>
+                <div class="fashion-checkout-summary-body-inner">
+                    <div class="fashion-summary-items">
+                        @foreach ($cartItems as $productId => $item)
+                            <article class="fashion-summary-item" data-cart-item="{{ $productId }}">
+                                <div class="fashion-summary-media">
+                                    @if (!empty($item['image']))
+                                        <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                                    @else
+                                        <span>{{ substr($item['name'], 0, 1) }}</span>
                                     @endif
-                                </p>
-                            @else
-                                <p>{{ $store->name }}</p>
-                            @endif
-                            <div class="fashion-summary-qty">
-                                <button type="button" data-action="decrease" data-product-id="{{ $productId }}">-</button>
-                                <span data-role="quantity">{{ $item['quantity'] }}</span>
-                                <button type="button" data-action="increase" data-product-id="{{ $productId }}">+</button>
-                                <button type="button" data-action="remove" data-product-id="{{ $productId }}" aria-label="Eliminar producto">&times;</button>
-                            </div>
-                        </div>
+                                    <b data-role="quantity-badge">{{ $item['quantity'] }}</b>
+                                </div>
 
-                        <strong data-role="item-total">$ {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</strong>
-                    </article>
-                @endforeach
-            </div>
+                                <div>
+                                    <h3>{{ $item['name'] }}</h3>
+                                    @if (!empty($item['color']) || !empty($item['size']))
+                                        <p>
+                                            {{ $item['color'] ?? 'Navy' }}
+                                            @if (!empty($item['size']))
+                                                / {{ $item['size'] }}
+                                            @endif
+                                        </p>
+                                    @else
+                                        <p>{{ $store->name }}</p>
+                                    @endif
+                                    <div class="fashion-summary-qty">
+                                        <button type="button" data-action="decrease" data-product-id="{{ $productId }}">-</button>
+                                        <span data-role="quantity">{{ $item['quantity'] }}</span>
+                                        <button type="button" data-action="increase" data-product-id="{{ $productId }}">+</button>
+                                        <button type="button" data-action="remove" data-product-id="{{ $productId }}" aria-label="Eliminar producto">&times;</button>
+                                    </div>
+                                </div>
 
-            <div class="fashion-summary-totals">
-                <p><span>Subtotal</span><strong data-role="total">$ {{ number_format($subtotal, 0, ',', '.') }}</strong></p>
-                <p class="{{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
-                    <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
-                    <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
-                </p>
-                @if($hasShippingCost)
-                    <p><span>Envío</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong></p>
-                @endif
-                <p><span>Impuestos estimados</span><strong>$ {{ number_format($tax, 0, ',', '.') }}</strong></p>
-                <p class="fashion-summary-grand">
-                    <span>Total</span>
-                    <small>COP</small>
-                    <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
-                </p>
-            </div>
+                                <strong data-role="item-total">$ {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</strong>
+                            </article>
+                        @endforeach
+                    </div>
 
-            <div class="fashion-summary-benefits">
-                <article>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-                    <div><strong>Envío gratis</strong><span>En pedidos que cumplan el mínimo de la tienda</span></div>
-                </article>
-                <article>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-                    <div><strong>Cambios fáciles</strong><span>Según las políticas de la tienda</span></div>
-                </article>
-                <article>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-                    <div><strong>Pago seguro</strong><span>Compra protegida</span></div>
-                </article>
+                    <div class="fashion-summary-totals">
+                        <p><span>Subtotal</span><strong data-role="total">$ {{ number_format($subtotal, 0, ',', '.') }}</strong></p>
+                        <p class="{{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
+                            <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
+                            <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
+                        </p>
+                        @if($hasShippingCost)
+                            <p><span>Envío</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong></p>
+                        @endif
+                        <p class="fashion-summary-grand">
+                            <span>Total</span>
+                            <small>COP</small>
+                            <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                        </p>
+                    </div>
+                </div>
             </div>
         </aside>
     </div>
 </section>
-
-

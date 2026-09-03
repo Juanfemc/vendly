@@ -7,6 +7,8 @@
         ->values();
     $visibleMobileCategories = $mobileCategories->take(8);
     $hasMoreMobileCategories = $mobileCategories->count() > $visibleMobileCategories->count();
+    $minimalNavHasSubcategories = $store->allowsSubcategories()
+        && $mobileCategories->contains(fn ($category) => ($category->activeChildren ?? collect())->isNotEmpty());
     $mobileBadgeFilters = ($customBadgeFilters ?? collect())->values();
     $selectedMobileBadge = trim((string) ($selectedHomeBadge ?? request('etiqueta', '')));
     $icons = \App\Support\MinimalShopIcons::class;
@@ -69,6 +71,37 @@
         <nav class="minimal-shop-links" aria-label="Navegacion principal">
             <a href="{{ $storefrontUrls->home($store) }}">Inicio</a>
             <a href="{{ $storefrontUrls->products($store) }}">Tienda</a>
+            @if($mobileCategories->isNotEmpty())
+                <div class="minimal-shop-nav-dropdown">
+                    <button type="button" class="minimal-shop-nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                        <span>Categorias</span>
+                        <i aria-hidden="true"></i>
+                    </button>
+                    <div class="minimal-shop-nav-dropdown-menu {{ $minimalNavHasSubcategories ? 'has-subcategories' : '' }}">
+                        @foreach($mobileCategories as $categoryLink)
+                            @if($minimalNavHasSubcategories)
+                                <section class="minimal-shop-nav-category-group">
+                                    <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="minimal-shop-nav-category-title">
+                                        <span>{!! $icons::categoryIcon($categoryLink->name) !!}</span>
+                                        <strong>{{ $categoryLink->name }}</strong>
+                                    </a>
+                                    @foreach($categoryLink->activeChildren ?? collect() as $subcategoryLink)
+                                        <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" class="minimal-shop-nav-subcategory">
+                                            {{ $subcategoryLink->name }}
+                                        </a>
+                                    @endforeach
+                                    <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="minimal-shop-nav-view-all">Ver todo</a>
+                                </section>
+                            @else
+                                <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" class="minimal-shop-nav-category-link">
+                                    <span>{!! $icons::categoryIcon($categoryLink->name) !!}</span>
+                                    <strong>{{ $categoryLink->name }}</strong>
+                                </a>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             @foreach($mobileBadgeFilters as $badge)
                 <a
                     href="{{ $minimalCategoryUrl(['etiqueta' => $badge]) }}"
@@ -217,11 +250,28 @@
             </a>
 
             @foreach($visibleMobileCategories as $categoryLink)
-                <a href="{{ $minimalCategoryUrl(['categoria' => $categoryLink->slug]) }}" data-minimal-category-link>
-                    <span>{!! $icons::categoryIcon($categoryLink->name) !!}</span>
-                    <strong>{{ $categoryLink->name }}</strong>
-                    <i>{!! $icons::icon('arrow') !!}</i>
-                </a>
+                @php($categoryChildren = $store->allowsSubcategories() ? ($categoryLink->activeChildren ?? collect()) : collect())
+                @if($categoryChildren->isNotEmpty())
+                    <details class="minimal-shop-mobile-category-group">
+                        <summary>
+                            <span>{!! $icons::categoryIcon($categoryLink->name) !!}</span>
+                            <strong>{{ $categoryLink->name }}</strong>
+                            <i>{!! $icons::icon('arrow') !!}</i>
+                        </summary>
+                        <div>
+                            <a href="{{ $storefrontUrls->category($store, $categoryLink) }}" data-minimal-category-link>Ver todo</a>
+                            @foreach($categoryChildren as $subcategoryLink)
+                                <a href="{{ $storefrontUrls->category($store, $subcategoryLink) }}" data-minimal-category-link>{{ $subcategoryLink->name }}</a>
+                            @endforeach
+                        </div>
+                    </details>
+                @else
+                    <a href="{{ $minimalCategoryUrl(['categoria' => $categoryLink->slug]) }}" data-minimal-category-link>
+                        <span>{!! $icons::categoryIcon($categoryLink->name) !!}</span>
+                        <strong>{{ $categoryLink->name }}</strong>
+                        <i>{!! $icons::icon('arrow') !!}</i>
+                    </a>
+                @endif
             @endforeach
 
             @if($hasMoreMobileCategories)

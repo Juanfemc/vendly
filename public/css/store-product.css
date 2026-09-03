@@ -13,13 +13,14 @@
 
 .product-detail {
     display: grid;
-    grid-template-columns: minmax(0, clamp(520px, 46vw, 600px)) minmax(320px, 440px);
-    gap: clamp(16px, 2vw, 26px);
+    grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+    gap: clamp(28px, 4vw, 56px);
     align-items: start;
     justify-content: center;
     padding-bottom: 40px;
     width: 100%;
-    max-width: 100%;
+    max-width: 1120px;
+    margin-inline: auto;
     overflow: visible;
 }
 
@@ -44,19 +45,22 @@
     justify-items: center;
     min-width: 0;
     width: 100%;
-    max-width: 600px;
+    max-width: 550px;
+    justify-self: end;
 }
 
 .product-carousel-stage {
     position: relative;
     justify-self: center;
-    width: min(100%, 560px);
+    display: grid;
+    place-items: center;
+    width: min(100%, 550px);
     aspect-ratio: 1 / 1;
     min-height: 0;
-    max-height: min(72vh, 600px);
+    max-height: min(72vh, 550px);
     overflow: hidden;
     border-radius: 26px;
-    background: transparent;
+    background: var(--soft);
     touch-action: pan-y;
     user-select: none;
     cursor: zoom-in;
@@ -65,11 +69,13 @@
 .product-carousel-image {
     position: absolute;
     inset: 0;
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     display: block;
+    padding: clamp(10px, 2.2vw, 22px);
     opacity: 0;
     transform: scale(1);
     transition: opacity .22s ease, transform .55s ease;
@@ -82,7 +88,7 @@
 
 @media (hover: hover) and (pointer: fine) {
     .product-carousel-stage:hover .product-carousel-image.is-active {
-        transform: scale(1.055);
+        transform: scale(1.025);
     }
 }
 
@@ -177,7 +183,7 @@
     grid-auto-flow: column;
     grid-auto-columns: clamp(74px, 12vw, 104px);
     grid-template-columns: none;
-    width: min(100%, 560px);
+    width: min(100%, 550px);
     gap: 12px;
     overflow-x: auto;
     padding: 2px 2px 8px;
@@ -356,7 +362,8 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    max-width: 100%;
+    max-width: 620px;
+    justify-self: start;
     padding: 8px 0;
 }
 
@@ -1087,6 +1094,13 @@
     .product-detail {
         grid-template-columns: 1fr;
         gap: 28px;
+        max-width: 760px;
+    }
+
+    .product-carousel,
+    .product-detail-panel {
+        justify-self: center;
+        max-width: 100%;
     }
 
     .product-detail-media,
@@ -1111,6 +1125,7 @@
 
     .product-detail {
         gap: 22px;
+        max-width: 100%;
     }
 
     .product-carousel {
@@ -1122,7 +1137,11 @@
     .product-carousel-stage {
         min-height: 0;
         border-radius: 20px;
-        aspect-ratio: 1 / 1.08;
+        aspect-ratio: 1 / 1;
+    }
+
+    .product-carousel-image {
+        padding: 10px;
     }
 
     .product-carousel-zoom {

@@ -10,6 +10,7 @@
     const totalEls = Array.from(document.querySelectorAll('[data-role="total"]'));
     const grandTotalEls = Array.from(document.querySelectorAll('[data-role="grand-total"]'));
     const shippingTotalEls = Array.from(document.querySelectorAll('[data-role="shipping-total"]'));
+    const shippingCostField = document.querySelector('[data-shipping-cost-field]');
     const discountTotalEls = Array.from(document.querySelectorAll('[data-role="discount-total"]'));
     const discountRow = document.querySelector('[data-discount-row]');
     const discountCodeInput = document.querySelector('[data-discount-code]');
@@ -26,6 +27,9 @@
     const clearCartButton = document.getElementById('clearCartButton');
     const paymentChoices = Array.from(document.querySelectorAll('[data-payment-choice]'));
     const paymentSubmitButtons = Array.from(document.querySelectorAll('[data-payment-submit]'));
+    const checkoutSummary = document.querySelector('.fashion-checkout-summary');
+    const checkoutSummaryToggle = document.querySelector('[data-checkout-summary-toggle]');
+    const checkoutSummaryToggleLabel = document.querySelector('[data-checkout-summary-toggle-label]');
     const csrfToken = page.dataset.csrf || '';
     const updatedText = page.dataset.feedbackUpdated || 'Carrito actualizado';
     const updateErrorText = page.dataset.feedbackUpdateError || 'No se pudo actualizar el carrito.';
@@ -43,6 +47,36 @@
     let feedbackTimer;
     let discountRefreshTimer;
     let lastTermsTrigger = null;
+    let summaryWasToggled = false;
+
+    const checkoutSummaryMedia = window.matchMedia('(max-width: 767px)');
+    const setCheckoutSummaryExpanded = (expanded) => {
+        if (!checkoutSummary || !checkoutSummaryToggle || !checkoutSummaryToggleLabel) {
+            return;
+        }
+
+        checkoutSummary.classList.toggle('is-expanded', expanded);
+        checkoutSummaryToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        checkoutSummaryToggleLabel.textContent = expanded ? 'Ocultar detalle' : 'Ver detalle';
+    };
+
+    const syncCheckoutSummaryMode = () => {
+        if (!checkoutSummary || !checkoutSummaryToggle) {
+            return;
+        }
+
+        if (!checkoutSummaryMedia.matches) {
+            setCheckoutSummaryExpanded(true);
+            checkoutSummaryToggle.disabled = true;
+            return;
+        }
+
+        checkoutSummaryToggle.disabled = false;
+
+        if (!summaryWasToggled) {
+            setCheckoutSummaryExpanded(false);
+        }
+    };
 
     const money = (value) => `$ ${new Intl.NumberFormat('es-CO').format(value || 0)}`;
     const grandTotal = (cost) => Math.max(0, subtotal + cost - discountAmount);
@@ -195,6 +229,9 @@
         shippingTotalEls.forEach((element) => {
             element.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
         });
+        if (shippingCostField) {
+            shippingCostField.value = String(awaitingCity ? 0 : cost);
+        }
         grandTotalEls.forEach((element) => {
             element.textContent = money(grandTotal(awaitingCity ? 0 : cost));
         });
@@ -366,6 +403,17 @@
         choice.addEventListener('change', syncPaymentChoice);
     });
 
+    checkoutSummaryToggle?.addEventListener('click', () => {
+        if (!checkoutSummaryMedia.matches || !checkoutSummary) {
+            return;
+        }
+
+        summaryWasToggled = true;
+        setCheckoutSummaryExpanded(!checkoutSummary.classList.contains('is-expanded'));
+    });
+
+    checkoutSummaryMedia.addEventListener?.('change', syncCheckoutSummaryMode);
+
     checkoutForm?.addEventListener('submit', (event) => {
         const selected = selectedPaymentChoice();
         const action = selected?.dataset.paymentAction;
@@ -514,5 +562,6 @@
 
     syncCityOptions();
     syncPaymentChoice();
+    syncCheckoutSummaryMode();
     updateSummary();
 })();

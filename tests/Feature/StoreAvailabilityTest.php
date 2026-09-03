@@ -1576,7 +1576,16 @@ test('admin template selection applies to the selected store', function () {
         'role' => 'admin',
         'is_active' => true,
     ]);
+    $firstStoreUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $secondStoreUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
     $firstStore = Store::create([
+        'user_id' => $firstStoreUser->id,
         'name' => 'Primera Tienda',
         'slug' => 'primera-tienda',
         'whatsapp' => '573001112233',
@@ -1585,6 +1594,7 @@ test('admin template selection applies to the selected store', function () {
         'is_active' => true,
     ]);
     $secondStore = Store::create([
+        'user_id' => $secondStoreUser->id,
         'name' => 'Segunda Tienda',
         'slug' => 'segunda-tienda',
         'whatsapp' => '573001112233',
@@ -1648,7 +1658,7 @@ test('admin template panel defaults to an eligible store', function () {
         ->post(route('admin.templates.apply', 'fashion'), [
             'store_id' => $basicStore->id,
         ])
-        ->assertRedirect(route('admin.templates.index', ['store_id' => $basicStore->id]))
+        ->assertRedirect(route('admin.templates.index', ['store_id' => $proStore->id]))
         ->assertSessionHas('error');
 
     $this->actingAs($admin)
@@ -5129,6 +5139,77 @@ test('technology storefront renders variant selectors before adding to cart', fu
         ->assertSee('name="color"', false);
 });
 
+test('technology storefront shows real catalog details without fake footer or wishlist', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+        'email' => 'ventas@techstore.test',
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tech Premium',
+        'slug' => 'tech-premium',
+        'whatsapp' => '573001112233',
+        'location' => 'Bogota',
+        'business_type' => 'technology',
+        'plan' => Store::PLAN_PREMIUM,
+        'instagram_url' => 'https://instagram.com/techpremium',
+        'terms_content' => 'Cambios segun politicas de la tienda.',
+        'shipping_methods' => [
+            ['name' => 'Envio local', 'cost' => 9000],
+        ],
+        'is_active' => true,
+    ]);
+
+    $parentCategory = StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Audio',
+        'slug' => 'audio',
+        'is_active' => true,
+    ]);
+    $subcategory = StoreCategory::create([
+        'store_id' => $store->id,
+        'parent_id' => $parentCategory->id,
+        'name' => 'Audifonos',
+        'slug' => 'audifonos',
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Audifonos Pro',
+        'category' => $subcategory->name,
+        'price' => 249000,
+        'has_offer' => true,
+        'offer_original_price' => 299000,
+        'stock_quantity' => 8,
+        'description' => "Sonido envolvente.\nBateria de larga duracion.",
+        'features' => "Bluetooth 5.3\nMicrofono integrado",
+    ]);
+
+    $home = $this->get('/tech-premium')->assertOk()->getContent();
+    $detail = $this->get('/tech-premium/productos/'.$product->publicRouteKey())->assertOk()->getContent();
+
+    expect($home)->toContain('minimal-shop-card-stock')
+        ->and($home)->toContain('8 disponibles')
+        ->and($home)->toContain('minimal-shop-nav-category-group')
+        ->and($home)->toContain('Audifonos')
+        ->and($home)->toContain('Instagram')
+        ->and($home)->toContain('ventas@techstore.test')
+        ->and($home)->toContain('Bogota')
+        ->and($home)->not->toContain('Noticias')
+        ->and($home)->not->toContain('https://facebook.com')
+        ->and($detail)->toContain('minimal-product-info-card')
+        ->and($detail)->toContain('minimalProductDescription')
+        ->and($detail)->toContain('minimalProductFeatures')
+        ->and($detail)->toContain('minimalProductShipping')
+        ->and($detail)->toContain('Envio local')
+        ->and($detail)->not->toContain('Agregar a favoritos')
+        ->and($detail)->not->toContain('Cancelacion activa de ruido');
+});
+
 test('restaurant storefront renders as a menu', function () {
     $user = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -7764,6 +7845,73 @@ test('checkout applies selected shipping method cost to orders and whatsapp mess
         ->toContain('Total: $38.000');
 });
 
+test('fashion checkout shows shipping without redundant summary actions', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Moda Checkout',
+        'slug' => 'moda-checkout',
+        'business_type' => 'fashion',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'shipping_methods' => [
+            ['name' => 'Domicilio urbano', 'cost' => 9000],
+            ['name' => 'Recoger en tienda', 'cost' => 0],
+        ],
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Camiseta Checkout',
+        'price' => 60000,
+    ]);
+
+    StorePaymentAccount::create([
+        'store_id' => $store->id,
+        'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
+        'access_token' => 'access-token',
+        'refresh_token' => 'refresh-token',
+        'provider_user_id' => '521008171',
+        'connected_at' => now(),
+        'status' => StorePaymentAccount::STATUS_CONNECTED,
+    ]);
+
+    StorePaymentAccount::create([
+        'store_id' => $store->id,
+        'provider' => StorePaymentAccount::PROVIDER_WOMPI,
+        'public_key' => 'pub_test',
+        'private_key' => 'prv_test',
+        'events_secret' => 'evt_test',
+        'integrity_secret' => 'int_test',
+        'connected_at' => now(),
+        'status' => StorePaymentAccount::STATUS_CONNECTED,
+    ]);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
+
+    $response = $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertSee('cart-page--fashion')
+        ->assertSee('Método de envío')
+        ->assertSee('Domicilio urbano')
+        ->assertSee('$ 9.000')
+        ->assertSee('data-shipping-cost-field', false)
+        ->assertSee('images/icons/payment-whatsapp.svg', false)
+        ->assertSee('images/icons/payment-mercadopago.svg', false)
+        ->assertSee('images/icons/payment-wompi.svg', false)
+        ->assertDontSee('Editar carrito')
+        ->assertDontSee('fashion-summary-benefits')
+        ->assertDontSee('Impuestos estimados');
+
+    expect($response->getContent())->toContain('value="9000"');
+});
+
 test('shipping methods are only available on pro and premium plans', function () {
     $basicUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -8270,4 +8418,80 @@ test('non premium stores cannot keep wholesale pricing from crafted product requ
     expect($product->has_wholesale_price)->toBeFalse()
         ->and($product->wholesale_min_quantity)->toBeNull()
         ->and($product->wholesale_price)->toBeNull();
+});
+
+test('fashion storefront reuses fashion cards and shared cart drawer on catalog pages', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Moda Consistente',
+        'slug' => 'moda-consistente',
+        'business_type' => 'fashion',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $category = StoreCategory::create([
+        'store_id' => $store->id,
+        'name' => 'Camisetas',
+        'slug' => 'camisetas',
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Camiseta Minimal',
+        'category' => $category->name,
+        'price' => 45000,
+        'has_offer' => true,
+        'offer_original_price' => 55000,
+        'stock_quantity' => 8,
+    ]);
+
+    ProductReview::create([
+        'store_id' => $store->id,
+        'product_id' => $product->id,
+        'name' => 'Cliente feliz',
+        'rating' => 5,
+        'comment' => 'Excelente camiseta.',
+        'is_approved' => true,
+    ]);
+
+    $home = $this->get('/moda-consistente')->assertOk()->getContent();
+    $catalog = $this->get('/moda-consistente/productos')->assertOk()->getContent();
+    $categoryPage = $this->get('/moda-consistente/categorias/camisetas')->assertOk()->getContent();
+    $detailPage = $this->get(route('store.product.show', [
+        'slug' => $store->slug,
+        'product' => $product->fresh()->publicRouteKey(),
+    ]))->assertOk()->getContent();
+    $categoryUrl = route('store.category.show', ['slug' => $store->slug, 'category' => $category->slug]);
+    $buyNowUrl = route('cart.buy_now', $product->id);
+
+    expect(substr_count($home, 'fashion-cart-drawer minimal-shop-cart-drawer'))->toBe(1)
+        ->and($home)->toContain('fashion-cart-drawer minimal-shop-cart-drawer')
+        ->and($home)->not->toContain('minimal-shop-cart-secure')
+        ->and($home)->toContain('fashion-product-badges')
+        ->and($home)->toContain('Oferta')
+        ->and($home)->toContain('fashion-product-stock')
+        ->and($home)->toContain('8 disponibles')
+        ->and($catalog)->toContain('fashion-catalog-head')
+        ->and($catalog)->toContain('fashion-product-grid fashion-catalog-product-grid')
+        ->and($catalog)->toContain('class="fashion-product"')
+        ->and($catalog)->not->toContain('class="product-card')
+        ->and($categoryPage)->toContain('fashion-catalog-head')
+        ->and($categoryPage)->toContain('class="fashion-product"')
+        ->and($categoryPage)->not->toContain('category-page-hero')
+        ->and($detailPage)->toContain('href="'.$categoryUrl.'"')
+        ->and($detailPage)->toContain('fashion-product-rating')
+        ->and($detailPage)->toContain('1 reseña')
+        ->and($detailPage)->toContain('Cliente feliz')
+        ->and($detailPage)->toContain('Comprar ahora')
+        ->and($detailPage)->toContain('fashion-product-actions has-whatsapp')
+        ->and($detailPage)->toContain('formaction="'.$buyNowUrl.'"');
 });

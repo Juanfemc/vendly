@@ -77,6 +77,7 @@
     @endif
 
     <main class="shell">
+        @if($storefrontVariant !== 'fashion')
         <section class="category-page-hero category-page-hero--category">
             <div class="category-page-mark" aria-hidden="true">
                 @if($categoryImageUrl)
@@ -104,17 +105,42 @@
                 @endif
             </div>
         </section>
+        @endif
 
         <section class="catalog-section" id="catalogo">
+            @if($storefrontVariant === 'fashion')
+                <div class="fashion-catalog-head">
+                    <h1>{{ $category->name }}</h1>
+                    <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }}</p>
+                    @if($category->description)
+                        <small>{{ $category->description }}</small>
+                    @endif
+                    @if($store->allowsSubcategories() && ($category->parent || $categoryChildren->isNotEmpty()))
+                        <div class="category-page-subcategories" aria-label="Subcategorías">
+                            @if($category->parent)
+                                <a href="{{ $storefrontUrls->category($store, $category->parent) }}">Ver {{ $category->parent->name }}</a>
+                            @endif
+                            @foreach($categoryChildren as $subcategory)
+                                <a href="{{ $storefrontUrls->category($store, $subcategory) }}">{{ $subcategory->name }}</a>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             @include('storefront.partials.product-search', [
                 'productSearchId' => 'category',
                 'productSearchAction' => $storefrontUrls->category($store, $category),
             ])
 
             @if($products->isNotEmpty())
-                <div class="products-grid">
+                <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
                     @foreach($products as $product)
-                        @include('storefront.partials.product-card')
+                        @if($storefrontVariant === 'fashion')
+                            @include('storefront.partials.fashion-product-card')
+                        @else
+                            @include('storefront.partials.product-card')
+                        @endif
                     @endforeach
                 </div>
 

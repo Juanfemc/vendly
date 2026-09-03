@@ -1,18 +1,26 @@
 @php
+    $cartBackdropClass = $cartBackdropClass ?? 'store-cart-backdrop';
+    $cartDrawerClass = $cartDrawerClass ?? 'store-cart-drawer';
+    $cartShowTax = $cartShowTax ?? false;
+    $cartShowSecure = $cartShowSecure ?? true;
+    $cartHideItemMeta = $cartHideItemMeta ?? false;
     $drawerCart = app(\App\Services\CartService::class)->cartForStore($store);
     $drawerSubtotal = collect($drawerCart)->sum(fn ($item) => (float) ($item['price'] ?? 0) * (int) ($item['quantity'] ?? 1));
     $drawerShipping = 0;
+    $drawerTax = 0;
     $drawerTotal = $drawerSubtotal + $drawerShipping;
 @endphp
 
-<label class="store-cart-backdrop" for="minimalShopCartToggle" aria-hidden="true"></label>
+<label class="{{ $cartBackdropClass }}" for="minimalShopCartToggle" aria-hidden="true"></label>
 
 <aside
-    class="store-cart-drawer{{ $cartCount < 1 ? ' is-empty' : '' }}"
+    class="{{ $cartDrawerClass }}{{ $cartCount < 1 ? ' is-empty' : '' }}"
     aria-label="{{ $cartLabel }}"
     data-cart-drawer
     data-cart-subtotal="{{ $drawerSubtotal }}"
     data-cart-shipping="{{ $drawerShipping }}"
+    data-cart-tax="{{ $drawerTax }}"
+    data-cart-hide-item-meta="{{ $cartHideItemMeta ? '1' : '0' }}"
     data-store-url="{{ $storefrontUrls->home($store) }}"
 >
     <div class="minimal-shop-cart-head">
@@ -43,7 +51,9 @@
                 </div>
                 <div class="minimal-shop-cart-info">
                     <strong>{{ $item['name'] ?? 'Producto' }}</strong>
-                    <small>{{ $drawerVariant !== '' ? $drawerVariant : 'Sin variante' }}</small>
+                    @unless($cartHideItemMeta)
+                        <small>{{ $drawerVariant !== '' ? $drawerVariant : 'Sin variante' }}</small>
+                    @endunless
                     <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
                 </div>
                 <div class="minimal-shop-cart-controls">
@@ -71,7 +81,10 @@
     <div class="minimal-shop-cart-summary">
         <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
         <p><span>Envío</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
-        <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
+        @if($cartShowTax)
+            <p><span>Impuestos</span><strong data-cart-drawer-tax>$0</strong></p>
+        @endif
+        <p class="minimal-shop-cart-total"><span>Total</span>@if($cartShowTax)<small>COP</small>@endif<strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
     </div>
 
     <div class="minimal-shop-cart-actions">
@@ -79,10 +92,12 @@
         <a href="{{ route('cart.index', ['store' => $store->slug]) }}">Finalizar compra</a>
     </div>
 
-    <p class="minimal-shop-cart-secure">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
-        </svg>
-        Compra segura
-    </p>
+    @if($cartShowSecure)
+        <p class="minimal-shop-cart-secure">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+            </svg>
+            Compra segura
+        </p>
+    @endif
 </aside>

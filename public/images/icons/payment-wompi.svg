@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+  <title id="title">Wompi</title>
+  <desc id="desc">Icono morado de Wompi para metodos de pago.</desc>
+  <rect width="48" height="48" rx="16" fill="#5b2cff"/>
+  <circle cx="35" cy="13" r="5" fill="#00e6b8"/>
+  <path fill="#fff" d="M12 16h5.2l3.1 14.4L24 16h4.4l3.7 14.4L35.2 16H40l-5.6 22h-4.9l-3.4-13-3.4 13h-4.9L12 16Z"/>
+</svg>

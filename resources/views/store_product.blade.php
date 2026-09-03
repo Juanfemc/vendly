@@ -724,12 +724,36 @@
 
             const hasRequiredSize = Boolean(selectedSize || document.querySelector('[data-role="selected-size-radio"]'));
             const hasRequiredColor = Boolean(selectedColor || document.querySelector('[data-role="selected-color-radio"]'));
+            const isFashionStorefront = document.body.classList.contains('storefront-page--fashion');
 
             const variantsAreSelected = () => {
                 const sizeSelected = !hasRequiredSize || Boolean(selectedSize?.value || selectedSizeRadio()?.value);
                 const colorSelected = !hasRequiredColor || Boolean(selectedColor?.value || selectedColorRadio()?.value);
 
                 return sizeSelected && colorSelected;
+            };
+
+            const pendingVariantLabel = () => {
+                if (!isFashionStorefront) {
+                    return 'Selecciona una opción';
+                }
+
+                const needsSize = hasRequiredSize && !Boolean(selectedSize?.value || selectedSizeRadio()?.value);
+                const needsColor = hasRequiredColor && !Boolean(selectedColor?.value || selectedColorRadio()?.value);
+
+                if (needsColor && needsSize) {
+                    return 'Elige color y talla';
+                }
+
+                if (needsColor) {
+                    return 'Elige color';
+                }
+
+                if (needsSize) {
+                    return 'Elige talla';
+                }
+
+                return 'Selecciona una opción';
             };
 
             const syncVariantActions = () => {
@@ -742,7 +766,7 @@
                     if (button.hasAttribute('data-variant-add-action')) {
                         const label = button.querySelector('[data-variant-label]');
                         const nextLabel = isDisabled
-                            ? 'Selecciona una opción'
+                            ? pendingVariantLabel()
                             : (button.dataset.enabledLabel || 'Agregar al carrito');
 
                         if (label) {

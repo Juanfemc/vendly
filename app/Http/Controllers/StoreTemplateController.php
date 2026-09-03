@@ -29,12 +29,21 @@ class StoreTemplateController extends Controller
     {
         abort_unless($request->user()?->isAdmin(), 403);
 
-        $stores = $this->availableStores();
-        $store = $this->storeForRequest($request, $stores);
+        $allStores = $this->accessibleStores();
+        $stores = $this->templateEligibleStores($allStores);
+        $store = $this->storeForRequest($request, $allStores);
         $templateData = StoreTemplateCatalog::find($template);
 
-        abort_unless($store, $stores->isEmpty() ? 403 : 404);
+        abort_unless($store, $allStores->isEmpty() ? 403 : 404);
         abort_unless($templateData, 404);
+
+        if (! $store->allowsTemplates()) {
+            $redirectStore = $stores->first();
+
+            return redirect()
+                ->route('admin.templates.index', $redirectStore ? ['store_id' => $redirectStore->id] : [])
+                ->with('error', 'Esta tienda no puede usar plantillas con su plan actual.');
+        }
 
         if (! ($templateData['available'] ?? false)) {
             return redirect()
@@ -53,16 +62,24 @@ class StoreTemplateController extends Controller
 
     private function availableStores(): Collection
     {
+        return $this->templateEligibleStores($this->accessibleStores());
+    }
+
+    private function accessibleStores(): Collection
+    {
         $user = auth()->user();
 
         if (! $user) {
             return Store::newCollection();
         }
 
-        $stores = $user->isAdmin()
+        return $user->isAdmin()
             ? Store::orderBy('name')->get()
             : $user->stores()->orderBy('name')->get();
+    }
 
+    private function templateEligibleStores(Collection $stores): Collection
+    {
         return $stores->filter(fn (Store $store) => $store->allowsTemplates())->values();
     }
 

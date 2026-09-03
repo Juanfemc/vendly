@@ -17,32 +17,33 @@
     $minimalSwatches = ['#111111', '#ffffff', '#33415f'];
     $minimalCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $minimalBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
+    $minimalIcons = \App\Support\MinimalShopIcons::class;
     $minimalDisplayPrice = (float) $product->price;
     $minimalShowsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
-    $minimalDescription = \App\Support\ProductText::plain($product->description) ?: 'Disfruta ' . $product->name . ' con una experiencia pensada para comprar fácil, rápido y con confianza.';
+    $minimalDescription = \App\Support\ProductText::plain($product->description);
     $minimalFeatureItems = collect(preg_split('/\R+/', \App\Support\ProductText::featureLines($product->features)) ?: [])
         ->map(fn ($feature) => trim($feature, " \t\n\r\0\x0B-*"))
         ->filter()
         ->take(6)
         ->values();
-
-    if ($minimalFeatureItems->isEmpty()) {
-        $minimalFeatureItems = collect([
-            'Cancelacion activa de ruido',
-            'Conectividad Bluetooth 5.3',
-            'Microfono integrado para llamadas',
-            'Diseno plegable y liviano',
-        ]);
-    }
-
-    $minimalBenefits = [
-        ['icon' => 'E', 'title' => 'Envío gratis', 'copy' => 'En pedidos seleccionados'],
-        ['icon' => 'D', 'title' => 'Devoluciones faciles', 'copy' => 'Politica de devolucion disponible'],
-        $minimalAllowsOnlinePayments
-            ? ['icon' => 'P', 'title' => 'Pago seguro', 'copy' => 'Compra protegida']
-            : ['icon' => 'W', 'title' => 'Compra por WhatsApp', 'copy' => 'Confirma tu pedido directo'],
-        ['icon' => 'G', 'title' => 'Garantia', 'copy' => 'Calidad garantizada'],
-    ];
+    $minimalShippingMethods = collect($store->shippingMethods())
+        ->filter(fn ($method) => trim((string) ($method['name'] ?? '')) !== '')
+        ->values();
+    $minimalTermsContent = trim(strip_tags((string) $store->terms_content));
+    $minimalTermsUrl = trim((string) $store->terms_url);
+    $hasMinimalShippingInfo = $store->localDeliveryEnabled()
+        || $minimalShippingMethods->isNotEmpty()
+        || $minimalTermsContent !== ''
+        || $minimalTermsUrl !== '';
+    $hasMinimalProductInfo = $minimalDescription !== ''
+        || $minimalFeatureItems->isNotEmpty()
+        || $hasMinimalShippingInfo;
+    $minimalInfoNavItems = collect([
+        $minimalDescription !== '' ? ['href' => '#minimalProductDescription', 'label' => 'Descripcion'] : null,
+        $minimalFeatureItems->isNotEmpty() ? ['href' => '#minimalProductFeatures', 'label' => 'Caracteristicas'] : null,
+        $hasMinimalShippingInfo ? ['href' => '#minimalProductShipping', 'label' => 'Envios y devoluciones'] : null,
+        ($minimalReviewsEnabled && $minimalReviewCount > 0) ? ['href' => '#minimalProductReviews', 'label' => 'Resenas ('.$minimalReviewCount.')'] : null,
+    ])->filter()->values();
 @endphp
 
 <main class="shell minimal-product-page">
@@ -112,23 +113,65 @@
                 </div>
             @endif
 
-            <section class="minimal-product-tabs">
-                <nav aria-label="Informacion del producto">
-                    <a class="is-active" href="#minimalProductDescription">Descripcion</a>
-                    <a href="#minimalProductDescription">Especificaciones</a>
-                    @if($minimalReviewsEnabled && $minimalReviewCount > 0)
-                        <a href="#minimalProductReviews">Resenas ({{ $minimalReviewCount }})</a>
+            @if($hasMinimalProductInfo || $minimalReviewsEnabled)
+                <section class="minimal-product-tabs">
+                    @if($minimalInfoNavItems->isNotEmpty())
+                        <nav aria-label="Informacion del producto">
+                            @foreach($minimalInfoNavItems as $item)
+                                <a href="{{ $item['href'] }}" @class(['is-active' => $loop->first])>{{ $item['label'] }}</a>
+                            @endforeach
+                        </nav>
                     @endif
-                    <a href="#minimalProductDescription">Envíos y devoluciones</a>
-                </nav>
-                <div id="minimalProductDescription" class="minimal-product-copy">
-                    <p>{{ $minimalDescription }}</p>
-                    <ul>
-                        @foreach($minimalFeatureItems as $feature)
-                            <li>{{ $feature }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+
+                    @if($hasMinimalProductInfo)
+                        <div class="minimal-product-info-grid">
+                            @if($minimalDescription !== '')
+                                <section id="minimalProductDescription" class="minimal-product-copy minimal-product-info-card">
+                                    <span>{!! $minimalIcons::icon('grid') !!}</span>
+                                    <div>
+                                        <h2>Descripcion</h2>
+                                        <p>{!! nl2br(e($minimalDescription)) !!}</p>
+                                    </div>
+                                </section>
+                            @endif
+
+                            @if($minimalFeatureItems->isNotEmpty())
+                                <section id="minimalProductFeatures" class="minimal-product-copy minimal-product-info-card">
+                                    <span>{!! $minimalIcons::icon('settings') !!}</span>
+                                    <div>
+                                        <h2>Caracteristicas</h2>
+                                        <ul>
+                                            @foreach($minimalFeatureItems as $feature)
+                                                <li>{{ $feature }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </section>
+                            @endif
+
+                            @if($hasMinimalShippingInfo)
+                                <section id="minimalProductShipping" class="minimal-product-copy minimal-product-info-card">
+                                    <span>{!! $minimalIcons::icon('truck') !!}</span>
+                                    <div>
+                                        <h2>Envios y devoluciones</h2>
+                                        <ul>
+                                            @if($store->localDeliveryEnabled())
+                                                <li>Envio local disponible.</li>
+                                            @endif
+                                            @foreach($minimalShippingMethods->take(4) as $method)
+                                                <li>{{ $method['name'] }}@if((float) ($method['cost'] ?? 0) > 0): ${{ number_format((float) $method['cost'], 0, ',', '.') }}@endif</li>
+                                            @endforeach
+                                            @if($minimalTermsUrl !== '')
+                                                <li><a href="{{ $minimalTermsUrl }}" target="_blank" rel="noopener noreferrer">Ver terminos y condiciones</a></li>
+                                            @elseif($minimalTermsContent !== '')
+                                                <li>Cambios y devoluciones segun politicas de la tienda.</li>
+                                            @endif
+                                        </ul>
+                                    </div>
+                                </section>
+                            @endif
+                        </div>
+                    @endif
 
                 @if($minimalReviewsEnabled)
                     <section id="minimalProductReviews" class="minimal-product-reviews">
@@ -190,7 +233,8 @@
                         </form>
                     </section>
                 @endif
-            </section>
+                </section>
+            @endif
         </div>
 
         <aside class="minimal-product-summary">
@@ -208,7 +252,9 @@
                 @if($product->hasWholesalePricing($store))
                     <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 2, '.', ',') }}</span>
                 @endif
-                <p>{{ $minimalDescription }}</p>
+                @if($minimalDescription !== '')
+                    <p>{{ $minimalDescription }}</p>
+                @endif
 
                 <div class="minimal-product-divider"></div>
 
@@ -296,19 +342,7 @@
                         </form>
                     </div>
                 @endif
-
-                <button type="button" class="minimal-product-wishlist">&hearts; Agregar a favoritos</button>
             </div>
-
-            <section class="minimal-product-benefits" aria-label="Beneficios">
-                @foreach($minimalBenefits as $benefit)
-                    <div>
-                        <span aria-hidden="true">{{ $benefit['icon'] }}</span>
-                        <strong>{{ $benefit['title'] }}</strong>
-                        <small>{{ $benefit['copy'] }}</small>
-                    </div>
-                @endforeach
-            </section>
 
             @if($minimalRelated->isNotEmpty())
                 <section class="minimal-product-related">

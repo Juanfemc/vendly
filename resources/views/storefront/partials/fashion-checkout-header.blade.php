@@ -14,7 +14,12 @@
 <header class="fashion-checkout-header" aria-label="Checkout">
     <div class="fashion-checkout-header-shell">
         <a class="fashion-checkout-back" href="{{ $storeHomeUrl }}">
-            <span aria-hidden="true">&larr;</span>
+            <span aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15 6 9 12l6 6"></path>
+                    <path d="M10 12h10"></path>
+                </svg>
+            </span>
             <span>Volver a la tienda</span>
         </a>
 

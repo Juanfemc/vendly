@@ -93,6 +93,13 @@
         @endif
 
         <section class="catalog-section" id="catalogo">
+            @if($storefrontVariant === 'fashion')
+                <div class="fashion-catalog-head">
+                    <h1>{{ $isCatalogSearch ? 'Resultados de búsqueda' : 'Todos los productos' }}</h1>
+                    <p>{{ $catalogSearchTotal }} {{ $catalogSearchTotal === 1 ? 'producto' : 'productos' }}</p>
+                </div>
+            @endif
+
             @include('storefront.partials.product-search', ['productSearchId' => 'catalog'])
 
             @if($isCatalogSearch)
@@ -107,9 +114,13 @@
             @endif
 
             @if($products->isNotEmpty())
-                <div class="products-grid">
+                <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
                     @foreach($products as $product)
-                        @include('storefront.partials.product-card', ['cardClass' => $cardClass])
+                        @if($storefrontVariant === 'fashion')
+                            @include('storefront.partials.fashion-product-card')
+                        @else
+                            @include('storefront.partials.product-card', ['cardClass' => $cardClass])
+                        @endif
                     @endforeach
                 </div>
 

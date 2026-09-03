@@ -10,6 +10,7 @@
     $cardPrice = (float) $product->price;
     $showsOfferPricing = $showsOfferBadge && $product->hasOfferPricing();
     $displayBadges = $product->displayBadges($store ?? null);
+    $stockLabel = $product->stockLabel();
     $reviewsEnabled = isset($store) && $store->allowsProductReviews();
     $reviewCount = $reviewsEnabled ? $product->reviewCount() : 0;
     $reviewAverage = $reviewsEnabled ? $product->reviewAverage() : null;
@@ -30,6 +31,9 @@
             </div>
         @endif
         <span class="minimal-shop-card-badge">{{ $productCategory }}</span>
+        @if($stockLabel)
+            <span class="minimal-shop-card-stock {{ $isSoldOut ? 'is-sold-out' : '' }}">{{ $stockLabel }}</span>
+        @endif
         @if($product->image)
             <img
                 class="minimal-shop-card-image"

@@ -72,6 +72,7 @@
     @endif
 
     <main class="shell">
+        @if($storefrontVariant !== 'fashion')
         <section class="category-page-hero category-page-hero--catalog">
             <div class="category-page-copy">
                 <span class="eyebrow">{{ $businessLabel }}</span>
@@ -79,17 +80,29 @@
                 <p>{{ $fallbackDescription }}</p>
             </div>
         </section>
+        @endif
 
         <section class="catalog-section" id="catalogo">
+            @if($storefrontVariant === 'fashion')
+                <div class="fashion-catalog-head">
+                    <h1>Ofertas</h1>
+                    <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }} con descuento</p>
+                </div>
+            @endif
+
             @include('storefront.partials.product-search', [
                 'productSearchId' => 'offers',
                 'productSearchAction' => $storefrontUrls->offers($store),
             ])
 
             @if($products->isNotEmpty())
-                <div class="products-grid">
+                <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
                     @foreach($products as $product)
-                        @include('storefront.partials.product-card', ['cardClass' => $cardClass])
+                        @if($storefrontVariant === 'fashion')
+                            @include('storefront.partials.fashion-product-card')
+                        @else
+                            @include('storefront.partials.product-card', ['cardClass' => $cardClass])
+                        @endif
                     @endforeach
                 </div>
 
