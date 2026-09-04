@@ -68,10 +68,12 @@ $fashionTabs = collect([[
         ->sortBy(fn ($size) => mb_strtolower($size))
         ->values();
     $fashionHeroImage = $heroImage;
-    $fashionHeroOverlayEnabled = $supportsHeroOverlay && (bool) ($store->show_hero_overlay ?? false);
+    $fashionHeroOverlayEnabled = (bool) ($showHeroProductsAction ?? false)
+        || ($supportsHeroOverlay && (bool) ($store->show_hero_overlay ?? false));
     $fashionHeroEyebrow = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_eyebrow ?? '')) : '';
-    $fashionHeroTitle = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_title ?? '')) : '';
-    $fashionHeroButtonText = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_text ?? '')) : '';
+    $fashionHeroTitle = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_title ?? '')) : trim((string) ($heroOverlayTitle ?? ''));
+    $fashionHeroButtonText = $supportsHeroOverlay ? trim((string) ($store->hero_overlay_button_text ?? '')) : trim((string) ($heroOverlayButtonText ?? ''));
+    $fashionHeroButtonText = $fashionHeroButtonText !== '' ? $fashionHeroButtonText : trim((string) ($heroOverlayButtonText ?? 'Comprar ahora'));
     $fashionHeroButtonUrl = ($supportsHeroOverlay && trim((string) ($store->hero_overlay_button_url ?? '')) !== '')
         ? trim((string) $store->hero_overlay_button_url)
         : $storefrontUrls->products($store);

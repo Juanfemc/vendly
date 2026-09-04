@@ -26,8 +26,168 @@
 }
 
 .storefront-page--fashion .store-announcement-bar {
-    background: rgba(255, 255, 255, .12);
-    color: #ffffff;
+    background: linear-gradient(110deg, rgba(255, 238, 244, .96), rgba(250, 237, 216, .92), rgba(255, 238, 244, .96));
+    background-size: 180% 100%;
+    color: #111111;
+    animation: fashion-announcement-sheen 9s ease-in-out infinite;
+}
+
+.storefront-page--fashion .fashion-announcement-bar {
+    border-bottom: 1px solid rgba(17, 17, 17, .08);
+}
+
+.fashion-announcement-shell {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    width: min(100% - 72px, 1750px);
+    min-height: 75px;
+    margin: 0 auto;
+    padding: 12px 0 10px;
+    box-sizing: border-box;
+}
+
+.fashion-announcement-viewport {
+    position: relative;
+    grid-column: 2;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.fashion-announcement-message {
+    grid-area: 1 / 1;
+    width: 100%;
+    min-width: 0;
+    max-width: min(100%, 720px);
+    margin: 0;
+    color: #111111;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(9px) scale(.985);
+    transition: opacity .38s ease, transform .38s ease;
+    will-change: opacity, transform;
+}
+
+.fashion-announcement-message.is-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.fashion-announcement-message.is-leaving {
+    opacity: 0;
+    transform: translateY(-9px) scale(.985);
+}
+
+.fashion-announcement-message[hidden] {
+    display: none !important;
+}
+
+.fashion-announcement-arrow {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #111111;
+    cursor: pointer;
+    transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.fashion-announcement-arrow:hover,
+.fashion-announcement-arrow:focus-visible {
+    background: rgba(17, 17, 17, .06);
+    outline: 2px solid rgba(17, 17, 17, .14);
+    outline-offset: 2px;
+    box-shadow: 0 10px 20px rgba(17, 17, 17, .08);
+    transform: translateY(-1px) scale(1.04);
+}
+
+.fashion-announcement-arrow svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.fashion-announcement-dots {
+    grid-column: 2;
+    display: inline-flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.fashion-announcement-dots button {
+    position: relative;
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: 1px solid #111111;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    transition: width .24s ease, background .2s ease;
+}
+
+.fashion-announcement-dots button.is-active {
+    width: 26px;
+    background: #111111;
+}
+
+.fashion-announcement-dots button.is-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255, 255, 255, .5);
+    transform: translateX(-100%);
+    animation: fashion-announcement-dot-progress var(--fashion-announcement-interval, 5.2s) linear forwards;
+}
+
+@keyframes fashion-announcement-sheen {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes fashion-announcement-dot-progress {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .storefront-page--fashion .store-announcement-bar,
+    .fashion-announcement-dots button.is-active::after {
+        animation: none;
+    }
+
+    .fashion-announcement-message,
+    .fashion-announcement-arrow,
+    .fashion-announcement-dots button {
+        transition: none;
+    }
 }
 
 .storefront-page--fashion .navbar {
@@ -992,8 +1152,9 @@
 }
 
 .fashion-end-message {
-    margin-top: clamp(30px, 5vw, 52px);
+    margin-top: clamp(46px, 7vw, 78px);
     margin-bottom: 0;
+    padding-top: 4px;
 }
 
 .fashion-catalog-more-link {
@@ -3026,9 +3187,35 @@
 }
 
 .fashion-shipping-option strong,
-.fashion-payment-option span {
+.fashion-payment-option > span {
     font-size: 14px;
     font-weight: 800;
+}
+
+.fashion-payment-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fashion-payment-copy strong,
+.fashion-payment-copy em {
+    display: block;
+    min-width: 0;
+}
+
+.fashion-payment-copy strong {
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.fashion-payment-copy em {
+    color: #6b7280;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: break-word;
 }
 
 .fashion-shipping-option em {
@@ -8324,5 +8511,390 @@
     .cart-page--fashion .fashion-checkout-form .checkout-coupon-row {
         grid-template-columns: 1fr;
         gap: 10px;
+    }
+}
+
+@media (max-width: 767px) {
+    .storefront-page--fashion .fashion-announcement-bar {
+        min-height: 0;
+    }
+
+    .storefront-page--fashion .fashion-announcement-shell {
+        grid-template-columns: 30px minmax(0, 1fr) 30px;
+        width: min(100% - 20px, 720px);
+        min-height: 56px;
+        padding: 9px 0 7px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-shell:not(:has(.fashion-announcement-arrow)) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .storefront-page--fashion .fashion-announcement-shell:not(:has(.fashion-announcement-arrow)) .fashion-announcement-viewport,
+    .storefront-page--fashion .fashion-announcement-shell:not(:has(.fashion-announcement-arrow)) .fashion-announcement-dots {
+        grid-column: 1;
+    }
+
+    .storefront-page--fashion .fashion-announcement-message {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        font-size: 13px;
+        line-height: 1.28;
+        white-space: normal;
+        overflow: visible;
+        overflow-wrap: anywhere;
+        text-overflow: clip;
+        transform: none;
+        transition: opacity .18s ease;
+    }
+
+    .storefront-page--fashion .fashion-announcement-message.is-leaving {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .storefront-page--fashion .fashion-announcement-arrow {
+        width: 30px;
+        height: 30px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-arrow svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-dots {
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-dots button {
+        width: 6px;
+        height: 6px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-dots button.is-active {
+        width: 18px;
+    }
+}
+
+@media (max-width: 360px) {
+    .storefront-page--fashion .fashion-announcement-shell {
+        grid-template-columns: 28px minmax(0, 1fr) 28px;
+        width: min(100% - 16px, 720px);
+        min-height: 54px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-message {
+        font-size: 12px;
+    }
+
+    .storefront-page--fashion .fashion-announcement-arrow {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Fashion cover copy: keep the optional panel text readable without changing the cover image behavior. */
+.storefront-page--fashion .fashion-hero::before {
+    background:
+        linear-gradient(90deg, rgba(10, 10, 10, .68) 0%, rgba(10, 10, 10, .38) 42%, rgba(10, 10, 10, .08) 74%),
+        linear-gradient(0deg, rgba(10, 10, 10, .52) 0%, rgba(10, 10, 10, .08) 42%, rgba(10, 10, 10, .12) 100%);
+}
+
+.storefront-page--fashion .fashion-hero-copy {
+    position: absolute;
+    left: clamp(28px, 7vw, 92px);
+    bottom: clamp(58px, 11vh, 116px);
+    box-sizing: border-box;
+    width: min(560px, calc(100% - 56px));
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: clamp(12px, 1.7vw, 20px);
+    text-wrap: balance;
+    text-shadow: 0 16px 34px rgba(0, 0, 0, .38);
+}
+
+.storefront-page--fashion .fashion-hero-copy span,
+.storefront-page--fashion .fashion-hero-copy h1,
+.storefront-page--fashion .fashion-hero-copy a {
+    min-width: 0;
+}
+
+.storefront-page--fashion .fashion-hero-copy span {
+    max-width: 100%;
+    color: rgba(255, 255, 255, .9);
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.storefront-page--fashion .fashion-hero-copy h1 {
+    max-width: min(12ch, 100%);
+    font-size: clamp(42px, 7vw, 86px);
+    line-height: .98;
+    overflow-wrap: anywhere;
+}
+
+.storefront-page--fashion .fashion-hero-copy a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: min(100%, 280px);
+    min-height: 46px;
+    padding: 0 24px;
+    border-radius: 999px;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: none;
+    white-space: normal;
+}
+
+@media (max-width: 760px) {
+    .storefront-page--fashion .fashion-hero {
+        display: block;
+        position: relative;
+        min-height: clamp(430px, 124vw, 620px);
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: #f7f4ef;
+    }
+
+    .storefront-page--fashion .fashion-hero::before {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background:
+            linear-gradient(90deg, rgba(10, 10, 10, .72) 0%, rgba(10, 10, 10, .34) 46%, rgba(10, 10, 10, .06) 78%),
+            linear-gradient(0deg, rgba(10, 10, 10, .66) 0%, rgba(10, 10, 10, .18) 48%, rgba(10, 10, 10, .04) 100%);
+    }
+
+    .storefront-page--fashion .fashion-hero img {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        object-fit: cover;
+        object-position: center top;
+        transform: none;
+    }
+
+    .storefront-page--fashion .fashion-hero-copy {
+        position: absolute;
+        left: clamp(22px, 7vw, 30px);
+        right: auto;
+        bottom: clamp(34px, 9vw, 54px);
+        z-index: 2;
+        width: min(62%, 260px);
+        gap: 9px;
+    }
+
+    .storefront-page--fashion .fashion-hero-copy span {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        font-size: 9px;
+        line-height: 1.3;
+        letter-spacing: .07em;
+        overflow-wrap: break-word;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .storefront-page--fashion .fashion-hero-copy h1 {
+        display: -webkit-box;
+        max-width: min(9.5ch, 100%);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        font-size: clamp(30px, 8.5vw, 40px);
+        line-height: .98;
+    }
+
+    .storefront-page--fashion .fashion-hero-copy a {
+        max-width: min(100%, 210px);
+        min-height: 40px;
+        padding: 0 18px;
+        border-radius: 999px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 430px) {
+    .storefront-page--fashion .fashion-hero-copy {
+        width: min(60%, 230px);
+    }
+
+    .storefront-page--fashion .fashion-hero-copy a {
+        min-height: 38px;
+        padding-inline: 16px;
+    }
+}
+
+@media (max-width: 380px) {
+    .storefront-page--fashion .fashion-hero-copy {
+        left: 18px;
+        width: min(64%, 220px);
+    }
+
+    .storefront-page--fashion .fashion-hero-copy h1 {
+        font-size: clamp(27px, 8.5vw, 34px);
+    }
+}
+
+@media (max-width: 767px) {
+    .cart-page--fashion .fashion-checkout-summary-head {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "title toggle"
+            "total toggle";
+        column-gap: 10px;
+        row-gap: 4px;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-head h2 {
+        grid-area: title;
+        max-width: 100%;
+        overflow: visible;
+        font-size: 14px;
+        line-height: 1.15;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-total {
+        grid-area: total;
+        font-size: 13px;
+        line-height: 1.1;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-toggle {
+        grid-area: toggle;
+        align-self: center;
+        min-width: 0;
+        min-height: 34px;
+        padding-inline: 11px;
+        font-size: 11px;
+        line-height: 1;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-toggle svg {
+        flex: 0 0 auto;
+    }
+
+    .cart-page--fashion .fashion-payment-option {
+        grid-template-columns: 18px minmax(0, 1fr) 38px;
+        gap: 10px;
+        align-items: center;
+        min-height: 66px;
+        padding: 12px;
+    }
+
+    .cart-page--fashion .fashion-payment-option input {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+        justify-self: center;
+    }
+
+    .cart-page--fashion .fashion-payment-copy {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        min-width: 0;
+        gap: 3px;
+    }
+
+    .cart-page--fashion .fashion-payment-copy strong,
+    .cart-page--fashion .fashion-payment-copy em {
+        grid-column: auto;
+        justify-self: auto;
+        width: 100%;
+        overflow: visible;
+        text-align: left;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .cart-page--fashion .fashion-payment-copy strong {
+        font-size: 13px;
+        line-height: 1.15;
+    }
+
+    .cart-page--fashion .fashion-payment-copy em {
+        font-size: 11.5px;
+        line-height: 1.25;
+    }
+
+    .cart-page--fashion .fashion-payment-option .fashion-payment-icon {
+        grid-column: 3;
+        grid-row: 1;
+        align-self: center;
+        justify-self: end;
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+    }
+
+    .cart-page--fashion .fashion-payment-option .fashion-payment-icon img {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+@media (max-width: 360px) {
+    .cart-page--fashion .fashion-checkout-summary {
+        padding: 12px;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-head {
+        column-gap: 8px;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-head h2 {
+        font-size: 13px;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-total {
+        font-size: 12px;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-toggle {
+        width: 38px;
+        padding: 0;
+    }
+
+    .cart-page--fashion .fashion-checkout-summary-toggle span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .cart-page--fashion .fashion-payment-option {
+        grid-template-columns: 16px minmax(0, 1fr) 32px;
+        gap: 8px;
+        padding: 11px 10px;
+    }
+
+    .cart-page--fashion .fashion-payment-option .fashion-payment-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+    }
+
+    .cart-page--fashion .fashion-payment-option .fashion-payment-icon img {
+        width: 23px;
+        height: 23px;
     }
 }

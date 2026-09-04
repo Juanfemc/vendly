@@ -178,12 +178,12 @@
             <div class="sidebar-section">
                 <p class="sidebar-section-label">Configuración</p>
 
-                <details class="sidebar-menu-group" {{ request()->is('admin/onboarding') || request()->is('admin/store-settings') || (auth()->user()?->isAdmin() && request()->is('admin/templates*')) || request()->is('admin/payments*') || request()->is('admin/categories*') || request()->is('admin/coupons*') ? 'open' : '' }}>
+                <details class="sidebar-menu-group" {{ request()->is('admin/onboarding') || request()->is('admin/store-settings') || request()->is('admin/templates*') || request()->is('admin/payments*') || request()->is('admin/categories*') || request()->is('admin/coupons*') ? 'open' : '' }}>
                     <summary><span>{!! $sidebarIcon('settings') !!}Configurar catálogo</span></summary>
                     <div class="sidebar-submenu">
                         <a href="{{ route('admin.store.onboarding') }}" class="{{ $sidebarSubLinkClass('admin/onboarding') }}">Primeros pasos</a>
                         <a href="/admin/store-settings" class="{{ $sidebarSubLinkClass('admin/store-settings') }}">Apariencia e identidad</a>
-                        @if(auth()->user()?->isAdmin() && $sidebarAllowsTemplates)
+                        @if($sidebarAllowsTemplates)
                             <a href="{{ route('admin.templates.index') }}" class="{{ $sidebarSubLinkClass('admin/templates*') }}">Plantillas</a>
                         @endif
                         @if(($sidebarStore?->allowsOnlinePayments() ?? false))

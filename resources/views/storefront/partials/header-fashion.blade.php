@@ -41,19 +41,56 @@
 
 <div class="storefront-topbar fashion-topbar" data-storefront-topbar>
     @if(! empty($announcementMessages))
-        <section class="store-announcement-bar" aria-label="Avisos de la tienda" data-announcement-bar data-announcement-speed="42">
-            <div class="shell store-announcement-shell">
-                <div class="store-announcement-viewport">
-                    <div class="store-announcement-message is-marquee-active" data-announcement-message>
-                        @for($announcementLoop = 0; $announcementLoop < 8; $announcementLoop++)
-                            <p class="store-announcement-group" @if($announcementLoop > 0) aria-hidden="true" @endif>
-                                @foreach($announcementMessages as $announcementMessage)
-                                    <span>{{ $announcementMessage }}</span>
-                                @endforeach
-                            </p>
-                        @endfor
-                    </div>
+        <section
+            class="store-announcement-bar fashion-announcement-bar"
+            aria-label="Avisos de la tienda"
+            data-announcement-bar
+            data-fashion-announcement
+            data-fashion-announcement-interval="5200"
+        >
+            <div class="fashion-announcement-shell">
+                @if(count($announcementMessages) > 1)
+                    <button type="button" class="fashion-announcement-arrow" data-fashion-announcement-prev aria-label="Aviso anterior">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m15 6-6 6 6 6"></path>
+                        </svg>
+                    </button>
+                @endif
+
+                <div class="fashion-announcement-viewport">
+                    @foreach($announcementMessages as $announcementMessage)
+                        <p
+                            class="fashion-announcement-message {{ $loop->first ? 'is-active' : '' }}"
+                            data-fashion-announcement-message
+                            @unless($loop->first) hidden @endunless
+                        >
+                            {{ $announcementMessage }}
+                        </p>
+                    @endforeach
                 </div>
+
+                @if(count($announcementMessages) > 1)
+                    <button type="button" class="fashion-announcement-arrow" data-fashion-announcement-next aria-label="Siguiente aviso">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m9 6 6 6-6 6"></path>
+                        </svg>
+                    </button>
+                @endif
+
+                @if(count($announcementMessages) > 1)
+                    <div class="fashion-announcement-dots" role="tablist" aria-label="Seleccionar aviso">
+                        @foreach($announcementMessages as $announcementMessage)
+                            <button
+                                type="button"
+                                class="{{ $loop->first ? 'is-active' : '' }}"
+                                data-fashion-announcement-dot="{{ $loop->index }}"
+                                role="tab"
+                                aria-selected="{{ $loop->first ? 'true' : 'false' }}"
+                                aria-label="Mostrar aviso {{ $loop->iteration }}"
+                            ></button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
     @endif

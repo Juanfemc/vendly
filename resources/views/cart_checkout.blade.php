@@ -327,10 +327,12 @@
                                         data-payment-label="{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}"
                                         checked
                                     >
-                                    <span class="checkout-payment-mark">WA</span>
-                                    <span>
+                                    <span class="checkout-payment-mark checkout-payment-mark--whatsapp" aria-hidden="true">
+                                        <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
+                                    </span>
+                                    <span class="checkout-payment-copy">
                                         <strong>WhatsApp</strong>
-                                        <small>La tienda te confirma por WhatsApp</small>
+                                        <span class="checkout-payment-methods">Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</span>
                                     </span>
                                 </label>
 
@@ -344,10 +346,12 @@
                                             data-payment-action="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
                                             data-payment-label="Pagar con Mercado Pago"
                                         >
-                                        <span class="checkout-payment-mark checkout-payment-mark--mp">MP</span>
-                                        <span>
+                                        <span class="checkout-payment-mark checkout-payment-mark--mp" aria-hidden="true">
+                                            <img src="{{ asset('images/icons/payment-mercadopago.svg') }}" alt="">
+                                        </span>
+                                        <span class="checkout-payment-copy">
                                             <strong>Mercado Pago</strong>
-                                            <small>Pago en línea con tarjeta o cuenta Mercado Pago</small>
+                                            <span class="checkout-payment-methods">Tarjetas, PSE y cuenta Mercado Pago según disponibilidad.</span>
                                         </span>
                                     </label>
                                 @endif
@@ -362,17 +366,18 @@
                                             data-payment-action="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
                                             data-payment-label="Pagar con Wompi"
                                         >
-                                        <span class="checkout-payment-mark checkout-payment-mark--wompi">W</span>
-                                        <span>
+                                        <span class="checkout-payment-mark checkout-payment-mark--wompi" aria-hidden="true">
+                                            <img src="{{ asset('images/icons/payment-wompi.svg') }}" alt="">
+                                        </span>
+                                        <span class="checkout-payment-copy">
                                             <strong>Wompi</strong>
-                                            <small>Pago en línea seguro con Wompi</small>
+                                            <span class="checkout-payment-methods">Tarjetas, PSE y billeteras disponibles en Wompi.</span>
                                         </span>
                                     </label>
                                 @endif
 
                                 <button class="primary-btn" type="submit" data-payment-submit>
                                     <span>{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</span>
-                                    <small>Continuar con el método seleccionado</small>
                                 </button>
                             </div>
                         </section>

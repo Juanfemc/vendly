@@ -230,7 +230,10 @@
                             data-payment-label="Finalizar pedido por WhatsApp"
                             checked
                         >
-                        <span>Pedido por WhatsApp</span>
+                        <span class="fashion-payment-copy">
+                            <strong>Pedido por WhatsApp</strong>
+                            <em>Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</em>
+                        </span>
                         <b class="fashion-payment-icon" aria-hidden="true">
                             <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
                         </b>
@@ -246,7 +249,10 @@
                                 data-payment-action="{{ route('cart.mercadopago', ['store' => $store->slug]) }}"
                                 data-payment-label="Pagar con Mercado Pago"
                             >
-                            <span>Mercado Pago</span>
+                            <span class="fashion-payment-copy">
+                                <strong>Mercado Pago</strong>
+                                <em>Tarjetas, PSE y cuenta Mercado Pago según disponibilidad.</em>
+                            </span>
                             <b class="fashion-payment-icon" aria-hidden="true">
                                 <img src="{{ asset('images/icons/payment-mercadopago.svg') }}" alt="">
                             </b>
@@ -263,7 +269,10 @@
                                 data-payment-action="{{ route('cart.wompi', ['store' => $store->slug]) }}"
                                 data-payment-label="Pagar con Wompi"
                             >
-                            <span>Wompi</span>
+                            <span class="fashion-payment-copy">
+                                <strong>Wompi</strong>
+                                <em>Tarjetas, PSE y billeteras disponibles en Wompi.</em>
+                            </span>
                             <b class="fashion-payment-icon" aria-hidden="true">
                                 <img src="{{ asset('images/icons/payment-wompi.svg') }}" alt="">
                             </b>

@@ -60,6 +60,7 @@
     const fashionSortSelect = document.querySelector('[data-fashion-sort]');
     const announcementMessages = Array.from(document.querySelectorAll('[data-announcement-message]'));
     const storefrontTopbar = document.querySelector('[data-storefront-topbar]');
+    const fashionAnnouncement = document.querySelector('[data-fashion-announcement]');
     const fashionCompactBlocks = Array.from(document.querySelectorAll('[data-fashion-collapsible]'));
     const csrfToken = page.dataset.csrf || '';
     const addingText = page.dataset.addingText || 'Agregando...';
@@ -425,6 +426,103 @@
 
     if (document.fonts?.ready) {
         document.fonts.ready.then(syncAnnouncementMarquee).catch(() => {});
+    }
+
+    if (fashionAnnouncement) {
+        const slides = Array.from(fashionAnnouncement.querySelectorAll('[data-fashion-announcement-message]'));
+        const dots = Array.from(fashionAnnouncement.querySelectorAll('[data-fashion-announcement-dot]'));
+        const prev = fashionAnnouncement.querySelector('[data-fashion-announcement-prev]');
+        const next = fashionAnnouncement.querySelector('[data-fashion-announcement-next]');
+        const interval = Math.max(3200, Number(fashionAnnouncement.dataset.fashionAnnouncementInterval || 5200));
+        fashionAnnouncement.style.setProperty('--fashion-announcement-interval', `${interval}ms`);
+        let activeIndex = Math.max(0, slides.findIndex((slide) => slide.classList.contains('is-active')));
+        let announcementTimer;
+        let announcementAnimationTimer;
+
+        const showFashionAnnouncement = (index) => {
+            if (!slides.length) {
+                return;
+            }
+
+            const nextIndex = (index + slides.length) % slides.length;
+
+            if (nextIndex === activeIndex && slides[activeIndex]?.classList.contains('is-active')) {
+                return;
+            }
+
+            window.clearTimeout(announcementAnimationTimer);
+
+            slides.forEach((slide, slideIndex) => {
+                const isCurrent = slideIndex === activeIndex;
+                const isNext = slideIndex === nextIndex;
+
+                slide.classList.toggle('is-leaving', isCurrent && !isNext);
+                slide.classList.toggle('is-active', isNext);
+
+                if (isNext) {
+                    slide.hidden = false;
+                }
+            });
+
+            announcementAnimationTimer = window.setTimeout(() => {
+                slides.forEach((slide, slideIndex) => {
+                    const isActive = slideIndex === nextIndex;
+                    slide.hidden = !isActive;
+                    slide.classList.toggle('is-leaving', false);
+                });
+            }, 420);
+
+            activeIndex = nextIndex;
+
+            dots.forEach((dot, dotIndex) => {
+                const isActive = dotIndex === activeIndex;
+                dot.classList.toggle('is-active', isActive);
+                dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            syncTopbarHeight();
+        };
+
+        const stopFashionAnnouncement = () => {
+            window.clearInterval(announcementTimer);
+        };
+
+        const startFashionAnnouncement = () => {
+            stopFashionAnnouncement();
+
+            if (slides.length < 2) {
+                return;
+            }
+
+            announcementTimer = window.setInterval(() => {
+                showFashionAnnouncement(activeIndex + 1);
+            }, interval);
+        };
+
+        prev?.addEventListener('click', () => {
+            showFashionAnnouncement(activeIndex - 1);
+            startFashionAnnouncement();
+        });
+
+        next?.addEventListener('click', () => {
+            showFashionAnnouncement(activeIndex + 1);
+            startFashionAnnouncement();
+        });
+
+        dots.forEach((dot) => {
+            dot.addEventListener('click', () => {
+                showFashionAnnouncement(Number(dot.dataset.fashionAnnouncementDot || 0));
+                startFashionAnnouncement();
+            });
+        });
+
+        fashionAnnouncement.addEventListener('mouseenter', stopFashionAnnouncement);
+        fashionAnnouncement.addEventListener('mouseleave', startFashionAnnouncement);
+        fashionAnnouncement.addEventListener('focusin', stopFashionAnnouncement);
+        fashionAnnouncement.addEventListener('focusout', startFashionAnnouncement);
+
+        showFashionAnnouncement(activeIndex);
+        startFashionAnnouncement();
     }
 
     const showFeedback = (message) => {

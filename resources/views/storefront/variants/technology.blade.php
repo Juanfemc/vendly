@@ -3,7 +3,6 @@
         ->filter(fn ($category) => ! $category->parent_id)
         ->values();
     $minimalProducts = ($allProducts ?? collect())->values();
-    $minimalRecommendationProducts = $minimalProducts->skip(1)->take(8);
     $icons = \App\Support\MinimalShopIcons::class;
     $minimalHomeUrl = $storefrontUrls->home($store);
     $minimalCategoryUrl = fn (array $query = []) => $minimalHomeUrl . ($query ? '?' . http_build_query($query) : '') . '#catalogo';
@@ -62,21 +61,4 @@
         @include('storefront.partials.minimal-catalog', ['catalogProducts' => $catalogProducts])
     </section>
 
-    <section class="minimal-shop-recommendations" aria-label="Recomendaciones">
-        <div class="minimal-shop-section-head">
-            <h2>Explora nuestras recomendaciones</h2>
-            <div aria-hidden="true">
-                <span>&larr;</span>
-                <span>&rarr;</span>
-            </div>
-        </div>
-
-        <div class="minimal-shop-recommendation-track">
-            @forelse($minimalRecommendationProducts as $product)
-                @include('storefront.partials.minimal-product-card', ['product' => $product, 'isRecommendation' => true])
-            @empty
-                <div class="minimal-shop-empty-state">Aún no hay recomendaciones.</div>
-            @endforelse
-        </div>
-    </section>
 </div>
