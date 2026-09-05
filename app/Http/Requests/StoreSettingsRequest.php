@@ -44,6 +44,7 @@ class StoreSettingsRequest extends FormRequest
             'announcement_items',
             'free_shipping_minimum',
             'shipping_methods',
+            'show_shipping_options_at_checkout_start',
             'checkout_fields',
             'local_delivery_area',
             'local_delivery_city_code',

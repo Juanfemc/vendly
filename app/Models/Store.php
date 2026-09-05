@@ -19,6 +19,7 @@ class Store extends Model
     private static ?bool $supportsSubdomainColumn = null;
     private static ?bool $supportsCustomDomainColumns = null;
     private static ?bool $supportsShippingMethodsColumn = null;
+    private static ?bool $supportsCheckoutShippingOptionsCardColumn = null;
     private static ?bool $supportsLocalDeliveryColumns = null;
     private static ?bool $supportsLocalDeliveryCityCodeColumn = null;
     private static ?bool $supportsMetaPixelColumn = null;
@@ -106,6 +107,7 @@ class Store extends Model
         'announcement_items',
         'free_shipping_minimum',
         'shipping_methods',
+        'show_shipping_options_at_checkout_start',
         'checkout_fields',
         'local_delivery_area',
         'local_delivery_city_code',
@@ -150,6 +152,7 @@ class Store extends Model
         'announcement_items' => 'array',
         'free_shipping_minimum' => 'decimal:2',
         'shipping_methods' => 'array',
+        'show_shipping_options_at_checkout_start' => 'boolean',
         'checkout_fields' => 'array',
         'local_delivery_cost' => 'decimal:2',
         'outside_delivery_cost' => 'decimal:2',
@@ -721,6 +724,11 @@ class Store extends Model
     public static function supportsShippingMethodsColumn(): bool
     {
         return self::$supportsShippingMethodsColumn ??= Schema::hasColumn('stores', 'shipping_methods');
+    }
+
+    public static function supportsCheckoutShippingOptionsCardColumn(): bool
+    {
+        return self::$supportsCheckoutShippingOptionsCardColumn ??= Schema::hasColumn('stores', 'show_shipping_options_at_checkout_start');
     }
 
     public static function supportsAiTables(): bool

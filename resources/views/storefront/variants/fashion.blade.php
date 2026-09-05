@@ -110,14 +110,14 @@ $fashionTabs = collect([[
     <div class="fashion-section-head">
         <nav class="fashion-category-tabs" aria-label="Categorias destacadas" data-fashion-category-tabs>
             @foreach($fashionTabs as $tab)
-                <a
-                    href="{{ $tab['url'] ?? '#catalogo' }}"
+                <button
+                    type="button"
                     data-fashion-category-filter="{{ $tab['slug'] }}"
                     aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
                     @class(['is-active' => $loop->first])
                 >
                     {{ $tab['name'] }}
-                </a>
+                </button>
             @endforeach
         </nav>
     </div>

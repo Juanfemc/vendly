@@ -59,6 +59,9 @@ return [
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
+        'ocr_model' => env('OPENAI_OCR_MODEL', env('OPENAI_MODEL', 'gpt-4.1-mini')),
+        'ocr_timeout' => (int) env('OPENAI_OCR_TIMEOUT', 45),
+        'ocr_queue_timeout' => (int) env('OPENAI_OCR_QUEUE_TIMEOUT', 240),
         'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
         'image_quality' => env('OPENAI_IMAGE_QUALITY', 'low'),
         'proxy' => env('OPENAI_PROXY'),

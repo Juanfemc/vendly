@@ -7862,6 +7862,7 @@ test('fashion checkout shows shipping without redundant summary actions', functi
             ['name' => 'Domicilio urbano', 'cost' => 9000],
             ['name' => 'Recoger en tienda', 'cost' => 0],
         ],
+        'show_shipping_options_at_checkout_start' => true,
         'is_active' => true,
     ]);
 
@@ -7898,6 +7899,7 @@ test('fashion checkout shows shipping without redundant summary actions', functi
     $response = $this->get(route('cart.index', ['store' => $store->slug]))
         ->assertOk()
         ->assertSee('cart-page--fashion')
+        ->assertSee('data-checkout-shipping-start-card', false)
         ->assertSee('Método de envío')
         ->assertSee('Domicilio urbano')
         ->assertSee('$ 9.000')
@@ -7909,7 +7911,169 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         ->assertDontSee('fashion-summary-benefits')
         ->assertDontSee('Impuestos estimados');
 
-    expect($response->getContent())->toContain('value="9000"');
+    expect($response->getContent())
+        ->toContain('value="9000"')
+        ->and(substr_count($response->getContent(), 'Domicilio urbano'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($response->getContent(), 'data-shipping-option'))->toBeGreaterThanOrEqual(2);
+});
+
+test('creating shipping methods does not enable the checkout shipping card', function () {
+    $user = User::factory()->create();
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Tarjeta Envio',
+        'slug' => 'tienda-tarjeta-envio',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+        'show_shipping_options_at_checkout_start' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'whatsapp' => $store->whatsapp,
+            'shipping_methods' => [
+                ['name' => 'Domicilio', 'cost' => 8000],
+            ],
+            'brand_color' => '#111111',
+            'background_color' => '#ffffff',
+            'font_family' => 'system',
+            'responsive_product_columns' => 2,
+            'show_hero_products_action' => 0,
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->show_shipping_options_at_checkout_start)->toBeFalse()
+        ->and($store->shipping_methods)->toHaveCount(1);
+});
+
+test('activating or editing a shipping method does not enable the checkout shipping card', function () {
+    $user = User::factory()->create();
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Metodo Activo',
+        'slug' => 'tienda-metodo-activo',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'shipping_methods' => [['name' => 'Domicilio', 'cost' => 5000]],
+        'show_shipping_options_at_checkout_start' => false,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'whatsapp' => $store->whatsapp,
+            'shipping_methods' => [
+                ['name' => 'Domicilio express', 'cost' => 9000],
+            ],
+            'brand_color' => '#111111',
+            'background_color' => '#ffffff',
+            'font_family' => 'system',
+            'responsive_product_columns' => 2,
+            'show_hero_products_action' => 0,
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->show_shipping_options_at_checkout_start)->toBeFalse();
+});
+
+test('checkout shipping card requires the manual preference and active shipping methods', function () {
+    $user = User::factory()->create();
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Visibilidad Envio',
+        'slug' => 'tienda-visibilidad-envio',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'shipping_methods' => [['name' => 'Domicilio', 'cost' => 5000]],
+        'show_shipping_options_at_checkout_start' => false,
+        'is_active' => true,
+    ]);
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Producto envio',
+        'price' => 30000,
+    ]);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertDontSee('data-checkout-shipping-start-card', false);
+
+    $store->update(['show_shipping_options_at_checkout_start' => true]);
+
+    $response = $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertSee('data-checkout-shipping-start-card', false)
+        ->assertSee('Método de envío')
+        ->assertSee('data-shipping-option', false);
+
+    expect(substr_count($response->getContent(), 'Domicilio'))->toBeGreaterThanOrEqual(2);
+
+    $store->update(['shipping_methods' => []]);
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertDontSee('data-checkout-shipping-start-card', false);
+});
+
+test('only the store owner can manually toggle its checkout shipping card', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $store = Store::create([
+        'user_id' => $owner->id,
+        'name' => 'Tienda Propietaria Envio',
+        'slug' => 'tienda-propietaria-envio',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'shipping_methods' => [['name' => 'Domicilio', 'cost' => 5000]],
+        'show_shipping_options_at_checkout_start' => false,
+        'is_active' => true,
+    ]);
+    $otherStore = Store::create([
+        'user_id' => $otherUser->id,
+        'name' => 'Otra Tienda Envio',
+        'slug' => 'otra-tienda-envio',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573009998877',
+        'shipping_methods' => [['name' => 'Otra entrega', 'cost' => 4000]],
+        'show_shipping_options_at_checkout_start' => false,
+        'is_active' => true,
+    ]);
+
+    $payload = [
+        'name' => $store->name,
+        'whatsapp' => $store->whatsapp,
+        'shipping_methods' => [['name' => 'Domicilio', 'cost' => 5000]],
+        'brand_color' => '#111111',
+        'background_color' => '#ffffff',
+        'font_family' => 'system',
+        'responsive_product_columns' => 2,
+        'show_hero_products_action' => 0,
+        'show_shipping_options_at_checkout_start' => '1',
+    ];
+
+    $this->actingAs($otherUser)
+        ->post('/admin/store-settings', array_merge($payload, [
+            'name' => $otherStore->name,
+            'whatsapp' => $otherStore->whatsapp,
+            'shipping_methods' => [['name' => 'Otra entrega', 'cost' => 4000]],
+        ]))
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->show_shipping_options_at_checkout_start)->toBeFalse();
+    expect($otherStore->refresh()->show_shipping_options_at_checkout_start)->toBeTrue();
+
+    $storePayload = $payload;
+    $this->actingAs($owner)
+        ->post('/admin/store-settings', $storePayload)
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->show_shipping_options_at_checkout_start)->toBeTrue();
 });
 
 test('shipping methods are only available on pro and premium plans', function () {
@@ -7986,7 +8150,7 @@ test('shipping methods are only available on pro and premium plans', function ()
         ->assertSee('name="shipping_methods[0][name]"', false);
 });
 
-test('local delivery pricing uses city before manual shipping methods', function () {
+test('local delivery pricing can coexist with manual shipping methods', function () {
     $user = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -8002,7 +8166,7 @@ test('local delivery pricing uses city before manual shipping methods', function
         'local_delivery_cost' => 5000,
         'outside_delivery_cost' => 12000,
         'shipping_methods' => [
-            ['name' => 'Metodo manual ignorado', 'cost' => 30000],
+            ['name' => 'Metodo manual disponible', 'cost' => 30000],
         ],
         'is_active' => true,
     ]);
@@ -8020,7 +8184,28 @@ test('local delivery pricing uses city before manual shipping methods', function
         ->assertOk()
         ->assertSee('Envío por ciudad')
         ->assertSee('data-local-delivery-enabled="1"', false)
-        ->assertDontSee('Metodo manual ignorado');
+        ->assertSee('Método de envío')
+        ->assertSee('Metodo manual disponible')
+        ->assertSee('data-shipping-option', false);
+
+    $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
+        'name' => 'Cliente',
+        'last_name' => 'Manual',
+        'phone' => '3001234567',
+        'address' => 'Calle 3',
+        'neighborhood' => 'Cedritos',
+        'city' => 'bogota',
+        'document' => '456789',
+        'shipping_method' => '0',
+    ])->assertRedirectContains('https://wa.me/573001112233');
+
+    $manualOrder = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
+
+    expect($manualOrder->shipping_method)->toBe('Metodo manual disponible')
+        ->and((float) $manualOrder->shipping_cost)->toBe(30000.0)
+        ->and((float) $manualOrder->total)->toBe(60000.0);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
 
     $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
         'name' => 'Cliente',

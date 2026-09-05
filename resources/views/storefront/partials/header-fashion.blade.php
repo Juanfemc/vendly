@@ -49,14 +49,6 @@
             data-fashion-announcement-interval="5200"
         >
             <div class="fashion-announcement-shell">
-                @if(count($announcementMessages) > 1)
-                    <button type="button" class="fashion-announcement-arrow" data-fashion-announcement-prev aria-label="Aviso anterior">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="m15 6-6 6 6 6"></path>
-                        </svg>
-                    </button>
-                @endif
-
                 <div class="fashion-announcement-viewport">
                     @foreach($announcementMessages as $announcementMessage)
                         <p
@@ -68,14 +60,6 @@
                         </p>
                     @endforeach
                 </div>
-
-                @if(count($announcementMessages) > 1)
-                    <button type="button" class="fashion-announcement-arrow" data-fashion-announcement-next aria-label="Siguiente aviso">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="m9 6 6 6-6 6"></path>
-                        </svg>
-                    </button>
-                @endif
 
                 @if(count($announcementMessages) > 1)
                     <div class="fashion-announcement-dots" role="tablist" aria-label="Seleccionar aviso">

@@ -136,6 +136,10 @@ Route::middleware(['auth', 'active'])->group(function () {
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/admin/products/import/ocr-preview', [ProductImportController::class, 'previewOcr'])->name('admin.products.import.ocr-preview');
+    Route::post('/admin/products/import/batches/{batch}/load', [ProductImportController::class, 'loadBatchPreview'])->name('admin.products.import.batches.load');
+    Route::post('/admin/products/import/images', [ProductImportController::class, 'assignImages'])->name('admin.products.import.images');
+
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::get('/admin/users/create', [AdminUserController::class, 'create']);
     Route::post('/admin/users', [AdminUserController::class, 'store']);

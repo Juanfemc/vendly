@@ -1151,6 +1151,64 @@ body.cart-page {
     gap: 10px;
 }
 
+.checkout-shipping-info-list {
+    display: grid;
+    gap: 14px;
+}
+
+.checkout-shipping-info-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    min-height: 82px;
+    padding: 20px 24px;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.cart-page--technology .checkout-shipping-info-option {
+    border-radius: 8px;
+}
+
+.checkout-shipping-info-copy {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.checkout-shipping-info-copy strong {
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.checkout-shipping-info-copy small {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.checkout-shipping-info-price {
+    justify-self: end;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--accent) 9%, #ffffff);
+    color: var(--accent);
+    padding: 12px 18px;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.checkout-shipping-info-price.is-free {
+    background: #e9f9ef;
+    color: #0f8b38;
+}
+
 .shipping-option {
     position: relative;
     display: flex;
@@ -1464,6 +1522,7 @@ body.cart-page {
     .checkout-section-head > div,
     .field-wrap,
     .shipping-options,
+    .checkout-shipping-info-list,
     .summary,
     .checkout-payment-options {
         min-width: 0;
@@ -1531,6 +1590,27 @@ body.cart-page {
         justify-self: flex-start;
         align-self: flex-start;
         white-space: normal;
+    }
+
+    .checkout-shipping-info-option {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        min-height: auto;
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .checkout-shipping-info-copy strong {
+        font-size: 15px;
+    }
+
+    .checkout-shipping-info-copy small {
+        font-size: 13px;
+    }
+
+    .checkout-shipping-info-price {
+        padding: 9px 12px;
+        font-size: 14px;
     }
 
     .local-delivery-preview {

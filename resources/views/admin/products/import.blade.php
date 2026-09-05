@@ -5,11 +5,16 @@
     $preview = $preview ?? null;
     $summary = $preview['summary'] ?? null;
     $rows = collect($preview['rows'] ?? []);
+    $zipFiles = collect($preview['zip_files'] ?? []);
+    $ocrBatches = $ocrBatches ?? collect();
+    $isOcrPreview = str_starts_with((string) ($preview['source'] ?? ''), 'PDF con OCR + IA:');
     $hasErrors = $summary && (int) ($summary['errors'] ?? 0) > 0;
     $productFileMaxKb = $productFileMaxKb ?? 5120;
     $imagesZipMaxKb = $imagesZipMaxKb ?? 51200;
+    $ocrPdfMaxKb = $ocrPdfMaxKb ?? 25600;
     $productFileMaxBytes = $productFileMaxKb * 1024;
     $imagesZipMaxBytes = $imagesZipMaxKb * 1024;
+    $ocrPdfMaxBytes = $ocrPdfMaxKb * 1024;
     $totalUploadMaxBytes = $productFileMaxBytes + $imagesZipMaxBytes;
 @endphp
 
@@ -233,6 +238,123 @@
         line-height: 1.45;
     }
 
+    .product-import-ocr-card {
+        border-color: #d7f0e8;
+        background: linear-gradient(135deg, #ffffff 0%, #f4fffb 100%);
+    }
+
+    .product-import-ocr-badge {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        min-height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .product-import-batches {
+        display: grid;
+        gap: 10px;
+    }
+
+    .product-import-batch {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid #dfe8ee;
+        border-radius: 14px;
+        background: #fff;
+    }
+
+    .product-import-batch strong {
+        display: block;
+        color: #071827;
+    }
+
+    .product-import-batch p {
+        margin: 4px 0 0;
+        color: #526b75;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .product-import-batch-status {
+        display: inline-flex;
+        width: fit-content;
+        min-height: 24px;
+        align-items: center;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: #e0f2fe;
+        color: #075985;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .product-import-batch-status.is-completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .product-import-batch-status.is-failed {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .product-import-batch-status.is-imported {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .product-import-image-tools {
+        display: grid;
+        gap: 14px;
+    }
+
+    .product-import-image-row {
+        display: grid;
+        grid-template-columns: minmax(160px, .8fr) minmax(180px, 1fr) minmax(180px, 1fr);
+        gap: 12px;
+        align-items: end;
+        padding: 14px;
+        border: 1px solid #e3ebef;
+        border-radius: 14px;
+        background: #fbfdfe;
+    }
+
+    .product-import-image-row strong {
+        display: block;
+        color: #071827;
+    }
+
+    .product-import-image-row span {
+        color: #5b737c;
+        font-size: 12px;
+    }
+
+    .product-import-image-row input,
+    .product-import-image-row select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #d8e2e8;
+        border-radius: 12px;
+        background: #fff;
+        color: #071827;
+        font: inherit;
+    }
+
+    .product-import-image-row select {
+        padding: 0 12px;
+    }
+
     .product-import-client-error.is-visible {
         display: block;
     }
@@ -252,6 +374,14 @@
         .product-import-actions a {
             width: 100%;
             justify-content: center;
+        }
+
+        .product-import-image-row {
+            grid-template-columns: 1fr;
+        }
+
+        .product-import-batch {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -331,12 +461,104 @@
         </form>
     </section>
 
+    @if(auth()->user()?->isAdmin())
+        <section class="product-import-card product-import-ocr-card">
+            <div>
+                <span class="product-import-ocr-badge">Admin interno</span>
+                <h2>PDF escaneado con OCR + IA</h2>
+                <p class="product-import-help">Sube un catálogo PDF desordenado o escaneado. La IA extrae productos, precios y datos visibles; después debes revisar la vista previa antes de importar.</p>
+            </div>
+
+            <form
+                method="POST"
+                action="{{ route('admin.products.import.ocr-preview') }}"
+                enctype="multipart/form-data"
+                class="product-import-grid"
+                data-product-import-form
+                data-file-max="{{ $ocrPdfMaxBytes }}"
+                data-zip-max="{{ $imagesZipMaxBytes }}"
+                data-total-max="{{ $ocrPdfMaxBytes + $imagesZipMaxBytes }}"
+            >
+                @csrf
+
+                <div class="product-import-field">
+                    <label for="ocr_pdf">PDF del catálogo</label>
+                    <input id="ocr_pdf" type="file" name="pdf" accept=".pdf,application/pdf" required>
+                    <p class="product-import-help">Máximo {{ number_format($ocrPdfMaxKb / 1024, 0, ',', '.') }} MB. Funciona mejor con catálogos claros, una página por sección y precios visibles.</p>
+                </div>
+
+                <div class="product-import-field">
+                    <label for="ocr_images_zip">ZIP de imágenes opcional</label>
+                    <input id="ocr_images_zip" type="file" name="images_zip" accept=".zip">
+                    <p class="product-import-help">Sube fotos en JPG, PNG o WebP para asignarlas en la vista previa antes de importar.</p>
+                </div>
+
+                <div class="product-import-field">
+                    <label for="ocr_store_id">Tienda</label>
+                    <select id="ocr_store_id" name="store_id" required>
+                        <option value="">Selecciona tienda</option>
+                        @foreach($stores as $storeOption)
+                            <option value="{{ $storeOption->id }}" @selected(old('store_id', $preview['store_id'] ?? null) == $storeOption->id)>{{ $storeOption->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="product-import-actions">
+                    <button type="submit" class="btn">Procesar en segundo plano</button>
+                </div>
+                <div class="product-import-client-error" data-product-import-error aria-live="polite"></div>
+            </form>
+
+            @if($ocrBatches->isNotEmpty())
+                <div class="product-import-batches">
+                    <h3>Procesos recientes</h3>
+                    @foreach($ocrBatches as $batch)
+                        @php
+                            $statusLabel = match ($batch->status) {
+                                'completed' => 'Listo',
+                                'failed' => 'Falló',
+                                'imported' => 'Importado',
+                                'processing' => 'Procesando',
+                                default => 'Pendiente',
+                            };
+                        @endphp
+                        <div class="product-import-batch">
+                            <div>
+                                <span class="product-import-batch-status is-{{ $batch->status }}">{{ $statusLabel }}</span>
+                                <strong>{{ $batch->source_name ?: 'Catálogo PDF' }}</strong>
+                                <p>{{ $batch->store?->name ?? 'Tienda' }} · {{ $batch->created_at?->diffForHumans() }}</p>
+                                @if($batch->status === 'failed' && $batch->error)
+                                    <p>{{ $batch->error }}</p>
+                                @elseif(in_array($batch->status, ['pending', 'processing'], true))
+                                    <p>El OCR puede tardar varios minutos. Actualiza esta página para ver si ya terminó.</p>
+                                @endif
+                            </div>
+
+                            @if($batch->status === 'completed')
+                                <form method="POST" action="{{ route('admin.products.import.batches.load', $batch) }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-secondary">Cargar vista previa</button>
+                                </form>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+    @endif
+
     @if($preview)
         <section class="product-import-card">
             <div>
                 <h2>Vista previa</h2>
                 <p class="product-import-help">Tienda: <strong>{{ $preview['store_name'] ?? 'Tienda' }}</strong>. Nada se guarda hasta que confirmes la importación.</p>
             </div>
+
+            @if(! empty($preview['source']))
+                <div class="product-import-note">
+                    Origen: {{ $preview['source'] }}. Revisa nombres, precios y categorías antes de confirmar.
+                </div>
+            @endif
 
             <div class="product-import-summary">
                 <div class="product-import-stat">
@@ -363,6 +585,54 @@
                 <div class="product-import-note">
                     ZIP revisado: encontramos {{ $preview['zip_image_count'] }} imagen(es) compatibles.
                 </div>
+            @endif
+
+            @if($isOcrPreview && auth()->user()?->isAdmin())
+                <form method="POST" action="{{ route('admin.products.import.images') }}" enctype="multipart/form-data" class="product-import-card product-import-image-tools">
+                    @csrf
+                    <div>
+                        <h3>Asignar imágenes antes de importar</h3>
+                        <p class="product-import-help">Puedes elegir una imagen del ZIP o subir una manual para cada producto. Si subes una manual, tendrá prioridad sobre el ZIP.</p>
+                    </div>
+
+                    @foreach($rows as $rowIndex => $row)
+                        @php
+                            $imageSource = $row['data']['image_source'] ?? ['type' => 'none', 'value' => ''];
+                            $selectedZipImage = ($imageSource['type'] ?? null) === 'zip' ? (string) ($imageSource['value'] ?? '') : '';
+                            $currentImageLabel = match ($imageSource['type'] ?? 'none') {
+                                'zip' => 'ZIP: ' . ($imageSource['value'] ?? ''),
+                                'temp' => 'Imagen manual asignada',
+                                'url' => 'URL asignada',
+                                default => 'Sin imagen',
+                            };
+                        @endphp
+                        <div class="product-import-image-row">
+                            <div>
+                                <strong>{{ $row['data']['name'] ?: 'Producto sin nombre' }}</strong>
+                                <span>{{ $currentImageLabel }}</span>
+                            </div>
+
+                            <div class="product-import-field">
+                                <label for="image_from_zip_{{ $rowIndex }}">Desde ZIP</label>
+                                <select id="image_from_zip_{{ $rowIndex }}" name="image_from_zip[{{ $rowIndex }}]" @disabled($zipFiles->isEmpty())>
+                                    <option value="">Sin cambio</option>
+                                    @foreach($zipFiles as $zipFile)
+                                        <option value="{{ $zipFile }}" @selected($selectedZipImage === $zipFile)>{{ $zipFile }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="product-import-field">
+                                <label for="manual_image_{{ $rowIndex }}">Subir manual</label>
+                                <input id="manual_image_{{ $rowIndex }}" type="file" name="manual_images[{{ $rowIndex }}]" accept="image/jpeg,image/png,image/webp">
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <div class="product-import-actions">
+                        <button type="submit" class="btn">Guardar imágenes asignadas</button>
+                    </div>
+                </form>
             @endif
 
             <div class="product-import-table-wrap">
@@ -404,6 +674,8 @@
                                         URL
                                     @elseif(($row['data']['image_source']['type'] ?? 'none') === 'zip')
                                         {{ $row['data']['image_source']['value'] }}
+                                    @elseif(($row['data']['image_source']['type'] ?? 'none') === 'temp')
+                                        Manual
                                     @else
                                         Sin imagen
                                     @endif
@@ -446,63 +718,66 @@
 @push('scripts')
 <script>
     (() => {
-        const form = document.querySelector('[data-product-import-form]');
+        const forms = document.querySelectorAll('[data-product-import-form]');
 
-        if (! form) {
+        if (! forms.length) {
             return;
         }
 
-        const fileInput = form.querySelector('input[name="file"]');
-        const zipInput = form.querySelector('input[name="images_zip"]');
-        const errorBox = form.querySelector('[data-product-import-error]');
-        const fileMax = Number(form.dataset.fileMax || 0);
-        const zipMax = Number(form.dataset.zipMax || 0);
-        const totalMax = Number(form.dataset.totalMax || 0);
         const formatMb = (bytes) => `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
 
-        const setError = (message = '') => {
-            if (! errorBox) {
-                return;
-            }
+        forms.forEach((form) => {
+            const fileInput = form.querySelector('input[name="file"], input[name="pdf"]');
+            const zipInput = form.querySelector('input[name="images_zip"]');
+            const errorBox = form.querySelector('[data-product-import-error]');
+            const fileMax = Number(form.dataset.fileMax || 0);
+            const zipMax = Number(form.dataset.zipMax || 0);
+            const totalMax = Number(form.dataset.totalMax || 0);
 
-            errorBox.textContent = message;
-            errorBox.classList.toggle('is-visible', message !== '');
-        };
+            const setError = (message = '') => {
+                if (! errorBox) {
+                    return;
+                }
 
-        const selectedFile = (input) => input?.files?.[0] || null;
+                errorBox.textContent = message;
+                errorBox.classList.toggle('is-visible', message !== '');
+            };
 
-        const validateFiles = () => {
-            const productFile = selectedFile(fileInput);
-            const imagesZip = selectedFile(zipInput);
-            const totalSize = (productFile?.size || 0) + (imagesZip?.size || 0);
+            const selectedFile = (input) => input?.files?.[0] || null;
 
-            if (productFile && fileMax > 0 && productFile.size > fileMax) {
-                return `La plantilla pesa ${formatMb(productFile.size)}. Sube un CSV o XLSX de máximo ${formatMb(fileMax)}. Si el Excel tiene imágenes incrustadas, quítalas y usa imagen_url o ZIP.`;
-            }
+            const validateFiles = () => {
+                const productFile = selectedFile(fileInput);
+                const imagesZip = selectedFile(zipInput);
+                const totalSize = (productFile?.size || 0) + (imagesZip?.size || 0);
 
-            if (imagesZip && zipMax > 0 && imagesZip.size > zipMax) {
-                return `El ZIP pesa ${formatMb(imagesZip.size)}. Sube un ZIP de máximo ${formatMb(zipMax)}.`;
-            }
+                if (productFile && fileMax > 0 && productFile.size > fileMax) {
+                    return `El archivo pesa ${formatMb(productFile.size)}. Sube un archivo de máximo ${formatMb(fileMax)}.`;
+                }
 
-            if (totalMax > 0 && totalSize > totalMax) {
-                return `Los archivos pesan ${formatMb(totalSize)} en total. Sube máximo ${formatMb(totalMax)} por importación.`;
-            }
+                if (imagesZip && zipMax > 0 && imagesZip.size > zipMax) {
+                    return `El ZIP pesa ${formatMb(imagesZip.size)}. Sube un ZIP de máximo ${formatMb(zipMax)}.`;
+                }
 
-            return '';
-        };
+                if (totalMax > 0 && totalSize > totalMax) {
+                    return `Los archivos pesan ${formatMb(totalSize)} en total. Sube máximo ${formatMb(totalMax)} por importación.`;
+                }
 
-        [fileInput, zipInput].forEach((input) => {
-            input?.addEventListener('change', () => setError(validateFiles()));
-        });
+                return '';
+            };
 
-        form.addEventListener('submit', (event) => {
-            const error = validateFiles();
+            [fileInput, zipInput].forEach((input) => {
+                input?.addEventListener('change', () => setError(validateFiles()));
+            });
 
-            if (error !== '') {
-                event.preventDefault();
-                setError(error);
-                errorBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            form.addEventListener('submit', (event) => {
+                const error = validateFiles();
+
+                if (error !== '') {
+                    event.preventDefault();
+                    setError(error);
+                    errorBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
         });
     })();
 </script>

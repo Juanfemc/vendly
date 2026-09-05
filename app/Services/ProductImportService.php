@@ -22,6 +22,7 @@ class ProductImportService
 
     private const REQUIRED_COLUMNS = ['nombre', 'precio'];
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+    private const MANUAL_IMAGE_DIRECTORY = 'imports/product-images/manual';
 
     private const COLUMN_ALIASES = [
         'nombre' => ['nombre', 'producto', 'name', 'product_name'],
@@ -54,6 +55,13 @@ class ProductImportService
     public function preview(Store $store, UploadedFile $file, ?UploadedFile $imagesZip = null): array
     {
         $rows = $this->readRows($file);
+
+        return $this->previewRows($store, $rows, 'Archivo ' . strtoupper($file->getClientOriginalExtension()), $imagesZip);
+    }
+
+    public function previewRows(Store $store, array $rows, ?string $sourceLabel = null, ?UploadedFile $imagesZip = null): array
+    {
+        $sourceLabel = trim((string) $sourceLabel);
 
         if (count($rows) < 2) {
             throw new RuntimeException('El archivo debe tener encabezados y al menos un producto.');
@@ -102,8 +110,11 @@ class ProductImportService
             return [
                 'store_id' => $store->id,
                 'store_name' => $store->name,
+                'source' => $sourceLabel !== '' ? $sourceLabel : null,
                 'zip_path' => $zipPath,
                 'zip_image_count' => count($zipFiles),
+                'zip_files' => $this->zipFileOptions($zipFiles),
+                'temp_images' => [],
                 'rows' => $items->all(),
                 'summary' => [
                     'total' => $items->count(),
@@ -181,12 +192,75 @@ class ProductImportService
         }
     }
 
+    public function assignPreviewImages(array $preview, array $zipSelections = [], array $manualImages = []): array
+    {
+        $rows = collect($preview['rows'] ?? [])->values();
+
+        if ($rows->isEmpty()) {
+            throw new RuntimeException('No hay productos en la vista previa para asignar imagenes.');
+        }
+
+        $zipFiles = collect($preview['zip_files'] ?? [])
+            ->map(fn ($file) => (string) $file)
+            ->filter()
+            ->values()
+            ->all();
+        $tempImages = collect($preview['temp_images'] ?? [])
+            ->map(fn ($file) => (string) $file)
+            ->filter()
+            ->values()
+            ->all();
+
+        $updatedRows = $rows->map(function (array $row, int $index) use ($zipSelections, $manualImages, $zipFiles, &$tempImages) {
+            $manualImage = $manualImages[$index] ?? null;
+            $zipSelection = trim((string) ($zipSelections[$index] ?? ''));
+
+            if ($manualImage instanceof UploadedFile) {
+                $this->deletePreviewImageSource($row['data']['image_source'] ?? null);
+                $path = $this->storePreviewManualImage($manualImage);
+                $tempImages[] = $path;
+                $row['data']['image_source'] = ['type' => 'temp', 'value' => $path];
+
+                return $row;
+            }
+
+            if ($zipSelection !== '') {
+                if (! in_array($zipSelection, $zipFiles, true)) {
+                    throw new RuntimeException('Una imagen seleccionada ya no existe en el ZIP.');
+                }
+
+                $this->deletePreviewImageSource($row['data']['image_source'] ?? null);
+                $row['data']['image_source'] = ['type' => 'zip', 'value' => $zipSelection];
+            }
+
+            return $row;
+        })->all();
+
+        $preview['rows'] = $updatedRows;
+        $preview['temp_images'] = collect($tempImages)
+            ->filter(fn (string $path) => Storage::disk('local')->exists($path))
+            ->unique()
+            ->values()
+            ->all();
+
+        return $preview;
+    }
+
     public function deletePreviewFiles(?array $preview): void
     {
         $zipPath = (string) ($preview['zip_path'] ?? '');
 
         if ($zipPath !== '' && str_starts_with($zipPath, 'imports/product-images/')) {
             Storage::disk('local')->delete($zipPath);
+        }
+
+        $tempImages = collect($preview['temp_images'] ?? [])
+            ->map(fn ($path) => (string) $path)
+            ->filter(fn (string $path) => str_starts_with($path, self::MANUAL_IMAGE_DIRECTORY . '/'))
+            ->all();
+
+        if ($tempImages !== []) {
+            Storage::disk('local')->delete($tempImages);
         }
     }
 
@@ -560,13 +634,79 @@ class ProductImportService
         return $files;
     }
 
+    private function zipFileOptions(array $zipFiles): array
+    {
+        return collect($zipFiles)
+            ->values()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
     private function storeImportedImage(array $source, ?string $zipPath): ?string
     {
         return match ($source['type'] ?? 'none') {
             'url' => $this->storeImageFromUrl((string) $source['value']),
             'zip' => $this->storeImageFromZip((string) $source['value'], (string) $zipPath),
+            'temp' => $this->storeImageFromPreview((string) $source['value']),
             default => null,
         };
+    }
+
+    private function storePreviewManualImage(UploadedFile $image): string
+    {
+        $bytes = $image->getContent();
+
+        if ($bytes === false || $bytes === '') {
+            throw new RuntimeException('No se pudo leer una imagen manual.');
+        }
+
+        if (strlen($bytes) > self::MAX_IMAGE_BYTES) {
+            throw new RuntimeException('Una imagen supera el limite de 8MB.');
+        }
+
+        $extension = $this->imageExtensionFromBytes($bytes)
+            ?: $this->imageExtensionFromName($image->getClientOriginalName());
+
+        if (! $extension) {
+            throw new RuntimeException('Una imagen manual no tiene formato JPG, PNG o WebP.');
+        }
+
+        $path = self::MANUAL_IMAGE_DIRECTORY . '/' . Str::uuid() . '.' . $extension;
+        Storage::disk('local')->put($path, $bytes);
+
+        return $path;
+    }
+
+    private function storeImageFromPreview(string $path): string
+    {
+        if (! str_starts_with($path, self::MANUAL_IMAGE_DIRECTORY . '/') || ! Storage::disk('local')->exists($path)) {
+            throw new RuntimeException('No encontramos una imagen manual para completar la importacion.');
+        }
+
+        $bytes = Storage::disk('local')->get($path);
+        $extension = $this->imageExtensionFromBytes($bytes)
+            ?: $this->imageExtensionFromName($path);
+
+        if (! $extension) {
+            throw new RuntimeException('Una imagen manual no tiene formato JPG, PNG o WebP.');
+        }
+
+        return $this->storeImageBytes($bytes, $extension);
+    }
+
+    private function deletePreviewImageSource(?array $source): void
+    {
+        if (($source['type'] ?? null) !== 'temp') {
+            return;
+        }
+
+        $path = (string) ($source['value'] ?? '');
+
+        if (str_starts_with($path, self::MANUAL_IMAGE_DIRECTORY . '/')) {
+            Storage::disk('local')->delete($path);
+        }
     }
 
     private function storeImageFromUrl(string $url): string

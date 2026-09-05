@@ -439,6 +439,14 @@
         let announcementTimer;
         let announcementAnimationTimer;
 
+        slides.forEach((slide, slideIndex) => {
+            const isActive = slideIndex === activeIndex;
+            slide.hidden = false;
+            slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+            slide.classList.toggle('is-active', isActive);
+            slide.classList.remove('is-leaving');
+        });
+
         const showFashionAnnouncement = (index) => {
             if (!slides.length) {
                 return;
@@ -456,18 +464,14 @@
                 const isCurrent = slideIndex === activeIndex;
                 const isNext = slideIndex === nextIndex;
 
+                slide.hidden = false;
                 slide.classList.toggle('is-leaving', isCurrent && !isNext);
                 slide.classList.toggle('is-active', isNext);
-
-                if (isNext) {
-                    slide.hidden = false;
-                }
+                slide.setAttribute('aria-hidden', isNext ? 'false' : 'true');
             });
 
             announcementAnimationTimer = window.setTimeout(() => {
-                slides.forEach((slide, slideIndex) => {
-                    const isActive = slideIndex === nextIndex;
-                    slide.hidden = !isActive;
+                slides.forEach((slide) => {
                     slide.classList.toggle('is-leaving', false);
                 });
             }, 420);

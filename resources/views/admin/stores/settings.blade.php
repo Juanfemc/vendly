@@ -1606,6 +1606,20 @@
                             @endfor
                         </div>
                     </div>
+
+                    @if(\App\Models\Store::supportsCheckoutShippingOptionsCardColumn())
+                        <div class="catalog-toggle-row" style="margin-top:18px;">
+                            <div>
+                                <strong>Mostrar opciones de envío al inicio del checkout</strong>
+                                <p class="catalog-help" style="margin:4px 0 0;">Actívalo manualmente si quieres que el cliente vea una tarjeta informativa con los métodos disponibles antes de llenar sus datos.</p>
+                            </div>
+                            <label class="catalog-switch">
+                                <input type="hidden" name="show_shipping_options_at_checkout_start" value="0">
+                                <input type="checkbox" name="show_shipping_options_at_checkout_start" value="1" @checked((bool) old('show_shipping_options_at_checkout_start', $store->show_shipping_options_at_checkout_start ?? false))>
+                                <i></i>
+                            </label>
+                        </div>
+                    @endif
                 @else
                     <p class="catalog-help">Actualiza a Pro o Premium para ofrecer costos de envío y opciones como domicilio local, envío nacional o recogida en tienda.</p>
                 @endif

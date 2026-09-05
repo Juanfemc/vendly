@@ -501,11 +501,13 @@ class ProductController extends Controller
             ->paginate($homeProductPageSize)
             ->withQueryString();
         $storeProductsTotal = Product::where('store_id', $store->id)->count();
-        $allProducts = Product::where('store_id', $store->id)
+        $allProductsQuery = Product::where('store_id', $store->id)
             ->withReviewStats()
-            ->latest()
-            ->take(12)
-            ->get();
+            ->latest();
+
+        $allProducts = $store->isFashionStore()
+            ? $allProductsQuery->get()
+            : $allProductsQuery->take(12)->get();
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $storefrontUrls = app(StorefrontUrlService::class);
 

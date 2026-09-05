@@ -65,6 +65,7 @@ trait ValidatesStoreProfile
             'shipping_methods' => ['nullable', 'array', 'max:5'],
             'shipping_methods.*.name' => ['nullable', 'string', 'max:80'],
             'shipping_methods.*.cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'show_shipping_options_at_checkout_start' => ['nullable', 'boolean'],
             'checkout_fields' => ['nullable', 'array'],
             'checkout_fields.*.enabled' => ['nullable', 'boolean'],
             'checkout_fields.*.required' => ['nullable', 'boolean'],
@@ -232,6 +233,14 @@ trait ValidatesStoreProfile
             $this->clearShippingData($data);
         }
 
+        if (array_key_exists('show_shipping_options_at_checkout_start', $data)) {
+            if (Store::supportsCheckoutShippingOptionsCardColumn() && $effectivePlan !== Store::PLAN_BASIC) {
+                $data['show_shipping_options_at_checkout_start'] = $this->boolean('show_shipping_options_at_checkout_start', false);
+            } else {
+                unset($data['show_shipping_options_at_checkout_start']);
+            }
+        }
+
         if (Store::supportsCheckoutFieldsColumn()) {
             $data['checkout_fields'] = Store::normalizeCheckoutFields($this->input('checkout_fields', []));
         } else {
@@ -367,7 +376,7 @@ trait ValidatesStoreProfile
 
     private function forgetShippingData(array &$data): void
     {
-        unset($data['shipping_methods']);
+        unset($data['shipping_methods'], $data['show_shipping_options_at_checkout_start']);
         $this->forgetLocalDeliveryData($data);
     }
 

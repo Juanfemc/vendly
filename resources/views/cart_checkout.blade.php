@@ -48,6 +48,9 @@
     $selectedShippingKey = old('shipping_method', $shippingMethods->first()['key'] ?? null);
     $selectedShipping = $shippingMethods->firstWhere('key', (string) $selectedShippingKey) ?? $shippingMethods->first();
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
+    $activeShippingMethods = $shippingMethods;
+    $showShippingOptionsAtCheckoutStart = $store?->show_shipping_options_at_checkout_start === true
+        && $activeShippingMethods->isNotEmpty();
     $discount = $discount ?? ['code' => null, 'amount' => 0];
     $discountAmount = (float) ($discount['amount'] ?? 0);
     $checkoutTotal = max(0, $total + $shippingCost - $discountAmount);
@@ -128,6 +131,32 @@
 
                     <form id="checkoutForm" action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}" method="POST">
                         @csrf
+
+                        @if($showShippingOptionsAtCheckoutStart)
+                            <section class="checkout-card checkout-shipping-start-card" data-checkout-shipping-start-card>
+                                <div class="checkout-section-head">
+                                    <span class="checkout-step-badge">i</span>
+                                    <div>
+                                        <h2 class="section-title">Opciones de envío</h2>
+                                        <p>Estos son los métodos disponibles para tu pedido.</p>
+                                    </div>
+                                </div>
+
+                                <div class="checkout-shipping-info-list">
+                                    @foreach($activeShippingMethods as $method)
+                                        <div class="checkout-shipping-info-option">
+                                            <span class="checkout-shipping-info-copy">
+                                                <strong>{{ $method['name'] }}</strong>
+                                                <small>{{ ((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</small>
+                                            </span>
+                                            <span class="checkout-shipping-info-price {{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">
+                                                {{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endif
 
                         <section class="checkout-card">
                             <div class="checkout-section-head">
@@ -254,7 +283,7 @@
                                 </div>
                             @endif
 
-                            @if(! $hasLocalDelivery && $shippingMethods->isNotEmpty())
+                            @if($shippingMethods->isNotEmpty())
                                 <fieldset class="field-wrap shipping-fieldset">
                                     <legend class="checkout-field-label">Método de envío</legend>
                                     <div class="shipping-options">

@@ -336,6 +336,23 @@ class CheckoutService
             return ['name' => null, 'cost' => 0];
         }
 
+        $methods = $store->shippingMethods();
+
+        if ($methods !== [] && array_key_exists('shipping_method', $customerData) && filled($customerData['shipping_method'])) {
+            $method = $store->shippingMethodByKey($customerData['shipping_method']);
+
+            if (! $method) {
+                throw ValidationException::withMessages([
+                    'shipping_method' => 'Selecciona un método de envío.',
+                ]);
+            }
+
+            return [
+                'name' => $method['name'],
+                'cost' => $store->shippingCostForSubtotal($method, $subtotal),
+            ];
+        }
+
         if ($store->localDeliveryEnabled()) {
             return $store->deliveryByCity(
                 $customerData['city'] ?? null,
@@ -345,24 +362,13 @@ class CheckoutService
                 ?? ['name' => null, 'cost' => 0];
         }
 
-        $methods = $store->shippingMethods();
-
-        if ($methods === []) {
-            return ['name' => null, 'cost' => 0];
-        }
-
-        $method = $store->shippingMethodByKey($customerData['shipping_method'] ?? null);
-
-        if (! $method) {
+        if ($methods !== []) {
             throw ValidationException::withMessages([
                 'shipping_method' => 'Selecciona un método de envío.',
             ]);
         }
 
-        return [
-            'name' => $method['name'],
-            'cost' => $store->shippingCostForSubtotal($method, $subtotal),
-        ];
+        return ['name' => null, 'cost' => 0];
     }
 
     private function termsAcceptanceData(Store $store): array

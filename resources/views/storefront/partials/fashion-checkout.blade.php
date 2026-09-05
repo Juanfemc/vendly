@@ -35,6 +35,24 @@
             <input type="hidden" name="store" value="{{ $store->slug }}">
             <input type="hidden" name="shipping_cost" value="{{ $hasSelectedDeliveryCity || ! $hasLocalDelivery ? $shippingCost : 0 }}" data-shipping-cost-field>
 
+            @if($showShippingOptionsAtCheckoutStart ?? false)
+                <section class="fashion-shipping-start-card" data-checkout-shipping-start-card>
+                    <h2>Opciones de envío</h2>
+                    <p class="fashion-checkout-muted">Estos son los métodos disponibles para tu pedido.</p>
+                    <div class="fashion-shipping-info-list">
+                        @foreach($activeShippingMethods as $method)
+                            <div class="fashion-shipping-info-option">
+                                <span class="fashion-shipping-info-copy">
+                                    <strong>{{ $method['name'] }}</strong>
+                                    <em>{{ ((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</em>
+                                </span>
+                                <b class="{{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             @if($checkoutFieldEnabled('email'))
                 <section>
                     <label class="fashion-field fashion-field--full">
@@ -190,7 +208,9 @@
                         <span data-local-delivery-label>Envío por ciudad</span>
                         <strong data-local-delivery-price>Por calcular</strong>
                     </div>
-                @elseif($shippingMethods->isNotEmpty())
+                @endif
+
+                @if($shippingMethods->isNotEmpty())
                     <fieldset class="fashion-shipping-options">
                         @foreach($shippingMethods as $method)
                             <label class="fashion-shipping-option">
@@ -210,7 +230,7 @@
                             </label>
                         @endforeach
                     </fieldset>
-                @else
+                @elseif(! $hasLocalDelivery)
                     <p class="fashion-checkout-muted">El vendedor coordinará el envío por WhatsApp.</p>
                 @endif
             </section>

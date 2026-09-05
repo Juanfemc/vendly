@@ -150,6 +150,14 @@
     };
 
     const shippingCost = () => {
+        const selected = shippingOptions.find((option) => option.checked);
+
+        if (selected) {
+            const baseCost = Number(selected.dataset.shippingCost || 0);
+
+            return freeShippingApplies() ? 0 : baseCost;
+        }
+
         if (localDeliveryEnabled) {
             if (!hasSelectedCity()) {
                 return 0;
@@ -161,16 +169,6 @@
 
             return freeShippingApplies() ? 0 : baseCost;
         }
-
-        const selected = shippingOptions.find((option) => option.checked);
-
-        if (!selected) {
-            return 0;
-        }
-
-        const baseCost = Number(selected.dataset.shippingCost || 0);
-
-        return freeShippingApplies() ? 0 : baseCost;
     };
 
     const updateShippingLabels = () => {
@@ -193,7 +191,6 @@
                 : `Envio fuera de ${localDeliveryArea}`;
             localDeliveryPrice.textContent = nextCost > 0 ? money(nextCost) : 'Gratis';
             localDeliveryPreview?.classList.toggle('is-local', isLocal);
-            return;
         }
 
         shippingOptions.forEach((option) => {
@@ -216,7 +213,8 @@
         }
 
         const cost = shippingCost();
-        const awaitingCity = localDeliveryEnabled && !hasSelectedCity();
+        const hasSelectedShippingOption = shippingOptions.some((option) => option.checked);
+        const awaitingCity = localDeliveryEnabled && !hasSelectedCity() && !hasSelectedShippingOption;
 
         updateShippingLabels();
         totalEls.forEach((element) => {

@@ -24,6 +24,7 @@ class AiContentService
     public const STORE_COVER_IMAGE_ENHANCE = 'store_cover_image_enhance';
     public const STORE_LOGO_IMAGE_ENHANCE = 'store_logo_image_enhance';
     public const PRODUCT_IMAGE_ENHANCE = 'product_image_enhance';
+    public const PRODUCT_IMPORT_OCR = 'product_import_ocr';
 
     public const TYPES = [
         self::PRODUCT_DESCRIPTION,

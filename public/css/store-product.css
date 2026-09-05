@@ -1411,3 +1411,98 @@
         gap: 8px;
     }
 }
+
+/* Default storefront product detail polish */
+.storefront-page--default .product-detail {
+    gap: clamp(30px, 3.4vw, 44px);
+}
+
+.storefront-page--default .product-carousel {
+    max-width: 540px;
+}
+
+.storefront-page--default .product-carousel-stage {
+    width: min(100%, 540px);
+    max-height: min(72vh, 540px);
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.9));
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.08);
+}
+
+.storefront-page--default .product-carousel-image {
+    padding: clamp(4px, 1vw, 10px);
+}
+
+.storefront-page--default .product-carousel-thumb {
+    border-color: rgba(17, 24, 39, 0.08);
+    background: #ffffff;
+}
+
+.storefront-page--default .product-carousel-thumb img {
+    object-fit: contain;
+    padding: 3px;
+    box-sizing: border-box;
+}
+
+.storefront-page--default .product-detail-panel {
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.storefront-page--default .product-detail-head {
+    margin: 8px 0 4px;
+}
+
+.storefront-page--default .product-detail-price {
+    margin-bottom: 6px;
+}
+
+.storefront-page--default .product-detail-panel .product-detail-description {
+    margin-top: 0;
+    padding: 16px 18px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.045);
+}
+
+.storefront-page--default .product-detail-panel .product-detail-description h2 {
+    margin-bottom: 8px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.storefront-page--default .product-detail-panel .product-detail-description p,
+.storefront-page--default .product-detail-panel .product-rich-content {
+    color: color-mix(in srgb, var(--ink, #111827) 72%, #64748b);
+}
+
+@media (max-width: 720px) {
+    .storefront-page--default .product-detail {
+        gap: 18px;
+    }
+
+    .storefront-page--default .product-carousel {
+        max-width: 100%;
+    }
+
+    .storefront-page--default .product-carousel-stage {
+        width: 100%;
+        border-radius: 20px;
+    }
+
+    .storefront-page--default .product-carousel-image {
+        padding: 4px;
+    }
+
+    .storefront-page--default .product-detail-panel {
+        gap: 10px;
+    }
+
+    .storefront-page--default .product-detail-panel .product-detail-description {
+        padding: 14px 15px;
+        border-radius: 16px;
+    }
+}
