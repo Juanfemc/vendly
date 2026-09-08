@@ -35,6 +35,11 @@
             'supplements' => 'css/storefront-supplements.css',
             'default' => 'css/storefront-default.css',
         ];
+        $storefrontCssPath = public_path('css/storefront.css');
+        $storefrontCssVersion = file_exists($storefrontCssPath) ? filemtime($storefrontCssPath) : null;
+        $variantStylesheet = $variantStylesheets[$storefrontVariant] ?? $variantStylesheets['default'];
+        $variantStylesheetPath = public_path($variantStylesheet);
+        $variantStylesheetVersion = file_exists($variantStylesheetPath) ? filemtime($variantStylesheetPath) : null;
         $faviconImage = $storefrontUrls->favicon($store);
         $seoImage = $absoluteStorageUrl($store->cover_image) ?: $absoluteStorageUrl($store->logo_image);
         $metaUrl = $storefrontUrls->about($store);
@@ -47,8 +52,8 @@
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
-    <link rel="stylesheet" href="{{ asset('css/storefront.css') }}">
-    <link rel="stylesheet" href="{{ asset($variantStylesheets[$storefrontVariant]) }}">
+    <link rel="stylesheet" href="{{ asset('css/storefront.css') }}{{ $storefrontCssVersion ? '?v=' . $storefrontCssVersion : '' }}">
+    <link rel="stylesheet" href="{{ asset($variantStylesheet) }}{{ $variantStylesheetVersion ? '?v=' . $variantStylesheetVersion : '' }}">
 </head>
 
 <body

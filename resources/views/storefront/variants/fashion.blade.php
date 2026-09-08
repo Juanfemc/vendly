@@ -82,7 +82,7 @@ $fashionTabs = collect([[
     $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 9.2h9.6l-.7 10a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8l-.7-10Z"/><path d="M9.5 9.2V7.4a2.5 2.5 0 0 1 5 0v1.8"/><path d="M12 13.1v4.2"/><path d="M9.9 15.2h4.2"/></svg>';
 @endphp
 
-<section class="fashion-hero">
+<section @class(['fashion-hero', 'has-copy' => $fashionHeroHasCopy, 'is-cover-only' => ! $fashionHeroHasCopy])>
     @if($fashionHeroHasCopy)
         <div class="fashion-hero-copy">
             @if($fashionHeroEyebrow !== '')

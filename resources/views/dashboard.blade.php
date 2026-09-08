@@ -3,7 +3,7 @@
 @section('meta_title', 'Vendly - Panel.')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}?v={{ filemtime(public_path('css/dashboard.css')) }}">
 
 <div class="header">
     <h2>{{ auth()->user()->isAdmin() ? 'Dashboard admin' : 'Dashboard de tienda' }}</h2>
@@ -474,7 +474,7 @@
     @endif
 
     @if (!empty($banners) && $banners->count() > 1)
-        <script src="{{ asset('js/dashboard.js') }}" defer></script>
+        <script src="{{ asset('js/dashboard.js') }}?v={{ filemtime(public_path('js/dashboard.js')) }}" defer></script>
     @endif
 @endif
 

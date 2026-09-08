@@ -223,7 +223,6 @@
                                     @checked((string) $selectedShippingKey === (string) $method['key'])
                                     required
                                 >
-                                <span aria-hidden="true"></span>
                                 <strong>{{ $method['name'] }}</strong>
                                 <em>{{ ((float) $method['cost']) > 0 ? '1-3 días hábiles' : '3-5 días hábiles' }}</em>
                                 <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>

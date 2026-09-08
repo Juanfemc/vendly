@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedido recibido</title>
-    <link rel="stylesheet" href="{{ asset('css/cart-checkout.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/cart-checkout.css') }}?v={{ filemtime(public_path('css/cart-checkout.css')) }}">
     @include('storefront.partials.meta-pixel', ['store' => $store])
 </head>
 @php

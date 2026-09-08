@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 | Vendly</title>
-    <link rel="stylesheet" href="{{ asset('css/errors.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/errors.css') }}?v={{ filemtime(public_path('css/errors.css')) }}">
 </head>
 <body class="error-page">
     <header class="error-nav">
