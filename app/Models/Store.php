@@ -20,6 +20,7 @@ class Store extends Model
     private static ?bool $supportsCustomDomainColumns = null;
     private static ?bool $supportsShippingMethodsColumn = null;
     private static ?bool $supportsCheckoutShippingOptionsCardColumn = null;
+    private static ?bool $supportsCheckoutWhatsappColumn = null;
     private static ?bool $supportsLocalDeliveryColumns = null;
     private static ?bool $supportsLocalDeliveryCityCodeColumn = null;
     private static ?bool $supportsMetaPixelColumn = null;
@@ -27,6 +28,9 @@ class Store extends Model
     private static ?bool $supportsTermsAcceptanceColumns = null;
     private static ?bool $supportsCheckoutFieldsColumn = null;
     private static ?bool $supportsHeroOverlayColumns = null;
+    private static ?bool $supportsColorVariantDisplayColumn = null;
+    private static ?bool $supportsFashionDeliveryTimesColumn = null;
+    private static ?bool $supportsFashionSizeFilterColumn = null;
     private static ?bool $supportsOnboardingStateColumns = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
@@ -49,6 +53,9 @@ class Store extends Model
 
     public const BASIC_PRODUCT_LIMIT = 20;
     public const PRO_PRODUCT_LIMIT = 100;
+
+    public const COLOR_VARIANT_DISPLAY_SWATCH = 'swatch';
+    public const COLOR_VARIANT_DISPLAY_LABEL = 'label';
 
     public const FONT_FAMILIES = [
         'system' => [
@@ -96,6 +103,7 @@ class Store extends Model
         'custom_domain_status',
         'custom_domain_verified_at',
         'whatsapp',
+        'checkout_whatsapp_enabled',
         'whatsapp_verified_at',
         'whatsapp_consent_at',
         'whatsapp_consent_version',
@@ -126,6 +134,9 @@ class Store extends Model
         'text_color',
         'font_family',
         'responsive_product_columns',
+        'color_variant_display',
+        'show_fashion_delivery_times',
+        'show_fashion_size_filter',
         'show_hero_products_action',
         'show_hero_overlay',
         'hero_overlay_eyebrow',
@@ -153,11 +164,14 @@ class Store extends Model
         'free_shipping_minimum' => 'decimal:2',
         'shipping_methods' => 'array',
         'show_shipping_options_at_checkout_start' => 'boolean',
+        'checkout_whatsapp_enabled' => 'boolean',
         'checkout_fields' => 'array',
         'local_delivery_cost' => 'decimal:2',
         'outside_delivery_cost' => 'decimal:2',
         'reservation_available_days' => 'array',
         'responsive_product_columns' => 'integer',
+        'show_fashion_delivery_times' => 'boolean',
+        'show_fashion_size_filter' => 'boolean',
         'show_hero_products_action' => 'boolean',
         'show_hero_overlay' => 'boolean',
         'require_terms_acceptance' => 'boolean',
@@ -536,6 +550,19 @@ class Store extends Model
         return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM;
     }
 
+    public function acceptsWhatsappCheckout(): bool
+    {
+        if (blank($this->whatsapp)) {
+            return false;
+        }
+
+        if (! self::supportsCheckoutWhatsappColumn()) {
+            return true;
+        }
+
+        return $this->checkout_whatsapp_enabled !== false;
+    }
+
     public function allowsOfferBadges(): bool
     {
         return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM;
@@ -731,6 +758,11 @@ class Store extends Model
         return self::$supportsCheckoutShippingOptionsCardColumn ??= Schema::hasColumn('stores', 'show_shipping_options_at_checkout_start');
     }
 
+    public static function supportsCheckoutWhatsappColumn(): bool
+    {
+        return self::$supportsCheckoutWhatsappColumn ??= Schema::hasColumn('stores', 'checkout_whatsapp_enabled');
+    }
+
     public static function supportsAiTables(): bool
     {
         return self::$supportsAiTables ??= Schema::hasTable('ai_generations')
@@ -754,6 +786,21 @@ class Store extends Model
             && Schema::hasColumn('stores', 'hero_overlay_title')
             && Schema::hasColumn('stores', 'hero_overlay_button_text')
             && Schema::hasColumn('stores', 'hero_overlay_button_url');
+    }
+
+    public static function supportsColorVariantDisplayColumn(): bool
+    {
+        return self::$supportsColorVariantDisplayColumn ??= Schema::hasColumn('stores', 'color_variant_display');
+    }
+
+    public static function supportsFashionDeliveryTimesColumn(): bool
+    {
+        return self::$supportsFashionDeliveryTimesColumn ??= Schema::hasColumn('stores', 'show_fashion_delivery_times');
+    }
+
+    public static function supportsFashionSizeFilterColumn(): bool
+    {
+        return self::$supportsFashionSizeFilterColumn ??= Schema::hasColumn('stores', 'show_fashion_size_filter');
     }
 
     public static function supportsOnboardingStateColumns(): bool
@@ -828,6 +875,7 @@ class Store extends Model
                     'key' => (string) $index,
                     'name' => $name,
                     'cost' => $cost,
+                    'delivery_time' => trim((string) ($method['delivery_time'] ?? '')),
                 ];
             })
             ->filter()
@@ -1164,6 +1212,48 @@ class Store extends Model
         return collect(self::FONT_FAMILIES)
             ->mapWithKeys(fn (array $font, string $value) => [$value => $font['label']])
             ->all();
+    }
+
+    public static function colorVariantDisplayOptions(): array
+    {
+        return [
+            self::COLOR_VARIANT_DISPLAY_SWATCH => 'Círculos de color',
+            self::COLOR_VARIANT_DISPLAY_LABEL => 'Nombre del color',
+        ];
+    }
+
+    public function colorVariantDisplay(): string
+    {
+        if (! self::supportsColorVariantDisplayColumn()) {
+            return self::COLOR_VARIANT_DISPLAY_SWATCH;
+        }
+
+        $display = (string) ($this->color_variant_display ?: self::COLOR_VARIANT_DISPLAY_SWATCH);
+
+        return array_key_exists($display, self::colorVariantDisplayOptions())
+            ? $display
+            : self::COLOR_VARIANT_DISPLAY_SWATCH;
+    }
+
+    public function showsFashionDeliveryTimes(): bool
+    {
+        return $this->isFashionStore()
+            && $this->allowsShippingMethods()
+            && self::supportsFashionDeliveryTimesColumn()
+            && $this->show_fashion_delivery_times === true;
+    }
+
+    public function showsFashionSizeFilter(): bool
+    {
+        if (! $this->isFashionStore()) {
+            return false;
+        }
+
+        if (! self::supportsFashionSizeFilterColumn()) {
+            return true;
+        }
+
+        return $this->show_fashion_size_filter !== false;
     }
 
     public function themeBackgroundColor(): string

@@ -28,6 +28,35 @@ class PaymentSettingsController extends Controller
         return view('admin.payments.index', compact('store', 'mercadoPagoAccount', 'wompiAccount'));
     }
 
+    public function updateWhatsApp(Request $request): RedirectResponse
+    {
+        $store = $this->currentStoreOrFail();
+
+        abort_unless($store->allowsOnlinePayments(), 403);
+
+        if (! Store::supportsCheckoutWhatsappColumn()) {
+            return redirect()
+                ->route('admin.payments.index')
+                ->with('error', 'La configuracion de WhatsApp en checkout aun no esta disponible. Ejecuta las migraciones.');
+        }
+
+        $enabled = $request->boolean('enabled');
+
+        if ($enabled && blank($store->whatsapp)) {
+            return redirect()
+                ->route('admin.payments.index')
+                ->with('error', 'Agrega un numero de WhatsApp antes de activar este metodo.');
+        }
+
+        $store->forceFill([
+            'checkout_whatsapp_enabled' => $enabled,
+        ])->save();
+
+        return redirect()
+            ->route('admin.payments.index')
+            ->with('success', $enabled ? 'WhatsApp fue activado en el checkout.' : 'WhatsApp fue desactivado en el checkout.');
+    }
+
     public function updateWompi(Request $request): RedirectResponse
     {
         $store = $this->currentStoreOrFail();

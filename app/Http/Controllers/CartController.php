@@ -102,6 +102,7 @@ class CartController extends Controller
             : null;
         $colombiaDepartments = ColombiaLocation::departmentsForSelect();
         $colombiaLocations = ColombiaLocation::citiesForSelect();
+        $whatsappAvailable = $store?->acceptsWhatsappCheckout() ?? false;
         $mercadoPagoAccount = $store?->mercadoPagoAccount()->first();
         $mercadoPagoAvailable = ($store?->allowsOnlinePayments() ?? false)
             && ($mercadoPagoAccount?->isConnected() ?? false);
@@ -115,7 +116,7 @@ class CartController extends Controller
         $initialShippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
         $discount = $this->discountPreviewForView($store, old('discount_code'), $total, $initialShippingCost);
 
-        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'mercadoPagoAvailable', 'wompiAvailable', 'discount'));
+        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'whatsappAvailable', 'mercadoPagoAvailable', 'wompiAvailable', 'discount'));
     }
 
     public function previewCoupon(Request $request): JsonResponse
@@ -593,8 +594,10 @@ class CartController extends Controller
             return $this->cartError($store, 'Esta tienda no esta disponible para recibir pedidos.');
         }
 
-        if ($requiresWhatsApp && ! $store->whatsapp) {
-            return $this->cartError($store, 'La tienda no tiene un WhatsApp configurado.');
+        if ($requiresWhatsApp && ! $store->acceptsWhatsappCheckout()) {
+            return $this->cartError($store, blank($store->whatsapp)
+                ? 'La tienda no tiene un WhatsApp configurado.'
+                : 'La tienda no tiene WhatsApp activo como metodo de pago.');
         }
 
         if (! $this->cartService->matchesStore($cart, $store)) {

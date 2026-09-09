@@ -5,6 +5,7 @@
     $fashionProductPrice = (float) $product->price;
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
+    $fashionColorDisplay = $store->colorVariantDisplay();
     $fashionCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 9.2h9.6l-.7 10a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8l-.7-10Z"/><path d="M9.5 9.2V7.4a2.5 2.5 0 0 1 5 0v1.8"/></svg>';
     $fashionBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
     $fashionProductBadges = $productBadges ?? $product->displayBadges($store);
@@ -258,11 +259,19 @@
                         <div class="fashion-option-head">
                             <span>COLOR</span>
                         </div>
-                        <div class="fashion-color-options">
+                        <div @class([
+                            'fashion-color-options',
+                            'fashion-color-options--labels' => $fashionColorDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                            'fashion-color-options--swatches' => $fashionColorDisplay !== \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                        ])>
                             @foreach($fashionColorOptions as $color)
                                 <label title="{{ $color['label'] }}">
                                     <input type="radio" name="color" value="{{ $color['value'] }}" required data-role="selected-color-radio">
-                                    <span style="--swatch-color: {{ $color['swatch'] }}"></span>
+                                    @if($fashionColorDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL)
+                                        <span class="fashion-color-name">{{ $color['label'] }}</span>
+                                    @else
+                                        <span class="fashion-color-swatch" style="--swatch-color: {{ $color['swatch'] }}"></span>
+                                    @endif
                                 </label>
                             @endforeach
                         </div>

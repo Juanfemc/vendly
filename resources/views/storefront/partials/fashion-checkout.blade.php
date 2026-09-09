@@ -8,6 +8,19 @@
     $checkoutRequired = $checkoutRequired ?? fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
     $checkoutLocationEnabled = $checkoutLocationEnabled ?? $checkoutFieldEnabled('city');
     $checkoutLocationRequired = $checkoutLocationRequired ?? $checkoutFieldRequired('city');
+    $whatsappAvailable = (bool) ($whatsappAvailable ?? ($store?->acceptsWhatsappCheckout() ?? false));
+    $mercadoPagoAvailable = (bool) ($mercadoPagoAvailable ?? false);
+    $wompiAvailable = (bool) ($wompiAvailable ?? false);
+    $showFashionDeliveryTimes = $store?->showsFashionDeliveryTimes() ?? false;
+    $defaultPaymentAction = $whatsappAvailable
+        ? route('cart.whatsapp', ['store' => $store->slug])
+        : ($mercadoPagoAvailable
+            ? route('cart.mercadopago', ['store' => $store->slug])
+            : ($wompiAvailable ? route('cart.wompi', ['store' => $store->slug]) : route('cart.whatsapp', ['store' => $store->slug])));
+    $defaultPaymentLabel = $whatsappAvailable
+        ? 'Finalizar pedido por WhatsApp'
+        : ($mercadoPagoAvailable ? 'Pagar con Mercado Pago' : ($wompiAvailable ? 'Pagar con Wompi' : 'Sin métodos de pago activos'));
+    $hasPaymentOptions = $whatsappAvailable || $mercadoPagoAvailable || $wompiAvailable;
 @endphp
 
 <section class="fashion-checkout">
@@ -30,7 +43,7 @@
     @endif
 
     <div class="fashion-checkout-grid">
-        <form id="checkoutForm" class="fashion-checkout-form" action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}" method="POST">
+        <form id="checkoutForm" class="fashion-checkout-form" action="{{ $defaultPaymentAction }}" method="POST">
             @csrf
             <input type="hidden" name="store" value="{{ $store->slug }}">
             <input type="hidden" name="shipping_cost" value="{{ $hasSelectedDeliveryCity || ! $hasLocalDelivery ? $shippingCost : 0 }}" data-shipping-cost-field>
@@ -41,10 +54,11 @@
                     <p class="fashion-checkout-muted">Estos son los métodos disponibles para tu pedido.</p>
                     <div class="fashion-shipping-info-list">
                         @foreach($activeShippingMethods as $method)
+                            @php($deliveryTime = trim((string) ($method['delivery_time'] ?? '')))
                             <div class="fashion-shipping-info-option">
                                 <span class="fashion-shipping-info-copy">
                                     <strong>{{ $method['name'] }}</strong>
-                                    <em>{{ ((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</em>
+                                    <em>{{ $showFashionDeliveryTimes && $deliveryTime !== '' ? $deliveryTime : (((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional') }}</em>
                                 </span>
                                 <b class="{{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
                             </div>
@@ -213,6 +227,7 @@
                 @if($shippingMethods->isNotEmpty())
                     <fieldset class="fashion-shipping-options">
                         @foreach($shippingMethods as $method)
+                            @php($deliveryTime = trim((string) ($method['delivery_time'] ?? '')))
                             <label class="fashion-shipping-option">
                                 <input
                                     type="radio"
@@ -224,7 +239,9 @@
                                     required
                                 >
                                 <strong>{{ $method['name'] }}</strong>
-                                <em>{{ ((float) $method['cost']) > 0 ? '1-3 días hábiles' : '3-5 días hábiles' }}</em>
+                                @if($showFashionDeliveryTimes && $deliveryTime !== '')
+                                    <em>{{ $deliveryTime }}</em>
+                                @endif
                                 <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
                             </label>
                         @endforeach
@@ -239,24 +256,26 @@
                 <p class="fashion-checkout-muted">Todas las transacciones son seguras.</p>
 
                 <div class="fashion-payment-options">
-                    <label class="fashion-payment-option">
-                        <input
-                            type="radio"
-                            name="checkout_payment_choice"
-                            value="whatsapp"
-                            data-payment-choice
-                            data-payment-action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}"
-                            data-payment-label="Finalizar pedido por WhatsApp"
-                            checked
-                        >
-                        <span class="fashion-payment-copy">
-                            <strong>Pedido por WhatsApp</strong>
-                            <em>Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</em>
-                        </span>
-                        <b class="fashion-payment-icon" aria-hidden="true">
-                            <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
-                        </b>
-                    </label>
+                    @if($whatsappAvailable)
+                        <label class="fashion-payment-option">
+                            <input
+                                type="radio"
+                                name="checkout_payment_choice"
+                                value="whatsapp"
+                                data-payment-choice
+                                data-payment-action="{{ route('cart.whatsapp', ['store' => $store->slug]) }}"
+                                data-payment-label="Finalizar pedido por WhatsApp"
+                                checked
+                            >
+                            <span class="fashion-payment-copy">
+                                <strong>Pedido por WhatsApp</strong>
+                                <em>Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</em>
+                            </span>
+                            <b class="fashion-payment-icon" aria-hidden="true">
+                                <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
+                            </b>
+                        </label>
+                    @endif
 
                     @if($mercadoPagoAvailable)
                         <label class="fashion-payment-option">
@@ -267,6 +286,7 @@
                                 data-payment-choice
                                 data-payment-action="{{ route('cart.mercadopago', ['store' => $store->slug]) }}"
                                 data-payment-label="Pagar con Mercado Pago"
+                                @checked(! $whatsappAvailable)
                             >
                             <span class="fashion-payment-copy">
                                 <strong>Mercado Pago</strong>
@@ -287,6 +307,7 @@
                                 data-payment-choice
                                 data-payment-action="{{ route('cart.wompi', ['store' => $store->slug]) }}"
                                 data-payment-label="Pagar con Wompi"
+                                @checked(! $whatsappAvailable && ! $mercadoPagoAvailable)
                             >
                             <span class="fashion-payment-copy">
                                 <strong>Wompi</strong>
@@ -296,6 +317,10 @@
                                 <img src="{{ asset('images/icons/payment-wompi.svg') }}" alt="">
                             </b>
                         </label>
+                    @endif
+
+                    @if(! $hasPaymentOptions)
+                        <p class="fashion-checkout-muted">Esta tienda no tiene métodos de pago activos por el momento.</p>
                     @endif
                 </div>
             </section>
@@ -323,9 +348,15 @@
             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => 'fashion'])
 
             <div class="fashion-checkout-actions">
-                <button type="submit" form="checkoutForm" data-payment-submit>
-                    <span>Finalizar pedido por WhatsApp</span>
-                </button>
+                @if($hasPaymentOptions)
+                    <button type="submit" form="checkoutForm" data-payment-submit>
+                        <span>{{ $defaultPaymentLabel }}</span>
+                    </button>
+                @else
+                    <button type="button" disabled>
+                        <span>Sin métodos de pago activos</span>
+                    </button>
+                @endif
             </div>
         </form>
 

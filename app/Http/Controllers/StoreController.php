@@ -348,6 +348,18 @@ class StoreController extends Controller
                 'show_hero_products_action' => false,
             ];
 
+            if (Store::supportsColorVariantDisplayColumn()) {
+                $customizationData['color_variant_display'] = Store::COLOR_VARIANT_DISPLAY_SWATCH;
+            }
+
+            if (Store::supportsFashionDeliveryTimesColumn()) {
+                $customizationData['show_fashion_delivery_times'] = false;
+            }
+
+            if (Store::supportsFashionSizeFilterColumn()) {
+                $customizationData['show_fashion_size_filter'] = true;
+            }
+
             if (Store::supportsHeroOverlayColumns()) {
                 $customizationData['show_hero_overlay'] = false;
                 $customizationData['hero_overlay_eyebrow'] = null;

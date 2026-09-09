@@ -65,6 +65,7 @@ trait ValidatesStoreProfile
             'shipping_methods' => ['nullable', 'array', 'max:5'],
             'shipping_methods.*.name' => ['nullable', 'string', 'max:80'],
             'shipping_methods.*.cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'shipping_methods.*.delivery_time' => ['nullable', 'string', 'max:80'],
             'show_shipping_options_at_checkout_start' => ['nullable', 'boolean'],
             'checkout_fields' => ['nullable', 'array'],
             'checkout_fields.*.enabled' => ['nullable', 'boolean'],
@@ -114,6 +115,9 @@ trait ValidatesStoreProfile
             'text_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'font_family' => ['nullable', Rule::in(array_keys(Store::fontFamilyOptions()))],
             'responsive_product_columns' => ['nullable', 'integer', 'in:1,2,3'],
+            'color_variant_display' => ['nullable', Rule::in(array_keys(Store::colorVariantDisplayOptions()))],
+            'show_fashion_delivery_times' => ['nullable', 'boolean'],
+            'show_fashion_size_filter' => ['nullable', 'boolean'],
             'show_hero_products_action' => ['nullable', 'boolean'],
             'show_hero_overlay' => ['nullable', 'boolean'],
             'hero_overlay_eyebrow' => ['nullable', 'string', 'max:80'],
@@ -161,6 +165,27 @@ trait ValidatesStoreProfile
         }
 
         $data['responsive_product_columns'] = (int) ($data['responsive_product_columns'] ?? 2);
+        if (Store::supportsColorVariantDisplayColumn()) {
+            $data['color_variant_display'] = $data['business_type'] === 'fashion'
+                ? ($data['color_variant_display'] ?? Store::COLOR_VARIANT_DISPLAY_SWATCH)
+                : Store::COLOR_VARIANT_DISPLAY_SWATCH;
+        } else {
+            unset($data['color_variant_display']);
+        }
+        if (Store::supportsFashionDeliveryTimesColumn()) {
+            $data['show_fashion_delivery_times'] = $data['business_type'] === 'fashion'
+                ? $this->boolean('show_fashion_delivery_times', false)
+                : false;
+        } else {
+            unset($data['show_fashion_delivery_times']);
+        }
+        if (Store::supportsFashionSizeFilterColumn()) {
+            $data['show_fashion_size_filter'] = $data['business_type'] === 'fashion'
+                ? $this->boolean('show_fashion_size_filter', true)
+                : false;
+        } else {
+            unset($data['show_fashion_size_filter']);
+        }
         $data['show_hero_products_action'] = $this->boolean('show_hero_products_action', false);
         $usesHeroOverlay = (bool) array_intersect($fields, [
             'show_hero_overlay',
@@ -200,6 +225,21 @@ trait ValidatesStoreProfile
             $data['text_color'] = Store::automaticTextColorFor(null);
             $data['font_family'] = 'system';
             $data['responsive_product_columns'] = 2;
+            if (Store::supportsColorVariantDisplayColumn()) {
+                $data['color_variant_display'] = Store::COLOR_VARIANT_DISPLAY_SWATCH;
+            } else {
+                unset($data['color_variant_display']);
+            }
+            if (Store::supportsFashionDeliveryTimesColumn()) {
+                $data['show_fashion_delivery_times'] = false;
+            } else {
+                unset($data['show_fashion_delivery_times']);
+            }
+            if (Store::supportsFashionSizeFilterColumn()) {
+                $data['show_fashion_size_filter'] = true;
+            } else {
+                unset($data['show_fashion_size_filter']);
+            }
             $data['show_hero_products_action'] = false;
             unset(
                 $data['show_hero_overlay'],
@@ -318,6 +358,7 @@ trait ValidatesStoreProfile
                     : [
                         'name' => $name,
                         'cost' => max(0, (float) ($method['cost'] ?? 0)),
+                        'delivery_time' => trim((string) ($method['delivery_time'] ?? '')),
                     ];
             })
             ->filter()

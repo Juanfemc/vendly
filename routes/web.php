@@ -120,6 +120,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/admin/templates', [StoreTemplateController::class, 'index'])->name('admin.templates.index');
     Route::post('/admin/templates/{template}', [StoreTemplateController::class, 'apply'])->name('admin.templates.apply');
     Route::get('/admin/payments', [PaymentSettingsController::class, 'index'])->name('admin.payments.index');
+    Route::post('/admin/payments/whatsapp', [PaymentSettingsController::class, 'updateWhatsApp'])->name('admin.payments.whatsapp.update');
     Route::post('/admin/payments/wompi', [PaymentSettingsController::class, 'updateWompi'])->name('admin.payments.wompi.update');
     Route::get('/admin/payments/mercadopago/connect', [PaymentSettingsController::class, 'connectMercadoPago'])->name('admin.payments.mercadopago.connect');
     Route::get('/admin/payments/mercadopago/callback', [PaymentSettingsController::class, 'mercadoPagoCallback'])->name('admin.payments.mercadopago.callback');

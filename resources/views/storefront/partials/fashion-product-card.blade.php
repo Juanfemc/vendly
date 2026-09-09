@@ -24,7 +24,7 @@
     $fashionProductStockLabel = $product->stockLabel();
     $fashionProductSoldOut = $product->isSoldOut();
     $fashionProductShowsOfferPricing = isset($store) && $store->allowsOfferBadges() && $product->hasOfferPricing();
-    $fashionCartIcon = $fashionCartIcon ?? '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 9.2h9.6l-.7 10a2 2 0 0 1-2 1.8H9.9a2 2 0 0 1-2-1.8l-.7-10Z"/><path d="M9.5 9.2V7.4a2.5 2.5 0 0 1 5 0v1.8"/><path d="M12 13.1v4.2"/><path d="M9.9 15.2h4.2"/></svg>';
+    $fashionCartIcon = $fashionCartIcon ?? '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M169 169v-25c0-48 39-87 87-87s87 39 87 87v25h25c23 0 42 16 46 39l47 236c5 27-15 52-43 52H94c-28 0-48-25-43-52l47-236c4-23 23-39 46-39h25Zm42 0h90v-25c0-25-20-45-45-45s-45 20-45 45v25Zm153 183a15 15 0 0 0-15-15h-29v-29a15 15 0 0 0-30 0v29h-29a15 15 0 0 0 0 30h29v29a15 15 0 0 0 30 0v-29h29a15 15 0 0 0 15-15Z"/></svg>';
 @endphp
 
 <article

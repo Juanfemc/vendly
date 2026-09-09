@@ -2562,6 +2562,87 @@ test('cart shows mercadopago button only for connected stores', function () {
         ->and(session()->has('carts.'.$store->id))->toBeFalse();
 });
 
+test('store owner can disable and enable whatsapp checkout from payments panel', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda WhatsApp Pagos',
+        'slug' => 'tienda-whatsapp-pagos',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PREMIUM,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($storeUser)
+        ->get(route('admin.payments.index'))
+        ->assertOk()
+        ->assertSee('Activar WhatsApp en el checkout')
+        ->assertSee('Pedido manual activo');
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.whatsapp.update'))
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('success', 'WhatsApp fue desactivado en el checkout.');
+
+    expect($store->refresh()->checkout_whatsapp_enabled)->toBeFalse()
+        ->and($store->acceptsWhatsappCheckout())->toBeFalse();
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.whatsapp.update'), ['enabled' => '1'])
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('success', 'WhatsApp fue activado en el checkout.');
+
+    expect($store->refresh()->checkout_whatsapp_enabled)->toBeTrue()
+        ->and($store->acceptsWhatsappCheckout())->toBeTrue();
+});
+
+test('checkout hides and rejects whatsapp when the store disables whatsapp checkout', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Sin WhatsApp Checkout',
+        'slug' => 'tienda-sin-whatsapp-checkout',
+        'whatsapp' => '573001112233',
+        'checkout_whatsapp_enabled' => false,
+        'plan' => Store::PLAN_PREMIUM,
+        'is_active' => true,
+    ]);
+    $product = Product::create([
+        'user_id' => $storeUser->id,
+        'store_id' => $store->id,
+        'name' => 'Producto sin WhatsApp',
+        'price' => 25000,
+    ]);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertDontSee('Pedido por WhatsApp')
+        ->assertDontSee('images/icons/payment-whatsapp.svg', false)
+        ->assertSee('Esta tienda no tiene métodos de pago activos por el momento.');
+
+    $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
+        'name' => 'Cliente',
+        'last_name' => 'Sin WhatsApp',
+        'phone' => '3001234567',
+        'address' => 'Calle 1',
+        'neighborhood' => 'Centro',
+        'city' => 'Bogota',
+        'document' => '123456',
+    ])
+        ->assertRedirect(route('cart.index', ['store' => $store->slug]))
+        ->assertSessionHas('error', 'La tienda no tiene WhatsApp activo como metodo de pago.');
+
+    expect(Order::where('store_id', $store->id)->exists())->toBeFalse();
+});
+
 test('pro stores cannot use mercadopago even with a connected account', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -5137,6 +5218,156 @@ test('technology storefront renders variant selectors before adding to cart', fu
         ->assertOk()
         ->assertSee('name="size"', false)
         ->assertSee('name="color"', false);
+});
+
+test('fashion product colors default to swatches and can render as names', function () {
+    $user = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Moda Colores',
+        'slug' => 'moda-colores',
+        'whatsapp' => '573001112233',
+        'business_type' => 'fashion',
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Camisa Serena',
+        'price' => 89000,
+        'colors' => ['Negro', 'Rosado'],
+    ]);
+
+    $this->get('/moda-colores/productos/'.$product->publicRouteKey())
+        ->assertOk()
+        ->assertSee('fashion-color-options--swatches', false)
+        ->assertSee('fashion-color-swatch', false)
+        ->assertDontSee('fashion-color-name', false);
+
+    $store->forceFill([
+        'color_variant_display' => Store::COLOR_VARIANT_DISPLAY_LABEL,
+    ])->save();
+
+    $this->get('/moda-colores/productos/'.$product->publicRouteKey())
+        ->assertOk()
+        ->assertSee('fashion-color-options--labels', false)
+        ->assertSee('<span class="fashion-color-name">Negro</span>', false)
+        ->assertSee('<span class="fashion-color-name">Rosado</span>', false)
+        ->assertDontSee('fashion-color-swatch', false);
+});
+
+test('fashion color display can be configured from the store panel', function () {
+    $storeUser = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Panel Moda',
+        'slug' => 'panel-moda',
+        'whatsapp' => '573001112233',
+        'business_type' => 'fashion',
+        'is_active' => true,
+    ]);
+
+    expect($store->refresh()->colorVariantDisplay())->toBe(Store::COLOR_VARIANT_DISPLAY_SWATCH);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'fashion',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'color_variant_display' => Store::COLOR_VARIANT_DISPLAY_LABEL,
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->colorVariantDisplay())->toBe(Store::COLOR_VARIANT_DISPLAY_LABEL);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'fashion',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'color_variant_display' => 'cards',
+        ])
+        ->assertSessionHasErrors('color_variant_display');
+});
+
+test('fashion size filter is active by default and can be hidden on storefront home', function () {
+    $user = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Moda Tallas',
+        'slug' => 'moda-tallas',
+        'whatsapp' => '573001112233',
+        'business_type' => 'fashion',
+        'is_active' => true,
+    ]);
+
+    Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Camiseta con tallas',
+        'price' => 89000,
+        'sizes' => ['S', 'M'],
+    ]);
+
+    $this->get('/moda-tallas')
+        ->assertOk()
+        ->assertSee('data-fashion-size-filter', false)
+        ->assertSee('data-fashion-size-option="s"', false)
+        ->assertSee('data-fashion-size-option="m"', false);
+
+    $store->forceFill([
+        'show_fashion_size_filter' => false,
+    ])->save();
+
+    $this->get('/moda-tallas')
+        ->assertOk()
+        ->assertDontSee('data-fashion-size-filter', false)
+        ->assertDontSee('data-fashion-size-option="s"', false);
+});
+
+test('fashion size filter visibility can be configured from the store panel', function () {
+    $storeUser = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Panel Tallas',
+        'slug' => 'panel-tallas',
+        'whatsapp' => '573001112233',
+        'business_type' => 'fashion',
+        'is_active' => true,
+    ]);
+
+    expect($store->refresh()->showsFashionSizeFilter())->toBeTrue();
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'fashion',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'show_fashion_size_filter' => '0',
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->showsFashionSizeFilter())->toBeFalse();
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'fashion',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'show_fashion_size_filter' => '1',
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->showsFashionSizeFilter())->toBeTrue();
 });
 
 test('technology storefront shows real catalog details without fake footer or wishlist', function () {
@@ -7915,6 +8146,80 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         ->toContain('value="9000"')
         ->and(substr_count($response->getContent(), 'Domicilio urbano'))->toBeGreaterThanOrEqual(2)
         ->and(substr_count($response->getContent(), 'data-shipping-option'))->toBeGreaterThanOrEqual(2);
+});
+
+test('fashion delivery times are hidden by default and shown only when enabled', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Moda Tiempos',
+        'slug' => 'moda-tiempos',
+        'business_type' => 'fashion',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'shipping_methods' => [
+            ['name' => 'Domicilio urbano', 'cost' => 9000, 'delivery_time' => '1-2 días hábiles'],
+        ],
+        'show_shipping_options_at_checkout_start' => true,
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Vestido Tiempos',
+        'price' => 60000,
+    ]);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertSee('Domicilio urbano')
+        ->assertDontSee('1-2 días hábiles');
+
+    $store->forceFill(['show_fashion_delivery_times' => true])->save();
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertSee('1-2 días hábiles');
+});
+
+test('fashion delivery times can be configured from the store panel', function () {
+    $storeUser = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Panel Tiempos',
+        'slug' => 'panel-tiempos',
+        'business_type' => 'fashion',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'fashion',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'show_fashion_delivery_times' => '1',
+            'shipping_methods' => [
+                ['name' => 'Domicilio local', 'cost' => 7000, 'delivery_time' => 'Entrega mañana'],
+            ],
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    $store->refresh();
+
+    expect($store->show_fashion_delivery_times)->toBeTrue()
+        ->and($store->shipping_methods[0]['delivery_time'])->toBe('Entrega mañana')
+        ->and($store->shippingMethods()[0]['delivery_time'])->toBe('Entrega mañana');
 });
 
 test('creating shipping methods does not enable the checkout shipping card', function () {

@@ -9,6 +9,12 @@
     $announcementTexts = collect($announcementItems)->pluck('text')->values();
     $shippingMethods = old('shipping_methods', $store->shipping_methods ?? []);
     $selectedReservationDays = old('reservation_available_days', $store->reservation_available_days ?? []);
+    $selectedColorVariantDisplay = old('color_variant_display', $store->colorVariantDisplay());
+    $selectedColorVariantDisplay = array_key_exists($selectedColorVariantDisplay, \App\Models\Store::colorVariantDisplayOptions())
+        ? $selectedColorVariantDisplay
+        : \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH;
+    $showFashionDeliveryTimes = (bool) old('show_fashion_delivery_times', $store->showsFashionDeliveryTimes());
+    $showFashionSizeFilter = (bool) old('show_fashion_size_filter', $store->showsFashionSizeFilter());
 @endphp
 
 <style>
@@ -655,6 +661,98 @@
         display: none;
     }
 
+    .catalog-variant-display-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .catalog-variant-display-option {
+        position: relative;
+        display: grid;
+        gap: 12px;
+        min-height: 118px;
+        padding: 16px;
+        border: 2px solid #dce5ea;
+        border-radius: 14px;
+        background: #ffffff;
+        color: #073241;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .catalog-variant-display-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .catalog-variant-display-option.is-selected,
+    .catalog-variant-display-option:has(input:checked) {
+        border-color: #22e1a8;
+        background: #effff8;
+    }
+
+    .catalog-variant-display-option.is-selected::after,
+    .catalog-variant-display-option:has(input:checked)::after {
+        content: "";
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #22e1a8;
+        box-shadow: inset 0 0 0 4px #ffffff;
+    }
+
+    .catalog-variant-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding-right: 24px;
+    }
+
+    .catalog-variant-dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid rgba(7, 50, 65, .12);
+        background: var(--preview-color, #d7dbe0);
+        box-shadow: inset 0 0 0 2px #ffffff;
+    }
+
+    .catalog-variant-name {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 30px;
+        padding: 0 12px;
+        border: 1px solid #d7dbe0;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #151515;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .catalog-variant-display-option strong,
+    .catalog-variant-display-option span {
+        display: block;
+    }
+
+    .catalog-variant-display-option > strong {
+        font-size: 15px;
+        line-height: 1.2;
+    }
+
+    .catalog-variant-display-option > span {
+        color: #6c9d9c;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
     .catalog-social-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -844,6 +942,10 @@
         grid-template-columns: 34px minmax(0, 1fr) minmax(130px, 180px);
     }
 
+    .catalog-shipping-row--delivery-time {
+        grid-template-columns: 34px minmax(0, 1.15fr) minmax(110px, 150px) minmax(150px, 1fr);
+    }
+
     .catalog-number-badge {
         width: 34px;
         height: 34px;
@@ -910,6 +1012,7 @@
         .fashion-preset-grid,
         .catalog-color-grid,
         .catalog-font-grid,
+        .catalog-variant-display-grid,
         .catalog-social-grid,
         .catalog-checkout-item,
         .catalog-shipping-row {
@@ -974,7 +1077,8 @@
     .catalog-settings-shell .catalog-field > span,
     .catalog-settings-shell .catalog-url-card span,
     .catalog-settings-shell .catalog-color-item strong,
-    .catalog-settings-shell .catalog-font-option strong {
+    .catalog-settings-shell .catalog-font-option strong,
+    .catalog-settings-shell .catalog-variant-display-option > strong {
         color: var(--catalog-panel-ink);
     }
 
@@ -985,6 +1089,7 @@
     .catalog-settings-shell .catalog-tip,
     .catalog-settings-shell .catalog-color-item span,
     .catalog-settings-shell .catalog-font-option span,
+    .catalog-settings-shell .catalog-variant-display-option > span,
     .catalog-settings-shell .catalog-social-label {
         color: var(--catalog-panel-muted);
     }
@@ -1002,17 +1107,23 @@
 
     .catalog-settings-shell .catalog-ai-button,
     .catalog-settings-shell .catalog-upload-card:hover,
-    .catalog-settings-shell .catalog-font-option.is-selected {
+    .catalog-settings-shell .catalog-font-option.is-selected,
+    .catalog-settings-shell .catalog-variant-display-option.is-selected,
+    .catalog-settings-shell .catalog-variant-display-option:has(input:checked) {
         border-color: var(--vendly-brand);
     }
 
     .catalog-settings-shell .catalog-upload-card:hover,
-    .catalog-settings-shell .catalog-font-option.is-selected {
+    .catalog-settings-shell .catalog-font-option.is-selected,
+    .catalog-settings-shell .catalog-variant-display-option.is-selected,
+    .catalog-settings-shell .catalog-variant-display-option:has(input:checked) {
         background: var(--catalog-panel-accent-soft);
         color: var(--catalog-panel-ink);
     }
 
     .catalog-settings-shell .catalog-font-option.is-selected::after,
+    .catalog-settings-shell .catalog-variant-display-option.is-selected::after,
+    .catalog-settings-shell .catalog-variant-display-option:has(input:checked)::after,
     .catalog-settings-shell .catalog-switch input:checked + i {
         background: var(--vendly-brand);
     }
@@ -1517,6 +1628,37 @@
                         <small>Elige cómo se acomodan los productos en pantallas pequeñas.</small>
                     </div>
                 </div>
+                @if($store->isFashionStore() && \App\Models\Store::supportsColorVariantDisplayColumn())
+                    <div class="catalog-option-row" style="margin-top:12px;">
+                        <span class="catalog-card-icon" aria-hidden="true">●</span>
+                        <div class="catalog-field">
+                            <span>Colores en detalle de producto</span>
+                            <div class="catalog-variant-display-grid" data-color-variant-display-picker>
+                                <label class="catalog-variant-display-option @if($selectedColorVariantDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH) is-selected @endif" data-color-variant-display-option>
+                                    <input type="radio" name="color_variant_display" value="{{ \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH }}" @checked($selectedColorVariantDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH)>
+                                    <div class="catalog-variant-preview" aria-hidden="true">
+                                        <i class="catalog-variant-dot" style="--preview-color:#111111"></i>
+                                        <i class="catalog-variant-dot" style="--preview-color:#f2a0b7"></i>
+                                        <i class="catalog-variant-dot" style="--preview-color:#173a63"></i>
+                                    </div>
+                                    <strong>Círculos de color</strong>
+                                    <span>Usa muestras visuales. Es la opción predeterminada.</span>
+                                </label>
+                                <label class="catalog-variant-display-option @if($selectedColorVariantDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL) is-selected @endif" data-color-variant-display-option>
+                                    <input type="radio" name="color_variant_display" value="{{ \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL }}" @checked($selectedColorVariantDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL)>
+                                    <div class="catalog-variant-preview" aria-hidden="true">
+                                        <i class="catalog-variant-name">Negro</i>
+                                        <i class="catalog-variant-name">Rosado</i>
+                                        <i class="catalog-variant-name">Azul</i>
+                                    </div>
+                                    <strong>Nombre del color</strong>
+                                    <span>Muestra botones con texto para clientes que prefieren leer la opción.</span>
+                                </label>
+                            </div>
+                            <small>Solo afecta la vista detalle de producto de la plantilla de ropa.</small>
+                        </div>
+                    </div>
+                @endif
                 <div class="catalog-toggle-row" style="margin-top:12px;">
                     <div>
                         <strong>Botón sobre la portada</strong>
@@ -1524,6 +1666,20 @@
                     </div>
                     <label class="catalog-switch">
                         <input type="checkbox" name="show_hero_products_action" value="1" @checked((bool) old('show_hero_products_action', $store->show_hero_products_action ?? false))>
+                        <i></i>
+                    </label>
+                </div>
+            @endif
+
+            @if($store->isFashionStore() && \App\Models\Store::supportsFashionSizeFilterColumn())
+                <div class="catalog-toggle-row" style="margin-top:12px;">
+                    <div>
+                        <strong>Filtro de talla en inicio</strong>
+                        <p class="catalog-help" style="margin:4px 0 0;">Muestra tallas como XS, S, M o 38, 40 para filtrar productos desde la portada.</p>
+                    </div>
+                    <label class="catalog-switch">
+                        <input type="hidden" name="show_fashion_size_filter" value="0">
+                        <input type="checkbox" name="show_fashion_size_filter" value="1" @checked($showFashionSizeFilter)>
                         <i></i>
                     </label>
                 </div>
@@ -1563,6 +1719,20 @@
                 </div>
 
                 @if($store->allowsShippingMethods())
+                    @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
+                        <div class="catalog-toggle-row" style="margin-bottom:18px;">
+                            <div>
+                                <strong>Mostrar tiempos de entrega en ropa</strong>
+                                <p class="catalog-help" style="margin:4px 0 0;">Activa esta opción para mostrar textos como “1-3 días hábiles” debajo de cada método de envío.</p>
+                            </div>
+                            <label class="catalog-switch">
+                                <input type="hidden" name="show_fashion_delivery_times" value="0">
+                                <input type="checkbox" name="show_fashion_delivery_times" value="1" @checked($showFashionDeliveryTimes)>
+                                <i></i>
+                            </label>
+                        </div>
+                    @endif
+
                     @if(\App\Models\Store::supportsLocalDeliveryColumns())
                         <div class="catalog-settings-grid catalog-settings-grid--three">
                             <div class="catalog-field">
@@ -1598,13 +1768,22 @@
                         <div class="catalog-shipping-list">
                             @for($shippingIndex = 0; $shippingIndex < 5; $shippingIndex++)
                                 @php($shippingMethod = $shippingMethods[$shippingIndex] ?? [])
-                                <div class="catalog-shipping-row">
+                                <div @class([
+                                    'catalog-shipping-row',
+                                    'catalog-shipping-row--delivery-time' => $store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn(),
+                                ])>
                                     <span class="catalog-number-badge">{{ $shippingIndex + 1 }}</span>
                                     <input type="text" name="shipping_methods[{{ $shippingIndex }}][name]" value="{{ old('shipping_methods.' . $shippingIndex . '.name', $shippingMethod['name'] ?? '') }}" maxlength="80" placeholder="{{ ['Domicilio local', 'Envío nacional', 'Recoger en tienda', 'Mensajería express', 'Contra entrega'][$shippingIndex] }}">
                                     <input type="number" name="shipping_methods[{{ $shippingIndex }}][cost]" value="{{ old('shipping_methods.' . $shippingIndex . '.cost', $shippingMethod['cost'] ?? '') }}" min="0" step="1" placeholder="Costo">
+                                    @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
+                                        <input type="text" name="shipping_methods[{{ $shippingIndex }}][delivery_time]" value="{{ old('shipping_methods.' . $shippingIndex . '.delivery_time', $shippingMethod['delivery_time'] ?? '') }}" maxlength="80" placeholder="{{ ['1-3 días hábiles', '3-5 días hábiles', 'Disponible hoy', 'Entrega express', 'Según coordinación'][$shippingIndex] }}">
+                                    @endif
                                 </div>
                             @endfor
                         </div>
+                        @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
+                            <small>Los tiempos solo se muestran en la plantilla de ropa cuando el interruptor está activado.</small>
+                        @endif
                     </div>
 
                     @if(\App\Models\Store::supportsCheckoutShippingOptionsCardColumn())
@@ -1852,14 +2031,27 @@
             });
         };
 
-	        fontButtons.forEach((button) => {
-	            button.addEventListener('click', () => {
-	                setSelectedFont(button.dataset.fontValue);
+        fontButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                setSelectedFont(button.dataset.fontValue);
                     syncSelectedFashionPreset();
-	            });
-	        });
+            });
+        });
 
-	        const brandInput = document.querySelector('[data-theme-color-input="brand"]');
+        document.querySelectorAll('[data-color-variant-display-picker]').forEach((picker) => {
+            const options = picker.querySelectorAll('[data-color-variant-display-option]');
+
+            options.forEach((option) => {
+                option.addEventListener('change', () => {
+                    options.forEach((item) => {
+                        const input = item.querySelector('input[type="radio"]');
+                        item.classList.toggle('is-selected', Boolean(input && input.checked));
+                    });
+                });
+            });
+        });
+
+        const brandInput = document.querySelector('[data-theme-color-input="brand"]');
 	        const backgroundInput = document.querySelector('[data-theme-color-input="background"]');
 	        const textInput = document.querySelector('[data-theme-color-input="text"]');
 	        const paletteButtons = document.querySelectorAll('[data-palette-brand]');

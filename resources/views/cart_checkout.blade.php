@@ -58,6 +58,19 @@
     $hasSelectedDeliveryCity = $checkoutLocationEnabled && ($usesColombiaLocations
         ? filled(old('city_code'))
         : filled(old('city')));
+    $whatsappAvailable = (bool) ($whatsappAvailable ?? ($store?->acceptsWhatsappCheckout() ?? false));
+    $mercadoPagoAvailable = (bool) ($mercadoPagoAvailable ?? false);
+    $wompiAvailable = (bool) ($wompiAvailable ?? false);
+    $whatsappPaymentLabel = $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp');
+    $defaultPaymentAction = $whatsappAvailable
+        ? route('cart.whatsapp', ['store' => $store?->slug])
+        : ($mercadoPagoAvailable
+            ? route('cart.mercadopago', ['store' => $store?->slug])
+            : ($wompiAvailable ? route('cart.wompi', ['store' => $store?->slug]) : route('cart.whatsapp', ['store' => $store?->slug])));
+    $defaultPaymentLabel = $whatsappAvailable
+        ? $whatsappPaymentLabel
+        : ($mercadoPagoAvailable ? 'Pagar con Mercado Pago' : ($wompiAvailable ? 'Pagar con Wompi' : 'Sin métodos de pago activos'));
+    $hasPaymentOptions = $whatsappAvailable || $mercadoPagoAvailable || $wompiAvailable;
 @endphp
 <body
     class="cart-page {{ $isTechnologyStore ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }}"
@@ -129,7 +142,7 @@
                         </div>
                     @endif
 
-                    <form id="checkoutForm" action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}" method="POST">
+                    <form id="checkoutForm" action="{{ $defaultPaymentAction }}" method="POST">
                         @csrf
 
                         @if($showShippingOptionsAtCheckoutStart)
@@ -346,24 +359,26 @@
                             @include('storefront.partials.checkout-terms', ['store' => $store, 'mode' => $isTechnologyStore ? 'technology' : 'default'])
 
                             <div class="checkout-payment-options" data-payment-options>
-                                <label class="checkout-payment-option">
-                                    <input
-                                        type="radio"
-                                        name="checkout_payment_choice"
-                                        value="whatsapp"
-                                        data-payment-choice
-                                        data-payment-action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}"
-                                        data-payment-label="{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}"
-                                        checked
-                                    >
-                                    <span class="checkout-payment-mark checkout-payment-mark--whatsapp" aria-hidden="true">
-                                        <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
-                                    </span>
-                                    <span class="checkout-payment-copy">
-                                        <strong>WhatsApp</strong>
-                                        <span class="checkout-payment-methods">Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</span>
-                                    </span>
-                                </label>
+                                @if($whatsappAvailable)
+                                    <label class="checkout-payment-option">
+                                        <input
+                                            type="radio"
+                                            name="checkout_payment_choice"
+                                            value="whatsapp"
+                                            data-payment-choice
+                                            data-payment-action="{{ route('cart.whatsapp', ['store' => $store?->slug]) }}"
+                                            data-payment-label="{{ $whatsappPaymentLabel }}"
+                                            checked
+                                        >
+                                        <span class="checkout-payment-mark checkout-payment-mark--whatsapp" aria-hidden="true">
+                                            <img src="{{ asset('images/icons/payment-whatsapp.svg') }}" alt="">
+                                        </span>
+                                        <span class="checkout-payment-copy">
+                                            <strong>WhatsApp</strong>
+                                            <span class="checkout-payment-methods">Coordina pago manual: efectivo, transferencia, Nequi o Daviplata según la tienda.</span>
+                                        </span>
+                                    </label>
+                                @endif
 
                                 @if($mercadoPagoAvailable)
                                     <label class="checkout-payment-option">
@@ -374,6 +389,7 @@
                                             data-payment-choice
                                             data-payment-action="{{ route('cart.mercadopago', ['store' => $store?->slug]) }}"
                                             data-payment-label="Pagar con Mercado Pago"
+                                            @checked(! $whatsappAvailable)
                                         >
                                         <span class="checkout-payment-mark checkout-payment-mark--mp" aria-hidden="true">
                                             <img src="{{ asset('images/icons/payment-mercadopago.svg') }}" alt="">
@@ -394,6 +410,7 @@
                                             data-payment-choice
                                             data-payment-action="{{ route('cart.wompi', ['store' => $store?->slug]) }}"
                                             data-payment-label="Pagar con Wompi"
+                                            @checked(! $whatsappAvailable && ! $mercadoPagoAvailable)
                                         >
                                         <span class="checkout-payment-mark checkout-payment-mark--wompi" aria-hidden="true">
                                             <img src="{{ asset('images/icons/payment-wompi.svg') }}" alt="">
@@ -405,9 +422,13 @@
                                     </label>
                                 @endif
 
-                                <button class="primary-btn" type="submit" data-payment-submit>
-                                    <span>{{ $isRestaurant ? 'Enviar pedido por WhatsApp' : ($isReservationStore ? 'Solicitar reserva por WhatsApp' : 'Finalizar pedido por WhatsApp') }}</span>
-                                </button>
+                                @if($hasPaymentOptions)
+                                    <button class="primary-btn" type="submit" data-payment-submit>
+                                        <span>{{ $defaultPaymentLabel }}</span>
+                                    </button>
+                                @else
+                                    <p class="checkout-payment-empty">Esta tienda no tiene métodos de pago activos por el momento.</p>
+                                @endif
                             </div>
                         </section>
                     </form>
