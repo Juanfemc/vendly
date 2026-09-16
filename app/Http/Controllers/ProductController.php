@@ -6,6 +6,7 @@ use App\Http\Requests\ProductRequest;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreCategory;
+use App\Models\StoreLanding;
 use App\Services\AdminUpdateService;
 use App\Services\ProductContentService;
 use App\Services\ProductFileService;
@@ -324,6 +325,15 @@ class ProductController extends Controller
             $this->countStoreVisit($store);
         }
 
+        if (! $isCatalogPartial && $landing = $this->activeSingleProductLanding($store)) {
+            return view('store_single_product_landing', [
+                'store' => $store,
+                'landing' => $landing,
+                'product' => $landing->product,
+                'previewMode' => false,
+            ]);
+        }
+
         $payload = $this->storefrontPayload($store);
 
         if ($isCatalogPartial) {
@@ -442,6 +452,19 @@ class ProductController extends Controller
                 }
             })
             ->firstOrFail();
+    }
+
+    private function activeSingleProductLanding(Store $store): ?StoreLanding
+    {
+        if (! StoreLanding::supportsTable()) {
+            return null;
+        }
+
+        $landing = $store->singleProductLanding()
+            ->with(['product' => fn ($query) => $query->with('store')->withReviewStats()->with('approvedReviews')])
+            ->first();
+
+        return $landing?->isPubliclyActive() && $landing->product ? $landing : null;
     }
 
     private function storefrontPayload(Store $store): array

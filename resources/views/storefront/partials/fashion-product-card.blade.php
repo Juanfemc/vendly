@@ -24,7 +24,7 @@
     $fashionProductStockLabel = $product->stockLabel();
     $fashionProductSoldOut = $product->isSoldOut();
     $fashionProductShowsOfferPricing = isset($store) && $store->allowsOfferBadges() && $product->hasOfferPricing();
-    $fashionCartIcon = $fashionCartIcon ?? '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M169 169v-25c0-48 39-87 87-87s87 39 87 87v25h25c23 0 42 16 46 39l47 236c5 27-15 52-43 52H94c-28 0-48-25-43-52l47-236c4-23 23-39 46-39h25Zm42 0h90v-25c0-25-20-45-45-45s-45 20-45 45v25Zm153 183a15 15 0 0 0-15-15h-29v-29a15 15 0 0 0-30 0v29h-29a15 15 0 0 0 0 30h29v29a15 15 0 0 0 30 0v-29h29a15 15 0 0 0 15-15Z"/></svg>';
+    $fashionCartIcon = $fashionCartIcon ?? '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="currentColor"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#000" stroke-width="34" stroke-linecap="round"/></svg>';
 @endphp
 
 <article

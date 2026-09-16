@@ -1379,11 +1379,24 @@
 
 .fashion-product-cart-bag-icon {
     flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     display: block;
+}
+
+.fashion-product-cart-bag-icon .fashion-product-cart-bag-outline {
+    fill: none;
+    stroke: currentColor;
+}
+
+.fashion-product-cart-bag-icon .fashion-product-cart-bag-badge {
     fill: currentColor;
     stroke: none;
+}
+
+.fashion-product-cart-bag-icon .fashion-product-cart-bag-plus {
+    fill: none;
+    stroke: #000;
 }
 
 @media (min-width: 681px) {

@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar compra</title>
+    @php
+        $isSingleProductLandingCheckout = (bool) ($isSingleProductLandingCheckout ?? false);
+    @endphp
     <link rel="stylesheet" href="{{ asset('css/cart-checkout.css') }}?v={{ filemtime(public_path('css/cart-checkout.css')) }}">
+    @if($isSingleProductLandingCheckout)
+        <link rel="stylesheet" href="{{ asset('css/cart-single-product-landing-checkout.css') }}?v={{ filemtime(public_path('css/cart-single-product-landing-checkout.css')) }}">
+    @endif
     @include('storefront.partials.meta-pixel', ['store' => $store])
-    @if($store?->isTechnologyStore())
+    @if($store?->isTechnologyStore() && ! $isSingleProductLandingCheckout)
         <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
         <link rel="stylesheet" href="{{ asset('css/storefront-technology.css') }}?v={{ filemtime(public_path('css/storefront-technology.css')) }}">
     @endif
-    @if($store?->isFashionStore())
+    @if($store?->isFashionStore() && ! $isSingleProductLandingCheckout)
         <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
         <link rel="stylesheet" href="{{ asset('css/storefront-fashion.css') }}?v={{ filemtime(public_path('css/storefront-fashion.css')) }}">
     @endif
@@ -49,6 +55,7 @@
     $selectedShipping = $shippingMethods->firstWhere('key', (string) $selectedShippingKey) ?? $shippingMethods->first();
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
     $activeShippingMethods = $shippingMethods;
+    $selectableShippingMethods = $hasLocalDelivery ? collect() : $shippingMethods;
     $showShippingOptionsAtCheckoutStart = $store?->show_shipping_options_at_checkout_start === true
         && $activeShippingMethods->isNotEmpty();
     $discount = $discount ?? ['code' => null, 'amount' => 0];
@@ -73,7 +80,7 @@
     $hasPaymentOptions = $whatsappAvailable || $mercadoPagoAvailable || $wompiAvailable;
 @endphp
 <body
-    class="cart-page {{ $isTechnologyStore ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }}"
+    class="cart-page {{ $isTechnologyStore && ! $isSingleProductLandingCheckout ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore && ! $isSingleProductLandingCheckout ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }} {{ $isSingleProductLandingCheckout ? 'cart-page--single-product-landing' : '' }}"
     data-csrf="{{ csrf_token() }}"
     data-feedback-updated="{{ $isRestaurant ? 'Pedido actualizado' : ($isReservationStore ? 'Reserva actualizada' : 'Carrito actualizado') }}"
     data-feedback-update-error="{{ $isRestaurant ? 'No se pudo actualizar el pedido.' : ($isReservationStore ? 'No se pudo actualizar la reserva.' : 'No se pudo actualizar el carrito.') }}"
@@ -92,16 +99,16 @@
 >
     @include('storefront.partials.meta-pixel-noscript', ['store' => $store])
 
-    @if($isTechnologyStore && $store)
+    @if($isTechnologyStore && $store && ! $isSingleProductLandingCheckout)
         @include('storefront.partials.header-minimal-grid')
     @endif
 
-    @if($isFashionStore && $store)
+    @if($isFashionStore && $store && ! $isSingleProductLandingCheckout)
         @include('storefront.partials.fashion-checkout-header')
     @endif
 
     @if (empty($cart))
-        <main class="{{ $isTechnologyStore ? 'tech-checkout-shell shell' : ($isFashionStore ? 'fashion-checkout-shell' : '') }}">
+        <main class="{{ $isSingleProductLandingCheckout ? 'landing-checkout-shell' : ($isTechnologyStore ? 'tech-checkout-shell shell' : ($isFashionStore ? 'fashion-checkout-shell' : '')) }}">
         <div class="empty-state">
             <h1 class="section-title">Tu {{ $cartLabel }} está vacío</h1>
             <p>No hay {{ $itemsLabel }} agregados todavia.</p>
@@ -111,11 +118,33 @@
         </div>
         </main>
     @else
-        <main class="{{ $isTechnologyStore ? 'tech-checkout-shell shell' : ($isFashionStore ? 'fashion-checkout-shell' : '') }}">
-        @if($isFashionStore)
+        <main class="{{ $isSingleProductLandingCheckout ? 'landing-checkout-shell' : ($isTechnologyStore ? 'tech-checkout-shell shell' : ($isFashionStore ? 'fashion-checkout-shell' : '')) }}">
+        @if($isFashionStore && ! $isSingleProductLandingCheckout)
             @include('storefront.partials.fashion-checkout')
         @else
-        @if($isTechnologyStore)
+        @if($isSingleProductLandingCheckout)
+            <section class="landing-checkout-head">
+                <a class="landing-checkout-brand" href="{{ $storeHomeUrl }}">
+                    @if($store?->logo_image)
+                        <img src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}">
+                    @else
+                        <strong>{{ $store?->name ?? 'Vendly' }}</strong>
+                    @endif
+                </a>
+                <div class="landing-checkout-progress" aria-label="Progreso del checkout">
+                    <span class="is-active">1 Datos</span>
+                    <span>2 Envío</span>
+                    <span>3 Pago</span>
+                </div>
+                <div class="landing-checkout-secure">Compra segura</div>
+            </section>
+
+            <section class="landing-checkout-title">
+                <span>Checkout de venta directa</span>
+                <h1>Finaliza tu pedido</h1>
+                <p>Completa tus datos, elige envío y selecciona cómo quieres pagar.</p>
+            </section>
+        @elseif($isTechnologyStore)
             <section class="tech-checkout-head">
                 <h1>Finalizar compra</h1>
             </section>
@@ -203,7 +232,7 @@
                             @endif
                         </section>
 
-                        @if($checkoutFieldEnabled('address') || $checkoutFieldEnabled('apartment') || $checkoutFieldEnabled('neighborhood') || $checkoutLocationEnabled || $hasLocalDelivery || (! $hasLocalDelivery && $shippingMethods->isNotEmpty()) || $isReservationStore)
+                        @if($checkoutFieldEnabled('address') || $checkoutFieldEnabled('apartment') || $checkoutFieldEnabled('neighborhood') || $checkoutLocationEnabled || $hasLocalDelivery || $selectableShippingMethods->isNotEmpty() || $isReservationStore)
                         <section class="checkout-card">
                             <div class="checkout-section-head">
                                 <span class="checkout-step-badge">2</span>
@@ -296,11 +325,11 @@
                                 </div>
                             @endif
 
-                            @if($shippingMethods->isNotEmpty())
+                            @if($selectableShippingMethods->isNotEmpty())
                                 <fieldset class="field-wrap shipping-fieldset">
                                     <legend class="checkout-field-label">Método de envío</legend>
                                     <div class="shipping-options">
-                                        @foreach($shippingMethods as $method)
+                                        @foreach($selectableShippingMethods as $method)
                                             <label class="shipping-option">
                                                 <input
                                                     type="radio"
@@ -436,7 +465,12 @@
             </main>
 
             <aside class="checkout-side">
-                @if($isTechnologyStore)
+                @if($isSingleProductLandingCheckout)
+                    <div class="landing-checkout-summary-head">
+                        <span>Resumen del pedido</span>
+                        <strong>{{ $cartCount }} {{ $cartCount === 1 ? $itemLabel : $itemsLabel }}</strong>
+                    </div>
+                @elseif($isTechnologyStore)
                     <div class="tech-checkout-summary-head">
                         <h2>Resumen del pedido</h2>
                         <a href="{{ route('cart.index', ['store' => $store?->slug]) }}">Editar carrito</a>
@@ -551,17 +585,19 @@
                 <span>Total</span>
                 <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
             </div>
-            <button type="submit" form="checkoutForm">{{ $isRestaurant ? 'Enviar' : ($isReservationStore ? 'Reservar' : 'Finalizar') }}</button>
+            <button type="submit" form="checkoutForm" {{ $isSingleProductLandingCheckout ? 'data-payment-submit' : '' }}>
+                <span>{{ $isSingleProductLandingCheckout ? 'Pagar ahora' : ($isRestaurant ? 'Enviar' : ($isReservationStore ? 'Reservar' : 'Finalizar')) }}</span>
+            </button>
         </div>
         @endif
         </main>
     @endif
 
-    @if($isTechnologyStore && $store)
+    @if($isTechnologyStore && $store && ! $isSingleProductLandingCheckout)
         @include('storefront.partials.footer-minimal-grid')
     @endif
 
-    @if($isFashionStore && $store)
+    @if($isFashionStore && $store && ! $isSingleProductLandingCheckout)
         @include('storefront.partials.footer-fashion')
     @endif
 

@@ -88,7 +88,7 @@
                         <span>Tipo de descuento</span>
                         <select name="type" required>
                             @foreach(\App\Models\DiscountCoupon::typeOptions() as $type => $label)
-                                <option value="{{ $type }}" @selected(old('type') === $type)>{{ $label }}</option>
+                                <option value="{{ $type }}" @selected(old('type', \App\Models\DiscountCoupon::TYPE_PERCENT) === $type)>{{ $label }}</option>
                             @endforeach
                         </select>
                     </label>
@@ -97,7 +97,8 @@
                 <div class="grid-two">
                     <label>
                         <span>Valor</span>
-                        <input type="text" name="value" value="{{ old('value') }}" placeholder="10 o 15000" required>
+                        <input type="text" name="value" value="{{ old('value') }}" placeholder="10 para 10% o 15000 para valor fijo" required>
+                        <small>Si eliges porcentaje, 10 significa 10% del subtotal aplicable.</small>
                     </label>
 
                     @if(\App\Models\DiscountCoupon::supportsAppliesToColumn())

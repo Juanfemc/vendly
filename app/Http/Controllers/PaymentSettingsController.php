@@ -124,6 +124,42 @@ class PaymentSettingsController extends Controller
             ->with('success', $enabled ? 'Wompi configurado correctamente.' : 'Wompi fue desactivado.');
     }
 
+    public function updateMercadoPago(Request $request): RedirectResponse
+    {
+        $store = $this->currentStoreOrFail();
+
+        abort_unless($store->allowsOnlinePayments(), 403);
+
+        $account = $store->mercadoPagoAccount()->first();
+
+        if (! $account) {
+            return redirect()
+                ->route('admin.payments.index')
+                ->with('error', 'Conecta Mercado Pago antes de activar este metodo.');
+        }
+
+        $enabled = $request->boolean('enabled');
+
+        $expired = $account->status === StorePaymentAccount::STATUS_EXPIRED
+            || ($account->expires_at && $account->expires_at->isPast());
+
+        if ($expired) {
+            return redirect()
+                ->route('admin.payments.index')
+                ->with('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
+        }
+
+        $account->forceFill([
+            'status' => $enabled ? StorePaymentAccount::STATUS_CONNECTED : StorePaymentAccount::STATUS_DISCONNECTED,
+            'connected_at' => $enabled ? ($account->connected_at ?? now()) : $account->connected_at,
+            'disconnected_at' => $enabled ? null : now(),
+        ])->save();
+
+        return redirect()
+            ->route('admin.payments.index')
+            ->with('success', $enabled ? 'Mercado Pago fue activado en el checkout.' : 'Mercado Pago fue desactivado en el checkout.');
+    }
+
     public function connectMercadoPago(MercadoPagoOAuthService $mercadoPago): RedirectResponse
     {
         $store = $this->currentStoreOrFail();

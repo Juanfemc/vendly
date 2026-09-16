@@ -163,6 +163,13 @@
                         @endif
                     </p>
                 @endif
+
+                @if(\App\Models\Order::supportsStockRestorationColumns() && $order->stockRestored())
+                    <p class="resource-card__description">
+                        <strong>Stock restaurado:</strong>
+                        {{ $order->stock_restored_at?->format('Y-m-d H:i') }}
+                    </p>
+                @endif
             </div>
 
             <div class="resource-actions">
@@ -177,6 +184,14 @@
                     </select>
                     <button type="submit" class="btn">Guardar estado</button>
                 </form>
+
+                @if($order->canRestoreStockManually())
+                    <form method="POST" action="{{ route('admin.orders.restore-stock', $order) }}" data-confirm-delete data-confirm-message="¿Restaurar el stock de este pedido? Usa esta acción solo si la compra por WhatsApp no se concretó.">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="btn btn-secondary">Restaurar stock</button>
+                    </form>
+                @endif
 
                 <form method="POST" action="{{ route('admin.orders.destroy', $order) }}" data-confirm-delete data-confirm-message="¿Eliminar este pedido? Esta acción no se puede deshacer.">
                     @csrf

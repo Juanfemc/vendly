@@ -4,6 +4,7 @@ use App\Models\AdminUpdate;
 use App\Models\AiCreditTransaction;
 use App\Models\AiGeneration;
 use App\Models\ColombiaLocation;
+use App\Models\DiscountCoupon;
 use App\Models\LandingTestimonial;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -26,6 +27,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -2597,6 +2599,110 @@ test('store owner can disable and enable whatsapp checkout from payments panel',
 
     expect($store->refresh()->checkout_whatsapp_enabled)->toBeTrue()
         ->and($store->acceptsWhatsappCheckout())->toBeTrue();
+});
+
+test('store owner can hide and reactivate mercadopago without removing the connected account', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Toggle Mercado Pago',
+        'slug' => 'tienda-toggle-mercado-pago',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PREMIUM,
+        'is_active' => true,
+    ]);
+    $product = Product::create([
+        'user_id' => $storeUser->id,
+        'store_id' => $store->id,
+        'name' => 'Producto Mercado Toggle',
+        'price' => 25000,
+    ]);
+    $account = StorePaymentAccount::create([
+        'store_id' => $store->id,
+        'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
+        'access_token' => 'access-token',
+        'refresh_token' => 'refresh-token',
+        'provider_user_id' => '521008171',
+        'expires_at' => now()->addHour(),
+        'connected_at' => now()->subMinute(),
+        'status' => StorePaymentAccount::STATUS_CONNECTED,
+    ]);
+
+    $this->post(route('cart.add', $product->id))->assertRedirect();
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.mercadopago.update'))
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('success', 'Mercado Pago fue desactivado en el checkout.');
+
+    expect($account->refresh()->status)->toBe(StorePaymentAccount::STATUS_DISCONNECTED)
+        ->and($account->access_token)->toBe('access-token')
+        ->and($account->refresh_token)->toBe('refresh-token');
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertDontSee('Pagar con Mercado Pago')
+        ->assertDontSee(route('cart.mercadopago', ['store' => $store->slug]), false);
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.mercadopago.update'), ['enabled' => '1'])
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('success', 'Mercado Pago fue activado en el checkout.');
+
+    expect($account->refresh()->status)->toBe(StorePaymentAccount::STATUS_CONNECTED)
+        ->and($account->disconnected_at)->toBeNull();
+
+    $this->get(route('cart.index', ['store' => $store->slug]))
+        ->assertOk()
+        ->assertSee('Pagar con Mercado Pago')
+        ->assertSee(route('cart.mercadopago', ['store' => $store->slug]), false);
+});
+
+test('store owner cannot reactivate an expired mercadopago account without reconnecting', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Mercado Expirado',
+        'slug' => 'tienda-mercado-expirado',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PREMIUM,
+        'is_active' => true,
+    ]);
+    $account = StorePaymentAccount::create([
+        'store_id' => $store->id,
+        'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
+        'access_token' => 'expired-token',
+        'refresh_token' => 'refresh-token',
+        'provider_user_id' => '521008171',
+        'connected_at' => now()->subMonth(),
+        'status' => StorePaymentAccount::STATUS_EXPIRED,
+    ]);
+
+    $this->actingAs($storeUser)
+        ->get(route('admin.payments.index'))
+        ->assertOk()
+        ->assertSee('Requiere revisión')
+        ->assertSee('Reconectar Mercado Pago');
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.mercadopago.update'), ['enabled' => '1'])
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
+
+    expect($account->refresh()->status)->toBe(StorePaymentAccount::STATUS_EXPIRED);
+
+    $this->actingAs($storeUser)
+        ->post(route('admin.payments.mercadopago.update'))
+        ->assertRedirect(route('admin.payments.index'))
+        ->assertSessionHas('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
+
+    expect($account->refresh()->status)->toBe(StorePaymentAccount::STATUS_EXPIRED);
 });
 
 test('checkout hides and rejects whatsapp when the store disables whatsapp checkout', function () {
@@ -5791,6 +5897,195 @@ test('non reservation products respect stock and are marked sold out after check
     expect($product->is_sold_out)->toBeTrue();
 });
 
+test('store user can manually restore stock for a whatsapp order only once', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Restaura Stock',
+        'slug' => 'tienda-restaura-stock',
+        'business_type' => 'store',
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $product = Product::create([
+        'user_id' => $user->id,
+        'store_id' => $store->id,
+        'name' => 'Producto con stock manual',
+        'price' => 45000,
+        'stock_quantity' => 2,
+    ]);
+
+    $this->post('/cart/add/'.$product->id, ['quantity' => 2])->assertRedirect();
+
+    $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
+        'name' => 'Cliente',
+        'last_name' => 'Stock',
+        'phone' => '3001234567',
+        'address' => 'Calle 10',
+        'neighborhood' => 'Cedritos',
+        'city' => 'Bogota',
+        'document' => '123456',
+    ])->assertRedirectContains('https://wa.me/573001112233');
+
+    $order = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
+
+    expect($product->refresh()->stock_quantity)->toBe(0);
+
+    $this->actingAs($user)
+        ->patch(route('admin.orders.restore-stock', $order))
+        ->assertRedirect('/admin/orders')
+        ->assertSessionHas('success');
+
+    expect($product->refresh()->stock_quantity)->toBe(2)
+        ->and($product->is_sold_out)->toBeFalse()
+        ->and($order->refresh()->stock_restored_at)->not->toBeNull()
+        ->and($order->stock_restored_by)->toBe($user->id);
+
+    $this->actingAs($user)
+        ->patch(route('admin.orders.restore-stock', $order))
+        ->assertRedirect('/admin/orders')
+        ->assertSessionHasErrors('stock');
+
+    expect($product->refresh()->stock_quantity)->toBe(2);
+});
+
+test('manual whatsapp stock restore is blocked for paid and shipped orders', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Stock Pagado',
+        'slug' => 'tienda-stock-pagado',
+        'business_type' => 'store',
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    foreach (['pagado', 'enviado'] as $status) {
+        $product = Product::create([
+            'user_id' => $user->id,
+            'store_id' => $store->id,
+            'name' => 'Producto '.$status,
+            'price' => 45000,
+            'stock_quantity' => 0,
+            'is_sold_out' => true,
+        ]);
+
+        $order = Order::create([
+            'store_id' => $store->id,
+            'customer_name' => 'Cliente '.$status,
+            'customer_phone' => '3001234567',
+            'status' => $status,
+            'payment_method' => Order::PAYMENT_METHOD_WHATSAPP,
+            'payment_status' => Order::PAYMENT_STATUS_NOT_REQUIRED,
+            'total' => 45000,
+        ]);
+
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity' => 1,
+            'price' => 45000,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/admin/orders')
+            ->assertOk()
+            ->assertDontSee(route('admin.orders.restore-stock', $order), false);
+
+        $this->actingAs($user)
+            ->patch(route('admin.orders.restore-stock', $order))
+            ->assertRedirect('/admin/orders')
+            ->assertSessionHasErrors('stock');
+
+        expect($product->refresh()->stock_quantity)->toBe(0)
+            ->and($order->refresh()->stock_restored_at)->toBeNull();
+    }
+});
+
+test('manual whatsapp stock restore requires restoration tracking columns', function () {
+    $order = new Order([
+        'payment_method' => Order::PAYMENT_METHOD_WHATSAPP,
+        'status' => 'pendiente',
+        'stock_restored_at' => null,
+    ]);
+
+    expect($order->canRestoreStockManually())->toBe(Schema::hasColumn('orders', 'stock_restored_at')
+        && Schema::hasColumn('orders', 'stock_restored_by'));
+});
+
+test('store user cannot restore stock for another stores whatsapp order', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Propia Stock',
+        'slug' => 'tienda-propia-stock',
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    $otherStore = Store::create([
+        'user_id' => $otherUser->id,
+        'name' => 'Tienda Ajena Stock',
+        'slug' => 'tienda-ajena-stock',
+        'whatsapp' => '573001112244',
+        'is_active' => true,
+    ]);
+
+    $order = Order::create([
+        'store_id' => $otherStore->id,
+        'customer_name' => 'Cliente Ajeno',
+        'customer_phone' => '3001234567',
+        'status' => 'pendiente',
+        'total' => 45000,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('admin.orders.restore-stock', $order))
+        ->assertForbidden();
+});
+
+test('percent discount coupon discounts a percentage of the applicable subtotal', function () {
+    $user = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+
+    $store = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda Cupon Porcentaje',
+        'slug' => 'tienda-cupon-porcentaje',
+        'plan' => Store::PLAN_PREMIUM,
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+
+    DiscountCoupon::create([
+        'store_id' => $store->id,
+        'code' => 'DIEZ',
+        'type' => DiscountCoupon::TYPE_PERCENT,
+        'applies_to' => DiscountCoupon::APPLIES_TO_PRODUCTS,
+        'value' => 10,
+        'min_subtotal' => 0,
+        'is_active' => true,
+    ]);
+
+    $discount = app(\App\Services\DiscountCouponService::class)->preview($store, 'DIEZ', 250000, 12000);
+
+    expect((float) $discount['amount'])->toBe(25000.0);
+});
+
 test('brand color must be a hex value and is normalized', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $storeUser = User::factory()->create();
@@ -8455,7 +8750,7 @@ test('shipping methods are only available on pro and premium plans', function ()
         ->assertSee('name="shipping_methods[0][name]"', false);
 });
 
-test('local delivery pricing can coexist with manual shipping methods', function () {
+test('local delivery pricing takes priority over manual shipping methods at checkout', function () {
     $user = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -8489,13 +8784,13 @@ test('local delivery pricing can coexist with manual shipping methods', function
         ->assertOk()
         ->assertSee('Envío por ciudad')
         ->assertSee('data-local-delivery-enabled="1"', false)
-        ->assertSee('Método de envío')
-        ->assertSee('Metodo manual disponible')
-        ->assertSee('data-shipping-option', false);
+        ->assertSee('Por calcular')
+        ->assertDontSee('Metodo manual disponible')
+        ->assertDontSee('data-shipping-option', false);
 
     $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
         'name' => 'Cliente',
-        'last_name' => 'Manual',
+        'last_name' => 'Local',
         'phone' => '3001234567',
         'address' => 'Calle 3',
         'neighborhood' => 'Cedritos',
@@ -8504,29 +8799,11 @@ test('local delivery pricing can coexist with manual shipping methods', function
         'shipping_method' => '0',
     ])->assertRedirectContains('https://wa.me/573001112233');
 
-    $manualOrder = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
+    $localOrderWithManualInput = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
 
-    expect($manualOrder->shipping_method)->toBe('Metodo manual disponible')
-        ->and((float) $manualOrder->shipping_cost)->toBe(30000.0)
-        ->and((float) $manualOrder->total)->toBe(60000.0);
-
-    $this->post(route('cart.add', $product->id))->assertRedirect();
-
-    $this->post(route('cart.whatsapp', ['store' => $store->slug]), [
-        'name' => 'Cliente',
-        'last_name' => 'Local',
-        'phone' => '3001234567',
-        'address' => 'Calle 1',
-        'neighborhood' => 'Cedritos',
-        'city' => 'bogota',
-        'document' => '123456',
-    ])->assertRedirectContains('https://wa.me/573001112233');
-
-    $localOrder = Order::where('store_id', $store->id)->latest('id')->firstOrFail();
-
-    expect($localOrder->shipping_method)->toBe('Envío local: Bogota')
-        ->and((float) $localOrder->shipping_cost)->toBe(5000.0)
-        ->and((float) $localOrder->total)->toBe(35000.0);
+    expect($localOrderWithManualInput->shipping_method)->toBe('Envío local: Bogota')
+        ->and((float) $localOrderWithManualInput->shipping_cost)->toBe(5000.0)
+        ->and((float) $localOrderWithManualInput->total)->toBe(35000.0);
 
     $this->post(route('cart.add', $product->id))->assertRedirect();
 

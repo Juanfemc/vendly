@@ -29,6 +29,11 @@ class Order extends Model
         'devuelto' => 'Devuelto',
     ];
 
+    public const STOCK_RESTORABLE_STATUSES = [
+        'pendiente',
+        'devuelto',
+    ];
+
     public const PAYMENT_METHOD_LABELS = [
         self::PAYMENT_METHOD_WHATSAPP => 'WhatsApp',
         self::PAYMENT_METHOD_MERCADOPAGO => 'Mercado Pago',
@@ -76,6 +81,8 @@ class Order extends Model
         'terms_url',
         'terms_ip_hash',
         'terms_user_agent_hash',
+        'stock_restored_at',
+        'stock_restored_by',
         'total',
         'store_id',
         'admin_token',
@@ -88,6 +95,7 @@ class Order extends Model
         'paid_at' => 'datetime',
         'payment_expires_at' => 'datetime',
         'terms_accepted_at' => 'datetime',
+        'stock_restored_at' => 'datetime',
     ];
 
     public function statusLabel(): string
@@ -129,6 +137,30 @@ class Order extends Model
             && Schema::hasColumn('orders', 'discount_snapshot');
     }
 
+    public static function supportsStockRestorationColumns(): bool
+    {
+        return Schema::hasColumn('orders', 'stock_restored_at')
+            && Schema::hasColumn('orders', 'stock_restored_by');
+    }
+
+    public function isManualWhatsappOrder(): bool
+    {
+        return ($this->payment_method ?: self::PAYMENT_METHOD_WHATSAPP) === self::PAYMENT_METHOD_WHATSAPP;
+    }
+
+    public function stockRestored(): bool
+    {
+        return self::supportsStockRestorationColumns() && $this->stock_restored_at !== null;
+    }
+
+    public function canRestoreStockManually(): bool
+    {
+        return self::supportsStockRestorationColumns()
+            && $this->isManualWhatsappOrder()
+            && ! $this->stockRestored()
+            && in_array((string) $this->status, self::STOCK_RESTORABLE_STATUSES, true);
+    }
+
     public function paymentMethodLabel(): string
     {
         return self::PAYMENT_METHOD_LABELS[$this->payment_method] ?? 'WhatsApp';
@@ -165,5 +197,10 @@ class Order extends Model
     public function discountCoupon()
     {
         return $this->belongsTo(\App\Models\DiscountCoupon::class, 'discount_coupon_id');
+    }
+
+    public function stockRestoredBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'stock_restored_by');
     }
 }

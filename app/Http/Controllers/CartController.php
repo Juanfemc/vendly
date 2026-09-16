@@ -6,6 +6,7 @@ use App\Http\Requests\CheckoutRequest;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreLanding;
 use App\Models\StorePaymentAccount;
 use App\Models\ColombiaLocation;
 use App\Services\AdminUpdateService;
@@ -97,7 +98,8 @@ class CartController extends Controller
                 ->values()
                 ->all()
             : [];
-        $localDelivery = $store && ! $store->isReservationStore() && $store->localDeliveryEnabled()
+        $hasOldDeliveryCity = filled(old('city')) || filled(old('city_code'));
+        $localDelivery = $store && ! $store->isReservationStore() && $store->localDeliveryEnabled() && $hasOldDeliveryCity
             ? $store->deliveryByCity(old('city'), $total, old('city_code'))
             : null;
         $colombiaDepartments = ColombiaLocation::departmentsForSelect();
@@ -109,6 +111,7 @@ class CartController extends Controller
         $wompiAccount = $store?->wompiAccount()->first();
         $wompiAvailable = ($store?->allowsOnlinePayments() ?? false)
             && ($wompiAccount?->isWompiReady() ?? false);
+        $isSingleProductLandingCheckout = $this->isSingleProductLandingCheckout($store);
         $shippingMethodCollection = collect($shippingMethods);
         $firstShippingMethod = $shippingMethodCollection->first();
         $selectedShippingKey = old('shipping_method', $firstShippingMethod['key'] ?? null);
@@ -116,7 +119,7 @@ class CartController extends Controller
         $initialShippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
         $discount = $this->discountPreviewForView($store, old('discount_code'), $total, $initialShippingCost);
 
-        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'whatsappAvailable', 'mercadoPagoAvailable', 'wompiAvailable', 'discount'));
+        return view('cart_checkout', compact('cart', 'store', 'total', 'shippingMethods', 'localDelivery', 'colombiaDepartments', 'colombiaLocations', 'whatsappAvailable', 'mercadoPagoAvailable', 'wompiAvailable', 'discount', 'isSingleProductLandingCheckout'));
     }
 
     public function previewCoupon(Request $request): JsonResponse
@@ -653,6 +656,17 @@ class CartController extends Controller
         } catch (ValidationException) {
             return ['code' => null, 'amount' => 0];
         }
+    }
+
+    private function isSingleProductLandingCheckout(?Store $store): bool
+    {
+        if (! $store || ! StoreLanding::supportsTable()) {
+            return false;
+        }
+
+        $landing = $store->singleProductLanding()->first();
+
+        return $landing?->isPubliclyActive() ?? false;
     }
 
     private function hasValidMercadoPagoSignature(Request $request): bool

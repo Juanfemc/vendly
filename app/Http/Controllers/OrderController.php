@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Services\AdminUpdateService;
+use App\Services\CheckoutService;
 
 class OrderController extends Controller
 {
-    public function __construct(private AdminUpdateService $adminUpdateService)
+    public function __construct(
+        private AdminUpdateService $adminUpdateService,
+        private CheckoutService $checkoutService,
+    )
     {
     }
 
@@ -89,6 +93,45 @@ class OrderController extends Controller
         );
 
         return redirect('/admin/orders')->with('success', 'Estado del pedido actualizado.');
+    }
+
+    public function restoreStock(Order $order)
+    {
+        $this->authorize('update', $order);
+
+        $restored = $this->checkoutService->restoreStockForManualOrder($order);
+
+        if (! $restored) {
+            return redirect('/admin/orders')->withErrors([
+                'stock' => $this->stockRestorationError($order),
+            ]);
+        }
+
+        $this->adminUpdateService->record(
+            'Stock restaurado',
+            'Pedido #' . $order->id . ' devolvio sus unidades al inventario',
+            'pedido',
+            '/admin/orders'
+        );
+
+        return redirect('/admin/orders')->with('success', 'Stock restaurado para el pedido #' . $order->id . '.');
+    }
+
+    private function stockRestorationError(Order $order): string
+    {
+        if (! Order::supportsStockRestorationColumns()) {
+            return 'Ejecuta primero las migraciones para activar el control de restauración de stock.';
+        }
+
+        if ($order->stockRestored()) {
+            return 'El stock de este pedido ya fue restaurado.';
+        }
+
+        if (! $order->isManualWhatsappOrder()) {
+            return 'Solo puedes restaurar stock manualmente en pedidos por WhatsApp.';
+        }
+
+        return 'Solo puedes restaurar stock en pedidos pendientes o devueltos.';
     }
 
     public function destroy(Order $order)

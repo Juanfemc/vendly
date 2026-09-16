@@ -7,7 +7,12 @@
     $whatsappCheckoutEnabled = $store->acceptsWhatsappCheckout();
     $whatsappUnavailable = blank($store->whatsapp);
     $mercadoPagoConnected = $mercadoPagoAccount?->isConnected();
-    $mercadoPagoExpired = ($mercadoPagoAccount?->status) === \App\Models\StorePaymentAccount::STATUS_EXPIRED;
+    $mercadoPagoExpired = (($mercadoPagoAccount?->status) === \App\Models\StorePaymentAccount::STATUS_EXPIRED)
+        || ($mercadoPagoAccount?->expires_at && $mercadoPagoAccount->expires_at->isPast());
+    $mercadoPagoDisconnected = ($mercadoPagoAccount?->status) === \App\Models\StorePaymentAccount::STATUS_DISCONNECTED;
+    $mercadoPagoCanToggle = $mercadoPagoAccount
+        && ! $mercadoPagoExpired
+        && (! $mercadoPagoAccount->expires_at || $mercadoPagoAccount->expires_at->isFuture());
     $wompiReady = $wompiAccount?->isWompiReady();
 @endphp
 
@@ -624,13 +629,15 @@
                             <span class="payment-status">Activo</span>
                         @elseif($mercadoPagoExpired)
                             <span class="payment-status payment-status--warning">Requiere revisión</span>
+                        @elseif($mercadoPagoDisconnected)
+                            <span class="payment-status payment-status--muted">Oculto</span>
                         @else
                             <span class="payment-status payment-status--muted">No conectado</span>
                         @endif
                     </div>
                     <p class="payment-method__copy">Tarjetas, PSE y cuenta Mercado Pago.</p>
                     <div class="payment-method__meta" aria-label="Datos de Mercado Pago">
-                        <span class="payment-method__meta-item">Estado: {{ $mercadoPagoConnected ? 'Activo' : ($mercadoPagoExpired ? 'Token vencido' : 'No conectado') }}</span>
+                        <span class="payment-method__meta-item">Estado: {{ $mercadoPagoConnected ? 'Conectado y visible' : ($mercadoPagoExpired ? 'Token vencido' : ($mercadoPagoDisconnected ? 'Oculto en checkout' : 'No conectado')) }}</span>
                         <span class="payment-method__meta-item">{{ $mercadoPagoAccount?->provider_user_id ? 'Cuenta ID ' . $mercadoPagoAccount->provider_user_id : 'Sin cuenta conectada' }}</span>
                         <span class="payment-method__meta-item">Tokens encriptados</span>
                     </div>
@@ -662,13 +669,23 @@
                         @endif
                     </span>
                     <span>
-                        <strong class="payment-method__action-title">{{ $mercadoPagoConnected ? 'Activo' : 'Inactivo' }}</strong>
-                        <span class="payment-method__action-copy">{{ $mercadoPagoConnected ? 'Recibes pagos con tu cuenta conectada.' : 'Actívalo para recibir pagos con Mercado Pago.' }}</span>
+                        <strong class="payment-method__action-title">{{ $mercadoPagoConnected ? 'Activo' : ($mercadoPagoExpired ? 'Reconecta tu cuenta' : ($mercadoPagoDisconnected ? 'Oculto' : 'Inactivo')) }}</strong>
+                        <span class="payment-method__action-copy">{{ $mercadoPagoConnected ? 'Recibes pagos con tu cuenta conectada.' : ($mercadoPagoExpired ? 'La conexión venció y debe autorizarse de nuevo.' : ($mercadoPagoDisconnected ? 'La cuenta sigue conectada, pero no aparece en checkout.' : 'Actívalo para recibir pagos con Mercado Pago.')) }}</span>
                     </span>
                 </div>
 
-                @if($mercadoPagoConnected)
-                    <button type="button" class="payment-action-button" disabled>Conectado</button>
+                @if($mercadoPagoCanToggle)
+                    <form method="POST" action="{{ route('admin.payments.mercadopago.update') }}" class="payment-toggle-form">
+                        @csrf
+                        <input type="hidden" name="enabled" value="{{ $mercadoPagoConnected ? '0' : '1' }}">
+                        <button type="submit" class="payment-action-button {{ $mercadoPagoConnected ? '' : 'payment-action-button--primary' }}">
+                            {{ $mercadoPagoConnected ? 'Desactivar' : 'Activar' }}
+                        </button>
+                    </form>
+                @elseif($mercadoPagoAccount)
+                    <a href="{{ route('admin.payments.mercadopago.connect') }}" class="payment-action-button payment-action-button--primary">
+                        Reconectar Mercado Pago
+                    </a>
                 @else
                     <a href="{{ route('admin.payments.mercadopago.connect') }}" class="payment-action-button payment-action-button--primary">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>

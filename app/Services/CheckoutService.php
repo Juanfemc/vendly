@@ -107,6 +107,32 @@ class CheckoutService
         });
     }
 
+    public function restoreStockForManualOrder(Order $order): bool
+    {
+        if (! $order->canRestoreStockManually()) {
+            return false;
+        }
+
+        return DB::transaction(function () use ($order) {
+            $order = Order::whereKey($order->getKey())->lockForUpdate()->first();
+
+            if (! $order || ! $order->canRestoreStockManually()) {
+                return false;
+            }
+
+            $order->loadMissing(['items.product', 'store']);
+
+            $this->releaseStock($order);
+
+            $order->update([
+                'stock_restored_at' => now(),
+                'stock_restored_by' => auth()->id(),
+            ]);
+
+            return true;
+        });
+    }
+
     public function expirePendingOnlinePaymentOrders(): int
     {
         if (! Order::supportsPaymentExpirationColumn()) {
@@ -338,6 +364,15 @@ class CheckoutService
 
         $methods = $store->shippingMethods();
 
+        if ($store->localDeliveryEnabled()) {
+            return $store->deliveryByCity(
+                $customerData['city'] ?? null,
+                $subtotal,
+                $customerData['city_code'] ?? null,
+            )
+                ?? ['name' => null, 'cost' => 0];
+        }
+
         if ($methods !== [] && array_key_exists('shipping_method', $customerData) && filled($customerData['shipping_method'])) {
             $method = $store->shippingMethodByKey($customerData['shipping_method']);
 
@@ -351,15 +386,6 @@ class CheckoutService
                 'name' => $method['name'],
                 'cost' => $store->shippingCostForSubtotal($method, $subtotal),
             ];
-        }
-
-        if ($store->localDeliveryEnabled()) {
-            return $store->deliveryByCity(
-                $customerData['city'] ?? null,
-                $subtotal,
-                $customerData['city_code'] ?? null,
-            )
-                ?? ['name' => null, 'cost' => 0];
         }
 
         if ($methods !== []) {

@@ -150,14 +150,6 @@
     };
 
     const shippingCost = () => {
-        const selected = shippingOptions.find((option) => option.checked);
-
-        if (selected) {
-            const baseCost = Number(selected.dataset.shippingCost || 0);
-
-            return freeShippingApplies() ? 0 : baseCost;
-        }
-
         if (localDeliveryEnabled) {
             if (!hasSelectedCity()) {
                 return 0;
@@ -169,6 +161,16 @@
 
             return freeShippingApplies() ? 0 : baseCost;
         }
+
+        const selected = shippingOptions.find((option) => option.checked);
+
+        if (selected) {
+            const baseCost = Number(selected.dataset.shippingCost || 0);
+
+            return freeShippingApplies() ? 0 : baseCost;
+        }
+
+        return 0;
     };
 
     const updateShippingLabels = () => {
@@ -213,8 +215,7 @@
         }
 
         const cost = shippingCost();
-        const hasSelectedShippingOption = shippingOptions.some((option) => option.checked);
-        const awaitingCity = localDeliveryEnabled && !hasSelectedCity() && !hasSelectedShippingOption;
+        const awaitingCity = localDeliveryEnabled && !hasSelectedCity();
 
         updateShippingLabels();
         totalEls.forEach((element) => {

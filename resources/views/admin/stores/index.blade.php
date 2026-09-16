@@ -182,6 +182,9 @@
 
             <div class="resource-actions">
                 <a href="{{ app(\App\Services\StorefrontUrlService::class)->publicHome($store) }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Ver tienda</a>
+                @if(\App\Models\StoreLanding::supportsTable())
+                    <a href="{{ route('admin.stores.landing.edit', $store) }}" class="btn btn-secondary">Landing</a>
+                @endif
                 <a href="{{ route('admin.stores.edit', $store) }}" class="btn">Editar</a>
                 @if(\App\Models\Store::supportsSubscriptionColumns())
                     <form

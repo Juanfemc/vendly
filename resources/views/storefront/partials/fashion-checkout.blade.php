@@ -12,6 +12,7 @@
     $mercadoPagoAvailable = (bool) ($mercadoPagoAvailable ?? false);
     $wompiAvailable = (bool) ($wompiAvailable ?? false);
     $showFashionDeliveryTimes = $store?->showsFashionDeliveryTimes() ?? false;
+    $selectableShippingMethods = $hasLocalDelivery ? collect() : collect($shippingMethods ?? []);
     $defaultPaymentAction = $whatsappAvailable
         ? route('cart.whatsapp', ['store' => $store->slug])
         : ($mercadoPagoAvailable
@@ -224,9 +225,9 @@
                     </div>
                 @endif
 
-                @if($shippingMethods->isNotEmpty())
+                @if($selectableShippingMethods->isNotEmpty())
                     <fieldset class="fashion-shipping-options">
-                        @foreach($shippingMethods as $method)
+                        @foreach($selectableShippingMethods as $method)
                             @php($deliveryTime = trim((string) ($method['delivery_time'] ?? '')))
                             <label class="fashion-shipping-option">
                                 <input

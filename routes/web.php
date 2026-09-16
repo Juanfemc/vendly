@@ -15,6 +15,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreNotificationController;
 use App\Http\Controllers\StoreTemplateController;
+use App\Http\Controllers\StoreLandingController;
 use App\Http\Controllers\StoreFaviconController;
 use App\Http\Controllers\StoreOnboardingController;
 use App\Http\Controllers\TrialSignupController;
@@ -106,6 +107,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('/admin/orders', [OrderController::class, 'index']);
     Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.status');
+    Route::patch('/admin/orders/{order}/restore-stock', [OrderController::class, 'restoreStock'])->name('admin.orders.restore-stock');
     Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
     Route::get('/admin/store-settings', [StoreController::class, 'settings']);
     Route::post('/admin/store-settings', [StoreController::class, 'updateSettings']);
@@ -119,9 +121,13 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->name('admin.store.onboarding.whatsapp.verify');
     Route::get('/admin/templates', [StoreTemplateController::class, 'index'])->name('admin.templates.index');
     Route::post('/admin/templates/{template}', [StoreTemplateController::class, 'apply'])->name('admin.templates.apply');
+    Route::get('/admin/store-landing', [StoreLandingController::class, 'editOwn'])->name('admin.store-landing.edit');
+    Route::post('/admin/store-landing', [StoreLandingController::class, 'updateOwn'])->name('admin.store-landing.update');
+    Route::get('/admin/store-landing/preview', [StoreLandingController::class, 'previewOwn'])->name('admin.store-landing.preview');
     Route::get('/admin/payments', [PaymentSettingsController::class, 'index'])->name('admin.payments.index');
     Route::post('/admin/payments/whatsapp', [PaymentSettingsController::class, 'updateWhatsApp'])->name('admin.payments.whatsapp.update');
     Route::post('/admin/payments/wompi', [PaymentSettingsController::class, 'updateWompi'])->name('admin.payments.wompi.update');
+    Route::post('/admin/payments/mercadopago', [PaymentSettingsController::class, 'updateMercadoPago'])->name('admin.payments.mercadopago.update');
     Route::get('/admin/payments/mercadopago/connect', [PaymentSettingsController::class, 'connectMercadoPago'])->name('admin.payments.mercadopago.connect');
     Route::get('/admin/payments/mercadopago/callback', [PaymentSettingsController::class, 'mercadoPagoCallback'])->name('admin.payments.mercadopago.callback');
     Route::get('/admin/store-visits', [StoreController::class, 'visits'])->name('admin.store.visits');
@@ -180,6 +186,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/stores/{store}/products', [ProductController::class, 'index'])->name('admin.stores.products.index');
     Route::get('/admin/stores/{store}/categories', [StoreCategoryController::class, 'index'])->name('admin.stores.categories.index');
     Route::get('/admin/stores/{store}/coupons', [DiscountCouponController::class, 'index'])->name('admin.stores.coupons.index');
+    Route::get('/admin/stores/{store}/landing', [StoreLandingController::class, 'editStore'])->name('admin.stores.landing.edit');
+    Route::post('/admin/stores/{store}/landing', [StoreLandingController::class, 'updateStore'])->name('admin.stores.landing.update');
+    Route::get('/admin/stores/{store}/landing/preview', [StoreLandingController::class, 'previewStore'])->name('admin.stores.landing.preview');
+    Route::patch('/admin/stores/{store}/landing/activation', [StoreLandingController::class, 'updateActivation'])->name('admin.stores.landing.activation');
     Route::get('/admin/stores/{store}/edit', [StoreController::class, 'edit'])->name('admin.stores.edit');
     Route::put('/admin/stores/{store}', [StoreController::class, 'update'])->name('admin.stores.update');
     Route::post('/admin/stores/{store}/ai-credits', [StoreController::class, 'addAiCredits'])->name('admin.stores.ai-credits.store');

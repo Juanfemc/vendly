@@ -32,6 +32,7 @@ class Store extends Model
     private static ?bool $supportsFashionDeliveryTimesColumn = null;
     private static ?bool $supportsFashionSizeFilterColumn = null;
     private static ?bool $supportsOnboardingStateColumns = null;
+    private static ?bool $supportsStoreLandingsTable = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
 
@@ -1045,6 +1046,11 @@ class Store extends Model
             && Schema::hasColumn('stores', 'free_shipping_minimum');
     }
 
+    public static function supportsStoreLandingsTable(): bool
+    {
+        return self::$supportsStoreLandingsTable ??= Schema::hasTable('store_landings');
+    }
+
     public function announcementMessages(): array
     {
         if (! $this->allowsCommercialNotices()) {
@@ -1352,6 +1358,11 @@ class Store extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function singleProductLanding()
+    {
+        return $this->hasOne(StoreLanding::class);
     }
     public function orders()
     {
