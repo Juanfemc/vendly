@@ -810,7 +810,11 @@
 }
 
 .product-options--detail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px 0;
+    border-top: 1px solid rgba(17, 24, 39, 0.08);
+    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
 }
 
 .product-options--detail select,
@@ -829,6 +833,142 @@
 .product-options--detail select option {
     color: #111827;
     background: #fff;
+}
+
+.product-variant-group {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.product-variant-group legend {
+    margin: 0;
+    padding: 0;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.product-variant-list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.product-variant-list--colors {
+    gap: 14px;
+}
+
+.product-variant-choice {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.product-variant-choice input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.product-variant-option {
+    min-height: 50px;
+    min-width: 78px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: 16px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 850;
+    letter-spacing: 0;
+    line-height: 1;
+    text-transform: none;
+    transition: border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.product-variant-color-option {
+    min-width: 72px;
+    min-height: auto;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.product-variant-color-option b {
+    max-width: 86px;
+    color: #111827;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.15;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.product-variant-swatch {
+    width: 52px;
+    height: 52px;
+    display: block;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 999px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+        var(--swatch, #d7dbe0);
+    box-shadow: inset 0 0 0 4px #ffffff, 0 12px 24px rgba(15, 23, 42, 0.08);
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.product-variant-choice:hover .product-variant-option,
+.product-variant-choice:focus-within .product-variant-option {
+    border-color: color-mix(in srgb, var(--brand-color, #111) 42%, rgba(17, 24, 39, 0.14));
+    background: color-mix(in srgb, var(--brand-color, #111) 5%, #ffffff);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.product-variant-choice:hover .product-variant-swatch,
+.product-variant-choice:focus-within .product-variant-swatch {
+    border-color: color-mix(in srgb, var(--brand-color, #111) 36%, rgba(17, 24, 39, 0.12));
+    transform: translateY(-1px);
+}
+
+.product-variant-choice input:checked + .product-variant-option {
+    border-color: var(--brand-color, #111);
+    background: color-mix(in srgb, var(--brand-color, #111) 8%, #ffffff);
+    color: color-mix(in srgb, var(--brand-color, #111) 72%, #111827);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color, #111) 12%, transparent);
+}
+
+.product-variant-choice input:checked + .product-variant-color-option {
+    background: transparent;
+    box-shadow: none;
+}
+
+.product-variant-choice input:checked + .product-variant-color-option .product-variant-swatch {
+    border-color: var(--brand-color, #111);
+    box-shadow: inset 0 0 0 5px #ffffff, 0 0 0 3px color-mix(in srgb, var(--brand-color, #111) 18%, transparent), 0 14px 28px rgba(15, 23, 42, 0.11);
+}
+
+.product-variant-choice input:checked + .product-variant-color-option b {
+    color: var(--brand-color, #111);
 }
 
 .product-quantity-block {
@@ -1205,6 +1345,42 @@
         background: rgba(255, 255, 255, 0.96);
         box-shadow: 0 -16px 34px rgba(15, 23, 42, 0.12);
         backdrop-filter: blur(18px);
+    }
+
+    .product-options--detail {
+        gap: 16px;
+        padding: 16px 0;
+    }
+
+    .product-variant-list {
+        gap: 8px;
+    }
+
+    .product-variant-list--colors {
+        gap: 12px;
+    }
+
+    .product-variant-option {
+        min-width: 68px;
+        min-height: 46px;
+        padding-inline: 15px;
+        border-radius: 15px;
+        font-size: 13px;
+    }
+
+    .product-variant-color-option {
+        min-width: 62px;
+        padding: 0;
+    }
+
+    .product-variant-swatch {
+        width: 46px;
+        height: 46px;
+    }
+
+    .product-variant-color-option b {
+        max-width: 72px;
+        font-size: 11px;
     }
 
     .product-detail-buy-now-form {

@@ -12,6 +12,10 @@
             return;
         }
 
+        document.documentElement.style.setProperty('--brand-color', brandColor);
+        document.documentElement.style.scrollbarColor = `${brandColor} #eef3f8`;
+        page.style.scrollbarColor = `${brandColor} #eef3f8`;
+
         const probe = document.createElement('span');
         probe.style.color = brandColor;
         probe.style.display = 'none';
@@ -38,7 +42,9 @@
     const feedback = document.getElementById('cartFeedback');
     const cartDrawer = document.querySelector('[data-cart-drawer]');
     const cartDrawerToggle = document.getElementById('minimalShopCartToggle');
-    const storeCartBackdrop = document.querySelector('.store-cart-backdrop, .fashion-cart-backdrop');
+    const minimalMenuToggle = document.querySelector('.minimal-shop-menu-state');
+    const minimalSearchToggle = document.querySelector('.minimal-shop-search-state');
+    const storeCartBackdrop = document.querySelector('.store-cart-backdrop, .fashion-cart-backdrop, .minimal-shop-cart-backdrop');
     const cartDrawerItems = document.querySelector('[data-cart-drawer-items]');
     const cartDrawerCount = document.querySelector('[data-cart-drawer-count]');
     const cartDrawerSubtotal = document.querySelector('[data-cart-drawer-subtotal]');
@@ -54,10 +60,22 @@
     const fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
     const fashionEmptyState = document.querySelector('[data-fashion-empty-state]');
     const fashionEndMessage = document.querySelector('[data-fashion-end-message]');
-    const fashionSearchForms = Array.from(document.querySelectorAll('[data-fashion-search]'));
+    const storefrontSearchForms = Array.from(document.querySelectorAll('[data-storefront-search], [data-fashion-search]'));
     const fashionProductGrid = document.querySelector('[data-fashion-product-grid]');
     const fashionSizeButtons = Array.from(document.querySelectorAll('[data-fashion-size-option]'));
     const fashionSortSelect = document.querySelector('[data-fashion-sort]');
+    const defaultCategoryButtons = Array.from(document.querySelectorAll('[data-default-category-filter]'));
+    const defaultCategorySections = Array.from(document.querySelectorAll('[data-default-category-section]'));
+    const defaultCategoryProducts = Array.from(document.querySelectorAll('[data-default-category-product]'));
+    const defaultCategoryEmptyState = document.querySelector('[data-default-category-empty]');
+    const defaultCategoryCount = document.querySelector('.home-categories-head [data-default-category-count]');
+    const defaultCategoryTrack = document.querySelector('[data-default-category-tabs]');
+    const defaultCategoryScrollButtons = Array.from(document.querySelectorAll('[data-home-category-scroll]'));
+    const defaultProductGrid = document.querySelector('[data-default-category-grid]');
+    const defaultAvailabilityButtons = Array.from(document.querySelectorAll('[data-default-availability-filter]'));
+    const defaultOfferButtons = Array.from(document.querySelectorAll('[data-default-offer-filter]'));
+    const defaultSizeButtons = Array.from(document.querySelectorAll('[data-default-size-filter]'));
+    const defaultSortSelect = document.querySelector('[data-default-sort]');
     const announcementMessages = Array.from(document.querySelectorAll('[data-announcement-message]'));
     const storefrontTopbar = document.querySelector('[data-storefront-topbar]');
     const fashionAnnouncement = document.querySelector('[data-fashion-announcement]');
@@ -70,8 +88,114 @@
     let feedbackTimer;
     let activeFashionCategory = 'all';
     let activeFashionSize = 'all';
+    let activeDefaultCategory = 'all';
+    let activeDefaultAvailability = 'all';
+    let activeDefaultOffer = 'all';
+    let activeDefaultSize = 'all';
+    let activeDefaultSort = 'default';
+    let lockedScrollY = 0;
+    let isScrollLocked = false;
 
     resolveBrandContrast();
+
+    const minimalOverlayToggles = [minimalMenuToggle, cartDrawerToggle, minimalSearchToggle].filter(Boolean);
+
+    const syncMinimalOverlayScrollLock = () => {
+        if (!page.classList.contains('storefront-page--minimal-grid')) {
+            return;
+        }
+
+        const hasOpenOverlay = minimalOverlayToggles.some((toggle) => toggle.checked);
+        const hasOpenMenu = Boolean(minimalMenuToggle?.checked);
+
+        document.documentElement.classList.toggle('storefront-minimal-overlay-open', hasOpenOverlay);
+        document.body.classList.toggle('storefront-minimal-overlay-open', hasOpenOverlay);
+        document.documentElement.classList.toggle('storefront-minimal-menu-open', hasOpenMenu);
+        document.body.classList.toggle('storefront-minimal-menu-open', hasOpenMenu);
+        page.classList.toggle('is-minimal-overlay-open', hasOpenOverlay);
+        page.classList.toggle('is-minimal-menu-open', hasOpenMenu);
+
+        if (hasOpenOverlay && !isScrollLocked) {
+            lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+            document.body.style.setProperty('--storefront-lock-top', `-${lockedScrollY}px`);
+            isScrollLocked = true;
+        }
+
+        if (!hasOpenOverlay && isScrollLocked) {
+            document.body.style.removeProperty('--storefront-lock-top');
+            isScrollLocked = false;
+            window.scrollTo(0, lockedScrollY);
+        }
+    };
+
+    minimalOverlayToggles.forEach((toggle) => {
+        toggle.addEventListener('change', syncMinimalOverlayScrollLock);
+    });
+
+    syncMinimalOverlayScrollLock();
+
+    const setupTechnologyCustomScrollbar = () => {
+        if (!page.classList.contains('storefront-page--technology')) {
+            return;
+        }
+
+        const scrollRoot = document.scrollingElement || document.documentElement;
+        const scrollbar = document.createElement('div');
+        const thumb = document.createElement('div');
+        const brandColor = getComputedStyle(page).getPropertyValue('--brand-color').trim() || '#2563eb';
+
+        scrollbar.className = 'tech-custom-scrollbar';
+        scrollbar.style.setProperty('--tech-scrollbar-color', brandColor);
+        thumb.className = 'tech-custom-scrollbar-thumb';
+        scrollbar.appendChild(thumb);
+        document.body.appendChild(scrollbar);
+
+        const sync = () => {
+            if (document.documentElement.classList.contains('storefront-minimal-overlay-open')) {
+                scrollbar.hidden = true;
+                return;
+            }
+
+            const scrollHeight = scrollRoot.scrollHeight || 0;
+            const viewportHeight = window.innerHeight || scrollRoot.clientHeight || 0;
+            const maxScroll = Math.max(0, scrollHeight - viewportHeight);
+
+            if (maxScroll <= 2) {
+                scrollbar.hidden = true;
+                return;
+            }
+
+            scrollbar.hidden = false;
+
+            const thumbHeight = Math.max(42, Math.round((viewportHeight / scrollHeight) * viewportHeight));
+            const maxThumbTop = Math.max(0, viewportHeight - thumbHeight);
+            const thumbTop = Math.round((scrollRoot.scrollTop / maxScroll) * maxThumbTop);
+
+            thumb.style.height = `${thumbHeight}px`;
+            thumb.style.transform = `translateY(${thumbTop}px)`;
+        };
+
+        window.addEventListener('scroll', sync, { passive: true });
+        window.addEventListener('resize', sync);
+        window.addEventListener('load', sync);
+        minimalOverlayToggles.forEach((toggle) => {
+            toggle.addEventListener('change', sync);
+        });
+        sync();
+    };
+
+    setupTechnologyCustomScrollbar();
+
+    document.querySelectorAll('.minimal-product-tab-control[role="button"]').forEach((control) => {
+        control.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            control.click();
+        });
+    });
 
     const getRenderedLineHeight = (element) => {
         const styles = window.getComputedStyle(element);
@@ -282,17 +406,19 @@
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 
-    const setupFashionSearchSuggestions = () => {
-        if (!fashionSearchForms.length) {
+    const searchField = (form, role) => form.querySelector(`[data-storefront-search-${role}], [data-fashion-search-${role}]`);
+
+    const setupStorefrontSearchSuggestions = () => {
+        if (!storefrontSearchForms.length) {
             return;
         }
 
-        fashionSearchForms.forEach((form) => {
-            const input = form.querySelector('[data-fashion-search-input]');
-            const clearButton = form.querySelector('[data-fashion-search-clear]');
-            const results = form.querySelector('[data-fashion-search-results]');
-            const allLink = form.querySelector('[data-fashion-search-all]');
-            const items = Array.from(form.querySelectorAll('[data-fashion-search-item]'));
+        storefrontSearchForms.forEach((form) => {
+            const input = searchField(form, 'input');
+            const clearButton = searchField(form, 'clear');
+            const results = searchField(form, 'results');
+            const allLink = searchField(form, 'all');
+            const items = Array.from(form.querySelectorAll('[data-storefront-search-item], [data-fashion-search-item]'));
 
             if (!input) {
                 return;
@@ -358,7 +484,220 @@
         });
     };
 
-    setupFashionSearchSuggestions();
+    setupStorefrontSearchSuggestions();
+
+    const applyDefaultCategoryFilter = () => {
+        if (!defaultCategoryButtons.length || (!defaultCategorySections.length && !defaultCategoryProducts.length)) {
+            return;
+        }
+
+        let visibleSections = 0;
+        let visibleProducts = 0;
+
+        const syncFilterButtons = (buttons, activeValue, dataKey) => {
+            buttons.forEach((button) => {
+                const isActive = (button.dataset[dataKey] || 'all') === activeValue;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+        };
+
+        const matchesAvailability = (product) => {
+            if (activeDefaultAvailability === 'all') {
+                return true;
+            }
+
+            const isAvailable = product.dataset.defaultProductAvailable === 'true';
+
+            return activeDefaultAvailability === 'available' ? isAvailable : !isAvailable;
+        };
+
+        const matchesOffer = (product) => {
+            return activeDefaultOffer === 'all' || product.dataset.defaultProductOffer === 'true';
+        };
+
+        const matchesSize = (product) => {
+            if (activeDefaultSize === 'all') {
+                return true;
+            }
+
+            const productSizes = (product.dataset.defaultProductSizes || '')
+                .split(',')
+                .map((size) => size.trim())
+                .filter(Boolean);
+
+            return productSizes.includes(activeDefaultSize);
+        };
+
+        const sortProducts = () => {
+            if (!defaultProductGrid || !defaultCategoryProducts.length) {
+                return;
+            }
+
+            const sortedProducts = [...defaultCategoryProducts].sort((firstProduct, secondProduct) => {
+                const firstPrice = Number.parseFloat(firstProduct.dataset.defaultProductPrice || '0');
+                const secondPrice = Number.parseFloat(secondProduct.dataset.defaultProductPrice || '0');
+                const firstName = (firstProduct.dataset.defaultProductName || '').toLocaleLowerCase();
+                const secondName = (secondProduct.dataset.defaultProductName || '').toLocaleLowerCase();
+                const firstIndex = Number.parseInt(firstProduct.dataset.defaultProductIndex || '0', 10);
+                const secondIndex = Number.parseInt(secondProduct.dataset.defaultProductIndex || '0', 10);
+
+                if (activeDefaultSort === 'price-asc') {
+                    return firstPrice - secondPrice;
+                }
+
+                if (activeDefaultSort === 'price-desc') {
+                    return secondPrice - firstPrice;
+                }
+
+                if (activeDefaultSort === 'name-asc') {
+                    return firstName.localeCompare(secondName, 'es', { sensitivity: 'base' });
+                }
+
+                return firstIndex - secondIndex;
+            });
+
+            sortedProducts.forEach((product) => defaultProductGrid.appendChild(product));
+        };
+
+        sortProducts();
+
+        if (defaultCategoryProducts.length) {
+            defaultCategoryProducts.forEach((product) => {
+                const productCategories = (product.dataset.defaultCategoryProduct || '')
+                    .split(',')
+                    .map((category) => category.trim())
+                    .filter(Boolean);
+                const matchesCategory = activeDefaultCategory === 'all' || productCategories.includes(activeDefaultCategory);
+                const isVisible = matchesCategory
+                    && matchesAvailability(product)
+                    && matchesOffer(product)
+                    && matchesSize(product);
+
+                product.hidden = !isVisible;
+                product.style.display = isVisible ? '' : 'none';
+                product.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+
+                if (isVisible) {
+                    visibleProducts += 1;
+                }
+            });
+        } else {
+            defaultCategorySections.forEach((section) => {
+                const sectionCategory = section.dataset.defaultCategorySection || '';
+                const isVisible = activeDefaultCategory === 'all' || sectionCategory === activeDefaultCategory;
+
+                section.hidden = !isVisible;
+
+                if (isVisible) {
+                    visibleSections += 1;
+                }
+            });
+        }
+
+        syncFilterButtons(defaultAvailabilityButtons, activeDefaultAvailability, 'defaultAvailabilityFilter');
+        syncFilterButtons(defaultOfferButtons, activeDefaultOffer, 'defaultOfferFilter');
+        syncFilterButtons(defaultSizeButtons, activeDefaultSize, 'defaultSizeFilter');
+
+        defaultCategoryButtons.forEach((button) => {
+            const isActive = (button.dataset.defaultCategoryFilter || 'all') === activeDefaultCategory;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+
+            if (isActive && defaultCategoryCount) {
+                const count = Number.parseInt(button.dataset.defaultCategoryCount || '0', 10);
+                defaultCategoryCount.textContent = `${count} ${count === 1 ? 'producto' : 'productos'}`;
+            }
+        });
+
+        if (defaultCategoryEmptyState) {
+            const hasVisibleContent = defaultCategoryProducts.length ? visibleProducts > 0 : visibleSections > 0;
+
+            defaultCategoryEmptyState.hidden = hasVisibleContent;
+        }
+    };
+
+    if (defaultCategoryButtons.length && (defaultCategorySections.length || defaultCategoryProducts.length)) {
+        defaultCategoryButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                const category = button.dataset.defaultCategoryFilter || 'all';
+
+                event.preventDefault();
+                activeDefaultCategory = category;
+                applyDefaultCategoryFilter();
+                document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        defaultAvailabilityButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeDefaultAvailability = button.dataset.defaultAvailabilityFilter || 'all';
+                applyDefaultCategoryFilter();
+            });
+        });
+
+        defaultOfferButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeDefaultOffer = button.dataset.defaultOfferFilter || 'all';
+                applyDefaultCategoryFilter();
+            });
+        });
+
+        defaultSizeButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeDefaultSize = button.dataset.defaultSizeFilter || 'all';
+                applyDefaultCategoryFilter();
+            });
+        });
+
+        if (defaultSortSelect) {
+            defaultSortSelect.addEventListener('change', () => {
+                activeDefaultSort = defaultSortSelect.value || 'default';
+                applyDefaultCategoryFilter();
+            });
+        }
+
+        applyDefaultCategoryFilter();
+    }
+
+    if (defaultCategoryTrack && defaultCategoryScrollButtons.length) {
+        const updateCategoryScrollButtons = () => {
+            const maxScroll = Math.max(0, defaultCategoryTrack.scrollWidth - defaultCategoryTrack.clientWidth);
+            const currentScroll = defaultCategoryTrack.scrollLeft;
+            const hasOverflow = maxScroll > 2;
+
+            defaultCategoryScrollButtons.forEach((button) => {
+                const direction = button.dataset.homeCategoryScroll;
+                const isAtEdge = (direction === 'prev' && currentScroll <= 2)
+                    || (direction === 'next' && currentScroll >= maxScroll - 2);
+
+                button.hidden = !hasOverflow || isAtEdge;
+                button.disabled = !hasOverflow || isAtEdge;
+            });
+        };
+
+        defaultCategoryScrollButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const direction = button.dataset.homeCategoryScroll === 'prev' ? -1 : 1;
+                const amount = Math.max(defaultCategoryTrack.clientWidth * 0.78, 220);
+
+                defaultCategoryTrack.scrollBy({
+                    left: direction * amount,
+                    behavior: 'smooth',
+                });
+            });
+        });
+
+        defaultCategoryTrack.addEventListener('scroll', updateCategoryScrollButtons, { passive: true });
+        window.addEventListener('resize', updateCategoryScrollButtons);
+        window.addEventListener('load', updateCategoryScrollButtons);
+
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(updateCategoryScrollButtons).catch(() => {});
+        }
+
+        updateCategoryScrollButtons();
+    }
 
     if (fashionCategoryButtons.length && fashionProducts.length) {
         fashionCategoryButtons.forEach((button) => {
@@ -433,6 +772,7 @@
         const dots = Array.from(fashionAnnouncement.querySelectorAll('[data-fashion-announcement-dot]'));
         const prev = fashionAnnouncement.querySelector('[data-fashion-announcement-prev]');
         const next = fashionAnnouncement.querySelector('[data-fashion-announcement-next]');
+        const currentCounter = fashionAnnouncement.querySelector('[data-tech-announcement-current]');
         const interval = Math.max(3200, Number(fashionAnnouncement.dataset.fashionAnnouncementInterval || 5200));
         fashionAnnouncement.style.setProperty('--fashion-announcement-interval', `${interval}ms`);
         let activeIndex = Math.max(0, slides.findIndex((slide) => slide.classList.contains('is-active')));
@@ -483,6 +823,10 @@
                 dot.classList.toggle('is-active', isActive);
                 dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
+
+            if (currentCounter) {
+                currentCounter.textContent = String(activeIndex + 1);
+            }
 
             syncTopbarHeight();
         };
@@ -565,6 +909,7 @@
         storeCartBackdrop?.classList.toggle('is-open', isOpen);
         cartDrawer.style.removeProperty('right');
         cartDrawer.style.removeProperty('transform');
+        syncMinimalOverlayScrollLock();
     };
 
     cartDrawerToggle?.addEventListener('change', syncStoreCartDrawer);
@@ -609,6 +954,11 @@
             badge.textContent = count;
             badge.hidden = count < 1;
         });
+
+        document.querySelectorAll('[data-cart-count-badge]').forEach((badge) => {
+            badge.textContent = count;
+            badge.hidden = count < 1;
+        });
     };
 
     const renderCartDrawer = (data) => {
@@ -620,11 +970,15 @@
         const subtotal = Number(data.total || 0);
         const shipping = Number(cartDrawer.dataset.cartShipping || 0);
         const count = Number(data.cart_count || 0);
-        const hideItemMeta = cartDrawer.dataset.cartHideItemMeta === '1';
 
         if (cartDrawerCount) {
             cartDrawerCount.textContent = count;
         }
+
+        document.querySelectorAll('[data-cart-count-badge]').forEach((badge) => {
+            badge.textContent = count;
+            badge.hidden = count < 1;
+        });
 
         cartDrawer.classList.toggle('is-empty', items.length < 1);
 
@@ -660,17 +1014,12 @@
             const image = item.image_url
                 ? `<img src="${imageUrl}" alt="${name}">`
                 : `<span>${escapeHtml(String(item.name || 'P').charAt(0).toUpperCase())}</span>`;
-            const detail = escapeHtml(item.color || item.size || 'Sin variante');
-            const badge = escapeHtml(item.color || 'Otros');
-            const itemMeta = hideItemMeta ? '' : `<small>${detail}</small>`;
 
             return `
                 <article class="minimal-shop-cart-item" data-cart-drawer-item data-cart-key="${key}">
                     <div class="minimal-shop-cart-thumb">${image}</div>
                     <div class="minimal-shop-cart-info">
-                        <span>${badge}</span>
                         <strong>${name}</strong>
-                        ${itemMeta}
                         <b data-cart-item-total>${formatMoney(item.item_total || 0)}</b>
                     </div>
                     <div class="minimal-shop-cart-controls">
@@ -845,15 +1194,20 @@
             const originalText = button ? button.textContent : '';
             const originalHtml = button ? button.innerHTML : '';
             const isCompactFashionCart = form.matches('[data-compact-fashion-cart]');
+            const isResponsiveProductCard = form.closest('.product-card')
+                && window.matchMedia('(max-width: 760px)').matches;
+            const useCompactTechnologyLoading = page.classList.contains('storefront-page--technology')
+                && window.matchMedia('(max-width: 760px)').matches;
             const startedAt = Date.now();
 
             if (button) {
                 button.disabled = true;
                 button.classList.add('is-loading');
+                button.setAttribute('aria-busy', 'true');
                 const label = button.querySelector('[data-variant-label]');
 
-                if (isCompactFashionCart) {
-                    button.setAttribute('aria-busy', 'true');
+                if (isCompactFashionCart || useCompactTechnologyLoading || isResponsiveProductCard) {
+                    button.setAttribute('aria-label', addingText);
                 } else if (label) {
                     label.textContent = addingText;
                 } else {

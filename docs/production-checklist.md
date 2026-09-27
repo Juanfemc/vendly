@@ -3,6 +3,7 @@
 Antes de publicar o actualizar Vendly en produccion:
 
 - Verificar que `.env` tenga `APP_ENV=production`, `APP_DEBUG=false` y `APP_URL` con el dominio real HTTPS.
+- Confirmar `SESSION_ENCRYPT=true`, `SESSION_SECURE_COOKIE=true` y `MERCADOPAGO_WEBHOOK_SECRET` configurado.
 - Ejecutar migraciones con `php artisan migrate --force`.
 - Confirmar que `php artisan storage:link` exista en el servidor.
 - Compilar caches con `php artisan config:cache`, `php artisan route:cache` y `php artisan view:cache`.

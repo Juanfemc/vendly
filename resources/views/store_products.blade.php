@@ -54,6 +54,7 @@
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
+    @include('storefront.partials.root-theme')
     <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset($variantStylesheets[$storefrontVariant]) }}?v={{ filemtime(public_path($variantStylesheets[$storefrontVariant])) }}">
 </head>
@@ -109,7 +110,6 @@
                         <strong>"{{ $catalogSearchQuery }}"</strong>
                         <small>{{ $catalogSearchTotal === 1 ? '1 resultado encontrado' : $catalogSearchTotal . ' resultados encontrados' }}</small>
                     </div>
-                    <a href="{{ $storefrontUrls->products($store) }}">Ver todos</a>
                 </div>
             @endif
 

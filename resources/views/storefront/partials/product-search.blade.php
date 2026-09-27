@@ -5,7 +5,6 @@
     @endphp
 
     <form class="product-search" action="{{ $productSearchAction }}" method="GET" role="search">
-        <label class="product-search-label" for="productSearchInput-{{ $productSearchId ?? 'default' }}">Buscar productos</label>
         <div class="product-search-control">
             <input
                 id="productSearchInput-{{ $productSearchId ?? 'default' }}"
@@ -13,6 +12,7 @@
                 name="q"
                 value="{{ $productSearchValue }}"
                 placeholder="Buscar por nombre"
+                aria-label="Buscar productos"
                 autocomplete="off"
             >
             <button type="submit">Buscar</button>

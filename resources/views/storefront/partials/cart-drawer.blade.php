@@ -3,7 +3,6 @@
     $cartDrawerClass = $cartDrawerClass ?? 'store-cart-drawer';
     $cartShowTax = $cartShowTax ?? false;
     $cartShowSecure = $cartShowSecure ?? true;
-    $cartHideItemMeta = $cartHideItemMeta ?? false;
     $drawerCart = app(\App\Services\CartService::class)->cartForStore($store);
     $drawerSubtotal = collect($drawerCart)->sum(fn ($item) => (float) ($item['price'] ?? 0) * (int) ($item['quantity'] ?? 1));
     $drawerShipping = 0;
@@ -20,7 +19,6 @@
     data-cart-subtotal="{{ $drawerSubtotal }}"
     data-cart-shipping="{{ $drawerShipping }}"
     data-cart-tax="{{ $drawerTax }}"
-    data-cart-hide-item-meta="{{ $cartHideItemMeta ? '1' : '0' }}"
     data-store-url="{{ $storefrontUrls->home($store) }}"
 >
     <div class="minimal-shop-cart-head">
@@ -39,7 +37,6 @@
                 $drawerItemImage = trim((string) ($item['image'] ?? ''));
                 $drawerItemPrice = (float) ($item['price'] ?? 0);
                 $drawerItemQuantity = (int) ($item['quantity'] ?? 1);
-                $drawerVariant = trim(collect([$item['color'] ?? null, $item['size'] ?? null])->filter()->implode(' / '));
             @endphp
             <article class="minimal-shop-cart-item" data-cart-drawer-item data-cart-key="{{ $cartKey }}">
                 <div class="minimal-shop-cart-thumb">
@@ -51,9 +48,6 @@
                 </div>
                 <div class="minimal-shop-cart-info">
                     <strong>{{ $item['name'] ?? 'Producto' }}</strong>
-                    @unless($cartHideItemMeta)
-                        <small>{{ $drawerVariant !== '' ? $drawerVariant : 'Sin variante' }}</small>
-                    @endunless
                     <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
                 </div>
                 <div class="minimal-shop-cart-controls">

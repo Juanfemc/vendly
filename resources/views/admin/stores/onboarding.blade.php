@@ -12,6 +12,7 @@
     use App\Models\StorePaymentAccount;
     use App\Services\AiContentService;
     use App\Services\AiCreditService;
+    use App\Support\StoreTemplateCatalog;
 
     $stepKeys = array_keys($steps);
     $totalSteps = count($steps);
@@ -35,6 +36,40 @@
     $aiCreditService = $store->allowsAiContent() ? app(AiCreditService::class) : null;
     $mercadoPagoAccount = $paymentAccounts[StorePaymentAccount::PROVIDER_MERCADOPAGO] ?? null;
     $wompiAccount = $paymentAccounts[StorePaymentAccount::PROVIDER_WOMPI] ?? null;
+    $onboardingTemplateKeys = [StoreTemplateCatalog::FASHION, StoreTemplateCatalog::TECHNOLOGY, StoreTemplateCatalog::STORE];
+    $onboardingTemplates = collect(StoreTemplateCatalog::all())
+        ->only($onboardingTemplateKeys)
+        ->sortBy(fn ($template) => array_search($template['key'], $onboardingTemplateKeys, true))
+        ->values();
+    $selectedBusinessType = old('business_type', in_array($store->business_type, ['store', 'technology', 'fashion'], true) ? $store->business_type : 'store');
+    $templateSellChips = [
+        ['label' => 'Ropa y moda', 'template' => 'fashion'],
+        ['label' => 'Zapatos y accesorios', 'template' => 'fashion'],
+        ['label' => 'Belleza', 'template' => 'fashion'],
+        ['label' => 'Tecnologia', 'template' => 'technology'],
+        ['label' => 'Repuestos', 'template' => 'technology'],
+        ['label' => 'Ferreteria', 'template' => 'technology'],
+        ['label' => 'Tienda variada', 'template' => 'store'],
+        ['label' => 'Hogar y regalos', 'template' => 'store'],
+    ];
+    $activeTemplateChip = collect($templateSellChips)->firstWhere('template', $selectedBusinessType)['label'] ?? null;
+    $templatePreviewCopy = [
+        'fashion' => [
+            'label' => 'Recomendada para moda',
+            'title' => 'Ropa',
+            'description' => 'Portada editorial, colecciones y grilla visual para prendas, accesorios y belleza.',
+        ],
+        'technology' => [
+            'label' => 'Recomendada para catalogos tecnicos',
+            'title' => 'Tecnologia',
+            'description' => 'Navbar con busqueda, categorias compactas, filtros y tarjetas enfocadas en especificaciones.',
+        ],
+        'store' => [
+            'label' => 'Recomendada para tiendas mixtas',
+            'title' => 'Tienda normal',
+            'description' => 'Diseño flexible para vender varios tipos de productos con categorias y carrito lateral.',
+        ],
+    ];
 @endphp
 
 <style>
@@ -371,6 +406,358 @@
         background: #fff;
     }
 
+    .onboarding-template-selector {
+        display: grid;
+        grid-template-columns: minmax(250px, .9fr) minmax(0, 1.35fr);
+        gap: 16px;
+        align-items: start;
+    }
+
+    .onboarding-template-intro,
+    .onboarding-template-panel {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        background: #fff;
+        padding: 16px;
+    }
+
+    .onboarding-template-intro {
+        display: grid;
+        gap: 14px;
+    }
+
+    .onboarding-template-intro strong,
+    .onboarding-template-panel strong {
+        color: #111827;
+    }
+
+    .onboarding-template-intro p,
+    .onboarding-template-panel p {
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .onboarding-sell-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .onboarding-sell-chip {
+        min-height: 38px;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #111827;
+        padding: 0 13px;
+        font-weight: 850;
+        cursor: pointer;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .onboarding-sell-chip:hover,
+    .onboarding-sell-chip:focus-visible,
+    .onboarding-template-card:hover,
+    .onboarding-template-card:focus-within {
+        border-color: #fb923c;
+        box-shadow: 0 0 0 3px rgba(255, 107, 0, .12);
+        outline: none;
+    }
+
+    .onboarding-sell-chip.is-active,
+    .onboarding-template-card.is-active {
+        border-color: #ff6b00;
+        background: #fff7ed;
+        box-shadow: 0 0 0 3px rgba(255, 107, 0, .14);
+    }
+
+    .onboarding-template-cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .onboarding-template-card {
+        position: relative;
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        background: #fff;
+        cursor: pointer;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .onboarding-template-card input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .onboarding-template-card:hover {
+        transform: translateY(-1px);
+    }
+
+    .onboarding-template-card__copy {
+        display: grid;
+        gap: 2px;
+    }
+
+    .onboarding-template-card__copy span {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .onboarding-template-live-copy {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+
+    .onboarding-template-live-copy span {
+        color: #ff6b00;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .template-preview {
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #f8fafc;
+    }
+
+    .template-preview--mini {
+        height: 118px;
+    }
+
+    .template-preview--live {
+        min-height: 280px;
+        display: none;
+    }
+
+    .template-preview--live.is-active {
+        display: block;
+    }
+
+    .template-preview__bar {
+        height: 24px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        border-bottom: 1px solid rgba(148, 163, 184, .24);
+        background: rgba(255, 255, 255, .86);
+    }
+
+    .template-preview__bar strong,
+    .template-preview__bar span:not(.template-preview__logo) {
+        position: relative;
+        z-index: 2;
+        color: #111827;
+        font-size: 9px;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .template-preview__bar span:not(.template-preview__logo) {
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .template-preview__bar span:last-child {
+        margin-left: auto;
+    }
+
+    .template-preview__logo {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #111827;
+    }
+
+    .template-preview__line {
+        height: 7px;
+        border-radius: 999px;
+        background: #cbd5e1;
+    }
+
+    .template-preview__line:nth-child(2) {
+        width: 36%;
+    }
+
+    .template-preview__line:nth-child(3) {
+        width: 20%;
+        margin-left: auto;
+    }
+
+    .template-preview__hero {
+        position: relative;
+        min-height: 100px;
+        padding: 16px;
+    }
+
+    .template-preview__hero-copy {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        gap: 6px;
+        max-width: 54%;
+    }
+
+    .template-preview__hero-copy strong {
+        color: #111827;
+        font-size: 15px;
+        line-height: 1.03;
+    }
+
+    .template-preview__hero-copy small {
+        color: #64748b;
+        font-size: 8px;
+        font-weight: 800;
+        line-height: 1.35;
+    }
+
+    .template-preview__title {
+        width: 46%;
+        height: 14px;
+        border-radius: 999px;
+        background: #111827;
+    }
+
+    .template-preview__subtitle {
+        width: 34%;
+        height: 7px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: #94a3b8;
+    }
+
+    .template-preview__button {
+        width: max-content;
+        min-width: 74px;
+        min-height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 12px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #ff6b00;
+        color: #ffffff;
+        font-size: 8px;
+        font-weight: 900;
+    }
+
+    .template-preview__products {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .template-preview__product {
+        min-height: 54px;
+        display: grid;
+        align-content: end;
+        gap: 4px;
+        padding: 8px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid rgba(148, 163, 184, .28);
+    }
+
+    .template-preview__product strong,
+    .template-preview__product small {
+        position: relative;
+        z-index: 2;
+        color: #111827;
+        font-size: 8px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .template-preview__product small {
+        color: #64748b;
+        font-size: 7px;
+        font-weight: 800;
+    }
+
+    .template-preview--fashion {
+        background: linear-gradient(135deg, #fff7ed, #fff 46%, #fff1f2);
+    }
+
+    .template-preview--fashion .template-preview__hero::after {
+        content: "";
+        position: absolute;
+        right: 18px;
+        bottom: 0;
+        width: 34%;
+        height: 84%;
+        border-radius: 999px 999px 18px 18px;
+        background: linear-gradient(160deg, #fde68a, #f9a8d4);
+        opacity: .82;
+    }
+
+    .template-preview--fashion .template-preview__button,
+    .template-preview--fashion .template-preview__product:nth-child(2) {
+        background: #db2777;
+    }
+
+    .template-preview--technology {
+        background: linear-gradient(135deg, #f8fafc, #e0f2fe);
+    }
+
+    .template-preview--technology .template-preview__hero::after {
+        content: "";
+        position: absolute;
+        right: 14px;
+        top: 18px;
+        width: 38%;
+        height: 64px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #111827, #38bdf8);
+        box-shadow: -12px 14px 0 rgba(15, 23, 42, .08);
+    }
+
+    .template-preview--technology .template-preview__button,
+    .template-preview--technology .template-preview__product:nth-child(1) {
+        background: #0f172a;
+    }
+
+    .template-preview--store {
+        background: linear-gradient(135deg, #fff7ed, #fff);
+    }
+
+    .template-preview--store .template-preview__hero {
+        display: grid;
+        grid-template-columns: 1fr .7fr;
+        gap: 10px;
+    }
+
+    .template-preview--store .template-preview__hero::after {
+        content: "";
+        min-height: 72px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #fed7aa, #fff7ed);
+        border: 1px solid rgba(251, 146, 60, .34);
+    }
+
+    .template-preview--store .template-preview__product:nth-child(3),
+    .template-preview--store .template-preview__button {
+        background: #ff6b00;
+    }
+
     .onboarding-upload {
         display: grid;
         gap: 8px;
@@ -480,6 +867,10 @@
         .onboarding-steps {
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         }
+
+        .onboarding-template-selector {
+            grid-template-columns: 1fr;
+        }
     }
 
     @media (max-width: 640px) {
@@ -504,6 +895,14 @@
         .onboarding-grid--three,
         .onboarding-media {
             grid-template-columns: 1fr;
+        }
+
+        .onboarding-template-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .template-preview--live {
+            min-height: 235px;
         }
 
         .onboarding-cover-preview {
@@ -647,6 +1046,106 @@
                     @endif
                 </section>
             @elseif($currentStep === 'identity')
+                <section class="onboarding-section">
+                    <h2>Plantilla recomendada</h2>
+                    <div class="onboarding-template-selector">
+                        <div class="onboarding-template-intro">
+                            <div>
+                                <strong>¿Qué vendes?</strong>
+                                <p>Elige una opción rápida y te recomendamos una de las plantillas disponibles.</p>
+                            </div>
+                            <div class="onboarding-sell-chips" aria-label="Tipo de productos">
+                                @foreach($templateSellChips as $chip)
+                                    <button
+                                        type="button"
+                                        class="onboarding-sell-chip {{ $activeTemplateChip === $chip['label'] ? 'is-active' : '' }}"
+                                        data-template-chip="{{ $chip['template'] }}"
+                                        aria-pressed="{{ $activeTemplateChip === $chip['label'] ? 'true' : 'false' }}"
+                                    >
+                                        {{ $chip['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                            @error('business_type')<span class="onboarding-error">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="onboarding-template-panel">
+                            <div class="onboarding-template-live-copy">
+                                <span data-template-preview-label>{{ $templatePreviewCopy[$selectedBusinessType]['label'] ?? $templatePreviewCopy['store']['label'] }}</span>
+                                <strong data-template-preview-title>{{ $templatePreviewCopy[$selectedBusinessType]['title'] ?? $templatePreviewCopy['store']['title'] }}</strong>
+                                <p data-template-preview-description>{{ $templatePreviewCopy[$selectedBusinessType]['description'] ?? $templatePreviewCopy['store']['description'] }}</p>
+                            </div>
+
+                            @foreach($onboardingTemplates as $template)
+                                <div class="template-preview template-preview--{{ $template['key'] }} template-preview--live {{ $selectedBusinessType === $template['business_type'] ? 'is-active' : '' }}" data-template-preview="{{ $template['business_type'] }}">
+                                    <div class="template-preview__bar">
+                                        <span class="template-preview__logo"></span>
+                                        <strong>{{ $template['key'] === 'technology' ? 'Logo' : $template['name'] }}</strong>
+                                        <span>{{ $template['key'] === 'technology' ? 'Buscar' : 'Inicio' }}</span>
+                                        <span>{{ $template['key'] === 'fashion' ? 'Colecciones' : 'Categorias' }}</span>
+                                    </div>
+                                    <div class="template-preview__hero">
+                                        <div class="template-preview__hero-copy">
+                                            @if($template['key'] === 'fashion')
+                                                <strong>Nueva coleccion</strong>
+                                                <small>Looks, accesorios y prendas destacadas.</small>
+                                                <span class="template-preview__button">Comprar</span>
+                                            @elseif($template['key'] === 'technology')
+                                                <strong>Tecnologia que acompaña</strong>
+                                                <small>Busqueda, categorias y tarjetas limpias.</small>
+                                                <span class="template-preview__button">Comprar ahora</span>
+                                            @else
+                                                <strong>Explorar productos</strong>
+                                                <small>Categorias, filtros y catalogo flexible.</small>
+                                                <span class="template-preview__button">Ver catalogo</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="template-preview__products">
+                                        <span class="template-preview__product"><strong>{{ $template['key'] === 'fashion' ? 'Camisa' : ($template['key'] === 'technology' ? 'Audifonos' : 'Producto') }}</strong><small>$120.000</small></span>
+                                        <span class="template-preview__product"><strong>{{ $template['key'] === 'fashion' ? 'Bolso' : ($template['key'] === 'technology' ? 'Celular' : 'Oferta') }}</strong><small>$89.000</small></span>
+                                        <span class="template-preview__product"><strong>{{ $template['key'] === 'fashion' ? 'Zapatos' : ($template['key'] === 'technology' ? 'Accesorio' : 'Nuevo') }}</strong><small>$45.000</small></span>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            <div class="onboarding-template-cards" aria-label="Plantillas disponibles">
+                                @foreach($onboardingTemplates as $template)
+                                    <label class="onboarding-template-card {{ $selectedBusinessType === $template['business_type'] ? 'is-active' : '' }}" data-template-card="{{ $template['business_type'] }}">
+                                        <input type="radio" name="business_type" value="{{ $template['business_type'] }}" data-template-radio @checked($selectedBusinessType === $template['business_type'])>
+                                        <div class="template-preview template-preview--{{ $template['key'] }} template-preview--mini" aria-hidden="true">
+                                            <div class="template-preview__bar">
+                                                <span class="template-preview__logo"></span>
+                                                <strong>{{ $template['name'] }}</strong>
+                                                <span>{{ $template['key'] === 'technology' ? 'Buscar' : 'Inicio' }}</span>
+                                            </div>
+                                            <div class="template-preview__hero">
+                                                <div class="template-preview__hero-copy">
+                                                    @if($template['key'] === 'fashion')
+                                                        <strong>Nueva coleccion</strong>
+                                                        <small>Moda y accesorios.</small>
+                                                    @elseif($template['key'] === 'technology')
+                                                        <strong>Tecnologia</strong>
+                                                        <small>Busqueda y categorias.</small>
+                                                    @else
+                                                        <strong>Catalogo</strong>
+                                                        <small>Tienda flexible.</small>
+                                                    @endif
+                                                    <span class="template-preview__button">Ver</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="onboarding-template-card__copy">
+                                            <strong>{{ $template['name'] }}</strong>
+                                            <span>{{ $template['subtitle'] }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="onboarding-section">
                     <h2>Imagen de marca</h2>
                     <div class="onboarding-media">
@@ -974,6 +1473,58 @@
                 button.textContent = 'Enlace copiado';
             });
         });
+    })();
+
+    (() => {
+        const templateCopy = @json($templatePreviewCopy);
+        const radios = Array.from(document.querySelectorAll('[data-template-radio]'));
+        const cards = Array.from(document.querySelectorAll('[data-template-card]'));
+        const chips = Array.from(document.querySelectorAll('[data-template-chip]'));
+        const previews = Array.from(document.querySelectorAll('[data-template-preview]'));
+        const label = document.querySelector('[data-template-preview-label]');
+        const title = document.querySelector('[data-template-preview-title]');
+        const description = document.querySelector('[data-template-preview-description]');
+
+        if (!radios.length) return;
+
+        const selectTemplate = (template, activeChip = null) => {
+            radios.forEach((radio) => {
+                radio.checked = radio.value === template;
+            });
+
+            cards.forEach((card) => {
+                card.classList.toggle('is-active', card.dataset.templateCard === template);
+            });
+
+            chips.forEach((chip) => {
+                const isActive = activeChip ? chip === activeChip : chip.dataset.templateChip === template;
+                chip.classList.toggle('is-active', isActive);
+                chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            previews.forEach((preview) => {
+                preview.classList.toggle('is-active', preview.dataset.templatePreview === template);
+            });
+
+            if (templateCopy[template]) {
+                if (label) label.textContent = templateCopy[template].label;
+                if (title) title.textContent = templateCopy[template].title;
+                if (description) description.textContent = templateCopy[template].description;
+            }
+        };
+
+        chips.forEach((chip) => {
+            chip.addEventListener('click', () => selectTemplate(chip.dataset.templateChip, chip));
+        });
+
+        radios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) selectTemplate(radio.value);
+            });
+        });
+
+        const checked = radios.find((radio) => radio.checked) || radios[0];
+        selectTemplate(checked.value, chips.find((chip) => chip.classList.contains('is-active')) || null);
     })();
 
     (() => {

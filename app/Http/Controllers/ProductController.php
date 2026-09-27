@@ -373,12 +373,15 @@ class ProductController extends Controller
             ->whereIn('category', $this->categoryNamesForStorefront($store, $category))
             ->paginate(8)
             ->withQueryString();
+        $activeCategories = $this->activeCategories($store);
 
         return view('store_category', array_merge($this->storefrontNavigationPayload($store), [
             'category' => $category,
             'products' => $products,
             'productSearchEnabled' => $productSearchEnabled,
             'searchQuery' => $searchQuery,
+            'categoryProductCounts' => $this->categoryProductCountsForStore($store, $activeCategories),
+            'storeProductsTotal' => $this->publicProductsQuery($store)->reorder()->count(),
         ]));
     }
 
@@ -413,11 +416,14 @@ class ProductController extends Controller
             ->where('has_offer', true)
             ->paginate(24)
             ->withQueryString();
+        $activeCategories = $this->activeCategories($store);
 
         return view('store_offers', array_merge($this->storefrontNavigationPayload($store), [
             'products' => $products,
             'productSearchEnabled' => $productSearchEnabled,
             'searchQuery' => $searchQuery,
+            'categoryProductCounts' => $this->categoryProductCountsForStore($store, $activeCategories),
+            'storeProductsTotal' => $this->publicProductsQuery($store)->reorder()->count(),
         ]));
     }
 
@@ -470,16 +476,7 @@ class ProductController extends Controller
     private function storefrontPayload(Store $store): array
     {
         $activeCategories = $this->activeCategories($store);
-        $categoryNames = $activeCategories->pluck('name')->all();
-        $categoryProductCounts = empty($categoryNames)
-            ? collect()
-            : Product::where('store_id', $store->id)
-                ->whereIn('category', $categoryNames)
-                ->select('category', DB::raw('count(*) as total'))
-                ->groupBy('category')
-                ->pluck('total', 'category');
-
-        $this->mergeParentCategoryProductCounts($store, $activeCategories, $categoryProductCounts);
+        $categoryProductCounts = $this->categoryProductCountsForStore($store, $activeCategories);
 
         $categorySections = $activeCategories
             ->filter(fn (StoreCategory $category) => $store->isRestaurant() || ! $category->parent_id)
@@ -523,10 +520,8 @@ class ProductController extends Controller
             ->when($selectedHomeBadge, fn ($query) => $query->whereJsonContains('custom_badges', $selectedHomeBadge))
             ->paginate($homeProductPageSize)
             ->withQueryString();
-        $storeProductsTotal = Product::where('store_id', $store->id)->count();
-        $allProductsQuery = Product::where('store_id', $store->id)
-            ->withReviewStats()
-            ->latest();
+        $storeProductsTotal = $this->publicProductsQuery($store)->reorder()->count();
+        $allProductsQuery = $this->publicProductsQuery($store);
 
         $allProducts = $store->isFashionStore()
             ? $allProductsQuery->get()
@@ -588,7 +583,7 @@ class ProductController extends Controller
 
     private function productSearchEnabledForStore(Store $store): bool
     {
-        return $store->hasProductSearch() || $store->isFashionStore();
+        return $store->hasProductSearch() || $store->isFashionStore() || $store->isTechnologyStore();
     }
 
     private function applyProductSearch($query, string $searchQuery)
@@ -608,11 +603,27 @@ class ProductController extends Controller
         });
     }
 
+    private function applyPublicProductSearch($query, string $searchQuery)
+    {
+        if ($searchQuery === '') {
+            return $query;
+        }
+
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $searchQuery) . '%';
+
+        return $query->where(function ($query) use ($like) {
+            $query
+                ->where('name', 'like', $like)
+                ->orWhere('category', 'like', $like)
+                ->orWhere('material', 'like', $like);
+        });
+    }
+
     private function publicProductsQuery(Store $store, string $searchQuery = '')
     {
         return Product::where('store_id', $store->id)
             ->withReviewStats()
-            ->when($searchQuery !== '', fn ($query) => $this->applyProductSearch($query, $searchQuery))
+            ->when($searchQuery !== '', fn ($query) => $this->applyPublicProductSearch($query, $searchQuery))
             ->latest();
     }
 
@@ -740,5 +751,22 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->orderedForDisplay()
             ->get();
+    }
+
+    private function categoryProductCountsForStore(Store $store, $activeCategories)
+    {
+        $categoryNames = $activeCategories->pluck('name')->all();
+        $categoryProductCounts = empty($categoryNames)
+            ? collect()
+            : $this->publicProductsQuery($store)
+                ->reorder()
+                ->whereIn('category', $categoryNames)
+                ->select('category', DB::raw('count(*) as total'))
+                ->groupBy('category')
+                ->pluck('total', 'category');
+
+        $this->mergeParentCategoryProductCounts($store, $activeCategories, $categoryProductCounts);
+
+        return $categoryProductCounts;
     }
 }

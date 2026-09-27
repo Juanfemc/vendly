@@ -169,8 +169,10 @@ class WompiCheckoutService
     {
         $reference = (string) ($transaction['reference'] ?? '');
         $amountInCents = (int) ($transaction['amount_in_cents'] ?? 0);
+        $currency = strtoupper((string) ($transaction['currency'] ?? ''));
 
         return hash_equals($order->admin_token, $reference)
+            && hash_equals(self::CURRENCY, $currency)
             && $amountInCents >= $this->amountInCents($order);
     }
 

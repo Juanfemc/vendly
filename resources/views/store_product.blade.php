@@ -86,9 +86,58 @@
         $productFeaturesText = \App\Support\ProductText::featureLines($product->features);
         $productFeaturesRich = \App\Support\ProductText::rich($product->features);
         $hasProductFeatures = $productFeaturesText !== '' || \App\Support\ProductText::plain($productFeaturesRich) !== '';
+        $detailColorMap = [
+            'navy' => '#173a63',
+            'azul' => '#2563eb',
+            'blue' => '#2563eb',
+            'green' => '#16a34a',
+            'verde' => '#16a34a',
+            'black' => '#111111',
+            'negro' => '#111111',
+            'gray' => '#b8b8b8',
+            'gris' => '#b8b8b8',
+            'silver' => '#c7c7c7',
+            'plateado' => '#c7c7c7',
+            'white' => '#f8fafc',
+            'blanco' => '#f8fafc',
+            'red' => '#dc2626',
+            'rojo' => '#dc2626',
+            'pink' => '#ec5b92',
+            'rosado' => '#ec5b92',
+            'purple' => '#7c3aed',
+            'morado' => '#7c3aed',
+            'yellow' => '#f4c430',
+            'amarillo' => '#f4c430',
+            'orange' => '#f97316',
+            'naranja' => '#f97316',
+            'brown' => '#8b5a2b',
+            'cafe' => '#8b5a2b',
+            'beige' => '#d7c4a3',
+        ];
+        $detailColorOptions = collect($product->colors ?? [])
+            ->map(function ($color) use ($detailColorMap) {
+                $label = trim((string) $color);
+                $key = \Illuminate\Support\Str::lower($label);
+                $swatch = preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $label)
+                    ? $label
+                    : ($detailColorMap[$key] ?? '#d7dbe0');
+
+                return [
+                    'label' => $label,
+                    'value' => $label,
+                    'swatch' => $swatch,
+                ];
+            })
+            ->filter(fn ($color) => $color['label'] !== '')
+            ->values();
+        $detailSizeOptions = collect($product->sizes ?? [])
+            ->map(fn ($size) => trim((string) $size))
+            ->filter()
+            ->values();
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
+    @include('storefront.partials.root-theme')
     <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset($variantStylesheets[$storefrontVariant]) }}?v={{ filemtime(public_path($variantStylesheets[$storefrontVariant])) }}">
     <link rel="stylesheet" href="{{ asset('css/store-product.css') }}?v={{ filemtime(public_path('css/store-product.css')) }}">
@@ -244,28 +293,35 @@
                         @csrf
                         @if($product->hasSizes() || $product->hasColors())
                             <div class="product-options product-options--detail">
-                                @if($product->hasSizes())
-                                    <label>
-                                        <span>{{ $isRestaurant ? 'Porción' : 'Talla' }}</span>
-                                        <select name="size" data-role="selected-size" required>
-                                            <option value="">{{ $isRestaurant ? 'Selecciona porción' : 'Selecciona talla' }}</option>
-                                            @foreach($product->sizes as $size)
-                                                <option value="{{ $size }}">{{ $size }}</option>
+                                @if($product->hasColors())
+                                    <fieldset class="product-variant-group product-variant-group--colors">
+                                        <legend>{{ $isRestaurant ? 'Opción' : 'Color' }}</legend>
+                                        <div class="product-variant-list product-variant-list--colors">
+                                            @foreach($detailColorOptions as $color)
+                                                <label class="product-variant-choice" title="{{ $color['label'] }}">
+                                                    <input type="radio" name="color" value="{{ $color['value'] }}" data-role="selected-color-radio" required @checked(old('color') === $color['value'])>
+                                                    <span class="product-variant-option product-variant-color-option">
+                                                        <i class="product-variant-swatch" style="--swatch: {{ $color['swatch'] }}" aria-hidden="true"></i>
+                                                        <b>{{ $color['label'] }}</b>
+                                                    </span>
+                                                </label>
                                             @endforeach
-                                        </select>
-                                    </label>
+                                        </div>
+                                    </fieldset>
                                 @endif
 
-                                @if($product->hasColors())
-                                    <label>
-                                        <span>{{ $isRestaurant ? 'Opción' : 'Color' }}</span>
-                                        <select name="color" data-role="selected-color" required>
-                                            <option value="">{{ $isRestaurant ? 'Selecciona opción' : 'Selecciona color' }}</option>
-                                            @foreach($product->colors as $color)
-                                                <option value="{{ $color }}">{{ $color }}</option>
+                                @if($product->hasSizes())
+                                    <fieldset class="product-variant-group product-variant-group--sizes">
+                                        <legend>{{ $isRestaurant ? 'Porción' : 'Talla' }}</legend>
+                                        <div class="product-variant-list product-variant-list--sizes">
+                                            @foreach($detailSizeOptions as $size)
+                                                <label class="product-variant-choice" title="{{ $size }}">
+                                                    <input type="radio" name="size" value="{{ $size }}" data-role="selected-size-radio" required @checked(old('size') === $size)>
+                                                    <span class="product-variant-option">{{ $size }}</span>
+                                                </label>
                                             @endforeach
-                                        </select>
-                                    </label>
+                                        </div>
+                                    </fieldset>
                                 @endif
                             </div>
                         @endif

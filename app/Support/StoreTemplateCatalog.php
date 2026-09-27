@@ -28,7 +28,7 @@ class StoreTemplateCatalog
                 'subtitle' => 'Plantilla minimalista para catálogos de tecnología.',
                 'description' => 'Incluye portada amplia, categorías horizontales, tarjetas limpias, producto detallado, checkout y carrito lateral.',
                 'features' => ['Portada visual', 'Catálogo moderno', 'Carrito lateral', 'Checkout optimizado'],
-                'available' => false,
+                'available' => true,
             ],
             self::FASHION => [
                 'key' => self::FASHION,

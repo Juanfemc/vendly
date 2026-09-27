@@ -6,7 +6,9 @@
     <title>Finalizar compra</title>
     @php
         $isSingleProductLandingCheckout = (bool) ($isSingleProductLandingCheckout ?? false);
+        $brandTheme = \App\Support\BrandTheme::from($store?->brand_color);
     @endphp
+    @include('storefront.partials.root-theme', ['responsiveProductColumns' => 2])
     <link rel="stylesheet" href="{{ asset('css/cart-checkout.css') }}?v={{ filemtime(public_path('css/cart-checkout.css')) }}">
     @if($isSingleProductLandingCheckout)
         <link rel="stylesheet" href="{{ asset('css/cart-single-product-landing-checkout.css') }}?v={{ filemtime(public_path('css/cart-single-product-landing-checkout.css')) }}">
@@ -78,6 +80,14 @@
         ? $whatsappPaymentLabel
         : ($mercadoPagoAvailable ? 'Pagar con Mercado Pago' : ($wompiAvailable ? 'Pagar con Wompi' : 'Sin métodos de pago activos'));
     $hasPaymentOptions = $whatsappAvailable || $mercadoPagoAvailable || $wompiAvailable;
+    $availablePaymentNames = collect([
+        $whatsappAvailable ? 'WhatsApp' : null,
+        $mercadoPagoAvailable ? 'Mercado Pago' : null,
+        $wompiAvailable ? 'Wompi' : null,
+    ])->filter()->values();
+    $technologyCheckoutPaymentCopy = $hasPaymentOptions
+        ? 'Confirma tus datos, elige el envío y paga con ' . $availablePaymentNames->join(', ', ' o ') . '.'
+        : 'Confirma tus datos y revisa la tienda antes de finalizar: no hay métodos de pago activos.';
 @endphp
 <body
     class="cart-page {{ $isTechnologyStore && ! $isSingleProductLandingCheckout ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore && ! $isSingleProductLandingCheckout ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }} {{ $isSingleProductLandingCheckout ? 'cart-page--single-product-landing' : '' }}"
@@ -100,7 +110,12 @@
     @include('storefront.partials.meta-pixel-noscript', ['store' => $store])
 
     @if($isTechnologyStore && $store && ! $isSingleProductLandingCheckout)
-        @include('storefront.partials.header-minimal-grid')
+        @include('storefront.partials.header-minimal-grid', [
+            'enableAnnouncementRotation' => false,
+            'showAnnouncementBar' => false,
+            'showCartControl' => false,
+            'useCenteredCheckoutHeader' => true,
+        ])
     @endif
 
     @if($isFashionStore && $store && ! $isSingleProductLandingCheckout)
@@ -143,10 +158,6 @@
                 <span>Checkout de venta directa</span>
                 <h1>Finaliza tu pedido</h1>
                 <p>Completa tus datos, elige envío y selecciona cómo quieres pagar.</p>
-            </section>
-        @elseif($isTechnologyStore)
-            <section class="tech-checkout-head">
-                <h1>Finalizar compra</h1>
             </section>
         @endif
 
@@ -210,24 +221,24 @@
                             </div>
 
                             <div class="grid-two field-wrap">
-                                <input class="field" type="text" name="name" placeholder="Nombre" value="{{ old('name') }}" required>
-                                <input class="field" type="text" name="last_name" placeholder="Apellidos" value="{{ old('last_name') }}" required>
+                                <input class="field" type="text" name="name" placeholder="Nombre" value="{{ old('name') }}" autocomplete="given-name" minlength="2" maxlength="80" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]{2,80}$" title="Escribe un nombre válido, solo letras y espacios." required>
+                                <input class="field" type="text" name="last_name" placeholder="Apellidos" value="{{ old('last_name') }}" autocomplete="family-name" minlength="2" maxlength="100" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]{2,100}$" title="Escribe apellidos válidos, solo letras y espacios." required>
                             </div>
 
                             <div class="field-wrap">
-                                <input class="field" type="text" name="phone" placeholder="WhatsApp" value="{{ old('phone') }}" required>
+                                <input class="field" type="tel" name="phone" placeholder="WhatsApp" value="{{ old('phone') }}" autocomplete="tel" inputmode="tel" minlength="7" maxlength="20" pattern="^[0-9+() -]{7,20}$" title="Escribe un número de teléfono válido. Usa solo números, espacios, +, guiones o paréntesis." required>
                             </div>
 
                             @if($checkoutFieldEnabled('email'))
                                 <div class="field-wrap">
-                                    <input class="field" type="email" name="email" placeholder="Correo{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}" value="{{ old('email') }}" {{ $checkoutRequired('email') }}>
+                                    <input class="field" type="email" name="email" placeholder="Correo{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}" value="{{ old('email') }}" autocomplete="email" maxlength="120" title="Escribe un correo electrónico válido." {{ $checkoutRequired('email') }}>
                                     <small class="checkout-field-help">Útil para enviarte comprobantes o detalles del pedido.</small>
                                 </div>
                             @endif
 
                             @if($checkoutFieldEnabled('document'))
                                 <div class="field-wrap">
-                                    <input class="field" type="text" name="document" placeholder="Cédula{{ $checkoutFieldRequired('document') ? '' : ' (opcional)' }}" value="{{ old('document') }}" {{ $checkoutRequired('document') }}>
+                                    <input class="field" type="text" name="document" placeholder="Cédula{{ $checkoutFieldRequired('document') ? '' : ' (opcional)' }}" value="{{ old('document') }}" autocomplete="off" inputmode="numeric" minlength="5" maxlength="20" pattern="^[0-9A-Za-z.-]{5,20}$" title="Escribe un documento válido, sin espacios ni símbolos especiales." {{ $checkoutRequired('document') }}>
                                 </div>
                             @endif
                         </section>
@@ -244,19 +255,19 @@
 
                             @if($checkoutFieldEnabled('address'))
                                 <div class="field-wrap">
-                                    <input class="field" type="text" name="address" placeholder="Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}" value="{{ old('address') }}" {{ $checkoutRequired('address') }}>
+                                    <input class="field" type="text" name="address" placeholder="Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}" value="{{ old('address') }}" autocomplete="street-address" minlength="5" maxlength="160" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,°º/ -]{5,160}$" title="Escribe una dirección válida." {{ $checkoutRequired('address') }}>
                                 </div>
                             @endif
 
                             @if($checkoutFieldEnabled('apartment'))
                                 <div class="field-wrap">
-                                    <input class="field" type="text" name="apartment" placeholder="Casa, apartamento, referencia{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}" value="{{ old('apartment') }}" {{ $checkoutRequired('apartment') }}>
+                                    <input class="field" type="text" name="apartment" placeholder="Casa, apartamento, referencia{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}" value="{{ old('apartment') }}" autocomplete="address-line2" maxlength="120" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,°º/ -]{0,120}$" title="Usa letras, números y referencias simples." {{ $checkoutRequired('apartment') }}>
                                 </div>
                             @endif
 
                             @if($checkoutFieldEnabled('neighborhood'))
                                 <div class="field-wrap">
-                                    <input class="field" type="text" name="neighborhood" placeholder="Barrio{{ $checkoutFieldRequired('neighborhood') ? '' : ' (opcional)' }}" value="{{ old('neighborhood') }}" {{ $checkoutRequired('neighborhood') }}>
+                                    <input class="field" type="text" name="neighborhood" placeholder="Barrio{{ $checkoutFieldRequired('neighborhood') ? '' : ' (opcional)' }}" value="{{ old('neighborhood') }}" autocomplete="address-level3" maxlength="80" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .'-]{0,80}$" title="Escribe un barrio válido." {{ $checkoutRequired('neighborhood') }}>
                                 </div>
                             @endif
 
@@ -284,8 +295,8 @@
                                     </div>
                                 @else
                                     <div class="grid-two field-wrap">
-                                        <input class="field" type="text" name="city" placeholder="Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}" value="{{ old('city') }}" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
-                                        <input class="field" type="text" name="region" placeholder="Provincia / Estado (opcional)" value="{{ old('region') }}">
+                                        <input class="field" type="text" name="city" placeholder="Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}" value="{{ old('city') }}" autocomplete="address-level2" minlength="2" maxlength="80" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]{2,80}$" title="Escribe una ciudad válida, solo letras y espacios." {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
+                                        <input class="field" type="text" name="region" placeholder="Provincia / Estado (opcional)" value="{{ old('region') }}" autocomplete="address-level1" maxlength="80" pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]{0,80}$" title="Escribe una región válida, solo letras y espacios.">
                                     </div>
                                 @endif
                             @endif
@@ -367,7 +378,7 @@
 
                             @if($checkoutFieldEnabled('notes'))
                                 <div class="field-wrap">
-                                    <textarea class="textarea" name="notes" placeholder="{{ $isRestaurant ? 'Instrucciones del pedido' : ($isReservationStore ? 'Fecha, hora o detalles de la reserva' : 'Notas del pedido') }}{{ $checkoutFieldRequired('notes') ? '' : ' (opcional)' }}" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
+                                    <textarea class="textarea" name="notes" maxlength="500" placeholder="{{ $isRestaurant ? 'Instrucciones del pedido' : ($isReservationStore ? 'Fecha, hora o detalles de la reserva' : 'Notas del pedido') }}{{ $checkoutFieldRequired('notes') ? '' : ' (opcional)' }}" {{ $checkoutRequired('notes') }}>{{ old('notes') }}</textarea>
                                 </div>
                             @endif
 
@@ -377,7 +388,7 @@
                                     <div class="checkout-coupon-body">
                                         <label class="checkout-field-label" for="discountCode">Cupón de descuento</label>
                                         <div class="checkout-coupon-row">
-                                            <input class="field" id="discountCode" type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Código de descuento" data-discount-code>
+                                            <input class="field" id="discountCode" type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Código de descuento" maxlength="40" pattern="^[A-Za-z0-9_-]{1,40}$" title="El cupón solo puede tener letras, números, guion o guion bajo." data-discount-code>
                                             <button type="button" data-discount-apply>Aplicar</button>
                                         </div>
                                         <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Cupón aplicado.' : '' }}</p>
@@ -453,7 +464,7 @@
 
                                 @if($hasPaymentOptions)
                                     <button class="primary-btn" type="submit" data-payment-submit>
-                                        <span>{{ $defaultPaymentLabel }}</span>
+                                        <span>{{ $isTechnologyStore ? 'Confirmar pedido' : $defaultPaymentLabel }}</span>
                                     </button>
                                 @else
                                     <p class="checkout-payment-empty">Esta tienda no tiene métodos de pago activos por el momento.</p>
@@ -500,9 +511,14 @@
                     <div class="cart-item" data-cart-item="{{ $productId }}">
                         <div class="cart-thumb-wrap">
                             @if (!empty($item['image']))
-                                <img src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}">
+                                <img
+                                    src="{{ asset('storage/' . $item['image']) }}"
+                                    alt="{{ $item['name'] }}"
+                                    onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+                                >
+                                <span class="fallback-thumb" hidden>{{ strtoupper(substr((string) ($item['name'] ?? 'P'), 0, 1)) }}</span>
                             @else
-                                <div class="fallback-thumb"></div>
+                                <span class="fallback-thumb">{{ strtoupper(substr((string) ($item['name'] ?? 'P'), 0, 1)) }}</span>
                             @endif
                             <span class="qty-badge" data-role="quantity-badge">{{ $item['quantity'] }}</span>
                         </div>
@@ -585,7 +601,7 @@
                 <span>Total</span>
                 <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
             </div>
-            <button type="submit" form="checkoutForm" {{ $isSingleProductLandingCheckout ? 'data-payment-submit' : '' }}>
+            <button type="submit" form="checkoutForm" {{ ($isSingleProductLandingCheckout || $isTechnologyStore) ? 'data-payment-submit' : '' }}>
                 <span>{{ $isSingleProductLandingCheckout ? 'Pagar ahora' : ($isRestaurant ? 'Enviar' : ($isReservationStore ? 'Reservar' : 'Finalizar')) }}</span>
             </button>
         </div>

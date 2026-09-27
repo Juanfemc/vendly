@@ -12,6 +12,7 @@ class MercadoPagoCheckoutService
     private const PREFERENCES_URL = 'https://api.mercadopago.com/checkout/preferences';
     private const PAYMENTS_URL = 'https://api.mercadopago.com/v1/payments';
     private const MERCHANT_ORDERS_SEARCH_URL = 'https://api.mercadopago.com/merchant_orders/search';
+    private const CURRENCY = 'COP';
 
     public function createPreference(StorePaymentAccount $account, Order $order): array
     {
@@ -135,20 +136,20 @@ class MercadoPagoCheckoutService
                 'title' => 'Pedido #' . $order->id . ' - ' . ($order->store?->name ?? 'Vendly'),
                 'quantity' => 1,
                 'unit_price' => (float) $order->total,
-                'currency_id' => 'COP',
+                'currency_id' => self::CURRENCY,
             ]]
             : $order->items->map(fn ($item) => [
                 'id' => (string) ($item->product_id ?: $item->id),
                 'title' => $item->displayName(),
                 'quantity' => (int) $item->quantity,
                 'unit_price' => (float) $item->price,
-                'currency_id' => 'COP',
+                'currency_id' => self::CURRENCY,
             ])->when((float) ($order->shipping_cost ?? 0) > 0, fn ($items) => $items->push([
                 'id' => 'shipping',
                 'title' => 'Envío: ' . ($order->shipping_method ?: 'Envío'),
                 'quantity' => 1,
                 'unit_price' => (float) $order->shipping_cost,
-                'currency_id' => 'COP',
+                'currency_id' => self::CURRENCY,
             ]))->values()->all();
 
         $payload = [
@@ -180,8 +181,10 @@ class MercadoPagoCheckoutService
     {
         $externalReference = (string) ($payment['external_reference'] ?? '');
         $amount = (float) ($payment['transaction_amount'] ?? $payment['total_paid_amount'] ?? 0);
+        $currency = strtoupper((string) ($payment['currency_id'] ?? ''));
 
         return hash_equals($order->admin_token, $externalReference)
+            && hash_equals(self::CURRENCY, $currency)
             && $amount >= (float) $order->total;
     }
 

@@ -135,7 +135,9 @@
         }
 
         paymentSubmitButtons.forEach((button) => {
-            const label = selected.dataset.paymentLabel;
+            const label = document.body.classList.contains('cart-page--technology')
+                ? 'Confirmar pedido'
+                : selected.dataset.paymentLabel;
             const labelEl = button.querySelector('span');
 
             if (labelEl && label) {

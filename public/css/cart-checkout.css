@@ -55,18 +55,6 @@ body.cart-page {
     padding: 28px 0 0;
 }
 
-.tech-checkout-head {
-    display: grid;
-    gap: 22px;
-    margin-bottom: 24px;
-}
-
-.tech-checkout-head h1 {
-    margin: 0;
-    font-size: clamp(28px, 2.4vw, 38px);
-    line-height: 1;
-}
-
 .checkout {
     min-height: 100vh;
     display: grid;

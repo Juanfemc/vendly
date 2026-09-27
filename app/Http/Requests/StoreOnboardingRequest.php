@@ -70,6 +70,7 @@ class StoreOnboardingRequest extends FormRequest
 
         if ($step === 'identity') {
             return $base + [
+                'business_type' => ['required', Rule::in(['store', 'technology', 'fashion'])],
                 'shop_copy' => ['nullable', 'string', 'max:320'],
                 'brand_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
                 'background_color' => ['nullable', 'regex:/^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
@@ -199,6 +200,7 @@ class StoreOnboardingRequest extends FormRequest
         }
 
         $data = [
+            'business_type' => $validated['business_type'] ?? 'store',
             'shop_copy' => $validated['shop_copy'] ?? null,
             'brand_color' => $store?->allowsFullCustomization() ? ($brandColor ?: '#ff6b00') : $store?->brand_color,
             'background_color' => $store?->allowsFullCustomization() ? ($backgroundColor ?: '#ffffff') : $store?->background_color,
@@ -206,6 +208,22 @@ class StoreOnboardingRequest extends FormRequest
         ];
 
         $data['text_color'] = Store::automaticTextColorFor($data['background_color']);
+
+        if (Store::supportsColorVariantDisplayColumn()) {
+            $data['color_variant_display'] = $data['business_type'] === 'fashion'
+                ? ($store?->color_variant_display ?: Store::COLOR_VARIANT_DISPLAY_SWATCH)
+                : Store::COLOR_VARIANT_DISPLAY_SWATCH;
+        }
+
+        if (Store::supportsFashionDeliveryTimesColumn()) {
+            $data['show_fashion_delivery_times'] = $data['business_type'] === 'fashion'
+                ? (bool) ($store?->show_fashion_delivery_times ?? false)
+                : false;
+        }
+
+        if (Store::supportsFashionSizeFilterColumn()) {
+            $data['show_fashion_size_filter'] = $data['business_type'] === 'fashion';
+        }
 
         if (Store::supportsHeroOverlayColumns()) {
             $data['show_hero_overlay'] = $this->boolean('show_hero_overlay', false);

@@ -45,6 +45,7 @@
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
+    @include('storefront.partials.root-theme')
     <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset($variantStylesheets[$storefrontVariant]) }}?v={{ filemtime(public_path($variantStylesheets[$storefrontVariant])) }}">
 </head>
@@ -71,56 +72,65 @@
         @endif
     @endif
 
-    <main class="shell">
-        @if($storefrontVariant !== 'fashion')
-        <section class="category-page-hero category-page-hero--catalog">
-            <div class="category-page-copy">
-                <span class="eyebrow">{{ $businessLabel }}</span>
-                <h1>Ofertas</h1>
-                <p>{{ $fallbackDescription }}</p>
-            </div>
-        </section>
-        @endif
-
-        <section class="catalog-section" id="catalogo">
-            @if($storefrontVariant === 'fashion')
-                <div class="fashion-catalog-head">
+    <main class="shell {{ $storefrontVariant === 'technology' ? 'tech-collection-shell' : '' }}">
+        @if($storefrontVariant === 'technology')
+            @include('storefront.partials.technology-collection-page', [
+                'collectionKind' => 'offers',
+                'collectionTitle' => 'Ofertas',
+                'collectionDescription' => 'Tecnología que te acerca a lo que te gusta, a precios especiales.',
+                'collectionAction' => $storefrontUrls->offers($store),
+            ])
+        @else
+            @if($storefrontVariant !== 'fashion')
+            <section class="category-page-hero category-page-hero--catalog">
+                <div class="category-page-copy">
+                    <span class="eyebrow">{{ $businessLabel }}</span>
                     <h1>Ofertas</h1>
-                    <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }} con descuento</p>
+                    <p>{{ $fallbackDescription }}</p>
                 </div>
+            </section>
             @endif
 
-            @include('storefront.partials.product-search', [
-                'productSearchId' => 'offers',
-                'productSearchAction' => $storefrontUrls->offers($store),
-            ])
-
-            @if($products->isNotEmpty())
-                <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
-                    @foreach($products as $product)
-                        @if($storefrontVariant === 'fashion')
-                            @include('storefront.partials.fashion-product-card')
-                        @else
-                            @include('storefront.partials.product-card', ['cardClass' => $cardClass])
-                        @endif
-                    @endforeach
-                </div>
-
-                @if($products->hasPages())
-                    <div class="store-pagination">
-                        {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
+            <section class="catalog-section" id="catalogo">
+                @if($storefrontVariant === 'fashion')
+                    <div class="fashion-catalog-head">
+                        <h1>Ofertas</h1>
+                        <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }} con descuento</p>
                     </div>
                 @endif
 
-                @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
-                    <p class="catalog-end-message">Has visto todos los productos</p>
+                @include('storefront.partials.product-search', [
+                    'productSearchId' => 'offers',
+                    'productSearchAction' => $storefrontUrls->offers($store),
+                ])
+
+                @if($products->isNotEmpty())
+                    <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
+                        @foreach($products as $product)
+                            @if($storefrontVariant === 'fashion')
+                                @include('storefront.partials.fashion-product-card')
+                            @else
+                                @include('storefront.partials.product-card', ['cardClass' => $cardClass])
+                            @endif
+                        @endforeach
+                    </div>
+
+                    @if($products->hasPages())
+                        <div class="store-pagination">
+                            {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
+                        </div>
+                    @endif
+
+                    @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
+                        <p class="catalog-end-message">Has visto todos los productos</p>
+                    @endif
+                @else
+                    <div class="empty-state">
+                        No encontramos {{ $itemsLabel }} en oferta para esa búsqueda.
+                    </div>
                 @endif
-            @else
-                <div class="empty-state">
-                    No encontramos {{ $itemsLabel }} en oferta para esa búsqueda.
-                </div>
-            @endif
-        </section>
+            </section>
+        @endif
     </main>
 
     @if($storefrontVariant === 'technology')

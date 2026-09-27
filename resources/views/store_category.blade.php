@@ -50,6 +50,7 @@
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
+    @include('storefront.partials.root-theme')
     <link rel="stylesheet" href="{{ asset('css/storefront.css') }}?v={{ filemtime(public_path('css/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset($variantStylesheets[$storefrontVariant]) }}?v={{ filemtime(public_path($variantStylesheets[$storefrontVariant])) }}">
 </head>
@@ -76,42 +77,28 @@
         @endif
     @endif
 
-    <main class="shell">
-        @if($storefrontVariant !== 'fashion')
-        <section class="category-page-hero category-page-hero--category">
-            <div class="category-page-mark" aria-hidden="true">
-                @if($categoryImageUrl)
-                    <img src="{{ $categoryImageUrl }}" alt="">
-                @else
-                    <span>{{ $categoryInitial }}</span>
-                @endif
-            </div>
+    <main class="shell {{ $storefrontVariant === 'technology' ? 'tech-collection-shell' : '' }}">
+        @if($storefrontVariant === 'technology')
+            @include('storefront.partials.technology-collection-page', [
+                'collectionKind' => 'category',
+                'collectionTitle' => $category->name,
+                'collectionDescription' => $category->description,
+                'collectionAction' => $storefrontUrls->category($store, $category),
+            ])
+        @else
+            @if($storefrontVariant !== 'fashion')
+            <section class="category-page-hero category-page-hero--category">
+                <div class="category-page-mark" aria-hidden="true">
+                    @if($categoryImageUrl)
+                        <img src="{{ $categoryImageUrl }}" alt="">
+                    @else
+                        <span>{{ $categoryInitial }}</span>
+                    @endif
+                </div>
 
-            <div class="category-page-copy">
-                <h1>{{ $category->name }}</h1>
-                <p>{{ $products->total() }} {{ $products->total() === 1 ? rtrim($itemsLabel, 's') : $itemsLabel }}</p>
-                @if($category->description)
-                    <small>{{ $category->description }}</small>
-                @endif
-                @if($store->allowsSubcategories() && ($category->parent || $categoryChildren->isNotEmpty()))
-                    <div class="category-page-subcategories" aria-label="Subcategorías">
-                        @if($category->parent)
-                            <a href="{{ $storefrontUrls->category($store, $category->parent) }}">Ver {{ $category->parent->name }}</a>
-                        @endif
-                        @foreach($categoryChildren as $subcategory)
-                            <a href="{{ $storefrontUrls->category($store, $subcategory) }}">{{ $subcategory->name }}</a>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        </section>
-        @endif
-
-        <section class="catalog-section" id="catalogo">
-            @if($storefrontVariant === 'fashion')
-                <div class="fashion-catalog-head">
+                <div class="category-page-copy">
                     <h1>{{ $category->name }}</h1>
-                    <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }}</p>
+                    <p>{{ $products->total() }} {{ $products->total() === 1 ? rtrim($itemsLabel, 's') : $itemsLabel }}</p>
                     @if($category->description)
                         <small>{{ $category->description }}</small>
                     @endif
@@ -126,44 +113,66 @@
                         </div>
                     @endif
                 </div>
+            </section>
             @endif
 
-            @include('storefront.partials.product-search', [
-                'productSearchId' => 'category',
-                'productSearchAction' => $storefrontUrls->category($store, $category),
-            ])
-
-            @if($products->isNotEmpty())
-                <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
-                    @foreach($products as $product)
-                        @if($storefrontVariant === 'fashion')
-                            @include('storefront.partials.fashion-product-card')
-                        @else
-                            @include('storefront.partials.product-card')
+            <section class="catalog-section" id="catalogo">
+                @if($storefrontVariant === 'fashion')
+                    <div class="fashion-catalog-head">
+                        <h1>{{ $category->name }}</h1>
+                        <p>{{ $products->total() }} {{ $products->total() === 1 ? 'producto' : 'productos' }}</p>
+                        @if($category->description)
+                            <small>{{ $category->description }}</small>
                         @endif
-                    @endforeach
-                </div>
-
-                @if($products->hasPages())
-                    <div class="store-pagination">
-                        {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
+                        @if($store->allowsSubcategories() && ($category->parent || $categoryChildren->isNotEmpty()))
+                            <div class="category-page-subcategories" aria-label="Subcategorías">
+                                @if($category->parent)
+                                    <a href="{{ $storefrontUrls->category($store, $category->parent) }}">Ver {{ $category->parent->name }}</a>
+                                @endif
+                                @foreach($categoryChildren as $subcategory)
+                                    <a href="{{ $storefrontUrls->category($store, $subcategory) }}">{{ $subcategory->name }}</a>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endif
 
-                @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
-                    <p class="catalog-end-message">Has visto todos los productos</p>
-                @endif
-            @else
-                <div class="empty-state">
-                    @if(($searchQuery ?? '') !== '')
-                        No encontramos {{ $itemsLabel }} en esta categoría para esa búsqueda.
-                    @else
-                        Aún no hay {{ $itemsLabel }} en esta categoría.
-                    @endif
-                </div>
-            @endif
-        </section>
+                @include('storefront.partials.product-search', [
+                    'productSearchId' => 'category',
+                    'productSearchAction' => $storefrontUrls->category($store, $category),
+                ])
 
+                @if($products->isNotEmpty())
+                    <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
+                        @foreach($products as $product)
+                            @if($storefrontVariant === 'fashion')
+                                @include('storefront.partials.fashion-product-card')
+                            @else
+                                @include('storefront.partials.product-card')
+                            @endif
+                        @endforeach
+                    </div>
+
+                    @if($products->hasPages())
+                        <div class="store-pagination">
+                            {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
+                        </div>
+                    @endif
+
+                    @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
+                        <p class="catalog-end-message">Has visto todos los productos</p>
+                    @endif
+                @else
+                    <div class="empty-state">
+                        @if(($searchQuery ?? '') !== '')
+                            No encontramos {{ $itemsLabel }} en esta categoría para esa búsqueda.
+                        @else
+                            Aún no hay {{ $itemsLabel }} en esta categoría.
+                        @endif
+                    </div>
+                @endif
+            </section>
+        @endif
     </main>
 
     @if($storefrontVariant === 'technology')

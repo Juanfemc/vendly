@@ -674,6 +674,12 @@ class CartController extends Controller
         $secret = config('services.mercadopago.webhook_secret');
 
         if (! $secret) {
+            if (app()->environment('production')) {
+                Log::warning('Mercado Pago webhook rejected because the signing secret is not configured.');
+
+                return false;
+            }
+
             return true;
         }
 

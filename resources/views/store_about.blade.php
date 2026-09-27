@@ -52,6 +52,7 @@
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
+    @include('storefront.partials.root-theme')
     <link rel="stylesheet" href="{{ asset('css/storefront.css') }}{{ $storefrontCssVersion ? '?v=' . $storefrontCssVersion : '' }}">
     <link rel="stylesheet" href="{{ asset($variantStylesheet) }}{{ $variantStylesheetVersion ? '?v=' . $variantStylesheetVersion : '' }}">
 </head>

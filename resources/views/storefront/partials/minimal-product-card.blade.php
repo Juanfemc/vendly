@@ -4,7 +4,11 @@
     }
 
     $isSoldOut = $product->isSoldOut();
+    $isTechnologyProductCard = isset($store) && $store->isTechnologyStore();
     $productCategory = trim((string) $product->category) !== '' ? $product->category : 'Otros';
+    $productSpecLine = trim((string) ($product->material ?? '')) !== ''
+        ? $product->material
+        : $productCategory;
     $placeholderText = strtoupper(substr($product->name, 0, 2));
     $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge();
     $cardPrice = (float) $product->price;
@@ -21,7 +25,16 @@
     $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
 @endphp
 
-<article class="minimal-shop-product-card {{ ($isRecommendation ?? false) ? 'minimal-shop-product-card--recommendation' : '' }}">
+<article
+    class="minimal-shop-product-card {{ ($isRecommendation ?? false) ? 'minimal-shop-product-card--recommendation' : '' }}"
+    @if($isTechnologyProductCard)
+        data-tech-product-card
+        data-tech-product-name="{{ \Illuminate\Support\Str::lower($product->name) }}"
+        data-tech-product-price="{{ $cardPrice }}"
+        data-tech-product-available="{{ $isSoldOut ? '0' : '1' }}"
+        data-tech-product-offer="{{ $showsOfferBadge ? '1' : '0' }}"
+    @endif
+>
     <a href="{{ $storefrontUrls->product($store, $product) }}" class="minimal-shop-card-media" aria-label="{{ $product->name }}">
         @if($displayBadges !== [])
             <div class="minimal-shop-badges">
@@ -30,8 +43,10 @@
                 @endforeach
             </div>
         @endif
-        <span class="minimal-shop-card-badge">{{ $productCategory }}</span>
-        @if($stockLabel)
+        @unless($isTechnologyProductCard)
+            <span class="minimal-shop-card-badge">{{ $productCategory }}</span>
+        @endunless
+        @if($stockLabel && ! $isTechnologyProductCard)
             <span class="minimal-shop-card-stock {{ $isSoldOut ? 'is-sold-out' : '' }}">{{ $stockLabel }}</span>
         @endif
         @if($product->image)
@@ -49,7 +64,13 @@
     </a>
 
     <div class="minimal-shop-card-info">
+        @if($isTechnologyProductCard)
+            <span class="minimal-shop-card-badge minimal-shop-card-badge--inline">{{ $productCategory }}</span>
+        @endif
         <h3>{{ $product->name }}</h3>
+        @if($isTechnologyProductCard && $productSpecLine !== '')
+            <p class="minimal-shop-card-spec">{{ $productSpecLine }}</p>
+        @endif
         <div class="minimal-shop-card-meta">
             @if($reviewsEnabled && $reviewCount > 0)
                 <span class="minimal-shop-rating" aria-label="{{ $reviewLabel }}">&#9733; {{ $reviewLabel }}</span>
@@ -61,6 +82,11 @@
                 <strong>${{ number_format((float) $cardPrice, 2, '.', ',') }}</strong>
             </span>
         </div>
+        @if($isTechnologyProductCard)
+            <span class="minimal-shop-card-stock minimal-shop-card-stock--inline {{ $isSoldOut ? 'is-sold-out' : '' }}">
+                {{ $stockLabel ?: 'Disponible' }}
+            </span>
+        @endif
         @if($product->hasWholesalePricing($store ?? null))
             <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
         @endif
@@ -70,16 +96,16 @@
         @if($isSoldOut)
             <span class="minimal-shop-card-button minimal-shop-card-button--disabled">Agotado</span>
         @elseif($product->hasVariants())
-            <a href="{{ $storefrontUrls->product($store, $product) }}" class="minimal-shop-card-button">
+            <a href="{{ $storefrontUrls->product($store, $product) }}" class="minimal-shop-card-button" aria-label="{{ $isTechnologyProductCard ? 'Agregar ' . $product->name . ' al carrito' : 'Agregar ' . $product->name . ' al carrito' }}">
                 {!! $cartIcon !!}
-                <span>Agregar al carrito</span>
+                <span>{{ $isTechnologyProductCard ? 'Agregar' : 'Agregar al carrito' }}</span>
             </a>
         @else
             <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form">
                 @csrf
-                <button type="submit">
+                <button type="submit" aria-label="{{ $isTechnologyProductCard ? 'Agregar ' . $product->name . ' al carrito' : 'Agregar ' . $product->name . ' al carrito' }}">
                     {!! $cartIcon !!}
-                    <span>Agregar al carrito</span>
+                    <span>{{ $isTechnologyProductCard ? 'Agregar' : 'Agregar al carrito' }}</span>
                 </button>
             </form>
         @endif

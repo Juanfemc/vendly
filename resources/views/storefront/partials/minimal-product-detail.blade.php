@@ -1,7 +1,7 @@
 @php
     $minimalProductCategory = trim((string) $product->category) !== '' ? $product->category : 'Otros';
     $minimalGallery = $productGallery->isNotEmpty() ? $productGallery : collect([null]);
-    $minimalRelated = $relatedProducts->take(4);
+    $minimalRelated = $relatedProducts->take(3);
     $minimalAllowsOnlinePayments = $store->allowsOnlinePayments();
     $minimalReviewsEnabled = $store->allowsProductReviews();
     $minimalReviews = $minimalReviewsEnabled
@@ -14,7 +14,56 @@
         : null;
     $minimalInitials = strtoupper(substr($product->name, 0, 2));
     $minimalBadges = $product->displayBadges($store);
-    $minimalSwatches = ['#111111', '#ffffff', '#33415f'];
+    $minimalColors = $product->hasColors() ? collect($product->colors)->values() : collect();
+    $minimalColorDisplay = $store->colorVariantDisplay();
+    $minimalColorMap = [
+        'navy' => '#173a63',
+        'azul' => '#173a63',
+        'blue' => '#173a63',
+        'green' => '#12643f',
+        'verde' => '#12643f',
+        'black' => '#111111',
+        'negro' => '#111111',
+        'gray' => '#b8b8b8',
+        'gris' => '#b8b8b8',
+        'silver' => '#c7c7c7',
+        'plateado' => '#c7c7c7',
+        'white' => '#f8f8f8',
+        'blanco' => '#f8f8f8',
+        'red' => '#d62828',
+        'rojo' => '#d62828',
+        'pink' => '#f2a0b7',
+        'rosado' => '#f2a0b7',
+        'purple' => '#6d4aff',
+        'morado' => '#6d4aff',
+        'yellow' => '#f4c430',
+        'amarillo' => '#f4c430',
+        'orange' => '#ff7a1a',
+        'naranja' => '#ff7a1a',
+        'brown' => '#8b5a2b',
+        'cafe' => '#8b5a2b',
+        'beige' => '#d7c4a3',
+    ];
+    $minimalColorOptions = $minimalColors
+        ->map(function ($color) use ($minimalColorMap) {
+            $label = trim((string) $color);
+            $key = \Illuminate\Support\Str::lower($label);
+            $swatch = preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $label)
+                ? $label
+                : ($minimalColorMap[$key] ?? '#d7dbe0');
+
+            return [
+                'label' => $label,
+                'value' => $label,
+                'swatch' => $swatch,
+            ];
+        })
+        ->filter(fn ($color) => $color['label'] !== '')
+        ->values();
+    $minimalSizeOptions = collect($product->sizes ?? [])
+        ->map(fn ($size) => trim((string) $size))
+        ->filter()
+        ->values();
     $minimalCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $minimalBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
     $minimalIcons = \App\Support\MinimalShopIcons::class;
@@ -25,6 +74,16 @@
         ->map(fn ($feature) => trim($feature, " \t\n\r\0\x0B-*"))
         ->filter()
         ->take(6)
+        ->values();
+    $minimalTechSpecItems = collect([
+        trim((string) $product->material) !== '' ? ['icon' => 'settings', 'label' => $product->material] : null,
+        $minimalFeatureItems->get(0) ? ['icon' => 'spark', 'label' => $minimalFeatureItems->get(0)] : null,
+        $minimalFeatureItems->get(1) ? ['icon' => 'award', 'label' => $minimalFeatureItems->get(1)] : null,
+        ['icon' => 'grid', 'label' => $minimalProductCategory],
+    ])
+        ->filter(fn ($item) => $item && trim((string) $item['label']) !== '')
+        ->unique(fn ($item) => \Illuminate\Support\Str::lower((string) $item['label']))
+        ->take(4)
         ->values();
     $minimalShippingMethods = collect($store->shippingMethods())
         ->filter(fn ($method) => trim((string) ($method['name'] ?? '')) !== '')
@@ -38,12 +97,20 @@
     $hasMinimalProductInfo = $minimalDescription !== ''
         || $minimalFeatureItems->isNotEmpty()
         || $hasMinimalShippingInfo;
-    $minimalInfoNavItems = collect([
-        $minimalDescription !== '' ? ['href' => '#minimalProductDescription', 'label' => 'Descripcion'] : null,
-        $minimalFeatureItems->isNotEmpty() ? ['href' => '#minimalProductFeatures', 'label' => 'Caracteristicas'] : null,
-        $hasMinimalShippingInfo ? ['href' => '#minimalProductShipping', 'label' => 'Envios y devoluciones'] : null,
-        ($minimalReviewsEnabled && $minimalReviewCount > 0) ? ['href' => '#minimalProductReviews', 'label' => 'Resenas ('.$minimalReviewCount.')'] : null,
+    $minimalInfoTabItems = collect([
+        $minimalDescription !== '' ? ['key' => 'description', 'target' => 'minimalProductDescription', 'label' => 'Descripcion'] : null,
+        $minimalFeatureItems->isNotEmpty() ? ['key' => 'features', 'target' => 'minimalProductFeatures', 'label' => 'Caracteristicas'] : null,
+        $hasMinimalShippingInfo ? ['key' => 'shipping', 'target' => 'minimalProductShipping', 'label' => 'Envios y devoluciones'] : null,
     ])->filter()->values();
+    $minimalReviewsNavItem = ($minimalReviewsEnabled && $minimalReviewCount > 0)
+        ? ['href' => '#minimalProductReviews', 'label' => 'Resenas ('.$minimalReviewCount.')']
+        : null;
+    $minimalWhatsappNumber = $store->whatsappNumber();
+    $minimalProductUrl = $storefrontUrls->product($store, $product);
+    $minimalWhatsappUrl = $minimalWhatsappNumber !== ''
+        ? 'https://wa.me/' . $minimalWhatsappNumber . '?text=' . rawurlencode("Hola, quiero comprar {$product->name}. {$minimalProductUrl}")
+        : null;
+    $minimalAddFormId = 'minimalProductAddForm-' . $product->id;
 @endphp
 
 <main class="shell minimal-product-page">
@@ -115,18 +182,39 @@
 
             @if($hasMinimalProductInfo || $minimalReviewsEnabled)
                 <section class="minimal-product-tabs">
-                    @if($minimalInfoNavItems->isNotEmpty())
-                        <nav aria-label="Informacion del producto">
-                            @foreach($minimalInfoNavItems as $item)
-                                <a href="{{ $item['href'] }}" @class(['is-active' => $loop->first])>{{ $item['label'] }}</a>
+                    @if($minimalInfoTabItems->isNotEmpty())
+                        @foreach($minimalInfoTabItems as $item)
+                            <input
+                                type="radio"
+                                class="minimal-product-tab-state"
+                                id="minimalProductTab-{{ $item['key'] }}"
+                                name="minimal_product_tab_{{ $product->id }}"
+                                value="{{ $item['key'] }}"
+                                @checked($loop->first)
+                            >
+                        @endforeach
+
+                        <nav aria-label="Informacion del producto" class="minimal-product-tab-list">
+                            @foreach($minimalInfoTabItems as $item)
+                                <label
+                                    for="minimalProductTab-{{ $item['key'] }}"
+                                    class="minimal-product-tab-control minimal-product-tab-control--{{ $item['key'] }}"
+                                    role="button"
+                                    tabindex="0"
+                                >
+                                    {{ $item['label'] }}
+                                </label>
                             @endforeach
+                            @if($minimalReviewsNavItem)
+                                <a href="{{ $minimalReviewsNavItem['href'] }}">{{ $minimalReviewsNavItem['label'] }}</a>
+                            @endif
                         </nav>
                     @endif
 
                     @if($hasMinimalProductInfo)
                         <div class="minimal-product-info-grid">
                             @if($minimalDescription !== '')
-                                <section id="minimalProductDescription" class="minimal-product-copy minimal-product-info-card">
+                                <section id="minimalProductDescription" class="minimal-product-copy minimal-product-info-card minimal-product-tab-panel minimal-product-tab-panel--description">
                                     <span>{!! $minimalIcons::icon('grid') !!}</span>
                                     <div>
                                         <h2>Descripcion</h2>
@@ -136,7 +224,7 @@
                             @endif
 
                             @if($minimalFeatureItems->isNotEmpty())
-                                <section id="minimalProductFeatures" class="minimal-product-copy minimal-product-info-card">
+                                <section id="minimalProductFeatures" class="minimal-product-copy minimal-product-info-card minimal-product-tab-panel minimal-product-tab-panel--features">
                                     <span>{!! $minimalIcons::icon('settings') !!}</span>
                                     <div>
                                         <h2>Caracteristicas</h2>
@@ -150,7 +238,7 @@
                             @endif
 
                             @if($hasMinimalShippingInfo)
-                                <section id="minimalProductShipping" class="minimal-product-copy minimal-product-info-card">
+                                <section id="minimalProductShipping" class="minimal-product-copy minimal-product-info-card minimal-product-tab-panel minimal-product-tab-panel--shipping">
                                     <span>{!! $minimalIcons::icon('truck') !!}</span>
                                     <div>
                                         <h2>Envios y devoluciones</h2>
@@ -239,6 +327,7 @@
 
         <aside class="minimal-product-summary">
             <div class="minimal-product-main">
+                <span class="minimal-product-summary-badge">{{ $minimalProductCategory }}</span>
                 <h1>{{ $product->name }}</h1>
                 @if($minimalReviewsEnabled && $minimalReviewCount > 0)
                     <div class="minimal-product-rating"><span aria-hidden="true">&#9733;</span> {{ $minimalReviewLabel }}</div>
@@ -252,111 +341,154 @@
                 @if($product->hasWholesalePricing($store))
                     <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 2, '.', ',') }}</span>
                 @endif
+                @if($minimalTechSpecItems->isNotEmpty())
+                    <div class="minimal-product-spec-chips" aria-label="Resumen del producto">
+                        @foreach($minimalTechSpecItems as $spec)
+                            <span>
+                                {!! $minimalIcons::icon($spec['icon']) !!}
+                                <strong>{{ $spec['label'] }}</strong>
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
                 @if($minimalDescription !== '')
                     <p>{{ $minimalDescription }}</p>
                 @endif
 
                 <div class="minimal-product-divider"></div>
 
-                @if($product->hasColors())
-                    <fieldset class="minimal-product-colors">
-                        <legend>Color</legend>
-                        <div>
-                            @foreach($product->colors as $color)
-                                <label>
-                                    <input type="radio" name="visual_color" value="{{ $color }}" data-role="selected-color-radio">
-                                    <span style="--swatch: {{ $minimalSwatches[($loop->iteration - 1) % count($minimalSwatches)] }}"></span>
-                                    <em>{{ $color }}</em>
+                @if($minimalColorOptions->isNotEmpty())
+                    <fieldset @class([
+                        'minimal-product-colors',
+                        'minimal-product-variant-group',
+                        'minimal-product-colors--labels' => $minimalColorDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                        'minimal-product-colors--swatches' => $minimalColorDisplay !== \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                    ])>
+                        <legend>
+                            <span>Color</span>
+                        </legend>
+                        <div class="minimal-product-variant-list">
+                            @foreach($minimalColorOptions as $color)
+                                <label title="{{ $color['label'] }}">
+                                    <input type="radio" name="visual_color" value="{{ $color['value'] }}" data-role="selected-color-radio">
+                                    <span class="minimal-product-variant-option minimal-product-color-option">
+                                        <i class="minimal-product-color-swatch" style="--swatch: {{ $color['swatch'] }}" aria-hidden="true"></i>
+                                        <b>{{ $color['label'] }}</b>
+                                    </span>
                                 </label>
                             @endforeach
                         </div>
                     </fieldset>
-                @else
-                    <div class="minimal-product-colors" aria-hidden="true">
-                        <strong>Color</strong>
+                @endif
+
+                @if($minimalSizeOptions->isNotEmpty())
+                    <fieldset class="minimal-product-size minimal-product-variant-group">
+                        <legend>
+                            <span>Talla</span>
+                        </legend>
+                        <div class="minimal-product-variant-list">
+                            @foreach($minimalSizeOptions as $size)
+                                <label title="{{ $size }}">
+                                    <input type="radio" name="visual_size" value="{{ $size }}" data-role="selected-size-radio">
+                                    <span class="minimal-product-variant-option">{{ $size }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                @endif
+
+                <div @class(['minimal-product-purchase-panel', 'is-unavailable' => $isProductSoldOut])>
+                    <div class="minimal-product-quantity-row">
                         <div>
-                            @foreach($minimalSwatches as $swatch)
-                                <span style="--swatch: {{ $swatch }}"></span>
-                            @endforeach
+                            <div class="minimal-product-stepper">
+                                <button type="button" data-quantity-minus aria-label="Restar cantidad">&minus;</button>
+                                <input id="quantity" type="number" name="quantity" min="1" max="{{ $quantityMax }}" value="{{ old('quantity', 1) }}" class="product-quantity-input">
+                                <button type="button" data-quantity-plus aria-label="Sumar cantidad">+</button>
+                            </div>
                         </div>
+                        @if($product->stockLabel())
+                            <span class="minimal-product-stock {{ $isProductSoldOut ? 'is-sold-out' : '' }}">{{ $product->stockLabel() }}</span>
+                        @endif
                     </div>
-                @endif
 
-                @if($product->hasSizes())
-                    <label class="minimal-product-size">
-                        <span>Talla</span>
-                        <select data-role="selected-size">
-                            <option value="">Selecciona talla</option>
-                            @foreach($product->sizes as $size)
-                                <option value="{{ $size }}">{{ $size }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                @endif
+                    @if($isProductSoldOut)
+                        <div class="product-unavailable-message">Este producto esta agotado por ahora.</div>
+                    @else
+                        <div class="minimal-product-actions">
+                            <form id="{{ $minimalAddFormId }}" action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form" data-role="minimal-add-form">
+                                @csrf
+                                <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="add-quantity">
+                                <input type="hidden" name="size" value="" data-role="add-size">
+                                <input type="hidden" name="color" value="" data-role="add-color">
+                                <button
+                                    type="submit"
+                                    class="minimal-product-add"
+                                    data-variant-action
+                                    data-variant-add-action
+                                    data-enabled-label="Agregar al carrito"
+                                    @disabled($product->hasVariants())
+                                >
+                                    {!! $minimalCartIcon !!}
+                                    <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : 'Agregar al carrito' }}</span>
+                                    <span class="minimal-product-add-count" data-cart-count-badge @if(($cartCount ?? 0) < 1) hidden @endif>{{ $cartCount ?? 0 }}</span>
+                                </button>
+                            </form>
 
-                <div class="minimal-product-quantity-row">
-                    <div>
-                        <span>Cantidad</span>
-                        <div class="minimal-product-stepper">
-                            <button type="button" data-quantity-minus aria-label="Restar cantidad">&minus;</button>
-                            <input id="quantity" type="number" name="quantity" min="1" max="{{ $quantityMax }}" value="{{ old('quantity', 1) }}" class="product-quantity-input">
-                            <button type="button" data-quantity-plus aria-label="Sumar cantidad">+</button>
+                            <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" data-role="buy-now-form">
+                                @csrf
+                                <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
+                                <input type="hidden" name="size" value="" data-role="buy-now-size">
+                                <input type="hidden" name="color" value="" data-role="buy-now-color">
+                                <button type="submit" class="minimal-product-buy" data-variant-action @disabled($product->hasVariants())>
+                                    {!! $minimalBuyIcon !!}
+                                    <span>Comprar ahora</span>
+                                </button>
+                            </form>
                         </div>
-                    </div>
-                    @if($product->stockLabel())
-                        <span class="minimal-product-stock {{ $isProductSoldOut ? 'is-sold-out' : '' }}">{{ $product->stockLabel() }}</span>
                     @endif
                 </div>
 
-                @if($isProductSoldOut)
-                    <div class="product-unavailable-message">Este producto esta agotado por ahora.</div>
-                @else
-                    <div class="minimal-product-actions">
-                        <form action="{{ route('cart.add', $product->id) }}" method="POST" class="add-to-cart-form" data-role="minimal-add-form">
-                            @csrf
-                            <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="add-quantity">
-                            <input type="hidden" name="size" value="" data-role="add-size">
-                            <input type="hidden" name="color" value="" data-role="add-color">
-                            <button
-                                type="submit"
-                                class="minimal-product-add"
-                                data-variant-action
-                                data-variant-add-action
-                                data-enabled-label="Agregar al carrito"
-                                @disabled($product->hasVariants())
-                            >
-                                {!! $minimalCartIcon !!}
-                                <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : 'Agregar al carrito' }}</span>
-                            </button>
-                        </form>
-
-                        <form action="{{ route('cart.buy_now', $product->id) }}" method="POST" data-role="buy-now-form">
-                            @csrf
-                            <input type="hidden" name="quantity" value="{{ old('quantity', 1) }}" data-role="buy-now-quantity">
-                            <input type="hidden" name="size" value="" data-role="buy-now-size">
-                            <input type="hidden" name="color" value="" data-role="buy-now-color">
-                            <button type="submit" class="minimal-product-buy" data-variant-action @disabled($product->hasVariants())>
-                                {!! $minimalBuyIcon !!}
-                                <span>Comprar ahora</span>
-                            </button>
-                        </form>
-                    </div>
+                @if(!$isProductSoldOut && $minimalWhatsappUrl)
+                    <a class="minimal-product-whatsapp-action" href="{{ $minimalWhatsappUrl }}" target="_blank" rel="noopener" aria-label="Pedir este producto por WhatsApp">
+                        <span>
+                            <img src="{{ asset('images/icons/icon-whatsapp.png') }}" alt="" class="minimal-product-whatsapp-logo" aria-hidden="true" loading="lazy" decoding="async">
+                        </span>
+                        <strong>Pedir por WhatsApp</strong>
+                    </a>
                 @endif
-            </div>
 
-            @if($minimalRelated->isNotEmpty())
-                <section class="minimal-product-related">
-                    <div class="minimal-shop-section-head">
-                        <h2>Tambien te puede gustar</h2>
-                        <div aria-hidden="true">&lsaquo; &rsaquo;</div>
-                    </div>
-                    <div class="minimal-product-related-grid">
-                        @foreach($minimalRelated as $relatedProduct)
-                            @include('storefront.partials.minimal-product-card', ['product' => $relatedProduct, 'isRecommendation' => true])
-                        @endforeach
+                <section class="minimal-product-share" aria-label="Compartir producto">
+                    <h2>Compartir</h2>
+                    <div>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrlEncoded }}" target="_blank" rel="noopener noreferrer" aria-label="Compartir en Facebook">
+                            <img src="{{ asset('images/icons/icon-facebook.png') }}" alt="" aria-hidden="true">
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://wa.me/?text={{ $shareTextEncoded }}%20{{ $shareUrlEncoded }}" target="_blank" rel="noopener noreferrer" aria-label="Compartir por WhatsApp">
+                            <img src="{{ asset('images/icons/icon-whatsapp.png') }}" alt="" aria-hidden="true">
+                            <span>WhatsApp</span>
+                        </a>
+                        <button type="button" data-copy-product-link="{{ $metaUrl }}" aria-label="Copiar enlace del producto">
+                            <img src="{{ asset('images/icons/icon-copiar-enlace.png') }}" alt="" aria-hidden="true">
+                            <span>Copiar</span>
+                        </button>
                     </div>
                 </section>
-            @endif
+            </div>
         </aside>
+
+        @if($minimalRelated->isNotEmpty())
+            <section class="minimal-product-related">
+                <div class="minimal-shop-section-head">
+                    <h2>Tambien te puede gustar</h2>
+                </div>
+                <div class="minimal-product-related-grid">
+                    @foreach($minimalRelated as $relatedProduct)
+                        @include('storefront.partials.minimal-product-card', ['product' => $relatedProduct, 'isRecommendation' => true])
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </section>
+
 </main>
