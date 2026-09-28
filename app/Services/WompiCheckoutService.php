@@ -119,6 +119,10 @@ class WompiCheckoutService
             return false;
         }
 
+        if (! $this->freshEventTimestamp($timestamp)) {
+            return false;
+        }
+
         $payload = collect($properties)
             ->map(fn (string $property) => $this->eventSignatureValue($request, $property))
             ->implode('');
@@ -126,6 +130,24 @@ class WompiCheckoutService
         $expectedChecksum = hash('sha256', $payload . $timestamp . $account->events_secret);
 
         return hash_equals(strtoupper($expectedChecksum), strtoupper($receivedChecksum));
+    }
+
+    public function eventIdempotencyKey(Request $request): ?string
+    {
+        $signature = $request->input('signature');
+
+        if (! is_array($signature)) {
+            return null;
+        }
+
+        $checksum = (string) ($signature['checksum'] ?? '');
+        $timestamp = (string) ($signature['timestamp'] ?? $request->input('timestamp', ''));
+
+        if ($checksum === '' || $timestamp === '') {
+            return null;
+        }
+
+        return 'wompi:webhook:' . hash('sha256', $checksum . '|' . $timestamp);
     }
 
     private function integritySignature(StorePaymentAccount $account, string $reference, int $amountInCents, ?string $expirationTime = null): string
@@ -163,6 +185,45 @@ class WompiCheckoutService
             ?? data_get($request->all(), $property)
             ?? data_get($data, 'transaction.' . $property)
             ?? '';
+    }
+
+    private function freshEventTimestamp(string $timestamp): bool
+    {
+        $eventTime = $this->eventTime($timestamp);
+
+        if (! $eventTime) {
+            return false;
+        }
+
+        $tolerance = max(1, (int) config('services.wompi.webhook_tolerance_minutes', 5));
+
+        return $eventTime->betweenIncluded(
+            now()->subMinutes($tolerance),
+            now()->addMinutes($tolerance),
+        );
+    }
+
+    private function eventTime(string $timestamp): ?Carbon
+    {
+        $timestamp = trim($timestamp);
+
+        if ($timestamp === '') {
+            return null;
+        }
+
+        try {
+            if (ctype_digit($timestamp)) {
+                $value = (int) $timestamp;
+
+                return $value > 1000000000000
+                    ? Carbon::createFromTimestampMs($value)
+                    : Carbon::createFromTimestamp($value);
+            }
+
+            return Carbon::parse($timestamp);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function transactionBelongsToOrder(Order $order, array $transaction): bool

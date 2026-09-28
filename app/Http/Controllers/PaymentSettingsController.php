@@ -102,22 +102,16 @@ class PaymentSettingsController extends Controller
 
         $now = now();
 
-        StorePaymentAccount::updateOrCreate(
-            [
-                'store_id' => $store->id,
-                'provider' => StorePaymentAccount::PROVIDER_WOMPI,
-            ],
-            [
-                'public_key' => filled($validated['public_key'] ?? null) ? $validated['public_key'] : $current?->public_key,
-                'private_key' => filled($validated['private_key'] ?? null) ? $validated['private_key'] : $current?->private_key,
-                'events_secret' => filled($validated['events_secret'] ?? null) ? $validated['events_secret'] : $current?->events_secret,
-                'integrity_secret' => filled($validated['integrity_secret'] ?? null) ? $validated['integrity_secret'] : $current?->integrity_secret,
-                'mode' => $validated['mode'],
-                'connected_at' => $enabled ? ($current?->connected_at ?? $now) : $current?->connected_at,
-                'disconnected_at' => $enabled ? null : $now,
-                'status' => $enabled ? StorePaymentAccount::STATUS_CONNECTED : StorePaymentAccount::STATUS_DISCONNECTED,
-            ]
-        );
+        StorePaymentAccount::updateWompiCredentials($store, [
+            'public_key' => filled($validated['public_key'] ?? null) ? $validated['public_key'] : $current?->public_key,
+            'private_key' => filled($validated['private_key'] ?? null) ? $validated['private_key'] : $current?->private_key,
+            'events_secret' => filled($validated['events_secret'] ?? null) ? $validated['events_secret'] : $current?->events_secret,
+            'integrity_secret' => filled($validated['integrity_secret'] ?? null) ? $validated['integrity_secret'] : $current?->integrity_secret,
+            'mode' => $validated['mode'],
+            'connected_at' => $enabled ? ($current?->connected_at ?? $now) : $current?->connected_at,
+            'disconnected_at' => $enabled ? null : $now,
+            'status' => $enabled ? StorePaymentAccount::STATUS_CONNECTED : StorePaymentAccount::STATUS_DISCONNECTED,
+        ]);
 
         return redirect()
             ->route('admin.payments.index')
@@ -149,11 +143,11 @@ class PaymentSettingsController extends Controller
                 ->with('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
         }
 
-        $account->forceFill([
-            'status' => $enabled ? StorePaymentAccount::STATUS_CONNECTED : StorePaymentAccount::STATUS_DISCONNECTED,
-            'connected_at' => $enabled ? ($account->connected_at ?? now()) : $account->connected_at,
-            'disconnected_at' => $enabled ? null : now(),
-        ])->save();
+        $account->setConnectionStatus(
+            $enabled ? StorePaymentAccount::STATUS_CONNECTED : StorePaymentAccount::STATUS_DISCONNECTED,
+            $enabled ? ($account->connected_at ?? now()) : $account->connected_at,
+            $enabled ? null : now(),
+        );
 
         return redirect()
             ->route('admin.payments.index')
@@ -234,22 +228,16 @@ class PaymentSettingsController extends Controller
                 ->with('error', 'Mercado Pago no devolvio credenciales validas. Intenta nuevamente.');
         }
 
-        StorePaymentAccount::updateOrCreate(
-            [
-                'store_id' => $store->id,
-                'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
-            ],
-            [
-                'access_token' => $accessToken,
-                'refresh_token' => $payload['refresh_token'] ?? null,
-                'public_key' => $payload['public_key'] ?? null,
-                'provider_user_id' => isset($payload['user_id']) ? (string) $payload['user_id'] : null,
-                'expires_at' => now()->addSeconds($expiresIn),
-                'connected_at' => now(),
-                'disconnected_at' => null,
-                'status' => StorePaymentAccount::STATUS_CONNECTED,
-            ]
-        );
+        StorePaymentAccount::updateMercadoPagoCredentials($store, [
+            'access_token' => $accessToken,
+            'refresh_token' => $payload['refresh_token'] ?? null,
+            'public_key' => $payload['public_key'] ?? null,
+            'provider_user_id' => isset($payload['user_id']) ? (string) $payload['user_id'] : null,
+            'expires_at' => now()->addSeconds($expiresIn),
+            'connected_at' => now(),
+            'disconnected_at' => null,
+            'status' => StorePaymentAccount::STATUS_CONNECTED,
+        ]);
 
         return redirect()
             ->route('admin.payments.index')

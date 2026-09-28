@@ -43,6 +43,8 @@ return [
         'test_token' => env('MERCADOPAGO_TEST_TOKEN', false),
         'payment_expiration_minutes' => (int) env('MERCADOPAGO_PAYMENT_EXPIRATION_MINUTES', 60),
         'payment_expiration_grace_minutes' => (int) env('MERCADOPAGO_PAYMENT_EXPIRATION_GRACE_MINUTES', 30),
+        'webhook_tolerance_minutes' => (int) env('MERCADOPAGO_WEBHOOK_TOLERANCE_MINUTES', 5),
+        'webhook_idempotency_ttl_minutes' => (int) env('MERCADOPAGO_WEBHOOK_IDEMPOTENCY_TTL_MINUTES', 1440),
     ],
 
     'payments' => [
@@ -54,6 +56,8 @@ return [
 
     'wompi' => [
         'payment_expiration_minutes' => (int) env('WOMPI_PAYMENT_EXPIRATION_MINUTES', 60),
+        'webhook_tolerance_minutes' => (int) env('WOMPI_WEBHOOK_TOLERANCE_MINUTES', 5),
+        'webhook_idempotency_ttl_minutes' => (int) env('WOMPI_WEBHOOK_IDEMPOTENCY_TTL_MINUTES', 1440),
     ],
 
     'openai' => [

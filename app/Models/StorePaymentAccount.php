@@ -17,21 +17,12 @@ class StorePaymentAccount extends Model
     public const MODE_PRODUCTION = 'production';
 
     protected $fillable = [
-        'store_id',
-        'provider',
-        'access_token',
-        'refresh_token',
-        'public_key',
-        'private_key',
-        'events_secret',
-        'integrity_secret',
         'mode',
         'settings',
         'provider_user_id',
         'expires_at',
         'connected_at',
         'disconnected_at',
-        'status',
     ];
 
     protected $casts = [
@@ -66,5 +57,60 @@ class StorePaymentAccount extends Model
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public static function updateWompiCredentials(Store $store, array $attributes): self
+    {
+        $account = self::firstOrNew([
+            'store_id' => $store->id,
+            'provider' => self::PROVIDER_WOMPI,
+        ]);
+
+        $account->forceFill([
+            'store_id' => $store->id,
+            'provider' => self::PROVIDER_WOMPI,
+            'public_key' => $attributes['public_key'] ?? $account->public_key,
+            'private_key' => $attributes['private_key'] ?? $account->private_key,
+            'events_secret' => $attributes['events_secret'] ?? $account->events_secret,
+            'integrity_secret' => $attributes['integrity_secret'] ?? $account->integrity_secret,
+            'mode' => $attributes['mode'] ?? $account->mode,
+            'connected_at' => $attributes['connected_at'] ?? $account->connected_at,
+            'disconnected_at' => $attributes['disconnected_at'] ?? $account->disconnected_at,
+            'status' => $attributes['status'] ?? $account->status,
+        ])->save();
+
+        return $account;
+    }
+
+    public static function updateMercadoPagoCredentials(Store $store, array $attributes): self
+    {
+        $account = self::firstOrNew([
+            'store_id' => $store->id,
+            'provider' => self::PROVIDER_MERCADOPAGO,
+        ]);
+
+        $account->forceFill([
+            'store_id' => $store->id,
+            'provider' => self::PROVIDER_MERCADOPAGO,
+            'access_token' => $attributes['access_token'] ?? $account->access_token,
+            'refresh_token' => $attributes['refresh_token'] ?? $account->refresh_token,
+            'public_key' => $attributes['public_key'] ?? $account->public_key,
+            'provider_user_id' => $attributes['provider_user_id'] ?? $account->provider_user_id,
+            'expires_at' => $attributes['expires_at'] ?? $account->expires_at,
+            'connected_at' => $attributes['connected_at'] ?? $account->connected_at,
+            'disconnected_at' => $attributes['disconnected_at'] ?? $account->disconnected_at,
+            'status' => $attributes['status'] ?? $account->status,
+        ])->save();
+
+        return $account;
+    }
+
+    public function setConnectionStatus(string $status, ?\DateTimeInterface $connectedAt = null, ?\DateTimeInterface $disconnectedAt = null): void
+    {
+        $this->forceFill([
+            'status' => $status,
+            'connected_at' => $connectedAt ?? $this->connected_at,
+            'disconnected_at' => $disconnectedAt,
+        ])->save();
     }
 }

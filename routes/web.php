@@ -125,10 +125,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/admin/store-landing', [StoreLandingController::class, 'updateOwn'])->name('admin.store-landing.update');
     Route::get('/admin/store-landing/preview', [StoreLandingController::class, 'previewOwn'])->name('admin.store-landing.preview');
     Route::get('/admin/payments', [PaymentSettingsController::class, 'index'])->name('admin.payments.index');
-    Route::post('/admin/payments/whatsapp', [PaymentSettingsController::class, 'updateWhatsApp'])->name('admin.payments.whatsapp.update');
-    Route::post('/admin/payments/wompi', [PaymentSettingsController::class, 'updateWompi'])->name('admin.payments.wompi.update');
-    Route::post('/admin/payments/mercadopago', [PaymentSettingsController::class, 'updateMercadoPago'])->name('admin.payments.mercadopago.update');
-    Route::get('/admin/payments/mercadopago/connect', [PaymentSettingsController::class, 'connectMercadoPago'])->name('admin.payments.mercadopago.connect');
+    Route::post('/admin/payments/whatsapp', [PaymentSettingsController::class, 'updateWhatsApp'])->middleware('password.confirm')->name('admin.payments.whatsapp.update');
+    Route::post('/admin/payments/wompi', [PaymentSettingsController::class, 'updateWompi'])->middleware('password.confirm')->name('admin.payments.wompi.update');
+    Route::post('/admin/payments/mercadopago', [PaymentSettingsController::class, 'updateMercadoPago'])->middleware('password.confirm')->name('admin.payments.mercadopago.update');
+    Route::get('/admin/payments/mercadopago/connect', [PaymentSettingsController::class, 'connectMercadoPago'])->middleware('password.confirm')->name('admin.payments.mercadopago.connect');
     Route::get('/admin/payments/mercadopago/callback', [PaymentSettingsController::class, 'mercadoPagoCallback'])->name('admin.payments.mercadopago.callback');
     Route::get('/admin/store-visits', [StoreController::class, 'visits'])->name('admin.store.visits');
     Route::get('/admin/categories', [StoreCategoryController::class, 'index'])->name('admin.categories.index');
@@ -149,12 +149,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::get('/admin/users/create', [AdminUserController::class, 'create']);
-    Route::post('/admin/users', [AdminUserController::class, 'store']);
+    Route::post('/admin/users', [AdminUserController::class, 'store'])->middleware('password.confirm');
     Route::get('/admin/users/{user}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/admin/users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
-    Route::patch('/admin/users/{user}/extend', [AdminUserController::class, 'extendAccess'])->name('admin.users.extend');
-    Route::patch('/admin/users/{user}/toggle', [AdminUserController::class, 'toggleActive'])->name('admin.users.toggle');
-    Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::put('/admin/users/{user}', [AdminUserController::class, 'update'])->middleware('password.confirm')->name('admin.users.update');
+    Route::patch('/admin/users/{user}/extend', [AdminUserController::class, 'extendAccess'])->middleware('password.confirm')->name('admin.users.extend');
+    Route::patch('/admin/users/{user}/toggle', [AdminUserController::class, 'toggleActive'])->middleware('password.confirm')->name('admin.users.toggle');
+    Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy'])->middleware('password.confirm')->name('admin.users.destroy');
 
     Route::get('/admin/banners', [AdminBannerController::class, 'index']);
     Route::get('/admin/banners/create', [AdminBannerController::class, 'create']);
@@ -179,22 +179,22 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('/admin/stores', [StoreController::class, 'index']);
     Route::get('/admin/stores/create-with-user', [StoreController::class, 'createWithUser'])->name('admin.stores.create-with-user');
-    Route::post('/admin/stores/create-with-user', [StoreController::class, 'storeWithUser'])->name('admin.stores.store-with-user');
+    Route::post('/admin/stores/create-with-user', [StoreController::class, 'storeWithUser'])->middleware('password.confirm')->name('admin.stores.store-with-user');
     Route::get('/admin/stores/create', [StoreController::class, 'create']);
-    Route::post('/admin/stores', [StoreController::class, 'store']);
+    Route::post('/admin/stores', [StoreController::class, 'store'])->middleware('password.confirm');
     Route::get('/admin/stores/visits', [StoreController::class, 'visits'])->name('admin.stores.visits');
     Route::get('/admin/stores/{store}/products', [ProductController::class, 'index'])->name('admin.stores.products.index');
     Route::get('/admin/stores/{store}/categories', [StoreCategoryController::class, 'index'])->name('admin.stores.categories.index');
     Route::get('/admin/stores/{store}/coupons', [DiscountCouponController::class, 'index'])->name('admin.stores.coupons.index');
     Route::get('/admin/stores/{store}/landing', [StoreLandingController::class, 'editStore'])->name('admin.stores.landing.edit');
-    Route::post('/admin/stores/{store}/landing', [StoreLandingController::class, 'updateStore'])->name('admin.stores.landing.update');
+    Route::post('/admin/stores/{store}/landing', [StoreLandingController::class, 'updateStore'])->middleware('password.confirm')->name('admin.stores.landing.update');
     Route::get('/admin/stores/{store}/landing/preview', [StoreLandingController::class, 'previewStore'])->name('admin.stores.landing.preview');
-    Route::patch('/admin/stores/{store}/landing/activation', [StoreLandingController::class, 'updateActivation'])->name('admin.stores.landing.activation');
+    Route::patch('/admin/stores/{store}/landing/activation', [StoreLandingController::class, 'updateActivation'])->middleware('password.confirm')->name('admin.stores.landing.activation');
     Route::get('/admin/stores/{store}/edit', [StoreController::class, 'edit'])->name('admin.stores.edit');
-    Route::put('/admin/stores/{store}', [StoreController::class, 'update'])->name('admin.stores.update');
-    Route::post('/admin/stores/{store}/ai-credits', [StoreController::class, 'addAiCredits'])->name('admin.stores.ai-credits.store');
-    Route::patch('/admin/stores/{store}/subscription', [StoreController::class, 'activateSubscription'])->name('admin.stores.subscription.activate');
-    Route::delete('/admin/stores/{store}', [StoreController::class, 'destroy'])->name('admin.stores.destroy');
+    Route::put('/admin/stores/{store}', [StoreController::class, 'update'])->middleware('password.confirm')->name('admin.stores.update');
+    Route::post('/admin/stores/{store}/ai-credits', [StoreController::class, 'addAiCredits'])->middleware('password.confirm')->name('admin.stores.ai-credits.store');
+    Route::patch('/admin/stores/{store}/subscription', [StoreController::class, 'activateSubscription'])->middleware('password.confirm')->name('admin.stores.subscription.activate');
+    Route::delete('/admin/stores/{store}', [StoreController::class, 'destroy'])->middleware('password.confirm')->name('admin.stores.destroy');
 });
 
 

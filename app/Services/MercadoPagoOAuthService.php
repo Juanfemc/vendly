@@ -75,7 +75,7 @@ class MercadoPagoOAuthService
             return false;
         }
 
-        $account->update([
+        StorePaymentAccount::updateMercadoPagoCredentials($account->store, [
             'access_token' => $accessToken,
             'refresh_token' => $payload['refresh_token'] ?? $account->refresh_token,
             'public_key' => $payload['public_key'] ?? $account->public_key,

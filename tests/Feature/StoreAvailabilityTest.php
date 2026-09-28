@@ -1381,7 +1381,7 @@ test('store payment account stores mercadopago tokens encrypted', function () {
         'is_active' => true,
     ]);
 
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token-secreto',
@@ -1431,6 +1431,7 @@ test('store user can see payment methods panel', function () {
         ->assertSee(route('admin.payments.mercadopago.connect'), false);
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('admin.payments.mercadopago.connect'))
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('error');
@@ -1461,6 +1462,7 @@ test('pro store users cannot see or open payment methods', function () {
         ->assertForbidden();
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('admin.payments.mercadopago.connect'))
         ->assertForbidden();
 });
@@ -2509,7 +2511,7 @@ test('cart shows mercadopago button only for connected stores', function () {
         ->assertOk()
         ->assertDontSee('Pagar con Mercado Pago');
 
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -2620,7 +2622,7 @@ test('store owner can hide and reactivate mercadopago without removing the conne
         'name' => 'Producto Mercado Toggle',
         'price' => 25000,
     ]);
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -2634,6 +2636,7 @@ test('store owner can hide and reactivate mercadopago without removing the conne
     $this->post(route('cart.add', $product->id))->assertRedirect();
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.mercadopago.update'))
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('success', 'Mercado Pago fue desactivado en el checkout.');
@@ -2648,6 +2651,7 @@ test('store owner can hide and reactivate mercadopago without removing the conne
         ->assertDontSee(route('cart.mercadopago', ['store' => $store->slug]), false);
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.mercadopago.update'), ['enabled' => '1'])
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('success', 'Mercado Pago fue activado en el checkout.');
@@ -2674,7 +2678,7 @@ test('store owner cannot reactivate an expired mercadopago account without recon
         'plan' => Store::PLAN_PREMIUM,
         'is_active' => true,
     ]);
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -2691,6 +2695,7 @@ test('store owner cannot reactivate an expired mercadopago account without recon
         ->assertSee('Reconectar Mercado Pago');
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.mercadopago.update'), ['enabled' => '1'])
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
@@ -2698,6 +2703,7 @@ test('store owner cannot reactivate an expired mercadopago account without recon
     expect($account->refresh()->status)->toBe(StorePaymentAccount::STATUS_EXPIRED);
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.mercadopago.update'))
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('error', 'La conexion de Mercado Pago vencio. Reconecta la cuenta para activarla.');
@@ -2768,7 +2774,7 @@ test('pro stores cannot use mercadopago even with a connected account', function
         'name' => 'Producto pro pago',
         'price' => 45000,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -2821,7 +2827,7 @@ test('expired mercadopago account is not available at checkout', function () {
         'name' => 'Producto pago expirado',
         'price' => 45000,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -2869,7 +2875,7 @@ test('mercadopago webhook verifies payment and marks order as paid', function ()
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -2905,7 +2911,7 @@ test('mercadopago webhook verifies payment and marks order as paid', function ()
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -2950,7 +2956,7 @@ test('global mercadopago webhook finds order by payment external reference', fun
         'whatsapp' => '573001112244',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $firstStore->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'wrong-seller-token',
@@ -2959,7 +2965,7 @@ test('global mercadopago webhook finds order by payment external reference', fun
         'connected_at' => now(),
         'status' => StorePaymentAccount::STATUS_CONNECTED,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $secondStore->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -3001,7 +3007,7 @@ test('global mercadopago webhook finds order by payment external reference', fun
     ]);
 
     $requestId = 'request-global';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_global;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_global', [], [
@@ -3032,7 +3038,7 @@ test('mercadopago webhook refreshes expired token before verifying payment', fun
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3076,7 +3082,7 @@ test('mercadopago webhook refreshes expired token before verifying payment', fun
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -3117,7 +3123,7 @@ test('mercadopago webhook does not refresh manually disconnected account', funct
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3146,7 +3152,7 @@ test('mercadopago webhook does not refresh manually disconnected account', funct
     Http::fake();
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -3178,7 +3184,7 @@ test('mercadopago webhook keeps pending when token refresh has connection failur
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3214,7 +3220,7 @@ test('mercadopago webhook keeps pending when token refresh has connection failur
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -3241,7 +3247,7 @@ test('mercadopago webhook returns controlled error when payment lookup has conne
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -3271,7 +3277,7 @@ test('mercadopago webhook returns controlled error when payment lookup has conne
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -3296,7 +3302,7 @@ test('mercadopago rejected webhook releases reserved stock once', function () {
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -3347,7 +3353,7 @@ test('mercadopago rejected webhook releases reserved stock once', function () {
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_rejected;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
     $headers = [
         'x-request-id' => $requestId,
@@ -3383,7 +3389,7 @@ test('mercadopago checkout failure removes pending order and restores stock', fu
         'price' => 45000,
         'stock_quantity' => 2,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -3437,7 +3443,7 @@ test('mercadopago checkout connection failure removes pending order and restores
         'price' => 45000,
         'stock_quantity' => 1,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -3484,7 +3490,7 @@ test('mercadopago cancelled payment stops showing order as paid', function () {
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -3536,7 +3542,7 @@ test('mercadopago cancelled payment stops showing order as paid', function () {
     ]);
 
     $requestId = 'request-123';
-    $timestamp = '1715191200';
+    $timestamp = (string) now()->timestamp;
     $hash = hash_hmac('sha256', "id:pay_123;request-id:{$requestId};ts:{$timestamp};", 'webhook-secret');
 
     $this->postJson(route('cart.mercadopago.webhook').'?type=payment&data.id=pay_123', [], [
@@ -3631,7 +3637,7 @@ test('expired mercadopago pending order keeps stock when connected account token
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3710,7 +3716,7 @@ test('expired mercadopago pending order keeps stock when refresh has connection 
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3791,7 +3797,7 @@ test('expired mercadopago pending order keeps stock when refresh response is inc
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3870,7 +3876,7 @@ test('expired mercadopago pending order refreshes token before checking merchant
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    $account = StorePaymentAccount::create([
+    $account = StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'expired-token',
@@ -3971,7 +3977,7 @@ test('expired mercadopago pending order is paid when merchant order is approved'
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -4059,7 +4065,7 @@ test('expired mercadopago pending order keeps stock when merchant order has acti
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -4142,7 +4148,7 @@ test('expired mercadopago pending order keeps stock when merchant order lookup h
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -4304,7 +4310,7 @@ test('mercadopago return explains when immediate confirmation fails', function (
         'whatsapp' => '573001112233',
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'seller-token',
@@ -4389,7 +4395,7 @@ test('payment methods panel shows connected mercadopago account without exposing
         'plan' => Store::PLAN_PREMIUM,
         'is_active' => true,
     ]);
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token-no-visible',
@@ -4430,6 +4436,7 @@ test('store user can start mercadopago oauth connection', function () {
     ]);
 
     $response = $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('admin.payments.mercadopago.connect'));
 
     $response->assertRedirectContains('https://auth.mercadopago.com/authorization');
@@ -8407,7 +8414,7 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         'price' => 60000,
     ]);
 
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_MERCADOPAGO,
         'access_token' => 'access-token',
@@ -8417,7 +8424,7 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         'status' => StorePaymentAccount::STATUS_CONNECTED,
     ]);
 
-    StorePaymentAccount::create([
+    StorePaymentAccount::forceCreate([
         'store_id' => $store->id,
         'provider' => StorePaymentAccount::PROVIDER_WOMPI,
         'public_key' => 'pub_test',
@@ -9270,3 +9277,6 @@ test('fashion storefront reuses fashion cards and shared cart drawer on catalog 
         ->and($detailPage)->toContain('fashion-product-actions has-whatsapp')
         ->and($detailPage)->toContain('formaction="'.$buyNowUrl.'"');
 });
+
+
+

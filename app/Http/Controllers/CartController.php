@@ -26,6 +26,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -405,10 +406,24 @@ class CartController extends Controller
             return response('Ignored', 200);
         }
 
+        $idempotencyKey = $this->mercadoPagoWebhookIdempotencyKey($request, (string) $paymentId);
+        if ($idempotencyKey && Cache::has($idempotencyKey . ':processed')) {
+            return response('OK', 200);
+        }
+
+        $lockKey = $idempotencyKey ? $idempotencyKey . ':processing' : null;
+        if ($lockKey && ! Cache::add($lockKey, true, now()->addMinutes(10))) {
+            return response('Processing', 202);
+        }
+
         try {
             $sync = $this->syncMercadoPagoWebhookPayment($request, (string) $paymentId);
         } catch (ConnectionException|RequestException) {
             return response('Payment lookup failed', 502);
+        } finally {
+            if ($lockKey) {
+                Cache::forget($lockKey);
+            }
         }
 
         if (($sync['approved_now'] ?? false) && ($sync['order'] ?? null) instanceof Order) {
@@ -420,6 +435,10 @@ class CartController extends Controller
                 'pedido',
                 '/admin/orders'
             );
+        }
+
+        if ($idempotencyKey) {
+            Cache::put($idempotencyKey . ':processed', true, now()->addMinutes($this->mercadoPagoWebhookIdempotencyTtl()));
         }
 
         return response('OK', 200);
@@ -453,16 +472,36 @@ class CartController extends Controller
             return response('Invalid signature', 401);
         }
 
-        $approvedNow = $this->wompiCheckoutService->applyTransactionToOrder($order, $transaction);
-        $this->checkoutService->releaseStockForUnpaidOnlinePaymentOrder($order->refresh());
+        $idempotencyKey = $this->wompiCheckoutService->eventIdempotencyKey($request);
+        if ($idempotencyKey && Cache::has($idempotencyKey . ':processed')) {
+            return response('OK', 200);
+        }
 
-        if ($approvedNow) {
-            $this->adminUpdateService->record(
-                'Pedido pagado',
-                'Pedido #' . $order->id . ' fue aprobado por Wompi',
-                'pedido',
-                '/admin/orders'
-            );
+        $lockKey = $idempotencyKey ? $idempotencyKey . ':processing' : null;
+        if ($lockKey && ! Cache::add($lockKey, true, now()->addMinutes(10))) {
+            return response('Processing', 202);
+        }
+
+        try {
+            $approvedNow = $this->wompiCheckoutService->applyTransactionToOrder($order, $transaction);
+            $this->checkoutService->releaseStockForUnpaidOnlinePaymentOrder($order->refresh());
+
+            if ($approvedNow) {
+                $this->adminUpdateService->record(
+                    'Pedido pagado',
+                    'Pedido #' . $order->id . ' fue aprobado por Wompi',
+                    'pedido',
+                    '/admin/orders'
+                );
+            }
+
+            if ($idempotencyKey) {
+                Cache::put($idempotencyKey . ':processed', true, now()->addMinutes($this->wompiWebhookIdempotencyTtl()));
+            }
+        } finally {
+            if ($lockKey) {
+                Cache::forget($lockKey);
+            }
         }
 
         return response('OK', 200);
@@ -705,9 +744,54 @@ class CartController extends Controller
             return false;
         }
 
+        if (! $this->freshMercadoPagoTimestamp((string) $timestamp)) {
+            return false;
+        }
+
         $manifest = "id:{$dataId};request-id:{$requestId};ts:{$timestamp};";
         $expectedHash = hash_hmac('sha256', $manifest, $secret);
 
         return hash_equals($expectedHash, $receivedHash);
+    }
+
+    private function freshMercadoPagoTimestamp(string $timestamp): bool
+    {
+        $timestamp = trim($timestamp);
+
+        if ($timestamp === '' || ! ctype_digit($timestamp)) {
+            return false;
+        }
+
+        $value = (int) $timestamp;
+        $eventTime = $value > 1000000000000
+            ? \Carbon\Carbon::createFromTimestampMs($value)
+            : \Carbon\Carbon::createFromTimestamp($value);
+        $tolerance = max(1, (int) config('services.mercadopago.webhook_tolerance_minutes', 5));
+
+        return $eventTime->betweenIncluded(
+            now()->subMinutes($tolerance),
+            now()->addMinutes($tolerance),
+        );
+    }
+
+    private function mercadoPagoWebhookIdempotencyKey(Request $request, string $paymentId): ?string
+    {
+        $requestId = (string) $request->header('x-request-id');
+
+        if ($requestId === '' || $paymentId === '') {
+            return null;
+        }
+
+        return 'mercadopago:webhook:' . hash('sha256', $requestId . '|' . $paymentId);
+    }
+
+    private function wompiWebhookIdempotencyTtl(): int
+    {
+        return max(10, (int) config('services.wompi.webhook_idempotency_ttl_minutes', 1440));
+    }
+
+    private function mercadoPagoWebhookIdempotencyTtl(): int
+    {
+        return max(10, (int) config('services.mercadopago.webhook_idempotency_ttl_minutes', 1440));
     }
 }
