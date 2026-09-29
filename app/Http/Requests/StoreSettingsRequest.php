@@ -68,6 +68,7 @@ class StoreSettingsRequest extends FormRequest
             'show_hero_overlay',
             'hero_overlay_eyebrow',
             'hero_overlay_title',
+            'hero_overlay_subtitle',
             'hero_overlay_button_text',
             'hero_overlay_button_url',
             'instagram_url',

@@ -14,7 +14,7 @@
         ? $selectedColorVariantDisplay
         : \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH;
     $showFashionDeliveryTimes = (bool) old('show_fashion_delivery_times', $store->showsFashionDeliveryTimes());
-    $showFashionSizeFilter = (bool) old('show_fashion_size_filter', $store->showsFashionSizeFilter());
+    $showSizeFilter = (bool) old('show_fashion_size_filter', $store->showsSizeFilter());
 @endphp
 
 <style>
@@ -1288,7 +1288,7 @@
                     <div class="catalog-toggle-row catalog-field--full">
                         <div>
                             <strong>Texto y boton sobre portada</strong>
-                            <p class="catalog-help" style="margin:4px 0 0;">Activalo para mostrar una capa de texto sobre el banner de la tienda de ropa.</p>
+                            <p class="catalog-help" style="margin:4px 0 0;">Activalo para mostrar una capa de texto sobre el banner de la tienda.</p>
                         </div>
                         <label class="catalog-switch">
                             <input type="checkbox" name="show_hero_overlay" value="1" @checked((bool) old('show_hero_overlay', $store->show_hero_overlay ?? false))>
@@ -1303,8 +1303,15 @@
                     <div class="catalog-field">
                         <label for="hero_overlay_title">Texto sobre portada</label>
                         <input id="hero_overlay_title" type="text" name="hero_overlay_title" value="{{ old('hero_overlay_title', $store->hero_overlay_title) }}" maxlength="120" placeholder="Nueva colección">
-                        <small>Se muestra centrado sobre el banner.</small>
+                        <small>Se muestra sobre el banner de la tienda.</small>
                     </div>
+                    @if($store->isTechnologyStore() && \App\Models\Store::supportsHeroOverlaySubtitleColumn())
+                        <div class="catalog-field">
+                            <label for="hero_overlay_subtitle">Subtítulo del banner</label>
+                            <input id="hero_overlay_subtitle" type="text" name="hero_overlay_subtitle" value="{{ old('hero_overlay_subtitle', $store->hero_overlay_subtitle) }}" maxlength="240" placeholder="Ej: Repuestos importados y nacionales de alta calidad">
+                            <small>Se muestra debajo del título en la portada de tecnología.</small>
+                        </div>
+                    @endif
                     <div class="catalog-field">
                         <label for="hero_overlay_button_text">Texto del botón</label>
                         <input id="hero_overlay_button_text" type="text" name="hero_overlay_button_text" value="{{ old('hero_overlay_button_text', $store->hero_overlay_button_text) }}" maxlength="60" placeholder="Comprar ahora">
@@ -1671,15 +1678,15 @@
                 </div>
             @endif
 
-            @if($store->isFashionStore() && \App\Models\Store::supportsFashionSizeFilterColumn())
+            @if(($store->isFashionStore() || $store->isDefaultStore()) && \App\Models\Store::supportsFashionSizeFilterColumn())
                 <div class="catalog-toggle-row" style="margin-top:12px;">
                     <div>
-                        <strong>Filtro de talla en inicio</strong>
-                        <p class="catalog-help" style="margin:4px 0 0;">Muestra tallas como XS, S, M o 38, 40 para filtrar productos desde la portada.</p>
+                        <strong>Filtro de tallas en inicio</strong>
+                        <p class="catalog-help" style="margin:4px 0 0;">Muestra opciones como XS, S, M o 38, 40 para filtrar productos desde la portada.</p>
                     </div>
                     <label class="catalog-switch">
                         <input type="hidden" name="show_fashion_size_filter" value="0">
-                        <input type="checkbox" name="show_fashion_size_filter" value="1" @checked($showFashionSizeFilter)>
+                        <input type="checkbox" name="show_fashion_size_filter" value="1" @checked($showSizeFilter)>
                         <i></i>
                     </label>
                 </div>

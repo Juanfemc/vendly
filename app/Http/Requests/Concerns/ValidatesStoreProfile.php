@@ -122,6 +122,7 @@ trait ValidatesStoreProfile
             'show_hero_overlay' => ['nullable', 'boolean'],
             'hero_overlay_eyebrow' => ['nullable', 'string', 'max:80'],
             'hero_overlay_title' => ['nullable', 'string', 'max:120'],
+            'hero_overlay_subtitle' => ['nullable', 'string', 'max:240'],
             'hero_overlay_button_text' => ['nullable', 'string', 'max:60'],
             'hero_overlay_button_url' => ['nullable', 'string', 'max:255'],
             'instagram_url' => ['nullable', 'url', 'max:255'],
@@ -180,9 +181,11 @@ trait ValidatesStoreProfile
             unset($data['show_fashion_delivery_times']);
         }
         if (Store::supportsFashionSizeFilterColumn()) {
-            $data['show_fashion_size_filter'] = $data['business_type'] === 'fashion'
-                ? $this->boolean('show_fashion_size_filter', true)
-                : false;
+            $data['show_fashion_size_filter'] = match ($data['business_type']) {
+                'fashion' => $this->boolean('show_fashion_size_filter', true),
+                'store' => $this->boolean('show_fashion_size_filter', false),
+                default => false,
+            };
         } else {
             unset($data['show_fashion_size_filter']);
         }
@@ -191,6 +194,7 @@ trait ValidatesStoreProfile
             'show_hero_overlay',
             'hero_overlay_eyebrow',
             'hero_overlay_title',
+            'hero_overlay_subtitle',
             'hero_overlay_button_text',
             'hero_overlay_button_url',
         ]);
@@ -199,6 +203,13 @@ trait ValidatesStoreProfile
             $data['show_hero_overlay'] = $this->boolean('show_hero_overlay', false);
             $data['hero_overlay_eyebrow'] = trim((string) ($data['hero_overlay_eyebrow'] ?? '')) ?: null;
             $data['hero_overlay_title'] = trim((string) ($data['hero_overlay_title'] ?? '')) ?: null;
+            if (Store::supportsHeroOverlaySubtitleColumn()) {
+                $data['hero_overlay_subtitle'] = ($data['business_type'] ?? null) === 'technology'
+                    ? (trim((string) ($data['hero_overlay_subtitle'] ?? '')) ?: null)
+                    : null;
+            } else {
+                unset($data['hero_overlay_subtitle']);
+            }
             $data['hero_overlay_button_text'] = trim((string) ($data['hero_overlay_button_text'] ?? '')) ?: null;
             $data['hero_overlay_button_url'] = $this->normalizeHeroOverlayUrl($data['hero_overlay_button_url'] ?? null);
         } elseif ($usesHeroOverlay) {
@@ -206,6 +217,7 @@ trait ValidatesStoreProfile
                 $data['show_hero_overlay'],
                 $data['hero_overlay_eyebrow'],
                 $data['hero_overlay_title'],
+                $data['hero_overlay_subtitle'],
                 $data['hero_overlay_button_text'],
                 $data['hero_overlay_button_url']
             );
@@ -245,6 +257,7 @@ trait ValidatesStoreProfile
                 $data['show_hero_overlay'],
                 $data['hero_overlay_eyebrow'],
                 $data['hero_overlay_title'],
+                $data['hero_overlay_subtitle'],
                 $data['hero_overlay_button_text'],
                 $data['hero_overlay_button_url']
             );

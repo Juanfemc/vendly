@@ -364,6 +364,9 @@ class StoreController extends Controller
                 $customizationData['show_hero_overlay'] = false;
                 $customizationData['hero_overlay_eyebrow'] = null;
                 $customizationData['hero_overlay_title'] = null;
+                if (Store::supportsHeroOverlaySubtitleColumn()) {
+                    $customizationData['hero_overlay_subtitle'] = null;
+                }
                 $customizationData['hero_overlay_button_text'] = null;
                 $customizationData['hero_overlay_button_url'] = null;
             }

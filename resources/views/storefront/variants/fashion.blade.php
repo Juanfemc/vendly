@@ -80,7 +80,7 @@ $fashionTabs = collect([[
         : $storefrontUrls->products($store);
     $fashionHeroHasCopy = $fashionHeroOverlayEnabled
         && ($fashionHeroEyebrow !== '' || $fashionHeroTitle !== '' || $fashionHeroButtonText !== '');
-    $fashionCartIcon = '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="currentColor"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#000" stroke-width="34" stroke-linecap="round"/></svg>';
+    $fashionCartIcon = '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="#fff"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#111" stroke-width="40" stroke-linecap="round"/></svg>';
 @endphp
 
 <section @class(['fashion-hero', 'has-copy' => $fashionHeroHasCopy, 'is-cover-only' => ! $fashionHeroHasCopy])>
@@ -123,7 +123,26 @@ $fashionTabs = collect([[
         </nav>
     </div>
 
-    <div class="fashion-catalog-controls" aria-label="Filtros de productos">
+    <button type="button" class="fashion-filter-launch" data-filter-drawer-open="fashion" aria-expanded="false">
+        <span aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/><circle cx="8" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="17" r="2"/></svg>
+        </span>
+        Filtrar productos
+    </button>
+
+    <div class="fashion-filter-backdrop" data-filter-drawer-close="fashion" hidden></div>
+
+    <div class="fashion-catalog-controls" aria-label="Filtros de productos" data-filter-drawer="fashion" hidden>
+        <div class="fashion-filter-drawer-head">
+            <span aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/><circle cx="8" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="17" r="2"/></svg>
+            </span>
+            <strong>Filtrar productos</strong>
+            <button type="button" data-filter-drawer-close="fashion" aria-label="Cerrar filtros">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+
         @if($showFashionSizeFilter && $fashionSizeOptions->isNotEmpty())
             <div class="fashion-size-filter" data-fashion-size-filter>
                 <span>Talla</span>
@@ -146,6 +165,8 @@ $fashionTabs = collect([[
                 <option value="price-asc">Menor precio</option>
             </select>
         </label>
+
+        <button type="button" class="fashion-filter-apply" data-filter-drawer-close="fashion">Ver productos</button>
     </div>
 
     <div class="fashion-product-grid" data-fashion-product-grid>

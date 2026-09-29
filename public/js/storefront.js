@@ -99,6 +99,87 @@
     resolveBrandContrast();
 
     const minimalOverlayToggles = [minimalMenuToggle, cartDrawerToggle, minimalSearchToggle].filter(Boolean);
+    let activeFilterDrawerName = null;
+
+    const filterDrawerSelector = (name) => `[data-filter-drawer="${window.CSS?.escape ? CSS.escape(name) : name}"]`;
+    const filterDrawerBackdropSelector = (name) => `[data-filter-drawer-close="${window.CSS?.escape ? CSS.escape(name) : name}"]`;
+
+    const setFilterDrawerOpen = (name, isOpen) => {
+        const drawer = document.querySelector(filterDrawerSelector(name));
+        const backdrop = Array.from(document.querySelectorAll(filterDrawerBackdropSelector(name)))
+            .find((element) => element.classList.contains(`${name === 'technology' ? 'tech' : name}-filter-backdrop`) || element.classList.contains('default-filter-backdrop'));
+        const triggers = Array.from(document.querySelectorAll(`[data-filter-drawer-open="${name}"]`));
+
+        if (!drawer) {
+            return;
+        }
+
+        if (isOpen) {
+            if (activeFilterDrawerName && activeFilterDrawerName !== name) {
+                setFilterDrawerOpen(activeFilterDrawerName, false);
+            }
+
+            drawer.hidden = false;
+            if (backdrop) {
+                backdrop.hidden = false;
+            }
+
+            window.requestAnimationFrame(() => {
+                drawer.classList.add('is-open');
+                backdrop?.classList.add('is-open');
+            });
+
+            activeFilterDrawerName = name;
+            document.documentElement.classList.add('storefront-filter-drawer-open');
+            document.body.classList.add('storefront-filter-drawer-open');
+            triggers.forEach((trigger) => trigger.setAttribute('aria-expanded', 'true'));
+            drawer.querySelector('button, select, input, a')?.focus({ preventScroll: true });
+            return;
+        }
+
+        drawer.classList.remove('is-open');
+        backdrop?.classList.remove('is-open');
+        triggers.forEach((trigger) => trigger.setAttribute('aria-expanded', 'false'));
+
+        window.setTimeout(() => {
+            if (!drawer.classList.contains('is-open')) {
+                drawer.hidden = true;
+            }
+
+            if (backdrop && !backdrop.classList.contains('is-open')) {
+                backdrop.hidden = true;
+            }
+        }, 220);
+
+        if (activeFilterDrawerName === name) {
+            activeFilterDrawerName = null;
+            document.documentElement.classList.remove('storefront-filter-drawer-open');
+            document.body.classList.remove('storefront-filter-drawer-open');
+        }
+    };
+
+    document.addEventListener('click', (event) => {
+        const openButton = event.target.closest('[data-filter-drawer-open]');
+
+        if (openButton) {
+            event.preventDefault();
+            setFilterDrawerOpen(openButton.dataset.filterDrawerOpen, true);
+            return;
+        }
+
+        const closeButton = event.target.closest('[data-filter-drawer-close]');
+
+        if (closeButton) {
+            event.preventDefault();
+            setFilterDrawerOpen(closeButton.dataset.filterDrawerClose, false);
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && activeFilterDrawerName) {
+            setFilterDrawerOpen(activeFilterDrawerName, false);
+        }
+    });
 
     const syncMinimalOverlayScrollLock = () => {
         if (!page.classList.contains('storefront-page--minimal-grid')) {

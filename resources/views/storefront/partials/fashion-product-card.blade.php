@@ -24,7 +24,7 @@
     $fashionProductStockLabel = $product->stockLabel();
     $fashionProductSoldOut = $product->isSoldOut();
     $fashionProductShowsOfferPricing = isset($store) && $store->allowsOfferBadges() && $product->hasOfferPricing();
-    $fashionCartIcon = $fashionCartIcon ?? '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="currentColor"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#000" stroke-width="34" stroke-linecap="round"/></svg>';
+    $fashionCartIcon = $fashionCartIcon ?? '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="#fff"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#111" stroke-width="40" stroke-linecap="round"/></svg>';
 @endphp
 
 <article
@@ -57,14 +57,12 @@
             @endif
         </a>
 
-        @if($fashionProductSoldOut)
-            <span class="fashion-product-cart-float fashion-product-cart-float--disabled">Agotado</span>
-        @elseif($product->hasVariants())
+        @if(! $fashionProductSoldOut && $product->hasVariants())
             <a class="fashion-product-cart-float" href="{{ $storefrontUrls->product($store, $product) }}" aria-label="Ver opciones de {{ $product->name }}">
                 {!! $fashionCartIcon !!}
                 <span>Ver opciones</span>
             </a>
-        @else
+        @elseif(! $fashionProductSoldOut)
             <form action="{{ route('cart.add', $product->id) }}" method="POST" class="fashion-product-cart-form add-to-cart-form" data-compact-fashion-cart>
                 @csrf
                 <button type="submit" class="fashion-product-cart-float" aria-label="Agregar {{ $product->name }} al carrito">

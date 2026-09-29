@@ -28,6 +28,7 @@ class Store extends Model
     private static ?bool $supportsTermsAcceptanceColumns = null;
     private static ?bool $supportsCheckoutFieldsColumn = null;
     private static ?bool $supportsHeroOverlayColumns = null;
+    private static ?bool $supportsHeroOverlaySubtitleColumn = null;
     private static ?bool $supportsColorVariantDisplayColumn = null;
     private static ?bool $supportsFashionDeliveryTimesColumn = null;
     private static ?bool $supportsFashionSizeFilterColumn = null;
@@ -35,6 +36,19 @@ class Store extends Model
     private static ?bool $supportsStoreLandingsTable = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Store $store) {
+            if (
+                $store->business_type === 'store'
+                && ! array_key_exists('show_fashion_size_filter', $store->getAttributes())
+                && self::supportsFashionSizeFilterColumn()
+            ) {
+                $store->show_fashion_size_filter = false;
+            }
+        });
+    }
 
     public const PRODUCT_SEARCH_THRESHOLD = 20;
     public const TRIAL_DAYS = 7;
@@ -142,6 +156,7 @@ class Store extends Model
         'show_hero_overlay',
         'hero_overlay_eyebrow',
         'hero_overlay_title',
+        'hero_overlay_subtitle',
         'hero_overlay_button_text',
         'hero_overlay_button_url',
         'onboarding_completed_at',
@@ -789,6 +804,11 @@ class Store extends Model
             && Schema::hasColumn('stores', 'hero_overlay_button_url');
     }
 
+    public static function supportsHeroOverlaySubtitleColumn(): bool
+    {
+        return self::$supportsHeroOverlaySubtitleColumn ??= Schema::hasColumn('stores', 'hero_overlay_subtitle');
+    }
+
     public static function supportsColorVariantDisplayColumn(): bool
     {
         return self::$supportsColorVariantDisplayColumn ??= Schema::hasColumn('stores', 'color_variant_display');
@@ -1008,6 +1028,11 @@ class Store extends Model
     public function isFashionStore(): bool
     {
         return $this->business_type === 'fashion';
+    }
+
+    public function isDefaultStore(): bool
+    {
+        return $this->business_type === 'store';
     }
 
     public function isSupplementStore(): bool
@@ -1256,7 +1281,20 @@ class Store extends Model
         }
 
         if (! self::supportsFashionSizeFilterColumn()) {
-            return true;
+            return $this->isFashionStore();
+        }
+
+        return $this->show_fashion_size_filter !== false;
+    }
+
+    public function showsSizeFilter(): bool
+    {
+        if (! $this->isFashionStore() && ! $this->isDefaultStore()) {
+            return false;
+        }
+
+        if (! self::supportsFashionSizeFilterColumn()) {
+            return $this->isFashionStore();
         }
 
         return $this->show_fashion_size_filter !== false;

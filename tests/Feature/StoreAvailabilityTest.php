@@ -5491,6 +5491,63 @@ test('fashion size filter visibility can be configured from the store panel', fu
     expect($store->refresh()->showsFashionSizeFilter())->toBeTrue();
 });
 
+test('default store size filter visibility can be configured from the store panel', function () {
+    $storeUser = User::factory()->create();
+
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Tallas',
+        'slug' => 'tienda-tallas',
+        'whatsapp' => '573001112233',
+        'business_type' => 'store',
+        'is_active' => true,
+    ]);
+
+    Product::create([
+        'user_id' => $storeUser->id,
+        'store_id' => $store->id,
+        'name' => 'Producto con tallas',
+        'price' => 45000,
+        'sizes' => ['S', 'M'],
+    ]);
+
+    expect($store->refresh()->showsSizeFilter())->toBeFalse();
+
+    $this->get('/tienda-tallas')
+        ->assertOk()
+        ->assertDontSee('data-default-size-filter="s"', false)
+        ->assertDontSee('data-default-size-filter="m"', false);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'store',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'show_fashion_size_filter' => '1',
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->showsSizeFilter())->toBeTrue();
+
+    $this->get('/tienda-tallas')
+        ->assertOk()
+        ->assertSee('data-default-size-filter="s"', false)
+        ->assertSee('data-default-size-filter="m"', false);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => $store->name,
+            'business_type' => 'store',
+            'whatsapp' => $store->whatsapp,
+            'responsive_product_columns' => 2,
+            'show_fashion_size_filter' => '0',
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->showsSizeFilter())->toBeFalse();
+});
+
 test('technology storefront shows real catalog details without fake footer or wishlist', function () {
     $user = User::factory()->create([
         'active_starts_at' => now()->subDay(),

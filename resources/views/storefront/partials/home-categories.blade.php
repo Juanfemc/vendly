@@ -28,9 +28,6 @@
                     data-default-category-count="{{ $homeTotalProducts }}"
                     aria-pressed="true"
                 >
-                    <span class="home-category-media" aria-hidden="true">
-                        <strong>+</strong>
-                    </span>
                     <span class="home-category-copy">
                         <strong>Todos</strong>
                         <small>{{ $homeTotalProducts }} {{ $homeTotalLabel }}</small>
@@ -41,7 +38,6 @@
                     @php
                         $homeCategoryCount = (int) (($categoryProductCounts ?? collect())[$homeCategory->name] ?? 0);
                         $homeCategoryLabel = $homeCategoryCount === 1 ? 'producto' : $homeCategoryItemsLabel;
-                        $homeCategoryInitial = strtoupper(substr((string) $homeCategory->name, 0, 1));
                     @endphp
                     <a
                         href="{{ $storefrontUrls->category($store, $homeCategory) }}"
@@ -50,13 +46,6 @@
                         data-default-category-count="{{ $homeCategoryCount }}"
                         aria-pressed="false"
                     >
-                        <span class="home-category-media" aria-hidden="true">
-                            @if($homeCategory->image)
-                                <img src="{{ asset('storage/' . $homeCategory->image) }}" alt="" loading="lazy" decoding="async">
-                            @else
-                                <strong>{{ $homeCategoryInitial }}</strong>
-                            @endif
-                        </span>
                         <span class="home-category-copy">
                             <strong>{{ $homeCategory->name }}</strong>
                             <small>{{ $homeCategoryCount }} {{ $homeCategoryLabel }}</small>

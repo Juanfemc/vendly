@@ -20,15 +20,30 @@
             ->filter(fn ($size) => $size['label'] !== '' && $size['slug'] !== '')
             ->unique('slug')
             ->values();
+        $showDefaultSizeFilter = isset($store) && $store->showsSizeFilter();
     @endphp
 
     @if($visibleCategorySections->isNotEmpty() || $otherProducts->isNotEmpty())
-        <section class="default-filter-panel" aria-label="Filtrar productos" data-default-filter-panel>
+        <div class="default-filter-launch-rail">
+            <button type="button" class="default-filter-launch" data-filter-drawer-open="default" aria-expanded="false">
+                <span class="default-filter-panel-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/><circle cx="8" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="17" r="2"/></svg>
+                </span>
+                Filtrar productos
+            </button>
+        </div>
+
+        <div class="default-filter-backdrop" data-filter-drawer-close="default" hidden></div>
+
+        <section class="default-filter-panel" aria-label="Filtrar productos" data-default-filter-panel data-filter-drawer="default" hidden>
             <div class="default-filter-panel-head">
                 <span class="default-filter-panel-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/><circle cx="8" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="17" r="2"/></svg>
                 </span>
                 <strong>Filtrar productos</strong>
+                <button type="button" class="default-filter-close" data-filter-drawer-close="default" aria-label="Cerrar filtros">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
             </div>
 
             <div class="default-filter-groups">
@@ -49,7 +64,7 @@
                     </div>
                 </div>
 
-                @if($defaultSizeOptions->isNotEmpty())
+                @if($showDefaultSizeFilter && $defaultSizeOptions->isNotEmpty())
                     <div class="default-filter-group" aria-label="Tallas">
                         <span class="default-filter-label">Tallas</span>
                         <div role="group" aria-label="Filtrar por tallas">
@@ -71,6 +86,8 @@
                     </select>
                 </label>
             </div>
+
+            <button type="button" class="default-filter-apply" data-filter-drawer-close="default">Ver productos</button>
         </section>
 
         <div class="products-grid" data-default-category-grid>

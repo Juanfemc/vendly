@@ -1058,78 +1058,12 @@
     box-shadow: 0 -12px 32px rgba(17, 17, 17, 0.12), 0 18px 44px rgba(17, 17, 17, 0.08);
 }
 
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    z-index: 3;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
-    align-items: center;
-    gap: 24px;
-    width: 100%;
-    min-height: 76px;
-    padding: 16px 26px;
-    border-radius: 0;
-    background: #ffffff;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2,
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-section-head h2 {
     margin: 0;
     font-size: 24px;
     line-height: 1.05;
     font-weight: 900;
     letter-spacing: 0;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 5px;
-    border: 1px solid #eeeeee;
-    border-radius: 999px;
-    background: #ffffff;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel input {
-    width: 100%;
-    height: 32px;
-    border: 0;
-    background: transparent;
-    color: #111111;
-    padding: 0 12px;
-    font-size: 12px;
-    outline: none;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel button {
-    border: 0;
-    border-radius: 999px;
-    background: #111111;
-    color: #ffffff;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel button {
-    min-height: 32px;
-    padding: 0 18px;
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-layout {
@@ -2598,20 +2532,11 @@
         cursor: pointer;
     }
 
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel,
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-layout,
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-footer-grid {
         grid-template-columns: 1fr;
     }
 
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-        position: relative;
-        width: 100%;
-        margin-inline: 0;
-        border-radius: 0;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2,
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-section-head h2 {
         font-size: 22px;
         line-height: 1.12;
@@ -2959,27 +2884,9 @@
         grid-template-columns: 1fr;
     }
 
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-        padding: 16px 16px 20px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2,
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-section-head h2 {
         font-size: 20px;
         line-height: 1.12;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel input {
-        font-size: 12px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel form {
-        grid-template-columns: 1fr;
-        border-radius: 14px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel button {
-        width: 100%;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-product-grid {
@@ -3347,41 +3254,6 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-    min-height: auto;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
-    padding: 0 0 20px;
-    background: transparent;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2 {
-    color: var(--tech-ink);
-    font-size: clamp(24px, 3vw, 34px);
-    letter-spacing: -.03em;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel form {
-    min-height: 54px;
-    padding: 7px;
-    border-color: var(--tech-line);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, .9);
-    box-shadow: 0 16px 40px rgba(15, 23, 42, .07);
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel input {
-    height: 38px;
-    color: var(--tech-ink);
-    font-size: 14px;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel button {
-    min-height: 40px;
-    border-radius: 13px;
-    background: var(--tech-accent);
-    font-size: 12px;
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-layout {
@@ -6958,11 +6830,6 @@
         max-height: 280px;
     }
 
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-product-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -7036,24 +6903,6 @@
         bottom: 16px;
         min-width: 172px;
         padding: 12px 14px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-        padding: 18px 0;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2 {
-        font-size: 30px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel form {
-        grid-template-columns: minmax(0, 1fr) auto;
-        border-radius: 18px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel button {
-        width: auto;
-        padding-inline: 14px;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-sidebar nav a {
@@ -7802,15 +7651,8 @@
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .tech-commerce-strip,
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel,
 .storefront-page--technology.storefront-page--minimal-grid .tech-category-section {
     width: 100%;
-}
-
-.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-    align-items: center;
-    margin-top: 22px;
-    padding-bottom: 24px;
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-layout {
@@ -7903,15 +7745,6 @@
 
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-content-panel {
         padding-inline: 12px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel {
-        margin-top: 18px;
-        padding: 10px 0 18px;
-    }
-
-    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-search-panel h2 {
-        font-size: 26px;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .tech-commerce-strip {
@@ -10367,22 +10200,116 @@
 }
 
 /* Technology storefront product filters */
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-launch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 46px;
+    margin: 0 0 18px;
+    padding: 0 18px 0 12px;
+    border: 1px solid #e2ebf5;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--tech-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 950;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .07);
+    cursor: pointer;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-launch span {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--tech-accent) 10%, #ffffff);
+    color: var(--tech-accent);
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-launch svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-launch:hover,
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-launch:focus-visible {
+    border-color: color-mix(in srgb, var(--tech-accent) 32%, #dbe7f5);
+    background: color-mix(in srgb, var(--tech-accent) 5%, #ffffff);
+    outline: 0;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1900;
+    background: rgba(15, 23, 42, .34);
+    opacity: 0;
+    backdrop-filter: blur(5px);
+    transition: opacity .22s ease;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-backdrop.is-open {
+    opacity: 1;
+}
+
+body.storefront-filter-drawer-open.storefront-page--technology.storefront-page--minimal-grid .tech-filter-backdrop:not([hidden]) {
+    opacity: 1;
+}
+
 .storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel {
     display: grid;
-    gap: 12px;
-    margin: 0 0 18px;
-    padding: 14px;
+    grid-template-rows: auto 1fr auto;
+    gap: 14px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1901;
+    width: min(420px, calc(100vw - 20px));
+    margin: 0;
+    padding: 16px;
     border: 1px solid #e2ebf5;
-    border-radius: 20px;
+    border-radius: 24px 0 0 24px;
     background:
         linear-gradient(135deg, rgba(255, 255, 255, .98), rgba(248, 251, 255, .92));
     box-shadow: 0 16px 42px rgba(15, 23, 42, .06);
+    overflow-y: auto;
+    transform: translateX(102%);
+    transition: transform .24s ease;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel.is-open {
+    transform: translateX(0);
+}
+
+body.storefront-filter-drawer-open.storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel:not([hidden]) {
+    transform: translateX(0);
+}
+
+body.storefront-filter-drawer-open.storefront-page--technology.storefront-page--minimal-grid .store-whatsapp-float {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(.96);
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel-head {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel-head strong {
+    flex: 1 1 auto;
     min-width: 0;
 }
 
@@ -10414,16 +10341,39 @@
     line-height: 1;
 }
 
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-close {
+    width: 38px;
+    height: 38px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid #e2ebf5;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--tech-ink);
+    cursor: pointer;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-close svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
 .storefront-page--technology.storefront-page--minimal-grid .tech-filter-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 9px;
+    display: grid;
+    align-content: start;
+    align-items: stretch;
+    gap: 12px;
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .tech-filter-group {
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 4px;
     border: 1px solid #e2ebf5;
@@ -10474,6 +10424,19 @@
     color: #334155;
 }
 
+.storefront-page--technology.storefront-page--minimal-grid .tech-filter-apply {
+    min-height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--tech-accent);
+    color: var(--brand-contrast, #ffffff);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--tech-accent) 22%, transparent);
+}
+
 .storefront-page--technology.storefront-page--minimal-grid .tech-filter-select span {
     font-size: 12px;
     font-weight: 950;
@@ -10516,7 +10479,8 @@
 @media (max-width: 760px) {
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel {
         padding: 12px;
-        border-radius: 18px;
+        border-radius: 22px 0 0 22px;
+        width: min(390px, calc(100vw - 14px));
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-panel-head {
@@ -10526,11 +10490,9 @@
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-controls {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        scroll-snap-type: x proximity;
-        scrollbar-width: none;
+        overflow: visible;
+        padding-bottom: 0;
+        scroll-snap-type: none;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-controls::-webkit-scrollbar {
@@ -10540,8 +10502,7 @@
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-group,
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-select,
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-clear {
-        flex: 0 0 auto;
-        scroll-snap-align: start;
+        scroll-snap-align: none;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .tech-filter-select select {
@@ -14321,4 +14282,94 @@ body.storefront-minimal-overlay-open .tech-custom-scrollbar {
 
 .storefront-page--technology.storefront-page--minimal-grid .minimal-product-colors--swatches .minimal-product-color-swatch {
     display: inline-block !important;
+}
+
+/* Product detail gallery: make the main image fill the stage. */
+.storefront-page--technology.storefront-page--minimal-grid .minimal-product-stage .minimal-product-image {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    filter: none !important;
+}
+
+@media (max-width: 760px) {
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-product-stage {
+        aspect-ratio: 1 / .92 !important;
+    }
+}
+
+/* Technology hero image-only state: no text overlay effect, no crop. */
+.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero.tech-hero--image-only {
+    width: min(100%, 1400px) !important;
+    margin: 0 auto !important;
+    padding: clamp(10px, 1.8vw, 22px) 0 0 !important;
+    background: transparent !important;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only {
+    display: block !important;
+    width: min(100%, 1400px) !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 1 !important;
+    align-items: initial !important;
+    justify-items: initial !important;
+    isolation: auto !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only::before,
+.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+}
+
+.storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only > img.tech-hero-backdrop {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    opacity: 1 !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    filter: none !important;
+    transform: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+}
+
+@media (max-width: 760px) {
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero.tech-hero--image-only {
+        width: 100% !important;
+        padding: 8px 0 0 !important;
+    }
+
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 0 !important;
+        aspect-ratio: 3 / 1 !important;
+        margin-inline: auto !important;
+        border-radius: 0 !important;
+    }
+
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero-media.tech-hero-showcase.tech-hero-showcase--image-only > img.tech-hero-backdrop {
+        height: 100% !important;
+        opacity: 1 !important;
+        object-fit: contain !important;
+        object-position: center center !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-hero.tech-hero--image-only {
+        padding-top: 6px !important;
+    }
 }
