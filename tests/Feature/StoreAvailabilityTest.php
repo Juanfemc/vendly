@@ -182,6 +182,7 @@ test('admin can activate an expired store subscription after validating payment'
     $this->get('/tienda-pago-validado')->assertNotFound();
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.stores.subscription.activate', $store), [
             'plan' => Store::PLAN_PREMIUM,
             'duration_days' => 30,
@@ -1120,6 +1121,7 @@ test('subdomain must be unique and cannot use reserved words', function () {
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), [
             'user_id' => $secondUser->id,
             'name' => $store->name,
@@ -1137,6 +1139,7 @@ test('subdomain must be unique and cannot use reserved words', function () {
         ->assertSessionHasErrors('subdomain');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), [
             'user_id' => $secondUser->id,
             'name' => $store->name,
@@ -1201,22 +1204,27 @@ test('custom domain must be unique and cannot use the app domain', function () {
     ];
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), $payload + ['custom_domain' => 'www.ocupado.com'])
         ->assertSessionHasErrors('custom_domain');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), $payload + ['custom_domain' => 'vendlysuite.com'])
         ->assertSessionHasErrors('custom_domain');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), $payload + ['custom_domain' => 'cliente.vendlysuite.com'])
         ->assertSessionHasErrors('custom_domain');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), $payload + ['custom_domain' => 'tienda-.com'])
         ->assertSessionHasErrors('custom_domain');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), $payload + ['custom_domain' => 'mi.-marca.com'])
         ->assertSessionHasErrors('custom_domain');
 });
@@ -1242,6 +1250,7 @@ test('admin verification stores custom domain verified timestamp', function () {
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), [
             'user_id' => $storeUser->id,
             'name' => $store->name,

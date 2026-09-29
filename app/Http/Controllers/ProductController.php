@@ -523,7 +523,7 @@ class ProductController extends Controller
         $storeProductsTotal = $this->publicProductsQuery($store)->reorder()->count();
         $allProductsQuery = $this->publicProductsQuery($store);
 
-        $allProducts = $store->isFashionStore()
+        $allProducts = $store->isFashionStore() || ! $store->isTechnologyStore()
             ? $allProductsQuery->get()
             : $allProductsQuery->take(12)->get();
         $productSearchEnabled = $this->productSearchEnabledForStore($store);

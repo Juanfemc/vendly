@@ -9193,6 +9193,10 @@ body.storefront-filter-drawer-open.storefront-page--fashion .store-whatsapp-floa
         linear-gradient(0deg, rgba(10, 10, 10, .52) 0%, rgba(10, 10, 10, .08) 42%, rgba(10, 10, 10, .12) 100%);
 }
 
+.storefront-page--fashion .fashion-hero.is-cover-only::before {
+    display: none;
+}
+
 .storefront-page--fashion .fashion-hero-copy {
     position: absolute;
     left: clamp(28px, 7vw, 92px);

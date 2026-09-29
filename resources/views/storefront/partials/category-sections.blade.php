@@ -2,11 +2,46 @@
     @php
         $renderedDefaultProductIds = collect();
         $hasDefaultProducts = false;
-        $defaultFilterProducts = collect($visibleCategorySections ?? [])
-            ->flatMap(fn ($section) => collect($section['products'] ?? []))
-            ->merge(collect($otherProducts ?? []))
-            ->unique('id')
-            ->values();
+        $defaultCatalogProducts = isset($allProducts)
+            ? collect($allProducts)
+            : collect($visibleCategorySections ?? [])
+                ->flatMap(fn ($section) => collect($section['products'] ?? []))
+                ->merge(collect($otherProducts ?? []))
+                ->unique('id')
+                ->values();
+        $defaultActiveCategories = collect($activeCategories ?? []);
+        $defaultCategoriesByName = $defaultActiveCategories->keyBy(fn ($category) => $category->name);
+        $defaultCategoryMetaForProduct = function ($product) use ($defaultCategoriesByName) {
+            $categoryName = trim((string) ($product->category ?? ''));
+
+            if ($categoryName === '') {
+                return [
+                    'slugs' => collect(['__other']),
+                    'label' => 'Otros',
+                ];
+            }
+
+            $category = $defaultCategoriesByName->get($categoryName);
+
+            if (! $category) {
+                return [
+                    'slugs' => collect([\Illuminate\Support\Str::slug($categoryName)]),
+                    'label' => $categoryName,
+                ];
+            }
+
+            $slugs = collect([$category->slug]);
+
+            if ($category->parent_id && $category->relationLoaded('parent') && $category->parent) {
+                $slugs->push($category->parent->slug);
+            }
+
+            return [
+                'slugs' => $slugs->filter()->unique()->values(),
+                'label' => $category->name,
+            ];
+        };
+        $defaultFilterProducts = $defaultCatalogProducts;
         $defaultSizeOptions = $defaultFilterProducts
             ->flatMap(fn ($product) => collect(is_array($product->sizes) ? $product->sizes : []))
             ->map(function ($size) {
@@ -23,7 +58,7 @@
         $showDefaultSizeFilter = isset($store) && $store->showsSizeFilter();
     @endphp
 
-    @if($visibleCategorySections->isNotEmpty() || $otherProducts->isNotEmpty())
+    @if($defaultCatalogProducts->isNotEmpty())
         <div class="default-filter-launch-rail">
             <button type="button" class="default-filter-launch" data-filter-drawer-open="default" aria-expanded="false">
                 <span class="default-filter-panel-icon" aria-hidden="true">
@@ -91,32 +126,15 @@
         </section>
 
         <div class="products-grid" data-default-category-grid>
-            @foreach($visibleCategorySections as $section)
-                @php
-                    $sectionCategory = $section['category'];
-                @endphp
-                @foreach($section['products'] as $product)
-                    @if(! $renderedDefaultProductIds->contains($product->id))
-                        @php
-                            $defaultProductIndex = $renderedDefaultProductIds->count();
-                            $renderedDefaultProductIds->push($product->id);
-                            $hasDefaultProducts = true;
-                            $defaultCategoryProduct = $sectionCategory->slug;
-                            $defaultProductCategoryLabel = $sectionCategory->name;
-                        @endphp
-                        @include('storefront.partials.product-card')
-                    @endif
-                @endforeach
-            @endforeach
-
-            @foreach($otherProducts as $product)
+            @foreach($defaultCatalogProducts as $product)
                 @if(! $renderedDefaultProductIds->contains($product->id))
                     @php
+                        $defaultCategoryMeta = $defaultCategoryMetaForProduct($product);
                         $defaultProductIndex = $renderedDefaultProductIds->count();
                         $renderedDefaultProductIds->push($product->id);
                         $hasDefaultProducts = true;
-                        $defaultCategoryProduct = '__other';
-                        $defaultProductCategoryLabel = 'Otros';
+                        $defaultCategoryProduct = $defaultCategoryMeta['slugs']->implode(',');
+                        $defaultProductCategoryLabel = $defaultCategoryMeta['label'];
                     @endphp
                     @include('storefront.partials.product-card')
                 @endif

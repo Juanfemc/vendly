@@ -1533,6 +1533,35 @@ body.cart-page {
         white-space: normal;
     }
 
+    .cart-page:not(.cart-page--technology):not(.cart-page--fashion):not(.cart-page--single-product-landing) .cart-item {
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+    }
+
+    .cart-page:not(.cart-page--technology):not(.cart-page--fashion):not(.cart-page--single-product-landing) .cart-item > div:nth-child(2) {
+        min-width: 0;
+    }
+
+    .cart-page:not(.cart-page--technology):not(.cart-page--fashion):not(.cart-page--single-product-landing) .cart-thumb-wrap {
+        width: 72px;
+        height: 72px;
+    }
+
+    .cart-page:not(.cart-page--technology):not(.cart-page--fashion):not(.cart-page--single-product-landing) .item-price {
+        grid-column: 2;
+        justify-self: start;
+        margin-top: -2px;
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cart-page:not(.cart-page--technology):not(.cart-page--fashion):not(.cart-page--single-product-landing) .item-actions {
+        margin-top: 10px;
+    }
+
     .cart-page--technology .cart-item {
         grid-template-columns: 72px minmax(0, 1fr);
         gap: 12px;
