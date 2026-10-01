@@ -22,6 +22,7 @@ class MetaConversionsApiService
         array $eventPayload = [],
         array $userData = [],
         bool $throwOnFailure = false,
+        string $actionSource = 'system_generated',
     ): void {
         $this->subscriptionEventSnapshot(
             (int) $store->id,
@@ -31,7 +32,8 @@ class MetaConversionsApiService
             $eventId ?? self::subscriptionEventId($store, $eventName, $customData),
             $eventTime,
             $eventPayload !== [] ? $eventPayload : self::subscriptionPayloadForStore($store),
-            $throwOnFailure
+            $throwOnFailure,
+            $actionSource
         );
     }
 
@@ -44,6 +46,7 @@ class MetaConversionsApiService
         ?int $eventTime = null,
         array $eventPayload = [],
         bool $throwOnFailure = false,
+        string $actionSource = 'system_generated',
     ): void {
         $pixelId = trim((string) config('services.meta.landing_pixel_id'));
         $accessToken = trim((string) config('services.meta.conversions_access_token'));
@@ -83,7 +86,7 @@ class MetaConversionsApiService
             'event_name' => $eventName,
             'event_time' => $eventTime ?: now()->timestamp,
             'event_id' => $eventId,
-            'action_source' => 'system_generated',
+            'action_source' => $this->normalizeActionSource($actionSource),
             'user_data' => $normalizedUserData,
             'custom_data' => array_filter(array_merge([
                 'plan' => $eventPlan,
@@ -208,6 +211,23 @@ class MetaConversionsApiService
         $version = trim((string) config('services.meta.graph_version', 'v24.0'));
 
         return preg_match('/^v[0-9]+\.[0-9]+$/', $version) ? $version : 'v24.0';
+    }
+
+    private function normalizeActionSource(string $actionSource): string
+    {
+        $actionSource = trim($actionSource);
+        $allowed = [
+            'business_messaging',
+            'chat',
+            'email',
+            'other',
+            'phone_call',
+            'physical_store',
+            'system_generated',
+            'website',
+        ];
+
+        return in_array($actionSource, $allowed, true) ? $actionSource : 'system_generated';
     }
 
     private static function snapshotEventId(int $storeId, string $eventName, string $plan, mixed $subscriptionEndsAt, array $customData): string

@@ -414,8 +414,15 @@
                 <div class="field">
                     <label for="user_name">Tu nombre</label>
                     <input id="user_name" name="user_name" value="{{ old('user_name') }}" required autocomplete="name" placeholder="Ej. Juan">
-                    <small>Asi te saludaremos dentro del panel.</small>
+                    <small>Así te saludaremos dentro del panel.</small>
                     @error('user_name')<div class="error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="field">
+                    <label for="store_name">Nombre de tu tienda <span aria-hidden="true">(opcional)</span></label>
+                    <input id="store_name" name="store_name" value="{{ old('store_name') }}" autocomplete="organization" placeholder="Ej. Mi tienda">
+                    <small>Si lo dejas vacío, la crearemos con tu nombre y podrás cambiarlo después.</small>
+                    @error('store_name')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="field">
@@ -435,14 +442,12 @@
                 <div class="field">
                     <label for="password">Contraseña</label>
                     <div class="password-field">
-                        <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="Minimo 8 caracteres">
-                        <button class="password-toggle" type="button" data-password-toggle>Mostrar</button>
+                        <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                        <button class="password-toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false">Mostrar</button>
                     </div>
                     <small>No necesitas confirmarla. Puedes verla antes de enviar.</small>
                     @error('password')<div class="error">{{ $message }}</div>@enderror
                 </div>
-
-                <input type="hidden" name="store_name" value="{{ old('store_name') }}">
 
                 @if($turnstileSiteKey)
                     <div class="turnstile-box">
@@ -476,6 +481,7 @@
 
             input.type = isHidden ? 'text' : 'password';
             button.textContent = isHidden ? 'Ocultar' : 'Mostrar';
+            button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
         });
 
         document.querySelector('.signup-form')?.addEventListener('submit', (event) => {

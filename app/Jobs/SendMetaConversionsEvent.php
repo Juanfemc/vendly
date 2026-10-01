@@ -26,6 +26,7 @@ class SendMetaConversionsEvent implements ShouldBeEncrypted, ShouldQueue
         public array $userData = [],
         public ?string $eventId = null,
         public ?int $eventTime = null,
+        public string $actionSource = 'system_generated',
     ) {
     }
 
@@ -47,7 +48,8 @@ class SendMetaConversionsEvent implements ShouldBeEncrypted, ShouldQueue
                 $this->eventId,
                 $this->eventTime,
                 $this->eventPayload,
-                true
+                true,
+                $this->actionSource
             );
 
             return;
@@ -62,7 +64,8 @@ class SendMetaConversionsEvent implements ShouldBeEncrypted, ShouldQueue
             $this->eventTime,
             $this->eventPayload,
             $this->userData,
-            true
+            true,
+            $this->actionSource
         );
     }
 

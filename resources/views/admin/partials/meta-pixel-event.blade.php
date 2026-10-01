@@ -38,7 +38,9 @@
             }
 
             var track = function () {
-                fbq(isStandardEvent ? 'track' : 'trackCustom', eventName, payload || {});
+                var options = eventKey ? { eventID: eventKey } : {};
+
+                fbq(isStandardEvent ? 'track' : 'trackCustom', eventName, payload || {}, options);
             };
 
             if (! eventKey) {

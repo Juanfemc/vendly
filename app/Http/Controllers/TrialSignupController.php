@@ -9,6 +9,7 @@ use App\Models\TrialSignupClaim;
 use App\Models\User;
 use App\Services\AdminUpdateService;
 use App\Services\CustomerFollowupScheduler;
+use App\Services\MetaConversionsApiService;
 use App\Services\StoreSlugService;
 use App\Services\StoreSubdomainService;
 use App\Services\TrialPhoneHashService;
@@ -42,7 +43,7 @@ class TrialSignupController extends Controller
     {
         return view('auth.trial-signup', [
             'trialDays' => Store::TRIAL_DAYS,
-            'turnstileSiteKey' => $this->turnstile->siteKey(),
+            'turnstileSiteKey' => $this->turnstile->isReady() ? $this->turnstile->siteKey() : null,
             'requiresTurnstile' => $this->turnstile->isRequired(),
             'turnstileReady' => $this->turnstile->isReady(),
         ]);
@@ -127,14 +128,61 @@ class TrialSignupController extends Controller
 
         Auth::login($user);
 
+        $metaEvents = [
+            VendlyMetaPixelEvents::completeRegistration($store),
+            VendlyMetaPixelEvents::storeCreated($store),
+            VendlyMetaPixelEvents::startTrial($store),
+        ];
+
+        $this->dispatchSignupMetaEventsAfterResponse($store, $metaEvents, $request);
+
         return redirect()
             ->route('admin.store.onboarding')
-            ->with('meta_pixel_events', [
-                VendlyMetaPixelEvents::completeRegistration($store),
-                VendlyMetaPixelEvents::storeCreated($store),
-                VendlyMetaPixelEvents::startTrial($store),
-            ])
+            ->with('meta_pixel_events', $metaEvents)
             ->with('success', 'Tu tienda ya está creada. Verifica tu WhatsApp para completar la activación.');
+    }
+
+    private function dispatchSignupMetaEventsAfterResponse(Store $store, array $metaEvents, TrialSignupRequest $request): void
+    {
+        $eventTime = now()->timestamp;
+        $eventPayload = MetaConversionsApiService::subscriptionPayloadForStore($store);
+        $userData = array_filter([
+            ...MetaConversionsApiService::userDataForStore($store),
+            'client_ip_address' => $request->ip(),
+            'client_user_agent' => $request->userAgent(),
+            'fbp' => $request->cookie('_fbp'),
+            'fbc' => $request->cookie('_fbc'),
+        ], fn ($value) => filled($value));
+
+        app()->terminating(function () use ($store, $metaEvents, $eventTime, $eventPayload, $userData) {
+            $this->dispatchSignupMetaEvents($store, $metaEvents, $eventTime, $eventPayload, $userData);
+        });
+    }
+
+    private function dispatchSignupMetaEvents(Store $store, array $metaEvents, int $eventTime, array $eventPayload, array $userData): void
+    {
+        $metaConversions = app(MetaConversionsApiService::class);
+
+        foreach ($metaEvents as $metaEvent) {
+            $eventName = (string) ($metaEvent['event'] ?? '');
+            $eventKey = (string) ($metaEvent['eventKey'] ?? '');
+
+            if ($eventName === '' || $eventKey === '') {
+                continue;
+            }
+
+            $metaConversions->subscriptionEventSnapshot(
+                $store->id,
+                $eventName,
+                $userData,
+                $metaEvent['payload'] ?? [],
+                $eventKey,
+                $eventTime,
+                $eventPayload,
+                false,
+                'website'
+            );
+        }
     }
 
     private function trialPhoneHash(string $phone): string

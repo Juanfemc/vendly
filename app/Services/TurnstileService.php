@@ -61,6 +61,6 @@ class TurnstileService
 
     private function shouldVerify(): bool
     {
-        return $this->isRequired() || filled(config('services.turnstile.site_key'));
+        return $this->isRequired() || $this->isReady();
     }
 }

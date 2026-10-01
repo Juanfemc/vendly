@@ -3756,6 +3756,226 @@
                 height: 22px;
             }
         }
+
+        /* Responsive guardrails: keep admin pages inside the viewport and scroll only the content that needs it. */
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden !important;
+        }
+
+        .container,
+        .main,
+        .header,
+        .admin-topbar,
+        .card,
+        .list-card,
+        .resource-card,
+        .panel-empty,
+        .vendly-table-card,
+        .products-console,
+        .products-toolbar,
+        .products-owner-panel,
+        .catalog-settings-shell,
+        .catalog-settings-form,
+        .catalog-settings-card,
+        .product-editor-page,
+        .product-editor-main,
+        .product-editor-card,
+        .onboarding-card {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .main {
+            width: 100%;
+            overflow-x: hidden !important;
+        }
+
+        .header,
+        .admin-topbar,
+        .resource-card__header,
+        .products-console-head,
+        .products-actions,
+        .products-toolbar-actions,
+        .catalog-card-head,
+        .catalog-settings-hero,
+        .payment-method,
+        .payment-method__main {
+            min-width: 0 !important;
+        }
+
+        .header > *,
+        .admin-topbar > *,
+        .resource-card__main,
+        .resource-card__header > *,
+        .products-console-title,
+        .catalog-card-title,
+        .catalog-card-title > div,
+        .payment-method__main,
+        .notification-menu {
+            min-width: 0 !important;
+        }
+
+        .header h2,
+        .header p,
+        .vendly-page-subtitle,
+        .resource-card__title,
+        .resource-card__subtitle,
+        .resource-card__description,
+        .products-console-title h1,
+        .products-console-title p,
+        .catalog-card-title h3,
+        .catalog-card-title p {
+            overflow-wrap: anywhere;
+        }
+
+        .vendly-table-card {
+            overflow: hidden !important;
+        }
+
+        .vendly-table-scroll,
+        .dashboard-users-table-wrap,
+        .dashboard-subscription-table-wrap {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto !important;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+        }
+
+        .vendly-data-table,
+        .dashboard-users-table,
+        .dashboard-subscription-table {
+            max-width: none !important;
+        }
+
+        .vendly-data-table th,
+        .vendly-data-table td {
+            white-space: nowrap;
+        }
+
+        .vendly-data-table td small,
+        .vendly-order-detail,
+        .vendly-order-products {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        @media (min-width: 901px) {
+            .main {
+                max-width: calc(100vw - 260px) !important;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .mobile-topbar {
+                display: flex !important;
+            }
+
+            .container {
+                width: 100% !important;
+                max-width: 100vw !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                overflow-x: hidden !important;
+            }
+
+            .main {
+                width: 100% !important;
+                max-width: 100vw !important;
+                padding: 14px !important;
+                padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+
+            .admin-topbar {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .notification-menu,
+            .notification-toggle,
+            .admin-topbar-store {
+                max-width: 100%;
+            }
+
+            .notification-toggle span:not(.notification-badge),
+            .admin-topbar-store span {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .header,
+            .products-console-head,
+            .products-actions,
+            .catalog-settings-hero,
+            .catalog-card-head,
+            .products-owner-panel,
+            .payment-method {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .btn,
+            .btn-secondary,
+            .products-action,
+            .categories-action,
+            .product-editor-submit,
+            .catalog-link-action,
+            .payment-method__action {
+                width: 100%;
+                max-width: 100%;
+                justify-content: center;
+                white-space: normal !important;
+            }
+
+            .vendly-data-table {
+                min-width: 720px !important;
+            }
+
+            .admin-pagination {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .admin-pagination .pagination {
+                min-width: max-content;
+                justify-content: flex-start !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            .card,
+            .list-card,
+            .resource-card,
+            .panel-empty,
+            .catalog-settings-card,
+            .product-editor-card,
+            .onboarding-card {
+                padding-left: 14px !important;
+                padding-right: 14px !important;
+            }
+
+            .catalog-settings-grid,
+            .catalog-settings-grid--three,
+            .catalog-color-grid,
+            .catalog-palette-grid,
+            .catalog-url-row,
+            .catalog-media-layout,
+            .products-toolbar {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+        }
     </style>
 </head>
 

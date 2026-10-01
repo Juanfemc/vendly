@@ -43,7 +43,32 @@ test('trial signup does not ask for store type', function () {
     $this->get(route('trial-signup.create'))
         ->assertOk()
         ->assertDontSee('Tipo de negocio')
-        ->assertDontSee('name="business_type"', false);
+        ->assertDontSee('name="business_type"', false)
+        ->assertSee('name="store_name"', false)
+        ->assertSee('Nombre de tu tienda');
+});
+
+test('optional turnstile with incomplete credentials does not block trial signup', function () {
+    config([
+        'services.turnstile.required' => false,
+        'services.turnstile.site_key' => 'site-key',
+        'services.turnstile.secret_key' => '',
+    ]);
+
+    $this->get(route('trial-signup.create'))
+        ->assertOk()
+        ->assertDontSee('data-sitekey', false);
+
+    $this->post(route('trial-signup.store'), [
+        'user_name' => 'Cliente Sin Turnstile',
+        'user_email' => 'cliente-sin-turnstile@example.com',
+        'password' => 'password',
+        'store_name' => 'Tienda Sin Turnstile',
+        'whatsapp' => '573001112244',
+        'whatsapp_consent' => '1',
+    ])->assertRedirect(route('admin.store.onboarding'));
+
+    $this->assertDatabaseHas('users', ['email' => 'cliente-sin-turnstile@example.com']);
 });
 
 test('trial signup shows controlled warning when required turnstile is not ready', function () {
@@ -92,6 +117,64 @@ test('trial signup always creates a normal store', function () {
         ->assertSee('Información básica')
         ->assertDontSee('Tipo de negocio')
         ->assertDontSee('name="business_type"', false);
+});
+
+test('trial signup sends server side meta events with website action source', function () {
+    config([
+        'services.meta.landing_pixel_id' => '123456789012345',
+        'services.meta.conversions_access_token' => 'test-token',
+        'services.meta.graph_version' => 'v24.0',
+        'services.meta.test_event_code' => null,
+    ]);
+
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['events_received' => 1], 200),
+    ]);
+
+    $this->withCookie('_fbp', 'fb.1.1234567890.1234567890')
+        ->withCookie('_fbc', 'fb.1.1234567890.testclid')
+        ->post(route('trial-signup.store'), [
+            'user_name' => 'Cliente Meta',
+            'user_email' => 'cliente-meta@example.com',
+            'password' => 'password',
+            'store_name' => 'Tienda Meta',
+            'whatsapp' => '573001112245',
+            'whatsapp_consent' => '1',
+        ])->assertRedirect(route('admin.store.onboarding'))
+        ->assertSessionHas('meta_pixel_events');
+
+    $store = Store::where('name', 'Tienda Meta')->firstOrFail();
+
+    Http::assertSentCount(3);
+    Http::assertSent(function ($request) use ($store) {
+        $event = $request->data()['data'][0] ?? [];
+
+        return ($event['event_name'] ?? null) === 'CompleteRegistration'
+            && ($event['event_id'] ?? null) === 'complete-registration-'.$store->id
+            && ($event['action_source'] ?? null) === 'website'
+            && ($event['user_data']['fbp'] ?? null) === 'fb.1.1234567890.1234567890'
+            && ($event['user_data']['fbc'] ?? null) === 'fb.1.1234567890.testclid';
+    });
+    Http::assertSent(fn ($request) => ($request->data()['data'][0]['event_name'] ?? null) === 'StoreCreated'
+        && ($request->data()['data'][0]['event_id'] ?? null) === 'store-created-'.$store->id
+        && ($request->data()['data'][0]['action_source'] ?? null) === 'website');
+    Http::assertSent(fn ($request) => ($request->data()['data'][0]['event_name'] ?? null) === 'StartTrial'
+        && ($request->data()['data'][0]['event_id'] ?? null) === 'start-trial-'.$store->id
+        && ($request->data()['data'][0]['action_source'] ?? null) === 'website');
+});
+
+test('admin meta pixel events include event ids for browser and server deduplication', function () {
+    config(['services.meta.landing_pixel_id' => '123456789012345']);
+
+    $html = view('admin.partials.meta-pixel-event', [
+        'event' => 'CompleteRegistration',
+        'eventKey' => 'complete-registration-123',
+        'payload' => ['plan' => Store::PLAN_PREMIUM],
+    ])->render();
+
+    expect($html)
+        ->toContain('eventID')
+        ->toContain('complete-registration-123');
 });
 
 test('trial signup queues admin and customer whatsapp templates when configured', function () {
