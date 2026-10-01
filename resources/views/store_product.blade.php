@@ -605,6 +605,23 @@
     @if($storefrontVariant === 'technology')
         <script src="{{ asset('js/minimal-shop.js') }}?v={{ filemtime(public_path('js/minimal-shop.js')) }}" defer></script>
     @endif
+    @include('storefront.partials.meta-pixel-event', [
+        'event' => 'ViewContent',
+        'payload' => array_filter([
+            'content_ids' => [(string) $product->id],
+            'contents' => [[
+                'id' => (string) $product->id,
+                'quantity' => 1,
+                'item_price' => (float) $productDisplayPrice,
+            ]],
+            'content_name' => $product->name,
+            'content_type' => 'product',
+            'content_category' => $product->category,
+            'value' => (float) $productDisplayPrice,
+            'currency' => 'COP',
+        ], fn ($value) => $value !== null && $value !== ''),
+    ])
+
     <script>
         (() => {
             const carousel = document.querySelector('[data-product-carousel]');

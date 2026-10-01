@@ -17,6 +17,25 @@
         fbq('track', 'PageView');
 
         document.addEventListener('DOMContentLoaded', function () {
+            var standardEvents = [
+                'AddPaymentInfo',
+                'CompleteRegistration',
+                'Contact',
+                'Lead',
+                'PageView',
+                'Schedule',
+                'StartTrial',
+                'Subscribe',
+                'ViewContent'
+            ];
+            var trackVendlyEvent = function (eventName, payload) {
+                if (! eventName || typeof window.fbq !== 'function') {
+                    return;
+                }
+
+                fbq(standardEvents.indexOf(eventName) !== -1 ? 'track' : 'trackCustom', eventName, payload || {});
+            };
+
             document.addEventListener('click', function (event) {
                 var target = event.target.closest('a, button');
 
@@ -37,7 +56,11 @@
                 }
 
                 if (eventName) {
-                    fbq('track', eventName);
+                    trackVendlyEvent(eventName);
+
+                    if (eventName === 'Contact' && (href.indexOf('wa.me') !== -1 || href.indexOf('whatsapp') !== -1 || label.indexOf('whatsapp') !== -1)) {
+                        trackVendlyEvent('PaymentIntent', { source: 'whatsapp' });
+                    }
 
                     if (
                         target.tagName === 'A'

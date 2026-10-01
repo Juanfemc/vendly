@@ -125,6 +125,10 @@
             <button type="button" class="default-filter-apply" data-filter-drawer-close="default">Ver productos</button>
         </section>
 
+        <div class="section-heading default-category-heading">
+            <h2>Todos los productos</h2>
+        </div>
+
         <div class="products-grid" data-default-category-grid>
             @foreach($defaultCatalogProducts as $product)
                 @if(! $renderedDefaultProductIds->contains($product->id))

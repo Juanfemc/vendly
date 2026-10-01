@@ -1315,6 +1315,11 @@
 
                 updateCartBadge(data.cart_count || 0);
                 renderCartDrawer(data);
+
+                if (data.meta_event && typeof window.vendlyMetaPixelTrack === 'function') {
+                    window.vendlyMetaPixelTrack(data.meta_event.event, data.meta_event.payload || {});
+                }
+
                 if (cartDrawerToggle) {
                     cartDrawerToggle.checked = true;
                     syncStoreCartDrawer();

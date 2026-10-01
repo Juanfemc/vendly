@@ -676,27 +676,24 @@
 
 <div class="products-console">
     <div class="products-console-head">
-        <nav class="products-tabs" aria-label="Gestion de catálogo">
-            <a href="{{ url()->current() }}" class="products-tab is-active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-9 5-9-5"></path><path d="m21 12-9 5-9-5"></path><path d="m12 3 9 5-9 5-9-5 9-5Z"></path></svg>
-                Productos
-            </a>
-            @if($canManageCategories)
-                <a href="{{ auth()->user()->isAdmin() && ! empty($selectedStore) ? route('admin.stores.categories.index', $selectedStore) : route('admin.categories.index') }}" class="products-tab">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
-                    Categorías
-                </a>
-            @endif
-        </nav>
+        <div class="products-console-title">
+            <h1>Productos</h1>
+            <p>Gestiona los productos de tu tienda.</p>
+        </div>
 
         <div class="products-actions">
             <a href="{{ route('admin.products.import') }}" class="products-action products-action--secondary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
                 Importar
             </a>
+            @if($canManageCategories)
+                <a href="{{ auth()->user()->isAdmin() && ! empty($selectedStore) ? route('admin.stores.categories.index', $selectedStore) : route('admin.categories.index') }}" class="products-action products-action--secondary">
+                    Categorías
+                </a>
+            @endif
             <a href="/admin/products/create" class="products-action">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-                Nuevo
+                Agregar producto
             </a>
         </div>
     </div>
@@ -794,49 +791,72 @@
                 @endif
             </div>
         @else
-            <div class="products-grid">
-                @foreach($products as $product)
-                    <article class="product-card">
-                        <a href="{{ route('admin.products.edit', $product) }}" class="product-card-media" aria-label="Editar {{ $product->name }}">
-                            @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
-                            @else
-                                <div class="product-card-placeholder">
-                                    <span>{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
-                                </div>
-                            @endif
-                        </a>
-
-                        <div class="product-card-body">
-                            <p class="product-card-kicker">{{ $product->category ?: 'Sin categoría' }}</p>
-                            <h3 class="product-card-title">
-                                <a href="{{ route('admin.products.edit', $product) }}">{{ $product->name }}</a>
-                            </h3>
-                            <div class="product-card-meta">
-                                @if($product->material)
-                                    <span>Material: {{ $product->material }}</span>
-                                @endif
-                                <span>Inventario: {{ ($product->store?->isReservationStore() ?? false) ? 'No aplica' : ($product->stockLabel() ?? 'Ilimitado') }}</span>
+            <div class="vendly-table-card products-table-card">
+                <div class="vendly-table-scroll">
+                    <table class="vendly-data-table products-data-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Inventario</th>
+                                <th>Estado</th>
                                 @if(auth()->user()->isAdmin())
-                                    <span>Tienda: {{ $product->store?->name ?? 'Sin tienda' }}</span>
+                                    <th>Tienda</th>
                                 @endif
-                            </div>
-                            <strong class="product-card-price">$ {{ number_format((float) $product->price, 0, ',', '.') }}</strong>
-                        </div>
-
-                        <div class="product-card-actions">
-                            <a href="{{ route('admin.products.edit', $product) }}" class="product-card-action product-card-action--edit">Editar</a>
-                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="product-card-delete" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar este producto? Esta acción no se puede deshacer.">
-                                @csrf
-                                @method('DELETE')
-                                <button class="product-card-action" type="submit" aria-label="Eliminar {{ $product->name }}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-                                    <span>Eliminar</span>
-                                </button>
-                            </form>
-                        </div>
-                    </article>
-                @endforeach
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($products as $product)
+                                @php
+                                    $isSoldOut = (bool) ($product->is_sold_out ?? false);
+                                    $inventoryLabel = ($product->store?->isReservationStore() ?? false) ? 'No aplica' : ($product->stockLabel() ?? 'Ilimitado');
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('admin.products.edit', $product) }}" class="vendly-product-cell">
+                                            <span class="vendly-product-thumb">
+                                                @if($product->image)
+                                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                                                @else
+                                                    <span>{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
+                                                @endif
+                                            </span>
+                                            <span>
+                                                <strong>{{ $product->name }}</strong>
+                                                @if($product->material)
+                                                    <small>Material: {{ $product->material }}</small>
+                                                @endif
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td>{{ $product->category ?: 'Sin categoría' }}</td>
+                                    <td><strong>$ {{ number_format((float) $product->price, 0, ',', '.') }}</strong></td>
+                                    <td>{{ $inventoryLabel }}</td>
+                                    <td>
+                                        <span @class(['vendly-status', 'is-danger' => $isSoldOut, 'is-success' => ! $isSoldOut])>
+                                            {{ $isSoldOut ? 'Agotado' : 'Disponible' }}
+                                        </span>
+                                    </td>
+                                    @if(auth()->user()->isAdmin())
+                                        <td>{{ $product->store?->name ?? 'Sin tienda' }}</td>
+                                    @endif
+                                    <td>
+                                        <div class="vendly-row-actions">
+                                            <a href="{{ route('admin.products.edit', $product) }}" aria-label="Editar {{ $product->name }}">Editar</a>
+                                            <form method="POST" action="{{ route('admin.products.destroy', $product) }}" data-confirm-delete data-confirm-message="¿Seguro que quieres eliminar este producto? Esta acción no se puede deshacer.">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" aria-label="Eliminar {{ $product->name }}">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
 

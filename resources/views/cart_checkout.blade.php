@@ -88,6 +88,31 @@
     $technologyCheckoutPaymentCopy = $hasPaymentOptions
         ? 'Confirma tus datos, elige el envío y paga con ' . $availablePaymentNames->join(', ', ' o ') . '.'
         : 'Confirma tus datos y revisa la tienda antes de finalizar: no hay métodos de pago activos.';
+    $metaCartContents = collect($cart)
+        ->map(function (array $item) {
+            $productId = (string) ($item['product_id'] ?? '');
+
+            return [
+                'id' => $productId,
+                'quantity' => (int) ($item['quantity'] ?? 1),
+                'item_price' => (float) ($item['price'] ?? 0),
+            ];
+        })
+        ->filter(fn (array $item) => $item['id'] !== '')
+        ->values();
+    $metaCheckoutPayload = [
+        'content_ids' => $metaCartContents->pluck('id')->values()->all(),
+        'contents' => $metaCartContents->all(),
+        'content_type' => 'product',
+        'num_items' => (int) $cartCount,
+        'value' => (float) $checkoutTotal,
+        'currency' => 'COP',
+    ];
+    $metaCheckoutEventKey = 'checkout-' . sha1(json_encode([
+        'store_id' => $store?->id,
+        'contents' => $metaCheckoutPayload['contents'],
+        'value' => $metaCheckoutPayload['value'],
+    ]));
 @endphp
 <body
     class="cart-page {{ $isTechnologyStore && ! $isSingleProductLandingCheckout ? 'cart-page--technology storefront-page--technology storefront-page--minimal-grid' : '' }} {{ $isFashionStore && ! $isSingleProductLandingCheckout ? 'storefront-page storefront-page--fashion cart-page--fashion' : '' }} {{ $isSingleProductLandingCheckout ? 'cart-page--single-product-landing' : '' }}"
@@ -618,6 +643,17 @@
     @endif
 
     <div class="cart-feedback" id="cartFeedback" aria-live="polite"></div>
+
+    @if(! empty($cart))
+        @include('storefront.partials.meta-pixel-event', [
+            'event' => 'InitiateCheckout',
+            'payload' => $metaCheckoutPayload,
+            'eventKey' => $metaCheckoutEventKey,
+        ])
+        <script>
+            window.vendlyCheckoutMetaPixelPayload = @js($metaCheckoutPayload);
+        </script>
+    @endif
 
     <script src="{{ asset('js/cart-checkout.js') }}?v={{ filemtime(public_path('js/cart-checkout.js')) }}" defer></script>
 </body>

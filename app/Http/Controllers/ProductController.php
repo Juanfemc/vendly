@@ -13,6 +13,7 @@ use App\Services\ProductFileService;
 use App\Services\StoreSubdomainService;
 use App\Services\StorefrontUrlService;
 use App\Services\StoreVisitService;
+use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -134,6 +135,7 @@ class ProductController extends Controller
                 ->with('error', 'Crea la categoría en la sección Categorías antes de asignarla a un producto.');
         }
 
+        $isFirstProduct = ! $store->products()->exists();
         $primaryImage = $this->productFileService->storeImage($request, $store);
         $galleryImages = $store->allowsProductGallery()
             ? $this->productFileService->storeImages($request)
@@ -161,7 +163,20 @@ class ProductController extends Controller
             route('admin.products.edit', $product)
         );
 
-        return redirect('/admin/products')->with('success', 'Producto guardado.');
+        $metaEvents = [];
+        $store = $store->refresh();
+
+        if (VendlyMetaPixelEvents::shouldTrackForUser($user, $store)) {
+            if ($isFirstProduct) {
+                $metaEvents[] = VendlyMetaPixelEvents::firstProductCreated($store);
+            }
+
+            $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
+        }
+
+        return redirect('/admin/products')
+            ->with('meta_pixel_events', $metaEvents)
+            ->with('success', 'Producto guardado.');
     }
 
     public function edit(Product $product)
@@ -506,7 +521,7 @@ class ProductController extends Controller
             ->take(5)
             ->get();
 
-        $homeProductPageSize = $store->isTechnologyStore() ? 6 : 7;
+        $homeProductPageSize = 12;
         $customBadgeFilters = $this->customBadgeFilters($store);
         $selectedHomeCategory = $store->isTechnologyStore()
             ? $activeCategories->firstWhere('slug', request('categoria'))
@@ -615,7 +630,8 @@ class ProductController extends Controller
             $query
                 ->where('name', 'like', $like)
                 ->orWhere('category', 'like', $like)
-                ->orWhere('material', 'like', $like);
+                ->orWhere('material', 'like', $like)
+                ->orWhere('description', 'like', $like);
         });
     }
 

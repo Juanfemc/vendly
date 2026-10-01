@@ -19,10 +19,414 @@
             --vendly-brand-contrast: #ffffff;
         }
 
+        /* Vendly Suite admin refresh: visual layer only, existing flows preserved. */
+        :root {
+            --admin-bg: #f3f7fb;
+            --admin-surface: #ffffff;
+            --admin-surface-soft: #f8fafc;
+            --admin-line: #dfe7ef;
+            --admin-text: #07142f;
+            --admin-muted: #61708a;
+            --admin-orange: #ff6a00;
+            --admin-orange-dark: #e85d00;
+            --admin-orange-soft: #fff0e6;
+            --admin-shadow: 0 16px 40px rgba(8, 20, 47, .07);
+            --admin-radius: 12px;
+        }
+
+        body {
+            background: var(--admin-bg) !important;
+            color: var(--admin-text);
+        }
+
+        .container {
+            grid-template-columns: 248px minmax(0, 1fr);
+            gap: 0;
+            background: var(--admin-bg);
+        }
+
+        .sidebar {
+            width: 248px;
+            padding: 22px 14px !important;
+            background: rgba(255, 255, 255, .96) !important;
+            border-right: 1px solid var(--admin-line) !important;
+            box-shadow: 10px 0 34px rgba(8, 20, 47, .035);
+        }
+
+        .sidebar-brand-title,
+        .sidebar-store-text strong,
+        .sidebar-plan-text strong {
+            color: var(--admin-text) !important;
+        }
+
+        .sidebar-brand-subtitle,
+        .sidebar-store-text span,
+        .sidebar-plan-text span {
+            color: var(--admin-muted) !important;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .sidebar-notification-link,
+        .sidebar-store-card,
+        .sidebar-plan-card {
+            border: 1px solid var(--admin-line) !important;
+            background: var(--admin-surface) !important;
+            color: var(--admin-text) !important;
+            box-shadow: 0 10px 22px rgba(8, 20, 47, .045);
+        }
+
+        .sidebar-nav {
+            scrollbar-color: rgba(255, 106, 0, .65) rgba(8, 20, 47, .06);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: rgba(8, 20, 47, .06);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 106, 0, .65);
+        }
+
+        .sidebar-section {
+            border-top-color: #eef2f7 !important;
+        }
+
+        .sidebar-section-label {
+            color: #94a3b8 !important;
+            letter-spacing: .08em;
+        }
+
+        .sidebar-nav-link,
+        .sidebar-menu-group summary,
+        .sidebar .sidebar-submenu a {
+            color: var(--admin-text) !important;
+            border-radius: var(--admin-radius);
+        }
+
+        .sidebar-nav-link:hover,
+        .sidebar-menu-group summary:hover,
+        .sidebar .sidebar-submenu a:hover,
+        .sidebar-store-card:hover,
+        .sidebar-plan-card:hover {
+            background: var(--admin-orange-soft) !important;
+            color: var(--admin-orange) !important;
+            transform: none !important;
+        }
+
+        .sidebar-nav-link.is-active,
+        .sidebar-menu-group[open] summary,
+        .sidebar .sidebar-submenu a.is-active {
+            background: var(--admin-orange-soft) !important;
+            color: var(--admin-orange) !important;
+            box-shadow: inset 3px 0 0 var(--admin-orange) !important;
+        }
+
+        .sidebar-nav-icon {
+            color: currentColor !important;
+        }
+
+        .sidebar-submenu {
+            border-left-color: #edf2f7 !important;
+        }
+
+        .sidebar-plan-icon {
+            background: var(--admin-orange) !important;
+            color: #ffffff !important;
+        }
+
+        .sidebar-plan-mini,
+        .notification-badge {
+            background: var(--admin-orange) !important;
+            color: #ffffff !important;
+        }
+
+        .sidebar-logout-button {
+            color: var(--admin-muted) !important;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-logout-button:hover {
+            background: #fff1f1 !important;
+            color: #dc2626 !important;
+        }
+
+        .sidebar-notification-dot {
+            background: var(--admin-orange) !important;
+            box-shadow: 0 0 0 3px #ffffff !important;
+        }
+
+        .main {
+            padding: clamp(18px, 2.4vw, 28px) !important;
+        }
+
+        .admin-topbar {
+            margin-bottom: 18px;
+            padding: 10px;
+            border: 1px solid var(--admin-line);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, .86);
+            box-shadow: 0 10px 26px rgba(8, 20, 47, .045);
+        }
+
+        .notification-toggle,
+        .notification-dropdown,
+        .card,
+        .list-card,
+        .resource-card,
+        .panel-empty,
+        .dashboard-welcome-card,
+        .dashboard-progress-card,
+        .dashboard-products-panel,
+        .product-editor-card,
+        .product-editor-preview-panel,
+        .products-toolbar,
+        .products-summary-card,
+        .products-grid-card,
+        .categories-console-card,
+        .categories-form-card,
+        .categories-table-card,
+        .catalog-settings-card,
+        .catalog-url-card,
+        .payment-method,
+        .payments-panel__notice,
+        .payment-method__action,
+        .template-card,
+        .coupon-card,
+        .landing-editor-card,
+        .store-landing-card {
+            border: 1px solid var(--admin-line) !important;
+            border-radius: var(--admin-radius) !important;
+            background: var(--admin-surface) !important;
+            box-shadow: var(--admin-shadow) !important;
+        }
+
+        .header {
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .header h2,
+        .products-console-title h1,
+        .categories-console-title h1,
+        .product-editor-hero h2,
+        .catalog-settings-title h2,
+        .payments-panel__title,
+        .payment-method__title {
+            color: var(--admin-text) !important;
+            font-size: clamp(28px, 3.4vw, 42px) !important;
+            letter-spacing: -.02em;
+        }
+
+        .btn,
+        .products-action,
+        .categories-action,
+        .product-editor-submit,
+        .onboarding-actions .btn {
+            background: var(--admin-orange) !important;
+            border-color: var(--admin-orange) !important;
+            color: #ffffff !important;
+            border-radius: var(--admin-radius) !important;
+            box-shadow: 0 12px 24px rgba(255, 106, 0, .22) !important;
+        }
+
+        .btn:hover,
+        .products-action:hover,
+        .categories-action:hover,
+        .product-editor-submit:hover {
+            background: var(--admin-orange-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary,
+        .products-action--secondary,
+        .categories-action--secondary,
+        .product-editor-actions .btn-secondary {
+            background: #ffffff !important;
+            border-color: var(--admin-line) !important;
+            color: var(--admin-text) !important;
+            box-shadow: 0 10px 22px rgba(8, 20, 47, .06) !important;
+        }
+
+        .btn-danger {
+            background: #dc2626 !important;
+            border-color: #dc2626 !important;
+            color: #ffffff !important;
+            box-shadow: 0 12px 24px rgba(220, 38, 38, .18) !important;
+        }
+
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+        select,
+        textarea,
+        .products-search-field input {
+            border: 1px solid #d8e2ec !important;
+            border-radius: var(--admin-radius) !important;
+            background: #ffffff !important;
+            color: var(--admin-text) !important;
+            box-shadow: none !important;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus,
+        .products-search-field input:focus {
+            outline: none !important;
+            border-color: var(--admin-orange) !important;
+            box-shadow: 0 0 0 4px rgba(255, 106, 0, .13) !important;
+        }
+
+        table,
+        .dashboard-subscription-table,
+        .products-table,
+        .categories-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        thead th,
+        .products-table th,
+        .categories-table th {
+            background: #f4f7fb !important;
+            color: #526078 !important;
+            font-weight: 800 !important;
+        }
+
+        tbody tr,
+        .products-table tr,
+        .categories-table tr {
+            border-color: #edf2f7 !important;
+        }
+
+        .resource-badge--active,
+        .resource-badge--success,
+        .products-status--available,
+        .categories-status--active {
+            border-color: #bbf7d0 !important;
+            background: #dcfce7 !important;
+            color: #166534 !important;
+        }
+
+        .resource-badge--warning,
+        .products-status--warning {
+            border-color: #fed7aa !important;
+            background: #fff7ed !important;
+            color: #c2410c !important;
+        }
+
+        .resource-badge--danger,
+        .resource-badge--inactive,
+        .products-status--soldout,
+        .categories-status--inactive {
+            border-color: #fecaca !important;
+            background: #fee2e2 !important;
+            color: #991b1b !important;
+        }
+
+        .products-tab.is-active,
+        .categories-tab.is-active,
+        .dashboard-segment.is-active,
+        .dashboard-segment:hover {
+            background: var(--admin-orange-soft) !important;
+            color: var(--admin-orange) !important;
+            box-shadow: inset 0 0 0 1px rgba(255, 106, 0, .38) !important;
+        }
+
+        .products-tab:hover,
+        .categories-tab:hover {
+            color: var(--admin-orange) !important;
+        }
+
+        .products-search-icon,
+        .categories-search-icon,
+        .dashboard-kicker,
+        .product-editor-preview-panel__head span,
+        .payments-panel__eyebrow,
+        .catalog-settings-back,
+        .catalog-link-action,
+        .catalog-count-badge {
+            color: var(--admin-orange) !important;
+        }
+
+        .catalog-settings-title p,
+        .catalog-card-title p,
+        .payments-panel__subtitle,
+        .payment-method__copy,
+        .payment-method__action-copy {
+            color: var(--admin-muted) !important;
+        }
+
+        .catalog-card-icon,
+        .catalog-social-icon,
+        .payments-panel__notice-icon,
+        .payment-method__icon,
+        .product-editor-card__icon {
+            background: var(--admin-orange-soft) !important;
+            color: var(--admin-orange) !important;
+        }
+
+        .catalog-plan-pill,
+        .catalog-pro-pill,
+        .payment-status,
+        .product-editor-preview-badges span {
+            background: var(--admin-orange-soft) !important;
+            color: var(--admin-orange) !important;
+            border: 1px solid rgba(255, 106, 0, .24) !important;
+        }
+
+        .catalog-settings-back:hover {
+            background: var(--admin-orange-soft) !important;
+        }
+
+        .dashboard-action-card--primary,
+        .dashboard-stat-card--sales {
+            background: linear-gradient(135deg, var(--admin-orange), #ff8a33) !important;
+            border-color: rgba(255, 106, 0, .42) !important;
+        }
+
+        .dashboard-stat-card--sales .dashboard-stat-value,
+        .dashboard-stat-card--sales .dashboard-stat-label,
+        .dashboard-stat-card--sales .dashboard-stat-note {
+            color: #ffffff !important;
+        }
+
+        .dashboard-progress-track span {
+            background: linear-gradient(90deg, var(--admin-orange), #ff8a33) !important;
+        }
+
+        .admin-mobile-bottom-nav {
+            border-top: 1px solid var(--admin-line) !important;
+            background: rgba(255, 255, 255, .96) !important;
+        }
+
+        .admin-mobile-bottom-nav a,
+        .admin-mobile-bottom-nav button {
+            color: var(--admin-muted) !important;
+        }
+
+        .admin-mobile-bottom-nav .is-active {
+            color: var(--admin-orange) !important;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                background: #ffffff !important;
+            }
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f5f6fa;
+            background:
+                radial-gradient(circle at top left, rgba(255, 106, 0, 0.08), transparent 34vw),
+                linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #111827;
             overflow-x: clip;
         }
 
@@ -564,7 +968,7 @@
         }
 
         .main {
-            padding: 24px;
+            padding: clamp(18px, 3vw, 30px);
             box-sizing: border-box;
             min-width: 0;
             width: auto;
@@ -578,11 +982,21 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+            padding: clamp(18px, 3vw, 26px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: 0 18px 46px rgba(15, 23, 42, 0.06);
+            backdrop-filter: blur(10px);
         }
 
         .header h2 {
             margin: 0;
+            color: #0f172a;
+            font-size: clamp(26px, 4vw, 40px);
+            line-height: 1;
+            letter-spacing: 0;
         }
 
         .admin-brand-hero {
@@ -845,10 +1259,11 @@
 
         .card,
         .list-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.94);
             padding: 18px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.92);
+            border-radius: 18px;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.055);
         }
 
         .list-card {
@@ -857,15 +1272,16 @@
 
         .panel-list {
             display: grid;
-            gap: 14px;
+            gap: 16px;
         }
 
         .panel-empty {
-            padding: 28px;
+            padding: 34px;
             border: 1px dashed #cbd5e1;
-            border-radius: 12px;
+            border-radius: 20px;
             background: #ffffff;
             text-align: center;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
         }
 
         .panel-empty h3 {
@@ -885,10 +1301,11 @@
             grid-template-columns: minmax(0, 1fr) auto;
             gap: 18px;
             align-items: start;
-            padding: 18px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.92);
+            border-radius: 18px;
             background: #ffffff;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.055);
         }
 
         .resource-card--with-media {
@@ -898,7 +1315,7 @@
         .resource-card__media {
             width: 100%;
             aspect-ratio: 4 / 3;
-            border-radius: 10px;
+            border-radius: 16px;
             overflow: hidden;
             background: #f3f4f6;
         }
@@ -951,13 +1368,14 @@
 
         .resource-badge {
             min-height: 28px;
-            padding: 6px 10px;
+            padding: 7px 11px;
             border-radius: 999px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #f3f4f6;
-            color: #374151;
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #e5e7eb;
             font-size: 12px;
             font-weight: 800;
             line-height: 1;
@@ -991,9 +1409,9 @@
         .resource-metric {
             min-width: 0;
             padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            background: #f9fafb;
+            border: 1px solid #e8edf4;
+            border-radius: 14px;
+            background: #f8fafc;
         }
 
         .resource-metric__label {
@@ -1061,20 +1479,30 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 10px 14px;
-            background: #4f46e5;
+            padding: 11px 16px;
+            background: #111827;
             color: white;
-            border-radius: 8px;
+            border-radius: 12px;
             text-decoration: none;
             border: none;
             cursor: pointer;
             line-height: 1.2;
-            min-height: 40px;
+            min-height: 42px;
+            font-weight: 800;
+            box-shadow: 0 12px 24px rgba(17, 24, 39, 0.12);
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 30px rgba(17, 24, 39, 0.16);
         }
 
         .btn-secondary {
-            background: #ff6a00;
-            color: #ffffff;
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
         }
 
         .btn-danger {
@@ -2660,6 +3088,674 @@
                 height: 18px;
             }
         }
+        .vendly-page-subtitle {
+            margin: 5px 0 0;
+            color: var(--admin-muted);
+            font-size: 16px;
+            line-height: 1.35;
+        }
+
+        .admin-topbar-store {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 42px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            color: #07142f;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .admin-topbar-store svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 auto;
+        }
+
+        .vendly-table-card {
+            overflow: hidden;
+            border: 1px solid var(--admin-line);
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .orders-table-card {
+            overflow: visible;
+        }
+
+        @media (min-width: 761px) {
+            .orders-table-card .vendly-table-scroll {
+                overflow: visible;
+            }
+        }
+
+        .vendly-table-scroll {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .vendly-data-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .vendly-data-table th,
+        .vendly-data-table td {
+            padding: 16px 18px;
+            border-bottom: 1px solid #e8eef5;
+            color: #07142f;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .vendly-data-table th {
+            background: #f6f8fb;
+            color: #53627a;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .vendly-data-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .vendly-data-table td small {
+            display: block;
+            margin-top: 4px;
+            color: var(--admin-muted);
+            font-size: 12px;
+        }
+
+        .vendly-product-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .vendly-product-thumb {
+            width: 48px;
+            height: 48px;
+            display: inline-grid;
+            place-items: center;
+            flex: 0 0 auto;
+            overflow: hidden;
+            border: 1px solid #edf2f7;
+            border-radius: 9px;
+            background: #f6f8fb;
+            color: var(--admin-orange);
+            font-weight: 800;
+        }
+
+        .vendly-product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .vendly-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .vendly-status.is-success {
+            background: #dcfce7;
+            color: #008236;
+        }
+
+        .vendly-status.is-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .vendly-status.is-warning {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+
+        .vendly-status.is-info {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .vendly-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .vendly-row-actions a,
+        .vendly-row-actions button {
+            border: 0;
+            background: transparent;
+            color: var(--admin-orange);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .vendly-row-actions button {
+            color: #dc2626;
+            padding: 0;
+        }
+
+        .vendly-order-actions {
+            position: relative;
+        }
+
+        .vendly-order-actions summary {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 7px 12px;
+            border: 1px solid #dfe7ef;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #07142f;
+            font-weight: 800;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .vendly-order-actions summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .vendly-order-actions[open] summary {
+            border-color: rgba(255, 107, 0, .32);
+            color: var(--admin-orange);
+        }
+
+        .vendly-order-actions > div {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 10;
+            display: grid;
+            gap: 10px;
+            width: 260px;
+            padding: 12px;
+            border: 1px solid #dfe7ef;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 18px 40px rgba(8, 20, 47, .14);
+        }
+
+        .vendly-order-actions form {
+            display: grid;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .vendly-order-actions .btn {
+            width: 100%;
+            min-height: 38px;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .vendly-order-detail-row td {
+            padding-top: 0;
+            background: #ffffff;
+        }
+
+        .vendly-order-detail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 0 12px;
+            color: #53627a;
+            font-size: 12px;
+        }
+
+        .vendly-order-detail span {
+            display: inline-flex;
+            gap: 4px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #f6f8fb;
+        }
+
+        .vendly-order-products {
+            width: 100%;
+            border-radius: 10px !important;
+        }
+
+        .products-console {
+            gap: 22px !important;
+        }
+
+        .products-console-head {
+            align-items: flex-start !important;
+        }
+
+        .products-console-title h1 {
+            margin: 0;
+        }
+
+        .products-console-title p {
+            margin: 6px 0 0;
+            color: var(--admin-muted);
+            font-size: 16px;
+        }
+
+        .products-toolbar {
+            grid-template-columns: minmax(280px, 1fr) auto !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .products-toolbar-actions .btn {
+            min-height: 44px;
+        }
+
+        .order-filter-panel {
+            display: flex !important;
+            align-items: center;
+            gap: 12px;
+            max-width: 100%;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .order-filter-panel select {
+            max-width: 240px;
+            min-height: 44px !important;
+        }
+
+        .order-filter-count {
+            color: var(--admin-muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 760px) {
+            .vendly-data-table {
+                min-width: 720px;
+            }
+
+            .vendly-order-actions > div {
+                right: auto;
+                left: 0;
+            }
+
+            .products-console-head,
+            .products-actions,
+            .products-toolbar,
+            .order-filter-panel {
+                align-items: stretch !important;
+                flex-direction: column;
+                grid-template-columns: 1fr !important;
+            }
+
+            .products-actions,
+            .products-toolbar-actions {
+                width: 100%;
+            }
+
+            .products-actions .products-action,
+            .products-toolbar-actions .btn,
+            .products-toolbar-actions .btn-secondary,
+            .order-filter-panel select {
+                width: 100%;
+            }
+        }
+        /* Sidebar-only redesign based on the Vendly Suite reference. */
+        .container {
+            grid-template-columns: 260px minmax(0, 1fr) !important;
+        }
+
+        .sidebar {
+            width: 260px !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            border-right: 1px solid #d8e2ec !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+        }
+
+        .sidebar-top {
+            flex: 0 0 auto;
+            padding: 16px 18px 10px !important;
+            border-bottom: 0 !important;
+        }
+
+        .sidebar-brand {
+            gap: 12px !important;
+            padding: 0 !important;
+        }
+
+        .sidebar-brand img {
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 999px !important;
+            background: #050505;
+        }
+
+        .sidebar-brand-title {
+            color: #07142f !important;
+            font-size: 22px !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+            letter-spacing: -.02em !important;
+        }
+
+        .sidebar-brand-subtitle {
+            margin-top: 4px !important;
+            color: #74829a !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            letter-spacing: .14em !important;
+            text-transform: uppercase !important;
+        }
+
+        .sidebar-nav {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            padding: 0 12px 10px !important;
+            overflow-y: visible !important;
+            overflow-x: hidden !important;
+            scrollbar-width: none !important;
+            scrollbar-color: transparent transparent !important;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            border-radius: 999px !important;
+            background: rgba(255, 107, 0, .42) !important;
+        }
+
+        .sidebar-section {
+            display: grid !important;
+            gap: 2px !important;
+            padding: 6px 0 8px !important;
+            border-top: 0 !important;
+        }
+
+        .sidebar-section + .sidebar-section {
+            margin-top: 0 !important;
+        }
+
+        .sidebar-section-label {
+            margin: 0 0 4px !important;
+            padding: 0 14px !important;
+            color: #7a88a0 !important;
+            font-size: 11px !important;
+            font-weight: 900 !important;
+            letter-spacing: .08em !important;
+            text-transform: uppercase !important;
+        }
+
+        .sidebar-nav-link,
+        .sidebar-menu-group summary,
+        .sidebar .sidebar-submenu a,
+        .sidebar-store-card,
+        .sidebar-plan-card,
+        .sidebar-logout-button {
+            min-height: 36px !important;
+            padding: 7px 14px !important;
+            border: 1px solid transparent !important;
+            border-radius: 10px !important;
+            background: transparent !important;
+            color: #07142f !important;
+            font-size: 14px !important;
+            font-weight: 650 !important;
+            line-height: 1.2 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .sidebar-nav-link,
+        .sidebar-menu-group summary,
+        .sidebar-store-card,
+        .sidebar-plan-card,
+        .sidebar-logout-button {
+            position: relative;
+            display: flex !important;
+            align-items: center !important;
+            gap: 14px !important;
+        }
+
+        .sidebar-nav-link::before,
+        .sidebar-menu-group > summary::before,
+        .sidebar-store-card::before,
+        .sidebar-plan-card::before,
+        .sidebar-logout-button::before {
+            content: "";
+            position: absolute;
+            left: -12px;
+            top: 7px;
+            bottom: 7px;
+            width: 2px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .sidebar-nav-icon {
+            width: 19px !important;
+            height: 19px !important;
+            color: currentColor !important;
+            stroke-width: 2 !important;
+        }
+
+        .sidebar-nav-link:hover,
+        .sidebar-menu-group summary:hover,
+        .sidebar .sidebar-submenu a:hover,
+        .sidebar-store-card:hover,
+        .sidebar-plan-card:hover {
+            background: #fff4ec !important;
+            color: #ff6b00 !important;
+        }
+
+        .sidebar-nav-link.is-active,
+        .sidebar-menu-group[open] summary,
+        .sidebar .sidebar-submenu a.is-active {
+            background: #fff1e8 !important;
+            color: #ff6b00 !important;
+            border-color: #ffe0cc !important;
+            box-shadow: none !important;
+        }
+
+        .sidebar-nav-link.is-active::before,
+        .sidebar-menu-group[open] > summary::before,
+        .sidebar-store-card.is-active::before,
+        .sidebar-plan-card.is-active::before {
+            background: #ff6b00;
+        }
+
+        .sidebar-menu-group {
+            margin: 0 !important;
+        }
+
+        .sidebar-menu-group summary {
+            justify-content: space-between !important;
+        }
+
+        .sidebar-menu-group summary span:first-child {
+            gap: 12px !important;
+        }
+
+        .sidebar-menu-group summary::after {
+            content: "›" !important;
+            color: currentColor;
+            font-size: 20px !important;
+            transform: rotate(0deg) !important;
+        }
+
+        .sidebar-menu-group[open] summary::after {
+            transform: rotate(90deg) !important;
+        }
+
+        .sidebar-submenu {
+            display: grid !important;
+            gap: 2px !important;
+            margin: 2px 0 4px 33px !important;
+            padding: 0 0 0 10px !important;
+            border-left: 1px solid #e8eef5 !important;
+        }
+
+        .sidebar .sidebar-submenu a {
+            min-height: 30px !important;
+            padding: 5px 10px !important;
+            color: #516078 !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            white-space: normal !important;
+        }
+
+        .sidebar-plan-mini {
+            margin-left: auto !important;
+            min-height: 22px !important;
+            padding: 3px 8px !important;
+            border: 1px solid #ff6b00 !important;
+            border-radius: 999px !important;
+            background: #ffffff !important;
+            color: #ff6b00 !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0 !important;
+            text-transform: none !important;
+        }
+
+        .sidebar-footer {
+            position: sticky !important;
+            bottom: 0 !important;
+            z-index: 2 !important;
+            margin-top: auto !important;
+            padding-top: 8px !important;
+            padding-bottom: 2px !important;
+            border-top: 1px solid #dfe7ef !important;
+            background: #ffffff !important;
+        }
+
+        .sidebar-store-card,
+        .sidebar-plan-card {
+            align-items: center !important;
+            justify-content: flex-start !important;
+        }
+
+        .sidebar-store-text,
+        .sidebar-plan-text {
+            display: grid !important;
+            gap: 2px !important;
+            min-width: 0 !important;
+        }
+
+        .sidebar-store-text strong,
+        .sidebar-plan-text strong {
+            color: #07142f !important;
+            font-size: 14px !important;
+            font-weight: 650 !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
+        }
+
+        .sidebar-store-text span {
+            color: #74829a !important;
+            font-size: 12px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        .sidebar-logout-button {
+            width: 100% !important;
+            color: #63728a !important;
+            cursor: pointer !important;
+        }
+
+        .sidebar-logout-button:hover {
+            background: #f8fafc !important;
+            color: #07142f !important;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: min(86vw, 310px) !important;
+                max-width: min(86vw, 310px) !important;
+                height: 100dvh !important;
+                padding: 0 !important;
+                transform: translateX(-105%);
+                transition: transform .24s ease !important;
+                z-index: 60 !important;
+            }
+
+            .sidebar.is-open {
+                transform: translateX(0) !important;
+            }
+
+            .sidebar-top {
+                padding: 20px 18px 14px !important;
+            }
+
+            .sidebar-nav {
+                padding: 4px 12px 20px !important;
+                overflow-y: auto !important;
+                scrollbar-width: thin !important;
+                scrollbar-color: rgba(255, 107, 0, .42) transparent !important;
+            }
+
+            .sidebar-nav::-webkit-scrollbar {
+                width: 6px !important;
+            }
+
+            .mobile-topbar {
+                min-height: 62px;
+                padding: 10px 14px !important;
+            }
+
+            .mobile-sidebar-toggle {
+                width: 44px;
+                height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #dfe7ef;
+                border-radius: 12px;
+                background: #ffffff;
+                color: #07142f;
+            }
+
+            .mobile-sidebar-toggle svg {
+                width: 22px;
+                height: 22px;
+            }
+        }
     </style>
 </head>
 
@@ -2675,6 +3771,13 @@
             <img src="{{ asset('images/vendly-logo.svg') }}" alt="Vendly">
             <span>{{ auth()->user()->isAdmin() ? 'Vendly Admin' : 'Vendly Store' }}</span>
         </div>
+        <button type="button" class="mobile-sidebar-toggle" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar" aria-label="Abrir menú">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M4 6h16"></path>
+                <path d="M4 12h16"></path>
+                <path d="M4 18h16"></path>
+            </svg>
+        </button>
     </div>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -2707,6 +3810,10 @@
                     $layoutUnreadNotifications = (clone $layoutQuery)->whereNull('read_at')->count();
                     $layoutNotifications = (clone $layoutQuery)->whereNull('read_at')->take(5)->get();
                 }
+
+                $layoutUser = $layoutUser ?? auth()->user();
+                $layoutStore = $layoutUser?->store ?? $layoutUser?->stores()->first();
+                $layoutStoreUrl = $layoutStore?->slug ? app(\App\Services\StorefrontUrlService::class)->publicHome($layoutStore) : null;
             @endphp
 
             @if(\App\Models\StoreNotification::supportsTable())
@@ -2743,6 +3850,21 @@
                             @endif
                         </div>
                     </div>
+
+                    @if($layoutStore)
+                        <a href="{{ $layoutStoreUrl ?: '#' }}" class="admin-topbar-store" @if($layoutStoreUrl) target="_blank" rel="noopener noreferrer" @endif>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M4 10h16"></path>
+                                <path d="M5 10l1-5h12l1 5"></path>
+                                <path d="M6 10v10h12V10"></path>
+                                <path d="M9 20v-6h6v6"></path>
+                            </svg>
+                            <span>{{ $layoutStore->name }}</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </a>
+                    @endif
                 </div>
             @endif
 
@@ -2824,23 +3946,37 @@
             const toggles = document.querySelectorAll('[data-sidebar-toggle]');
             const sidebar = document.getElementById('adminSidebar');
             const backdrop = document.getElementById('sidebarBackdrop');
+            let lastToggle = null;
 
             if (!toggles.length || !sidebar || !backdrop) {
                 return;
             }
 
-            const setOpen = (open) => {
+            const setOpen = (open, trigger = null) => {
+                if (open && trigger) {
+                    lastToggle = trigger;
+                }
+
                 sidebar.classList.toggle('is-open', open);
                 backdrop.classList.toggle('is-visible', open);
                 document.body.classList.toggle('sidebar-open', open);
                 toggles.forEach((toggle) => {
                     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
                 });
+
+                if (open) {
+                    window.setTimeout(() => {
+                        sidebar.querySelector('a, button, summary')?.focus();
+                    }, 80);
+                } else if (lastToggle) {
+                    lastToggle.focus();
+                    lastToggle = null;
+                }
             };
 
             toggles.forEach((toggle) => {
                 toggle.addEventListener('click', () => {
-                    setOpen(!sidebar.classList.contains('is-open'));
+                    setOpen(!sidebar.classList.contains('is-open'), toggle);
                 });
             });
 
@@ -2988,6 +4124,13 @@
     </script>
     <script src="{{ asset('js/image-upload-optimizer.js') }}?v={{ filemtime(public_path('js/image-upload-optimizer.js')) }}"></script>
     <script src="{{ asset('js/product-image-preview.js') }}?v={{ filemtime(public_path('js/product-image-preview.js')) }}"></script>
+    @php
+        $vendlyMetaEvents = collect(session('meta_pixel_events', []))
+            ->filter(fn ($event) => is_array($event) && filled($event['event'] ?? null));
+    @endphp
+    @foreach($vendlyMetaEvents as $vendlyMetaEvent)
+        @include('admin.partials.meta-pixel-event', $vendlyMetaEvent)
+    @endforeach
     @stack('scripts')
 </body>
 

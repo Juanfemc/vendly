@@ -16,6 +16,7 @@ use App\Services\StorefrontUrlService;
 use App\Services\TrialPhoneHashService;
 use App\Services\WhatsAppPhoneVerificationService;
 use App\Support\StoreOnboardingSteps;
+use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,8 +86,10 @@ class StoreOnboardingController extends Controller
             $data = $this->storeFileService->replaceUploadedImages($store, $request, $data);
         }
 
+        $createdOnboardingProduct = false;
+
         if ($step === 'product') {
-            $this->createOnboardingProduct($request, $store);
+            $createdOnboardingProduct = $this->createOnboardingProduct($request, $store);
         }
 
         if (array_key_exists('whatsapp', $data) && $previousWhatsApp !== (string) $data['whatsapp']) {
@@ -149,13 +152,40 @@ class StoreOnboardingController extends Controller
                 ])->save();
             }
 
+            $metaEvents = [];
+
+            if (VendlyMetaPixelEvents::shouldTrackForUser(auth()->user(), $store->refresh())) {
+                if ($createdOnboardingProduct) {
+                    $metaEvents[] = VendlyMetaPixelEvents::firstProductCreated($store);
+                }
+
+                $metaEvents[] = VendlyMetaPixelEvents::storeConfigured($store);
+                $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
+            }
+
             return redirect()
                 ->route('dashboard')
+                ->with('meta_pixel_events', $metaEvents)
                 ->with('success', 'Configuración finalizada. Tu tienda está lista para compartir.');
+        }
+
+        $metaEvents = [];
+
+        if (VendlyMetaPixelEvents::shouldTrackForUser(auth()->user(), $store->refresh())) {
+            if ($createdOnboardingProduct) {
+                $metaEvents[] = VendlyMetaPixelEvents::firstProductCreated($store);
+            }
+
+            if ($step === 'identity') {
+                $metaEvents[] = VendlyMetaPixelEvents::templateSelected($store);
+            }
+
+            $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
         }
 
         return redirect()
             ->route('admin.store.onboarding', ['step' => $nextStep])
+            ->with('meta_pixel_events', $metaEvents)
             ->with('success', 'Paso guardado.');
     }
 
@@ -301,10 +331,10 @@ class StoreOnboardingController extends Controller
         return null;
     }
 
-    private function createOnboardingProduct(StoreOnboardingRequest $request, Store $store): void
+    private function createOnboardingProduct(StoreOnboardingRequest $request, Store $store): bool
     {
         if ($store->products()->exists() || ! $request->filled('product_name')) {
-            return;
+            return false;
         }
 
         if (! $store->canCreateMoreProducts()) {
@@ -352,6 +382,8 @@ class StoreOnboardingController extends Controller
         }
 
         Product::create($productData);
+
+        return true;
     }
 
     private function categoryBelongsToStore(Store $store, ?string $categoryName): bool

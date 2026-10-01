@@ -2,31 +2,10 @@
     $sidebarUser = auth()->user();
     $sidebarStores = $sidebarUser?->stores()->get() ?? collect();
     $sidebarStore = $sidebarUser?->store ?? $sidebarStores->first();
-    $sidebarAllowsTemplates = $sidebarStores->contains(fn ($store) => $store->allowsTemplates());
+    $sidebarAllowsTemplates = $sidebarUser?->isAdmin() && $sidebarStores->contains(fn ($store) => $store->allowsTemplates());
     $sidebarStoreUrl = $sidebarStore?->slug ? app(\App\Services\StorefrontUrlService::class)->publicHome($sidebarStore) : url('/');
     $sidebarStoreHost = parse_url($sidebarStoreUrl, PHP_URL_HOST) ?: config('app.name', 'Vendly');
     $sidebarPlanLabel = $sidebarStore?->planLabel() ?? 'Admin';
-    $sidebarUnreadNotifications = 0;
-
-    if (\App\Models\StoreNotification::supportsTable()) {
-        $sidebarNotificationsQuery = \App\Models\StoreNotification::query();
-
-        if (! $sidebarUser?->isAdmin()) {
-            $sidebarStoreIds = $sidebarStores->pluck('id');
-
-            if ($sidebarUser?->store_id) {
-                $sidebarStoreIds->push($sidebarUser->store_id);
-            }
-
-            $sidebarStoreIds = $sidebarStoreIds->filter()->unique()->values();
-            $sidebarNotificationsQuery = $sidebarStoreIds->isEmpty()
-                ? $sidebarNotificationsQuery->whereRaw('1 = 0')
-                : $sidebarNotificationsQuery->whereIn('store_id', $sidebarStoreIds);
-        }
-
-        $sidebarUnreadNotifications = (clone $sidebarNotificationsQuery)->whereNull('read_at')->count();
-    }
-
     $sidebarIsActive = fn (...$patterns) => collect($patterns)->contains(fn ($pattern) => request()->is($pattern));
     $sidebarLinkClass = fn (...$patterns) => 'sidebar-nav-link' . ($sidebarIsActive(...$patterns) ? ' is-active' : '');
     $sidebarSubLinkClass = fn (...$patterns) => $sidebarIsActive(...$patterns) ? 'is-active' : '';
@@ -38,6 +17,10 @@
             'image' => '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
             'star' => '<path d="m12 3 2.7 5.47 6.03.88-4.36 4.25 1.03 6-5.4-2.84-5.4 2.84 1.03-6-4.36-4.25 6.03-.88L12 3z"/>',
             'store' => '<path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v10h12V10"/><path d="M9 20v-6h6v6"/>',
+            'visits' => '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+            'card' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',
+            'palette' => '<path d="M12 3a9 9 0 0 0 0 18h1.5a1.5 1.5 0 0 0 0-3H13a1.5 1.5 0 0 1 0-3h1a7 7 0 0 0 7-7c0-3-4-5-9-5Z"/><circle cx="7.5" cy="10.5" r=".5"/><circle cx="10.5" cy="7.5" r=".5"/><circle cx="14.5" cy="7.5" r=".5"/><circle cx="16.5" cy="11.5" r=".5"/>',
+            'file' => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/>',
             'box' => '<path d="m21 8-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
             'tag' => '<path d="M20.59 13.41 12 22l-9-9V4h9l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
             'chat' => '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>',
@@ -65,15 +48,6 @@
                 <p class="sidebar-brand-subtitle">{{ $sidebarUser->isAdmin() ? 'Panel admin' : 'Mi tienda' }}</p>
             </div>
         </div>
-
-        @if(\App\Models\StoreNotification::supportsTable())
-            <a href="{{ route('admin.notifications.index') }}" class="sidebar-notification-link" aria-label="Notificaciones">
-                {!! $sidebarIcon('bell') !!}
-                @if($sidebarUnreadNotifications > 0)
-                    <span class="sidebar-notification-dot"></span>
-                @endif
-            </a>
-        @endif
     </div>
 
     <nav class="sidebar-nav" aria-label="Menu del panel">
@@ -83,6 +57,12 @@
                 <span>Inicio</span>
             </a>
 
+            @if(!$sidebarUser->isAdmin() && ($sidebarStore?->allowsVisitStats() ?? false))
+                <a href="{{ route('admin.store.visits') }}" class="{{ $sidebarLinkClass('admin/store-visits*') }}">
+                    {!! $sidebarIcon('visits') !!}
+                    <span>Visitas</span>
+                </a>
+            @endif
         </div>
 
         @if ($sidebarUser->isAdmin())
@@ -151,15 +131,32 @@
             </div>
         @else
             <div class="sidebar-section">
-                <p class="sidebar-section-label">Mi negocio</p>
+                <p class="sidebar-section-label">Ventas</p>
 
                 <a href="/admin/orders" class="{{ $sidebarLinkClass('admin/orders*') }}">
                     {!! $sidebarIcon('cart') !!}
-                    <span>Mis pedidos</span>
+                    <span>Pedidos</span>
                 </a>
 
+                @if(($sidebarStore?->allowsOnlinePayments() ?? false))
+                    <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarLinkClass('admin/payments*') }}">
+                        {!! $sidebarIcon('card') !!}
+                        <span>Pagos</span>
+                    </a>
+                @endif
+
+                <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarLinkClass('admin/coupons*') }}">
+                    {!! $sidebarIcon('ticket') !!}
+                    <span>Cupones</span>
+                    <span class="sidebar-plan-mini">Premium</span>
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <p class="sidebar-section-label">Catálogo</p>
+
                 <details class="sidebar-menu-group" {{ request()->is('admin/products*') ? 'open' : '' }}>
-                    <summary><span>{!! $sidebarIcon('box') !!}Mis productos</span></summary>
+                    <summary><span>{!! $sidebarIcon('box') !!}Productos</span></summary>
                     <div class="sidebar-submenu">
                         <a href="/admin/products" class="{{ $sidebarSubLinkClass('admin/products') }}">Ver productos</a>
                         <a href="/admin/products/create" class="{{ $sidebarSubLinkClass('admin/products/create') }}">Crear producto</a>
@@ -167,71 +164,71 @@
                     </div>
                 </details>
 
-                @if(($sidebarStore?->allowsVisitStats() ?? false))
-                    <a href="{{ route('admin.store.visits') }}" class="{{ $sidebarLinkClass('admin/store-visits*') }}">
-                        {!! $sidebarIcon('store') !!}
-                        <span>Metricas de mi tienda</span>
+                @if(($sidebarStore?->allowsCategories() ?? true))
+                    <a href="/admin/categories" class="{{ $sidebarLinkClass('admin/categories*') }}">
+                        {!! $sidebarIcon('tag') !!}
+                        <span>Categorías</span>
                     </a>
                 @endif
             </div>
 
             <div class="sidebar-section">
-                <p class="sidebar-section-label">Configuración</p>
+                <p class="sidebar-section-label">Mi tienda</p>
 
-                <details class="sidebar-menu-group" {{ request()->is('admin/onboarding') || request()->is('admin/store-settings') || request()->is('admin/store-landing*') || request()->is('admin/templates*') || request()->is('admin/payments*') || request()->is('admin/categories*') || request()->is('admin/coupons*') ? 'open' : '' }}>
-                    <summary><span>{!! $sidebarIcon('settings') !!}Configurar catálogo</span></summary>
-                    <div class="sidebar-submenu">
-                        <a href="{{ route('admin.store.onboarding') }}" class="{{ $sidebarSubLinkClass('admin/onboarding') }}">Primeros pasos</a>
-                        <a href="/admin/store-settings" class="{{ $sidebarSubLinkClass('admin/store-settings') }}">Apariencia e identidad</a>
-                        <a href="{{ route('admin.store-landing.edit') }}" class="{{ $sidebarSubLinkClass('admin/store-landing*') }}">Landing de producto</a>
-                        @if($sidebarAllowsTemplates)
-                            <a href="{{ route('admin.templates.index') }}" class="{{ $sidebarSubLinkClass('admin/templates*') }}">Plantillas</a>
-                        @endif
-                        @if(($sidebarStore?->allowsOnlinePayments() ?? false))
-                            <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarSubLinkClass('admin/payments*') }}">Métodos de pago</a>
-                        @endif
-                        @if(($sidebarStore?->allowsCategories() ?? true))
-                            <a href="/admin/categories" class="{{ $sidebarSubLinkClass('admin/categories*') }}">Categorías</a>
-                        @endif
-                        <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarSubLinkClass('admin/coupons*') }}">Gestionar cupones <span class="sidebar-plan-mini">Premium</span></a>
-                    </div>
-                </details>
+                <a href="{{ route('admin.store.onboarding') }}" class="{{ $sidebarLinkClass('admin/onboarding') }}">
+                    {!! $sidebarIcon('book') !!}
+                    <span>Primeros pasos</span>
+                </a>
+
+                <a href="/admin/store-settings" class="{{ $sidebarLinkClass('admin/store-settings') }}">
+                    {!! $sidebarIcon('palette') !!}
+                    <span>Apariencia</span>
+                </a>
+
+                <a href="{{ route('admin.store-landing.edit') }}" class="{{ $sidebarLinkClass('admin/store-landing*') }}">
+                    {!! $sidebarIcon('file') !!}
+                    <span>Landing de producto</span>
+                </a>
+
+                @if($sidebarAllowsTemplates)
+                    <a href="{{ route('admin.templates.index') }}" class="{{ $sidebarLinkClass('admin/templates*') }}">
+                        {!! $sidebarIcon('image') !!}
+                        <span>Plantillas</span>
+                    </a>
+                @endif
             </div>
         @endif
 
-        <div class="sidebar-section">
+        <div class="sidebar-section sidebar-footer">
             <a href="/profile" class="{{ $sidebarLinkClass('profile') }}">
                 {!! $sidebarIcon('profile') !!}
                 <span>Perfil</span>
             </a>
+
+            @if($sidebarStore)
+                <a href="{{ $sidebarStoreUrl }}" class="sidebar-store-card" target="_blank" rel="noopener">
+                    {!! $sidebarIcon('external') !!}
+                    <span class="sidebar-store-text">
+                        <strong>Ver mi tienda</strong>
+                        <span>{{ $sidebarStore->name }}</span>
+                    </span>
+                </a>
+
+                <a href="/admin/store-settings" class="sidebar-plan-card">
+                    {!! $sidebarIcon('gift') !!}
+                    <span class="sidebar-plan-text">
+                        <strong>Plan {{ $sidebarPlanLabel }}</strong>
+                    </span>
+                </a>
+            @endif
+
+            <form method="POST" action="{{ route('logout') }}" class="sidebar-logout-form">
+                @csrf
+                <button type="submit" class="sidebar-logout-button">
+                    {!! $sidebarIcon('logout') !!}
+                    <span>Cerrar sesión</span>
+                </button>
+            </form>
         </div>
     </nav>
-
-    <div class="sidebar-footer">
-        @if($sidebarStore)
-            <a href="{{ $sidebarStoreUrl }}" class="sidebar-store-card" target="_blank" rel="noopener">
-                <span class="sidebar-store-text">
-                    <strong>{{ $sidebarStore->name }}</strong>
-                    <span>{{ $sidebarStoreHost }}</span>
-                </span>
-                {!! $sidebarIcon('external') !!}
-            </a>
-
-            <a href="/admin/store-settings" class="sidebar-plan-card">
-                <span class="sidebar-plan-icon">{!! $sidebarIcon('gift') !!}</span>
-                <span class="sidebar-plan-text">
-                    <strong>Plan {{ $sidebarPlanLabel }}</strong>
-                    <span>Gestiona tu tienda</span>
-                </span>
-            </a>
-        @endif
-
-        <form method="POST" action="{{ route('logout') }}" class="sidebar-logout-form">
-            @csrf
-            <button type="submit" class="sidebar-logout-button">
-                {!! $sidebarIcon('logout') !!}
-                <span>Cerrar sesión</span>
-            </button>
-        </form>
-    </div>
 </aside>

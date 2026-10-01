@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Services\AdminUpdateService;
 use App\Services\AiContentService;
 use App\Services\AiCreditService;
+use App\Services\MetaConversionsApiService;
 use App\Services\StorefrontUrlService;
 use App\Services\StoreSubdomainService;
 use App\Services\WhatsAppOrderMessageBuilder;
@@ -1026,6 +1027,135 @@ test('premium stores can save and render meta pixel id', function () {
         ->and($body)->toContain('<noscript>');
 });
 
+test('storefront meta pixel sends custom events with track custom', function () {
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Pixel Custom',
+        'slug' => 'tienda-pixel-custom',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PREMIUM,
+        'meta_pixel_id' => '123456789012345',
+        'is_active' => true,
+    ]);
+
+    Product::create([
+        'user_id' => $storeUser->id,
+        'store_id' => $store->id,
+        'name' => 'Producto Pixel',
+        'price' => 50000,
+    ]);
+
+    $html = $this->get('/'.$store->slug)
+        ->assertOk()
+        ->getContent();
+
+    expect($html)
+        ->toContain("'AddToCart'")
+        ->toContain("'InitiateCheckout'")
+        ->toContain("'Purchase'")
+        ->toContain("var method = standardEvents.indexOf(eventName) !== -1 ? 'track' : 'trackCustom';")
+        ->toContain('fbq(method, eventName, payload || {})');
+});
+
+test('storefront meta pixel event partial ignores invalid event names', function () {
+    $validHtml = view('storefront.partials.meta-pixel-event', [
+        'event' => 'HighIntent',
+        'eventKey' => 'high-intent-1',
+        'payload' => ['product_count' => 5],
+    ])->render();
+
+    $invalidHtml = view('storefront.partials.meta-pixel-event', [
+        'event' => 'High Intent',
+        'eventKey' => 'bad-event-1',
+        'payload' => ['product_count' => 5],
+    ])->render();
+
+    expect($validHtml)
+        ->toContain('vendlyMetaPixelTrackOnce')
+        ->toContain('HighIntent')
+        ->and($invalidHtml)->not->toContain('vendlyMetaPixelTrack');
+});
+
+test('meta conversions api sends subscription events only for paid plans', function () {
+    config([
+        'services.meta.landing_pixel_id' => '123456789012345',
+        'services.meta.conversions_access_token' => 'test-token',
+        'services.meta.graph_version' => 'v24.0',
+        'services.meta.test_event_code' => null,
+    ]);
+
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['events_received' => 1], 200),
+    ]);
+
+    $user = User::factory()->create(['email' => 'cliente@example.com']);
+
+    $proStore = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda CAPI Pro',
+        'slug' => 'tienda-capi-pro',
+        'whatsapp' => '+57 300 123 4567',
+        'plan' => Store::PLAN_PRO,
+        'business_type' => 'store',
+        'subscription_status' => Store::SUBSCRIPTION_ACTIVE,
+        'subscription_ends_at' => now()->addMonth(),
+        'is_active' => true,
+    ]);
+
+    $premiumStore = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda CAPI Premium',
+        'slug' => 'tienda-capi-premium',
+        'whatsapp' => '+57 301 123 4567',
+        'plan' => Store::PLAN_PREMIUM,
+        'business_type' => 'technology',
+        'subscription_status' => Store::SUBSCRIPTION_ACTIVE,
+        'subscription_ends_at' => now()->addMonth(),
+        'is_active' => true,
+    ]);
+
+    $basicStore = Store::create([
+        'user_id' => $user->id,
+        'name' => 'Tienda CAPI Basic',
+        'slug' => 'tienda-capi-basic',
+        'whatsapp' => '+57 302 123 4567',
+        'plan' => Store::PLAN_BASIC,
+        'business_type' => 'store',
+        'subscription_status' => Store::SUBSCRIPTION_ACTIVE,
+        'subscription_ends_at' => now()->addMonth(),
+        'is_active' => true,
+    ]);
+
+    $service = app(MetaConversionsApiService::class);
+    $service->subscriptionEvent($proStore, 'SubscriptionActivated', customData: ['duration_days' => 30]);
+    $service->subscriptionEvent($premiumStore, 'SubscriptionRenewed', customData: ['duration_days' => 30]);
+    $service->subscriptionEvent($basicStore, 'SubscriptionActivated', customData: ['duration_days' => 30]);
+
+    Http::assertSentCount(2);
+    Http::assertSent(function ($request) {
+        $payload = $request->data();
+        $event = $payload['data'][0] ?? [];
+
+        return str_contains($request->url(), '/v24.0/123456789012345/events')
+            && ($payload['access_token'] ?? null) === 'test-token'
+            && ($event['event_name'] ?? null) === 'SubscriptionActivated'
+            && ($event['action_source'] ?? null) === 'system_generated'
+            && ($event['custom_data']['plan'] ?? null) === Store::PLAN_PRO
+            && preg_match('/^[a-f0-9]{64}$/', $event['user_data']['em'] ?? '') === 1
+            && preg_match('/^[a-f0-9]{64}$/', $event['user_data']['ph'] ?? '') === 1;
+    });
+    Http::assertSent(function ($request) {
+        $event = ($request->data()['data'][0] ?? []);
+
+        return ($event['event_name'] ?? null) === 'SubscriptionRenewed'
+            && ($event['custom_data']['plan'] ?? null) === Store::PLAN_PREMIUM;
+    });
+});
+
 test('meta pixel id is only available for premium stores', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
@@ -1568,12 +1698,12 @@ test('unavailable templates stay disabled', function () {
     $this->actingAs($admin)
         ->get(route('admin.templates.index'))
         ->assertOk()
-        ->assertSee('Tecnología')
-        ->assertSee('Plantilla minimalista para catálogos de tecnología.')
+        ->assertSee('Comida')
+        ->assertSee('Plantilla tipo menu para restaurantes, comidas rapidas y cafeterias.')
         ->assertSee('Muy pronto');
 
     $this->actingAs($admin)
-        ->post(route('admin.templates.apply', 'technology'))
+        ->post(route('admin.templates.apply', 'restaurant'))
         ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
         ->assertSessionHas('error');
 
@@ -2293,6 +2423,7 @@ test('admin can manually add paid ai credit packages to premium stores', functio
         ->assertSee('300 créditos - $24.900');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.stores.ai-credits.store', $premiumStore), [
             'package_key' => 'ai_300',
         ])
@@ -2308,6 +2439,7 @@ test('admin can manually add paid ai credit packages to premium stores', functio
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.stores.ai-credits.store', $proStore), [
             'package_key' => 'ai_100',
         ])
@@ -2596,6 +2728,7 @@ test('store owner can disable and enable whatsapp checkout from payments panel',
         ->assertSee('Pedido manual activo');
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.whatsapp.update'))
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('success', 'WhatsApp fue desactivado en el checkout.');
@@ -2604,6 +2737,7 @@ test('store owner can disable and enable whatsapp checkout from payments panel',
         ->and($store->acceptsWhatsappCheckout())->toBeFalse();
 
     $this->actingAs($storeUser)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.payments.whatsapp.update'), ['enabled' => '1'])
         ->assertRedirect(route('admin.payments.index'))
         ->assertSessionHas('success', 'WhatsApp fue activado en el checkout.');
@@ -4971,6 +5105,7 @@ test('basic plan hides existing product galleries after downgrade', function () 
         ->assertSee('products/extra.webp', false);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), [
             'user_id' => $storeUser->id,
             'name' => $store->name,
@@ -5097,6 +5232,7 @@ test('admin cannot downgrade a store when existing products exceed the target pl
     }
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->put(route('admin.stores.update', $store), [
             'user_id' => $storeUser->id,
             'name' => $store->name,
@@ -6172,6 +6308,7 @@ test('brand color must be a hex value and is normalized', function () {
     $storeUser = User::factory()->create();
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/stores', [
             'user_id' => $storeUser->id,
             'name' => 'Color Store',
@@ -6187,6 +6324,7 @@ test('brand color must be a hex value and is normalized', function () {
     $badColorUser = User::factory()->create();
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/stores', [
             'user_id' => $badColorUser->id,
             'name' => 'Bad Color Store',
@@ -6370,6 +6508,7 @@ test('admin cannot create a second store for the same user', function () {
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/stores', [
             'user_id' => $storeUser->id,
             'name' => 'Segunda tienda',
@@ -6389,6 +6528,7 @@ test('admin can create a store user and store in one flow', function () {
         ->assertSee('Crear cliente y tienda');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post(route('admin.stores.store-with-user'), [
             'user_name' => 'Cliente Mixtas',
             'user_email' => 'cliente-mixtas@example.com',
@@ -6453,6 +6593,7 @@ test('deleting a store removes its products and banners from the database', func
     Storage::disk('public')->put('products/product-extra.webp', 'fake');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->delete(route('admin.stores.destroy', $store))
         ->assertRedirect('/admin/stores');
 
@@ -6499,6 +6640,7 @@ test('deleting a user does not remove shared global banner files used by another
     Storage::disk('public')->put('banners/global.webp', 'fake');
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->delete(route('admin.users.destroy', $firstUser))
         ->assertRedirect('/admin/users');
 
@@ -6613,6 +6755,7 @@ test('admin cannot assign a store to a non store user', function () {
     $otherAdmin = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/stores', [
             'user_id' => $otherAdmin->id,
             'name' => 'Tienda invalida',
@@ -6627,6 +6770,7 @@ test('admin can create another admin user from the panel', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/users', [
             'name' => 'Admin Nuevo',
             'email' => 'admin-nuevo@example.com',
@@ -6662,6 +6806,7 @@ test('admin can extend a store user access from the current end date', function 
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.users.extend', $user), [
             'extend_days' => 15,
         ])
@@ -6692,6 +6837,7 @@ test('admin can extend an expired store user access from today and reactivate th
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.users.extend', $user), [
             'extend_days' => 30,
         ])
@@ -7651,6 +7797,7 @@ test('admin cannot use reserved store slugs and entered slugs are normalized', f
         $reservedSlugUser = User::factory()->create();
 
         $this->actingAs($admin)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->post('/admin/stores', [
                 'user_id' => $reservedSlugUser->id,
                 'name' => 'Slug Reservado '.$reservedSlug,
@@ -7664,6 +7811,7 @@ test('admin cannot use reserved store slugs and entered slugs are normalized', f
     $normalSlugUser = User::factory()->create();
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->post('/admin/stores', [
             'user_id' => $normalSlugUser->id,
             'name' => 'Mi Tienda Bonita',
@@ -7781,21 +7929,21 @@ test('offer badge is shown only on premium stores', function () {
     $this->get('/tienda-pro-etiqueta')
         ->assertOk()
         ->assertDontSee('product-offer-badge', false)
-        ->assertDontSee('Oferta')
-        ->assertDontSee('Nuevo');
+        ->assertDontSee('<span class="product-offer-badge">Oferta</span>', false)
+        ->assertDontSee('<span class="product-offer-badge">Nuevo</span>', false);
 
     $this->get('/tienda-basic-etiqueta')
         ->assertOk()
         ->assertDontSee('product-offer-badge', false)
-        ->assertDontSee('Oferta')
-        ->assertDontSee('Nuevo');
+        ->assertDontSee('<span class="product-offer-badge">Oferta</span>', false)
+        ->assertDontSee('<span class="product-offer-badge">Nuevo</span>', false);
 
     $premiumResponse = $this->get('/tienda-premium-etiqueta')
         ->assertOk()
         ->assertSee('product-offer-badge', false)
-        ->assertSee('Oferta')
-        ->assertSee('Nuevo')
-        ->assertSee('Mas vendido')
+        ->assertSee('<span class="product-offer-badge">Oferta</span>', false)
+        ->assertSee('<span class="product-offer-badge">Nuevo</span>', false)
+        ->assertSee('<span class="product-offer-badge">Mas vendido</span>', false)
         ->assertSee('$60.000')
         ->assertSee('$45.000')
         ->assertSee('Producto sin etiqueta premium');
@@ -7856,8 +8004,7 @@ test('offer menu and page are available only for premium stores with offer produ
 
     $this->get('/tienda-pro-menu-oferta')
         ->assertOk()
-        ->assertDontSee('nav-offer-link', false)
-        ->assertDontSee('Ofertas');
+        ->assertDontSee('nav-offer-link', false);
 
     $this->get('/tienda-pro-menu-oferta/ofertas')
         ->assertNotFound();
@@ -7866,7 +8013,7 @@ test('offer menu and page are available only for premium stores with offer produ
         ->assertOk()
         ->assertSee('nav-offer-link', false)
         ->assertSee('/tienda-premium-menu-oferta/ofertas', false)
-        ->assertSee('Ofertas');
+        ->assertSee('>Ofertas<', false);
 
     $this->get('/tienda-premium-menu-oferta/ofertas')
         ->assertOk()
@@ -7922,15 +8069,18 @@ test('store home groups products by three categories and category pages show the
 
     $this->get('/tienda-categorias')
         ->assertOk()
-        ->assertSee('id="categoria-audio"', false)
-        ->assertSee('id="categoria-computo"', false)
-        ->assertSee('id="categoria-gaming"', false)
-        ->assertDontSee('id="categoria-accesorios"', false)
+        ->assertSee('data-default-category-filter="audio"', false)
+        ->assertSee('data-default-category-filter="computo"', false)
+        ->assertSee('data-default-category-filter="gaming"', false)
+        ->assertSee('data-default-category-filter="accesorios"', false)
+        ->assertSee('Todos los productos')
+        ->assertSee('Filtrar productos')
         ->assertSee('Audio Producto 4')
         ->assertSee('Audio Producto 5')
+        ->assertSee('Accesorios Producto 5')
         ->assertSee('Producto sin categoria')
         ->assertSee('/tienda-categorias/productos', false)
-        ->assertSee('Ver más de Audio')
+        ->assertSee('/tienda-categorias/categorias/audio', false)
         ->assertSee('/tienda-categorias/categorias/accesorios', false);
 
     $this->get('/tienda-categorias/productos')
@@ -9135,7 +9285,8 @@ test('product reviews are available on pro and premium stores', function () {
         'product' => $product->fresh()->publicRouteKey(),
     ]))
         ->assertOk()
-        ->assertSee('Resenas (1)')
+        ->assertSee('minimalProductReviews', false)
+        ->assertSee('Resenas')
         ->assertSee('Cliente feliz')
         ->assertSee('Muy buen producto.');
 

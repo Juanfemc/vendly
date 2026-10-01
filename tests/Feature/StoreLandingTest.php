@@ -82,6 +82,7 @@ test('only admin activation makes the single product landing public', function (
         ->assertForbidden();
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.stores.landing.activation', $store), ['enabled' => '1'])
         ->assertRedirect();
 
@@ -128,6 +129,7 @@ test('landing pack displays the same price used by the cart', function () {
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.stores.landing.activation', $store), ['enabled' => '1'])
         ->assertRedirect();
 
@@ -262,6 +264,7 @@ test('active landing store uses landing checkout design', function () {
     ]);
 
     $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
         ->patch(route('admin.stores.landing.activation', $store), ['enabled' => '1'])
         ->assertRedirect();
 

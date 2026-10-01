@@ -88,6 +88,9 @@ return [
 
     'meta' => [
         'landing_pixel_id' => env('LANDING_META_PIXEL_ID'),
+        'conversions_access_token' => env('META_CONVERSIONS_ACCESS_TOKEN'),
+        'graph_version' => env('META_GRAPH_VERSION', 'v24.0'),
+        'test_event_code' => env('META_TEST_EVENT_CODE'),
     ],
 
     'turnstile' => [

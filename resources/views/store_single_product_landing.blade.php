@@ -337,6 +337,23 @@
         </button>
     </div>
 
+    @include('storefront.partials.meta-pixel-event', [
+        'event' => 'ViewContent',
+        'payload' => array_filter([
+            'content_ids' => [(string) $product->id],
+            'contents' => [[
+                'id' => (string) $product->id,
+                'quantity' => 1,
+                'item_price' => (float) $product->price,
+            ]],
+            'content_name' => $product->name,
+            'content_type' => 'product',
+            'content_category' => $product->category,
+            'value' => (float) $product->price,
+            'currency' => 'COP',
+        ], fn ($value) => $value !== null && $value !== ''),
+    ])
+
     <script>
         document.querySelectorAll('[data-landing-thumb]').forEach((button) => {
             button.addEventListener('click', () => {

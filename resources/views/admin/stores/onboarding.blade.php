@@ -1,11 +1,5 @@
 @extends('layouts.admin')
 
-@if(session('meta_complete_registration'))
-    @push('scripts')
-        @include('admin.partials.meta-pixel-event', ['event' => 'CompleteRegistration'])
-    @endpush
-@endif
-
 @section('content')
 @php
     use App\Models\Store;

@@ -49,9 +49,10 @@ class CartController extends Controller
     public function add(Request $request, $id)
     {
         $product = Product::with('store.user')->findOrFail($id);
+        $quantity = $this->cartService->requestedQuantity($request);
         [$cart, $message] = $this->cartService->addProduct(
             $product,
-            $this->cartService->requestedQuantity($request),
+            $quantity,
             $this->cartService->requestedOptions($request, $product),
         );
 
@@ -64,7 +65,15 @@ class CartController extends Controller
         }
 
         if ($request->expectsJson()) {
-            return response()->json($this->cartService->responsePayload($cart, null, 'Producto agregado'));
+            return response()->json(array_merge(
+                $this->cartService->responsePayload($cart, null, 'Producto agregado'),
+                [
+                    'meta_event' => [
+                        'event' => 'AddToCart',
+                        'payload' => $this->metaProductPayload($product, $quantity),
+                    ],
+                ],
+            ));
         }
 
         return back()->with('success', 'Producto agregado');
@@ -321,7 +330,7 @@ class CartController extends Controller
             }
         }
 
-        $order->refresh()->loadMissing('store');
+        $order->refresh()->loadMissing('store', 'items');
         $store = $order->store;
         $storeUrl = $store ? $this->storefrontUrls->home($store, request()) : url('/');
 
@@ -386,7 +395,7 @@ class CartController extends Controller
             }
         }
 
-        $order->refresh()->loadMissing('store');
+        $order->refresh()->loadMissing('store', 'items');
         $store = $order->store;
         $storeUrl = $store ? $this->storefrontUrls->home($store, request()) : url('/');
 
@@ -614,6 +623,26 @@ class CartController extends Controller
         }
 
         return $approvedNow;
+    }
+
+    private function metaProductPayload(Product $product, int $quantity = 1): array
+    {
+        $unitPrice = (float) $product->priceForQuantity($quantity);
+        $payload = [
+            'content_ids' => [(string) $product->id],
+            'contents' => [[
+                'id' => (string) $product->id,
+                'quantity' => $quantity,
+                'item_price' => $unitPrice,
+            ]],
+            'content_name' => $product->name,
+            'content_type' => 'product',
+            'content_category' => $product->category,
+            'value' => $unitPrice * $quantity,
+            'currency' => 'COP',
+        ];
+
+        return array_filter($payload, fn ($value) => $value !== null && $value !== '');
     }
 
     private function checkoutContext(CheckoutRequest $request, bool $requiresWhatsApp = false): array|RedirectResponse

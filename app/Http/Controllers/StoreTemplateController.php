@@ -13,6 +13,8 @@ class StoreTemplateController extends Controller
 {
     public function index(Request $request): View
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         $stores = $this->availableStores();
         $store = $this->storeForRequest($request, $stores);
 
@@ -25,6 +27,8 @@ class StoreTemplateController extends Controller
 
     public function apply(Request $request, string $template): RedirectResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         $allStores = $this->accessibleStores();
         $stores = $this->templateEligibleStores($allStores);
         $store = $this->storeForRequest($request, $allStores);

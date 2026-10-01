@@ -14,6 +14,7 @@ use App\Services\StoreSubdomainService;
 use App\Services\TrialPhoneHashService;
 use App\Services\TurnstileService;
 use App\Services\WhatsAppRegistrationNotifier;
+use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -128,7 +129,11 @@ class TrialSignupController extends Controller
 
         return redirect()
             ->route('admin.store.onboarding')
-            ->with('meta_complete_registration', true)
+            ->with('meta_pixel_events', [
+                VendlyMetaPixelEvents::completeRegistration($store),
+                VendlyMetaPixelEvents::storeCreated($store),
+                VendlyMetaPixelEvents::startTrial($store),
+            ])
             ->with('success', 'Tu tienda ya está creada. Verifica tu WhatsApp para completar la activación.');
     }
 

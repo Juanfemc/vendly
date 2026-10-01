@@ -28,6 +28,27 @@
         : ($isRejected
             ? "{$paymentMethod} no completó el pago. Puedes volver a la tienda e intentarlo nuevamente."
             : "Tu pago está pendiente de confirmación. La tienda verá el pedido en su panel cuando {$paymentMethod} actualice el estado."));
+    $metaOrderContents = $order->items
+        ->map(function ($item) {
+            $productId = (string) ($item->product_id ?? '');
+
+            return [
+                'id' => $productId,
+                'quantity' => (int) $item->quantity,
+                'item_price' => (float) $item->price,
+            ];
+        })
+        ->filter(fn (array $item) => $item['id'] !== '')
+        ->values();
+    $metaPurchasePayload = [
+        'content_ids' => $metaOrderContents->pluck('id')->values()->all(),
+        'contents' => $metaOrderContents->all(),
+        'content_type' => 'product',
+        'num_items' => (int) $order->items->sum('quantity'),
+        'value' => (float) $order->total,
+        'currency' => 'COP',
+        'order_id' => (string) $order->id,
+    ];
 @endphp
 <body class="cart-page" style="--accent: {{ $brandTheme->color }};">
     @include('storefront.partials.meta-pixel-noscript', ['store' => $store])
@@ -70,5 +91,13 @@
             <a class="primary-btn payment-return-button" href="{{ $storeUrl }}">Volver a la tienda</a>
         </section>
     </main>
+
+    @if($isApproved)
+        @include('storefront.partials.meta-pixel-event', [
+            'event' => 'Purchase',
+            'payload' => $metaPurchasePayload,
+            'eventKey' => 'purchase-' . $order->id,
+        ])
+    @endif
 </body>
 </html>

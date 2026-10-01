@@ -14,6 +14,8 @@
 /.codex-tmp
 /auth.json
 /node_modules
+/tools/node_modules
+/outputs
 /public/build
 /public/hot
 /public/storage

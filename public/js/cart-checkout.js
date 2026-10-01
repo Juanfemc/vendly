@@ -438,6 +438,13 @@
             ? 'Preparando WhatsApp...'
             : 'Redirigiendo al pago...';
 
+        if (selected?.value === 'whatsapp' && typeof window.vendlyMetaPixelTrack === 'function') {
+            window.vendlyMetaPixelTrack('Lead', Object.assign({}, window.vendlyCheckoutMetaPixelPayload || {}, {
+                content_name: 'Checkout por WhatsApp',
+                content_category: 'whatsapp_checkout',
+            }));
+        }
+
         paymentSubmitButtons.forEach((button) => {
             button.disabled = true;
             button.classList.add('is-loading');
