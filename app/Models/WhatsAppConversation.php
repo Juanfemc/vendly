@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\WhatsAppSearchIndexer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,6 +31,13 @@ class WhatsAppConversation extends Model
         'last_customer_message_at' => 'datetime',
         'last_message_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (WhatsAppConversation $conversation) {
+            app(WhatsAppSearchIndexer::class)->indexConversation($conversation);
+        });
+    }
 
     public function store(): BelongsTo
     {

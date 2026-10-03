@@ -6880,6 +6880,87 @@ test('admin can search users by account and store data', function () {
         ->assertDontSee('Pedro Oculto');
 });
 
+test('admin can search whatsapp conversations by phone store and message text', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $owner = User::factory()->create(['role' => 'store']);
+    $store = Store::create([
+        'user_id' => $owner->id,
+        'name' => 'Tienda Conversaciones',
+        'slug' => 'tienda-conversaciones',
+        'whatsapp' => '573001112233',
+        'is_active' => true,
+    ]);
+    $otherStore = Store::create([
+        'user_id' => $owner->id,
+        'name' => 'Tienda Oculta',
+        'slug' => 'tienda-oculta',
+        'whatsapp' => '573004445555',
+        'is_active' => true,
+    ]);
+
+    $conversation = \App\Models\WhatsAppConversation::create([
+        'store_id' => $store->id,
+        'conversation_key' => hash('sha256', 'conversation-visible'),
+        'contact_phone_hash' => hash('sha256', '573009991111'),
+        'contact_phone' => '573009991111',
+        'contact_name' => 'Cliente Buscado',
+        'last_message_at' => now()->subDays(10),
+    ]);
+    \App\Models\WhatsAppChatMessage::create([
+        'conversation_id' => $conversation->id,
+        'store_id' => $store->id,
+        'direction' => \App\Models\WhatsAppChatMessage::DIRECTION_INCOMING,
+        'body' => 'Hola, quiero renovar mi plan premium',
+        'status' => \App\Models\WhatsAppChatMessage::STATUS_RECEIVED,
+        'created_at' => now()->subDays(10),
+    ]);
+
+    foreach (range(1, 305) as $index) {
+        \App\Models\WhatsAppConversation::create([
+            'store_id' => $otherStore->id,
+            'conversation_key' => hash('sha256', 'conversation-recent-'.$index),
+            'contact_phone_hash' => hash('sha256', '57300123'.str_pad((string) $index, 4, '0', STR_PAD_LEFT)),
+            'contact_phone' => '57300123'.str_pad((string) $index, 4, '0', STR_PAD_LEFT),
+            'contact_name' => 'Cliente Reciente '.$index,
+            'last_message_at' => now()->subMinutes($index),
+        ]);
+    }
+
+    $otherConversation = \App\Models\WhatsAppConversation::create([
+        'store_id' => $otherStore->id,
+        'conversation_key' => hash('sha256', 'conversation-hidden'),
+        'contact_phone_hash' => hash('sha256', '573008882222'),
+        'contact_phone' => '573008882222',
+        'contact_name' => 'Cliente Oculto',
+        'last_message_at' => now()->subMinute(),
+    ]);
+    \App\Models\WhatsAppChatMessage::create([
+        'conversation_id' => $otherConversation->id,
+        'store_id' => $otherStore->id,
+        'direction' => \App\Models\WhatsAppChatMessage::DIRECTION_INCOMING,
+        'body' => 'Consulta general',
+        'status' => \App\Models\WhatsAppChatMessage::STATUS_RECEIVED,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.whatsapp.index', ['q' => 'premium']))
+        ->assertOk()
+        ->assertSee('Cliente Buscado')
+        ->assertDontSee('Cliente Oculto');
+
+    $this->actingAs($admin)
+        ->get(route('admin.whatsapp.index', ['q' => '3009991111']))
+        ->assertOk()
+        ->assertSee('Cliente Buscado')
+        ->assertDontSee('Cliente Oculto');
+
+    $this->actingAs($admin)
+        ->get(route('admin.whatsapp.index', ['q' => 'Conversaciones']))
+        ->assertOk()
+        ->assertSee('Cliente Buscado')
+        ->assertDontSee('Cliente Oculto');
+});
+
 test('admin can extend a store user access from the current end date', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $user = User::factory()->create([

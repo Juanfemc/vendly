@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\WhatsAppConversation;
+use App\Models\WhatsAppSearchToken;
 use App\Services\WhatsAppInboxService;
+use App\Services\WhatsAppSearchIndexer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,13 +13,18 @@ use Throwable;
 
 class WhatsAppInboxController extends Controller
 {
-    public function __construct(private WhatsAppInboxService $inbox)
+    public function __construct(
+        private WhatsAppInboxService $inbox,
+        private WhatsAppSearchIndexer $searchIndexer,
+    )
     {
     }
 
     public function index(Request $request): View
     {
         $user = $request->user();
+        $whatsappSearch = trim((string) $request->query('q', ''));
+
         $this->inbox->syncRecentTemplateMessages(
             $user->isAdmin() ? null : $user->stores()->pluck('id')->all(),
         );
@@ -27,6 +34,8 @@ class WhatsAppInboxController extends Controller
             ->withMax('messages', 'created_at')
             ->orderByDesc('last_message_at')
             ->orderByDesc('id');
+
+        $this->applyConversationSearch($request, $conversationsQuery, $whatsappSearch);
 
         $conversations = $conversationsQuery->paginate(15)->withQueryString();
         $selectedConversation = $this->selectedConversation($request);
@@ -46,6 +55,7 @@ class WhatsAppInboxController extends Controller
             'conversations' => $conversations,
             'selectedConversation' => $selectedConversation,
             'canManageAll' => $user->isAdmin(),
+            'whatsappSearch' => $whatsappSearch,
         ]);
     }
 
@@ -94,6 +104,61 @@ class WhatsAppInboxController extends Controller
         }
 
         return $query;
+    }
+
+    private function applyConversationSearch(Request $request, $query, string $search): void
+    {
+        if ($search === '') {
+            return;
+        }
+
+        $digits = preg_replace('/\D+/', '', $search) ?: '';
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
+        $phoneHashes = collect([$digits, strlen($digits) === 10 ? '57'.$digits : null])
+            ->filter()
+            ->unique()
+            ->map(fn (string $phone) => hash('sha256', $phone))
+            ->all();
+        $searchTokenHashes = $this->searchIndexer->hashesForSearch($search);
+
+        $databaseMatchIds = $this->visibleConversations($request)
+            ->where(function ($databaseQuery) use ($like, $phoneHashes) {
+                $databaseQuery->whereHas('store', function ($storeQuery) use ($like) {
+                    $storeQuery
+                        ->where('name', 'like', $like)
+                        ->orWhere('slug', 'like', $like)
+                        ->orWhere('whatsapp', 'like', $like);
+                });
+
+                if ($phoneHashes !== []) {
+                    $databaseQuery->orWhereIn('contact_phone_hash', $phoneHashes);
+                }
+            })
+            ->limit(1000)
+            ->pluck('id');
+
+        $indexedMatchIds = collect();
+
+        if ($searchTokenHashes !== [] && $this->searchIndexer->canIndex()) {
+            $indexedMatchIds = WhatsAppSearchToken::query()
+                ->whereIn('token_hash', $searchTokenHashes)
+                ->whereIn('conversation_id', $this->visibleConversations($request)->select('id'))
+                ->select('conversation_id')
+                ->groupBy('conversation_id')
+                ->havingRaw('COUNT(DISTINCT token_hash) >= ?', [count($searchTokenHashes)])
+                ->limit(1000)
+                ->pluck('conversation_id');
+        }
+
+        $matchingIds = $databaseMatchIds
+            ->merge($indexedMatchIds)
+            ->unique()
+            ->values()
+            ->all();
+
+        $matchingIds === []
+            ? $query->whereRaw('1 = 0')
+            : $query->whereKey($matchingIds);
     }
 
     private function authorizeConversation(Request $request, WhatsAppConversation $conversation): void

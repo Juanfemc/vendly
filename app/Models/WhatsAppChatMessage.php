@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\WhatsAppSearchIndexer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -51,6 +52,13 @@ class WhatsAppChatMessage extends Model
         'read_at' => 'datetime',
         'failed_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (WhatsAppChatMessage $message) {
+            app(WhatsAppSearchIndexer::class)->indexMessage($message);
+        });
+    }
 
     public function conversation(): BelongsTo
     {

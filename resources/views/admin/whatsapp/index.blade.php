@@ -9,6 +9,68 @@
         align-items: start;
     }
 
+    .whatsapp-search-card {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .whatsapp-search-head strong {
+        display: block;
+        color: #111827;
+        font-size: 17px;
+    }
+
+    .whatsapp-search-head span {
+        display: block;
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .whatsapp-search-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .whatsapp-search-field {
+        position: relative;
+        min-width: 0;
+    }
+
+    .whatsapp-search-field svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .whatsapp-search-field input {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 14px 0 42px;
+        border: 1px solid #d8e0eb;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 650;
+        outline: none;
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .whatsapp-search-field input:focus {
+        border-color: #ff6b00;
+        box-shadow: 0 0 0 4px rgba(255, 107, 0, .12);
+    }
+
     .whatsapp-conversation-list,
     .whatsapp-chat-panel {
         min-height: 560px;
@@ -158,6 +220,10 @@
             grid-template-columns: 1fr;
         }
 
+        .whatsapp-search-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
         .whatsapp-conversation-list,
         .whatsapp-chat-panel {
             min-height: auto;
@@ -188,10 +254,35 @@
     <div class="flash error">{{ $errors->first() }}</div>
 @endif
 
+<div class="list-card whatsapp-search-card">
+    <div class="whatsapp-search-head">
+        <strong>Buscar conversaciones</strong>
+        <span>{{ number_format($conversations->total(), 0, ',', '.') }} resultado(s){{ ($whatsappSearch ?? '') !== '' ? ' para "' . $whatsappSearch . '"' : '' }}</span>
+    </div>
+
+    <form method="GET" action="{{ route('admin.whatsapp.index') }}" class="whatsapp-search-row" data-admin-live-search>
+        <label class="whatsapp-search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.5 16.5 4 4"></path>
+            </svg>
+            <span class="sr-only">Buscar conversaciones de WhatsApp</span>
+            <input type="search" name="q" value="{{ $whatsappSearch ?? '' }}" placeholder="Buscar por cliente, teléfono, tienda o mensaje" autocomplete="off">
+        </label>
+        <button type="submit" class="btn">Buscar</button>
+        @if(($whatsappSearch ?? '') !== '')
+            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary">Limpiar</a>
+        @endif
+    </form>
+</div>
+
 @if ($conversations->isEmpty())
     <div class="panel-empty">
-        <h3>No hay conversaciones todavía</h3>
-        <p>Cuando un cliente responda un mensaje de WhatsApp enviado desde Vendly, aparecerá aquí.</p>
+        <h3>{{ ($whatsappSearch ?? '') !== '' ? 'No encontramos conversaciones' : 'No hay conversaciones todavía' }}</h3>
+        <p>{{ ($whatsappSearch ?? '') !== '' ? 'Prueba con otro cliente, teléfono, tienda o texto del mensaje.' : 'Cuando un cliente responda un mensaje de WhatsApp enviado desde Vendly, aparecerá aquí.' }}</p>
+        @if(($whatsappSearch ?? '') !== '')
+            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary">Limpiar búsqueda</a>
+        @endif
     </div>
 @else
     <div class="whatsapp-inbox">
@@ -202,7 +293,7 @@
                     $displayName = $conversation->contact_name ?: 'Cliente WhatsApp';
                 @endphp
                 <a
-                    href="{{ route('admin.whatsapp.index', ['conversation' => $conversation->id]) }}"
+                    href="{{ route('admin.whatsapp.index', array_filter(['conversation' => $conversation->id, 'q' => $whatsappSearch ?? null])) }}"
                     class="whatsapp-conversation-link {{ $isActive ? 'is-active' : '' }}"
                 >
                     <div class="whatsapp-conversation-top">
