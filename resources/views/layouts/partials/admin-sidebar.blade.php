@@ -2,7 +2,8 @@
     $sidebarUser = auth()->user();
     $sidebarStores = $sidebarUser?->stores()->get() ?? collect();
     $sidebarStore = $sidebarUser?->store ?? $sidebarStores->first();
-    $sidebarAllowsTemplates = $sidebarUser?->isAdmin() && $sidebarStores->contains(fn ($store) => $store->allowsTemplates());
+    $sidebarAllowsTemplates = ($sidebarUser?->isAdmin() ?? false)
+        || $sidebarStores->contains(fn ($store) => $store->allowsTemplates());
     $sidebarStoreUrl = $sidebarStore?->slug ? app(\App\Services\StorefrontUrlService::class)->publicHome($sidebarStore) : url('/');
     $sidebarStoreHost = parse_url($sidebarStoreUrl, PHP_URL_HOST) ?: config('app.name', 'Vendly');
     $sidebarPlanLabel = $sidebarStore?->planLabel() ?? 'Admin';
@@ -86,6 +87,11 @@
                         <a href="/admin/stores/create" class="{{ $sidebarSubLinkClass('admin/stores/create') }}">Crear tienda</a>
                     </div>
                 </details>
+
+                <a href="{{ route('admin.templates.index') }}" class="{{ $sidebarLinkClass('admin/templates*') }}">
+                    {!! $sidebarIcon('image') !!}
+                    <span>Plantillas</span>
+                </a>
 
                 <details class="sidebar-menu-group" {{ request()->is('admin/products*') ? 'open' : '' }}>
                     <summary><span>{!! $sidebarIcon('box') !!}Productos</span></summary>

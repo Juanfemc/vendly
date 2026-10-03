@@ -3224,6 +3224,17 @@
     border-radius: 3px;
     background: #ffffff;
     color: #111111;
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.fashion-field:focus-within {
+    border-color: var(--brand-color, #111111);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color, #111111) 10%, transparent);
+}
+
+.fashion-field:focus-within span {
+    color: var(--brand-color, #111111);
 }
 
 .fashion-field--full {
@@ -3249,6 +3260,24 @@
     font: inherit;
     font-size: 14px;
     outline: none;
+}
+
+.fashion-field input::placeholder,
+.fashion-field textarea::placeholder {
+    color: color-mix(in srgb, #111111 42%, #ffffff);
+}
+
+.fashion-field input:focus,
+.fashion-field select:focus,
+.fashion-field textarea:focus {
+    box-shadow: none;
+}
+
+.fashion-field input:-webkit-autofill,
+.fashion-field input:-webkit-autofill:hover,
+.fashion-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #111111;
+    box-shadow: 0 0 0 1000px #ffffff inset;
 }
 
 .fashion-field select {
@@ -6061,6 +6090,25 @@
 .storefront-page--fashion .fashion-checkout-summary,
 .storefront-page--fashion .fashion-summary-item {
     border-color: var(--fashion-border);
+}
+
+.cart-page--fashion .fashion-field:focus-within {
+    border-color: var(--brand-color, #111111);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color, #111111) 10%, transparent);
+}
+
+.cart-page--fashion .fashion-field input:focus,
+.cart-page--fashion .fashion-field select:focus,
+.cart-page--fashion .fashion-field textarea:focus {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.cart-page--fashion .fashion-checkout-form .checkout-coupon-row input:focus {
+    border-color: var(--brand-color, #111111);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-color, #111111) 10%, transparent);
+    outline: none;
 }
 
 .storefront-page--fashion .fashion-product-media,
@@ -8916,7 +8964,8 @@ body.storefront-filter-drawer-open.storefront-page--fashion .fashion-filter-back
     z-index: 1901;
     width: min(430px, calc(100vw - 20px));
     display: grid;
-    grid-template-rows: auto auto auto 1fr auto;
+    grid-auto-rows: auto;
+    align-content: start;
     align-items: stretch;
     gap: 14px;
     margin: 0;
@@ -9074,6 +9123,8 @@ body.storefront-filter-drawer-open.storefront-page--fashion .store-whatsapp-floa
 }
 
 .storefront-page--fashion .fashion-filter-apply {
+    width: 100%;
+    align-self: start;
     min-height: 48px;
     border: 0;
     border-radius: 999px;

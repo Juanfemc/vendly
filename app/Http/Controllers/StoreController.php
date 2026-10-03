@@ -44,15 +44,17 @@ class StoreController extends Controller
         $this->authorize('create', Store::class);
 
         $storeStatus = $this->normalizeStoreStatus($request->query('store_status'));
+        $storeSearch = trim((string) $request->query('q', ''));
         $storeFilterOptions = $this->storeStatusLabels();
         $storesQuery = Store::with(['user', 'creatorAdmin'])->latest();
 
         $this->applyStoreStatusFilter($storesQuery, $storeStatus);
+        $this->applyStoreSearch($storesQuery, $storeSearch);
 
         $stores = $storesQuery->get();
         $storesCount = $stores->count();
 
-        return view('admin.stores.index', compact('stores', 'storeStatus', 'storeFilterOptions', 'storesCount'));
+        return view('admin.stores.index', compact('stores', 'storeStatus', 'storeSearch', 'storeFilterOptions', 'storesCount'));
     }
 
     public function create()
@@ -501,6 +503,33 @@ class StoreController extends Controller
                 }),
             default => null,
         };
+    }
+
+    private function applyStoreSearch(Builder $query, string $search): void
+    {
+        if ($search === '') {
+            return;
+        }
+
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
+
+        $query->where(function (Builder $searchQuery) use ($like) {
+            $searchQuery
+                ->where('name', 'like', $like)
+                ->orWhere('slug', 'like', $like)
+                ->orWhere('whatsapp', 'like', $like)
+                ->orWhere('business_type', 'like', $like)
+                ->orWhereHas('user', function (Builder $userQuery) use ($like) {
+                    $userQuery
+                        ->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like);
+                })
+                ->orWhereHas('creatorAdmin', function (Builder $adminQuery) use ($like) {
+                    $adminQuery
+                        ->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like);
+                });
+        });
     }
 
     private function activePeriodData(Request $request): array

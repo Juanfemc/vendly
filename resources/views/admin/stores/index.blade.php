@@ -22,6 +22,48 @@
         margin-bottom: 16px;
     }
 
+    .store-filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .store-search-field {
+        position: relative;
+        min-width: 0;
+    }
+
+    .store-search-field svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .store-search-field input {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 14px 0 42px;
+        border: 1px solid #d8e0eb;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 650;
+        outline: none;
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .store-search-field input:focus {
+        border-color: #ff6b00;
+        box-shadow: 0 0 0 4px rgba(255, 107, 0, .12);
+    }
+
     .store-filter-head strong {
         display: block;
         color: #111827;
@@ -73,6 +115,10 @@
     }
 
     @media (max-width: 640px) {
+        .store-filter-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
         .store-filter-segmented {
             flex-wrap: nowrap;
             overflow-x: auto;
@@ -89,8 +135,24 @@
     <div class="list-card store-filter-card" data-store-filter-card>
         <div class="store-filter-head">
             <strong>Filtrar tiendas</strong>
-            <span>{{ number_format($storesCount ?? $stores->count(), 0, ',', '.') }} resultado(s) · Activas, en prueba o pagas</span>
+            <span>{{ number_format($storesCount ?? $stores->count(), 0, ',', '.') }} resultado(s){{ ($storeSearch ?? '') !== '' ? ' para "' . $storeSearch . '"' : '' }} · Activas, en prueba o pagas</span>
         </div>
+
+        <form method="GET" action="{{ url('/admin/stores') }}" class="store-filter-row" data-admin-live-search>
+            <input type="hidden" name="store_status" value="{{ $storeStatus ?? 'all' }}">
+            <label class="store-search-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16.5 16.5 4 4"></path>
+                </svg>
+                <span class="sr-only">Buscar tiendas</span>
+                <input type="search" name="q" value="{{ $storeSearch ?? '' }}" placeholder="Buscar por tienda, slug, WhatsApp o usuario" autocomplete="off">
+            </label>
+            <button type="submit" class="btn">Buscar</button>
+            @if(($storeSearch ?? '') !== '')
+                <a href="{{ request()->fullUrlWithoutQuery('q') }}" class="btn btn-secondary" data-store-filter-link>Limpiar</a>
+            @endif
+        </form>
 
         <div class="store-filter-segmented" aria-label="Filtrar tiendas por estado">
             @foreach (($storeFilterOptions ?? []) as $statusKey => $statusLabel)
@@ -107,9 +169,11 @@
 
     @if($stores->isEmpty())
         <div class="panel-empty">
-            <h3>{{ ($storeStatus ?? 'all') === 'all' ? 'No hay tiendas registradas' : 'No hay tiendas para este filtro' }}</h3>
-            <p>{{ ($storeStatus ?? 'all') === 'all' ? 'Crea una tienda para asociarla a un usuario y publicar su catálogo.' : 'Prueba con otro estado o revisa las suscripciones desde el listado completo.' }}</p>
-            @if (($storeStatus ?? 'all') === 'all')
+            <h3>{{ ($storeSearch ?? '') !== '' ? 'No encontramos tiendas' : (($storeStatus ?? 'all') === 'all' ? 'No hay tiendas registradas' : 'No hay tiendas para este filtro') }}</h3>
+            <p>{{ ($storeSearch ?? '') !== '' ? 'Prueba con otro nombre, correo, slug o número de WhatsApp.' : (($storeStatus ?? 'all') === 'all' ? 'Crea una tienda para asociarla a un usuario y publicar su catálogo.' : 'Prueba con otro estado o revisa las suscripciones desde el listado completo.') }}</p>
+            @if (($storeSearch ?? '') !== '')
+                <a href="{{ request()->fullUrlWithoutQuery('q') }}" class="btn btn-secondary" data-store-filter-link>Limpiar búsqueda</a>
+            @elseif (($storeStatus ?? 'all') === 'all')
                 <a href="{{ route('admin.stores.create-with-user') }}" class="btn">Crear cliente + tienda</a>
             @else
                 <a href="{{ request()->fullUrlWithQuery(['store_status' => 'all']) }}" class="btn btn-secondary" data-store-filter-link>Ver todas</a>

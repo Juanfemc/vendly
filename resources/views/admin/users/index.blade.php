@@ -19,15 +19,69 @@
     <div class="flash success">{{ session('success') }}</div>
 @endif
 
-@if ($users->isEmpty())
-    <div class="users-empty">
-        <h3>No hay usuarios registrados</h3>
-        <p>Crea el primer usuario para asignarle una tienda y controlar su acceso.</p>
-        <a href="/admin/users/create" class="btn">Crear usuario</a>
-    </div>
-@endif
-
 <style>
+    .users-filter-card {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .users-filter-head strong {
+        display: block;
+        color: #111827;
+        font-size: 17px;
+    }
+
+    .users-filter-head span {
+        display: block;
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .users-filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .users-search-field {
+        position: relative;
+        min-width: 0;
+    }
+
+    .users-search-field svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .users-search-field input {
+        width: 100%;
+        min-height: 42px;
+        padding: 0 14px 0 42px;
+        border: 1px solid #d8e0eb;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 650;
+        outline: none;
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .users-search-field input:focus {
+        border-color: #ff6b00;
+        box-shadow: 0 0 0 4px rgba(255, 107, 0, .12);
+    }
+
     .users-list {
         display: grid;
         gap: 14px;
@@ -282,6 +336,10 @@
     }
 
     @media (max-width: 720px) {
+        .users-filter-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
         .user-card {
             grid-template-columns: 1fr;
         }
@@ -318,6 +376,40 @@
         }
     }
 </style>
+
+<div class="list-card users-filter-card">
+    <div class="users-filter-head">
+        <strong>Buscar usuarios</strong>
+        <span>{{ number_format($users->count(), 0, ',', '.') }} resultado(s){{ ($userSearch ?? '') !== '' ? ' para "' . $userSearch . '"' : '' }}</span>
+    </div>
+
+    <form method="GET" action="{{ url('/admin/users') }}" class="users-filter-row" data-admin-live-search>
+        <label class="users-search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.5 16.5 4 4"></path>
+            </svg>
+            <span class="sr-only">Buscar usuarios</span>
+            <input type="search" name="q" value="{{ $userSearch ?? '' }}" placeholder="Buscar por nombre, correo, rol o tienda" autocomplete="off">
+        </label>
+        <button type="submit" class="btn">Buscar</button>
+        @if(($userSearch ?? '') !== '')
+            <a href="{{ url('/admin/users') }}" class="btn btn-secondary">Limpiar</a>
+        @endif
+    </form>
+</div>
+
+@if ($users->isEmpty())
+    <div class="users-empty">
+        <h3>{{ ($userSearch ?? '') !== '' ? 'No encontramos usuarios' : 'No hay usuarios registrados' }}</h3>
+        <p>{{ ($userSearch ?? '') !== '' ? 'Prueba con otro nombre, correo, rol, tienda o WhatsApp.' : 'Crea el primer usuario para asignarle una tienda y controlar su acceso.' }}</p>
+        @if(($userSearch ?? '') !== '')
+            <a href="{{ url('/admin/users') }}" class="btn btn-secondary">Limpiar búsqueda</a>
+        @else
+            <a href="/admin/users/create" class="btn">Crear usuario</a>
+        @endif
+    </div>
+@endif
 
 <div class="users-list">
     @foreach($users as $user)

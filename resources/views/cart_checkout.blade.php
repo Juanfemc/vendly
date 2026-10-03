@@ -53,11 +53,16 @@
     $checkoutRequired = fn (string $field): string => $checkoutFieldRequired($field) ? 'required' : '';
     $checkoutLocationEnabled = $checkoutFieldEnabled('city');
     $checkoutLocationRequired = $checkoutFieldRequired('city');
-    $selectedShippingKey = old('shipping_method', $shippingMethods->first()['key'] ?? null);
-    $selectedShipping = $shippingMethods->firstWhere('key', (string) $selectedShippingKey) ?? $shippingMethods->first();
+    $shouldPreselectShipping = ! ($isFashionStore && ! $isSingleProductLandingCheckout && ! $hasLocalDelivery);
+    $selectedShippingKey = old('shipping_method', $shouldPreselectShipping ? ($shippingMethods->first()['key'] ?? null) : null);
+    $selectedShipping = filled($selectedShippingKey)
+        ? $shippingMethods->firstWhere('key', (string) $selectedShippingKey)
+        : null;
+    $selectedShipping = $selectedShipping ?? ($shouldPreselectShipping ? $shippingMethods->first() : null);
     $shippingCost = (float) (($localDelivery['cost'] ?? null) ?? ($selectedShipping['checkout_cost'] ?? 0));
     $activeShippingMethods = $shippingMethods;
     $selectableShippingMethods = $hasLocalDelivery ? collect() : $shippingMethods;
+    $awaitingShippingSelection = ! $hasLocalDelivery && $selectableShippingMethods->isNotEmpty() && blank($selectedShippingKey);
     $showShippingOptionsAtCheckoutStart = $store?->show_shipping_options_at_checkout_start === true
         && $activeShippingMethods->isNotEmpty();
     $discount = $discount ?? ['code' => null, 'amount' => 0];

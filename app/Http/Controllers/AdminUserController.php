@@ -26,13 +26,34 @@ class AdminUserController extends Controller
     ) {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $userSearch = trim((string) $request->query('q', ''));
+
         $users = User::orderByRaw("case when role = 'admin' then 0 else 1 end")
+            ->when($userSearch !== '', fn ($query) => $this->applyUserSearch($query, $userSearch))
             ->latest()
             ->get();
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'userSearch'));
+    }
+
+    private function applyUserSearch($query, string $search): void
+    {
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
+
+        $query->where(function ($searchQuery) use ($like) {
+            $searchQuery
+                ->where('name', 'like', $like)
+                ->orWhere('email', 'like', $like)
+                ->orWhere('role', 'like', $like)
+                ->orWhereHas('stores', function ($storeQuery) use ($like) {
+                    $storeQuery
+                        ->where('name', 'like', $like)
+                        ->orWhere('slug', 'like', $like)
+                        ->orWhere('whatsapp', 'like', $like);
+                });
+        });
     }
 
     public function create(): View

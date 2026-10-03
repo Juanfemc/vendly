@@ -712,7 +712,7 @@
         </div>
     @endif
 
-    <form method="GET" action="{{ url()->current() }}" class="products-toolbar">
+    <form method="GET" action="{{ url()->current() }}" class="products-toolbar" data-admin-live-search>
         <div class="products-search-field">
             <span class="products-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>

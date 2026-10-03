@@ -4309,6 +4309,43 @@
     </script>
     <script>
         (() => {
+            const forms = document.querySelectorAll('form[data-admin-live-search]');
+
+            forms.forEach((form) => {
+                const input = form.querySelector('input[type="search"][name="q"]');
+
+                if (!input) {
+                    return;
+                }
+
+                let timer = null;
+                let lastSubmittedValue = input.value.trim();
+
+                const submitSearch = () => {
+                    const nextValue = input.value.trim();
+
+                    if (nextValue === lastSubmittedValue) {
+                        return;
+                    }
+
+                    lastSubmittedValue = nextValue;
+                    form.requestSubmit();
+                };
+
+                input.addEventListener('input', () => {
+                    window.clearTimeout(timer);
+                    timer = window.setTimeout(submitSearch, 350);
+                });
+
+                input.addEventListener('search', () => {
+                    window.clearTimeout(timer);
+                    submitSearch();
+                });
+            });
+        })();
+    </script>
+    <script>
+        (() => {
             const productEditor = document.querySelector('.product-editor-page');
 
             if (!productEditor) {

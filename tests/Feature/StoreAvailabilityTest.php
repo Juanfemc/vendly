@@ -1606,7 +1606,7 @@ test('pro store users cannot see or open payment methods', function () {
         ->assertForbidden();
 });
 
-test('store users cannot manage templates even on paid plans', function () {
+test('paid store users can manage their own templates', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
         'active_ends_at' => now()->addDay(),
@@ -1624,21 +1624,21 @@ test('store users cannot manage templates even on paid plans', function () {
     $this->actingAs($storeUser)
         ->get('/dashboard')
         ->assertOk()
-        ->assertDontSee(route('admin.templates.index'), false);
+        ->assertSee('Plantillas')
+        ->assertSee(route('admin.templates.index'), false);
 
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index'))
-        ->assertForbidden();
+        ->assertOk()
+        ->assertSee('Plantilla Ropa')
+        ->assertSee('Usar plantilla');
 
     $this->actingAs($storeUser)
         ->post(route('admin.templates.apply', 'fashion'))
-        ->assertForbidden();
+        ->assertRedirect(route('admin.templates.index', ['store_id' => $store->id]))
+        ->assertSessionHas('success');
 
-    expect($store->fresh()->business_type)->toBe('store');
-    $this->assertDatabaseMissing('store_categories', [
-        'store_id' => $store->id,
-        'name' => 'Audio',
-    ]);
+    expect($store->fresh()->business_type)->toBe('fashion');
 });
 
 test('admin users can apply available templates', function () {
@@ -1845,13 +1845,13 @@ test('template selection cannot target another users store', function () {
 
     $this->actingAs($storeUser)
         ->get(route('admin.templates.index', ['store_id' => $otherStore->id]))
-        ->assertForbidden();
+        ->assertNotFound();
 
     $this->actingAs($storeUser)
         ->post(route('admin.templates.apply', 'technology'), [
             'store_id' => $otherStore->id,
         ])
-        ->assertForbidden();
+        ->assertNotFound();
 
     expect($otherStore->fresh()->business_type)->toBe('store');
 });
@@ -6766,6 +6766,48 @@ test('admin cannot assign a store to a non store user', function () {
         ->assertSessionHasErrors('user_id');
 });
 
+test('admin can search stores by store and owner data', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $matchingOwner = User::factory()->create([
+        'role' => 'store',
+        'name' => 'Cliente Buscado',
+        'email' => 'cliente-buscado@example.com',
+    ]);
+    $otherOwner = User::factory()->create([
+        'role' => 'store',
+        'name' => 'Cliente Oculto',
+        'email' => 'cliente-oculto@example.com',
+    ]);
+
+    Store::create([
+        'user_id' => $matchingOwner->id,
+        'name' => 'Moda Aurora',
+        'slug' => 'moda-aurora',
+        'whatsapp' => '573009991111',
+        'is_active' => true,
+    ]);
+
+    Store::create([
+        'user_id' => $otherOwner->id,
+        'name' => 'Tecnologia Norte',
+        'slug' => 'tecnologia-norte',
+        'whatsapp' => '573002224444',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/admin/stores?q=aurora')
+        ->assertOk()
+        ->assertSee('Moda Aurora')
+        ->assertDontSee('Tecnologia Norte');
+
+    $this->actingAs($admin)
+        ->get('/admin/stores?q=cliente-buscado')
+        ->assertOk()
+        ->assertSee('Moda Aurora')
+        ->assertDontSee('Tecnologia Norte');
+});
+
 test('admin can create another admin user from the panel', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
@@ -6794,6 +6836,48 @@ test('admin can create another admin user from the panel', function () {
         ->assertOk()
         ->assertSee('Admin Nuevo')
         ->assertSee('Administrador');
+});
+
+test('admin can search users by account and store data', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $matchingUser = User::factory()->create([
+        'role' => 'store',
+        'name' => 'Laura Meta',
+        'email' => 'laura-meta@example.com',
+    ]);
+    $otherUser = User::factory()->create([
+        'role' => 'store',
+        'name' => 'Pedro Oculto',
+        'email' => 'pedro-oculto@example.com',
+    ]);
+
+    Store::create([
+        'user_id' => $matchingUser->id,
+        'name' => 'Ropa Horizonte',
+        'slug' => 'ropa-horizonte',
+        'whatsapp' => '573005551111',
+        'is_active' => true,
+    ]);
+
+    Store::create([
+        'user_id' => $otherUser->id,
+        'name' => 'Accesorios Sur',
+        'slug' => 'accesorios-sur',
+        'whatsapp' => '573006662222',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/admin/users?q=laura')
+        ->assertOk()
+        ->assertSee('Laura Meta')
+        ->assertDontSee('Pedro Oculto');
+
+    $this->actingAs($admin)
+        ->get('/admin/users?q=horizonte')
+        ->assertOk()
+        ->assertSee('Laura Meta')
+        ->assertDontSee('Pedro Oculto');
 });
 
 test('admin can extend a store user access from the current end date', function () {
@@ -8660,6 +8744,7 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         ->assertSee('Método de envío')
         ->assertSee('Domicilio urbano')
         ->assertSee('$ 9.000')
+        ->assertSee('Por seleccionar')
         ->assertSee('data-shipping-cost-field', false)
         ->assertSee('images/icons/payment-whatsapp.svg', false)
         ->assertSee('images/icons/payment-mercadopago.svg', false)
@@ -8668,8 +8753,11 @@ test('fashion checkout shows shipping without redundant summary actions', functi
         ->assertDontSee('fashion-summary-benefits')
         ->assertDontSee('Impuestos estimados');
 
+    $shippingBlock = (string) str($response->getContent())->between('<fieldset class="fashion-shipping-options">', '</fieldset>');
+
     expect($response->getContent())
-        ->toContain('value="9000"')
+        ->toContain('data-shipping-cost="9000"')
+        ->and($shippingBlock)->not->toContain('checked')
         ->and(substr_count($response->getContent(), 'Domicilio urbano'))->toBeGreaterThanOrEqual(2)
         ->and(substr_count($response->getContent(), 'data-shipping-option'))->toBeGreaterThanOrEqual(2);
 });

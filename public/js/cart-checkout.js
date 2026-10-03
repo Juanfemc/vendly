@@ -126,6 +126,7 @@
     };
 
     const selectedPaymentChoice = () => paymentChoices.find((choice) => choice.checked);
+    const selectedShippingOption = () => shippingOptions.find((option) => option.checked);
 
     const syncPaymentChoice = () => {
         const selected = selectedPaymentChoice();
@@ -164,7 +165,7 @@
             return freeShippingApplies() ? 0 : baseCost;
         }
 
-        const selected = shippingOptions.find((option) => option.checked);
+        const selected = selectedShippingOption();
 
         if (selected) {
             const baseCost = Number(selected.dataset.shippingCost || 0);
@@ -218,6 +219,7 @@
 
         const cost = shippingCost();
         const awaitingCity = localDeliveryEnabled && !hasSelectedCity();
+        const awaitingShippingSelection = !localDeliveryEnabled && shippingOptions.length > 0 && !selectedShippingOption();
 
         updateShippingLabels();
         totalEls.forEach((element) => {
@@ -228,13 +230,15 @@
         });
         if (discountRow) discountRow.classList.toggle('is-hidden', discountAmount <= 0);
         shippingTotalEls.forEach((element) => {
-            element.textContent = awaitingCity ? 'Por calcular' : (cost > 0 ? money(cost) : 'Gratis');
+            element.textContent = awaitingCity
+                ? 'Por calcular'
+                : (awaitingShippingSelection ? 'Por seleccionar' : (cost > 0 ? money(cost) : 'Gratis'));
         });
         if (shippingCostField) {
-            shippingCostField.value = String(awaitingCity ? 0 : cost);
+            shippingCostField.value = String(awaitingCity || awaitingShippingSelection ? 0 : cost);
         }
         grandTotalEls.forEach((element) => {
-            element.textContent = money(grandTotal(awaitingCity ? 0 : cost));
+            element.textContent = money(grandTotal(awaitingCity || awaitingShippingSelection ? 0 : cost));
         });
     };
 

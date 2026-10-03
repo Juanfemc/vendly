@@ -13,6 +13,8 @@
     $wompiAvailable = (bool) ($wompiAvailable ?? false);
     $showFashionDeliveryTimes = $store?->showsFashionDeliveryTimes() ?? false;
     $selectableShippingMethods = $hasLocalDelivery ? collect() : collect($shippingMethods ?? []);
+    $awaitingShippingSelection = $awaitingShippingSelection
+        ?? (! $hasLocalDelivery && $selectableShippingMethods->isNotEmpty() && blank($selectedShippingKey ?? null));
     $defaultPaymentAction = $whatsappAvailable
         ? route('cart.whatsapp', ['store' => $store->slug])
         : ($mercadoPagoAvailable
@@ -72,7 +74,7 @@
                 <section>
                     <label class="fashion-field fashion-field--full">
                         <span>Correo electrónico{{ $checkoutFieldRequired('email') ? '' : ' (opcional)' }}</span>
-                        <input type="email" name="email" value="{{ old('email') }}" placeholder="correo@ejemplo.com" {{ $checkoutRequired('email') }}>
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="correo@ejemplo.com" autocomplete="email" {{ $checkoutRequired('email') }}>
                     </label>
                 </section>
             @endif
@@ -89,31 +91,31 @@
                     <div class="fashion-field-row">
                         <label class="fashion-field">
                             <span>Nombre</span>
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" required>
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" autocomplete="given-name" required>
                         </label>
 
                         <label class="fashion-field">
                             <span>Apellidos</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" required>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" autocomplete="family-name" required>
                         </label>
                     </div>
 
                     <label class="fashion-field fashion-field--full">
                         <span>WhatsApp</span>
-                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" required>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" autocomplete="off" inputmode="tel" required>
                     </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">
                             <span>Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}</span>
-                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" {{ $checkoutRequired('address') }}>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" autocomplete="street-address" {{ $checkoutRequired('address') }}>
                         </label>
                     @endif
 
                     @if($checkoutFieldEnabled('apartment'))
                         <label class="fashion-field fashion-field--full">
                             <span>Apartamento, interior, torre, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}</span>
-                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." {{ $checkoutRequired('apartment') }}>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." autocomplete="address-line2" {{ $checkoutRequired('apartment') }}>
                         </label>
                     @endif
 
@@ -155,31 +157,31 @@
                     <div class="fashion-field-row">
                         <label class="fashion-field">
                             <span>Nombre</span>
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" required>
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Juan" autocomplete="given-name" required>
                         </label>
 
                         <label class="fashion-field">
                             <span>Apellidos</span>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" required>
+                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Pérez" autocomplete="family-name" required>
                         </label>
                     </div>
 
                     <label class="fashion-field fashion-field--full">
                         <span>WhatsApp</span>
-                        <input type="text" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" required>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="300 123 4567" autocomplete="off" inputmode="tel" required>
                     </label>
 
                     @if($checkoutFieldEnabled('address'))
                         <label class="fashion-field fashion-field--full">
                             <span>Dirección{{ $checkoutFieldRequired('address') ? '' : ' (opcional)' }}</span>
-                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" {{ $checkoutRequired('address') }}>
+                            <input type="text" name="address" value="{{ old('address') }}" placeholder="Calle 123 #45-67" autocomplete="street-address" {{ $checkoutRequired('address') }}>
                         </label>
                     @endif
 
                     @if($checkoutFieldEnabled('apartment'))
                         <label class="fashion-field fashion-field--full">
                             <span>Apartamento, interior, torre, etc.{{ $checkoutFieldRequired('apartment') ? '' : ' (opcional)' }}</span>
-                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." {{ $checkoutRequired('apartment') }}>
+                            <input type="text" name="apartment" value="{{ old('apartment') }}" placeholder="Apto 402, Torre 2, etc." autocomplete="address-line2" {{ $checkoutRequired('apartment') }}>
                         </label>
                     @endif
 
@@ -187,12 +189,12 @@
                         <div class="fashion-field-row fashion-field-row--three">
                             <label class="fashion-field">
                                 <span>Ciudad{{ $checkoutLocationRequired ? '' : ' (opcional)' }}</span>
-                                <input type="text" name="city" value="{{ old('city') }}" placeholder="Bogotá" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
+                                <input type="text" name="city" value="{{ old('city') }}" placeholder="Bogotá" autocomplete="address-level2" {{ $checkoutLocationRequired ? 'required' : '' }} data-city-input>
                             </label>
 
                             <label class="fashion-field">
                                 <span>Departamento</span>
-                                <input type="text" name="region" value="{{ old('region') }}" placeholder="Cundinamarca">
+                                <input type="text" name="region" value="{{ old('region') }}" placeholder="Cundinamarca" autocomplete="address-level1">
                             </label>
 
                         </div>
@@ -202,14 +204,14 @@
                 @if($checkoutFieldEnabled('neighborhood'))
                     <label class="fashion-field fashion-field--full">
                         <span>Barrio{{ $checkoutFieldRequired('neighborhood') ? '' : ' (opcional)' }}</span>
-                        <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" placeholder="Barrio" {{ $checkoutRequired('neighborhood') }}>
+                        <input type="text" name="neighborhood" value="{{ old('neighborhood') }}" placeholder="Barrio" autocomplete="address-level3" {{ $checkoutRequired('neighborhood') }}>
                     </label>
                 @endif
 
                 @if($checkoutFieldEnabled('document'))
                     <label class="fashion-field fashion-field--full">
                         <span>Documento{{ $checkoutFieldRequired('document') ? '' : ' (opcional)' }}</span>
-                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cédula" {{ $checkoutRequired('document') }}>
+                        <input type="text" name="document" value="{{ old('document') }}" placeholder="Cédula" autocomplete="off" inputmode="numeric" {{ $checkoutRequired('document') }}>
                     </label>
                 @endif
 
@@ -425,7 +427,7 @@
                             <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
                         </p>
                         @if($hasShippingCost)
-                            <p><span>Envío</span><strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong></p>
+                            <p><span>Envío</span><strong data-role="shipping-total">{{ $awaitingShippingSelection ? 'Por seleccionar' : ($hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis')) }}</strong></p>
                         @endif
                         <p class="fashion-summary-grand">
                             <span>Total</span>
