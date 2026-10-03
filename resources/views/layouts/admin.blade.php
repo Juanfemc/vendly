@@ -3425,8 +3425,14 @@
             grid-template-columns: 260px minmax(0, 1fr) !important;
         }
 
+        .main {
+            grid-column: 2 !important;
+        }
+
         .sidebar {
             width: 260px !important;
+            position: fixed !important;
+            inset: 0 auto 0 0 !important;
             height: 100vh !important;
             height: 100dvh !important;
             display: flex !important;
@@ -3436,6 +3442,7 @@
             background: #ffffff !important;
             box-shadow: none !important;
             overflow: hidden !important;
+            z-index: 40 !important;
         }
 
         .sidebar-top {
@@ -3479,14 +3486,14 @@
             flex-direction: column !important;
             min-height: 0 !important;
             padding: 0 12px 10px !important;
-            overflow-y: visible !important;
+            overflow-y: auto !important;
             overflow-x: hidden !important;
-            scrollbar-width: none !important;
-            scrollbar-color: transparent transparent !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: rgba(255, 107, 0, .32) transparent !important;
         }
 
         .sidebar-nav::-webkit-scrollbar {
-            width: 0 !important;
+            width: 6px !important;
             height: 0 !important;
         }
 
@@ -3706,8 +3713,10 @@
 
         @media (max-width: 900px) {
             .sidebar {
+                position: fixed !important;
                 width: min(86vw, 310px) !important;
                 max-width: min(86vw, 310px) !important;
+                inset: 0 auto 0 0 !important;
                 height: 100dvh !important;
                 padding: 0 !important;
                 transform: translateX(-105%);
@@ -3884,6 +3893,7 @@
             }
 
             .main {
+                grid-column: 1 !important;
                 width: 100% !important;
                 max-width: 100vw !important;
                 padding: 14px !important;

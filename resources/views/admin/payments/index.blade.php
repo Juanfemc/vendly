@@ -263,9 +263,11 @@
     }
 
     .payment-method__state {
-        display: flex;
-        gap: 16px;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px;
         align-items: center;
+        min-width: 0;
     }
 
     .payment-method__action-icon {
@@ -295,8 +297,9 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        width: 88px;
-        height: 42px;
+        width: 62px;
+        height: 34px;
+        flex: 0 0 62px;
         border-radius: 999px;
         background: #99a3b2;
         cursor: default;
@@ -311,9 +314,9 @@
 
     .payment-switch__thumb {
         position: absolute;
-        left: 5px;
-        width: 34px;
-        height: 34px;
+        left: 4px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
@@ -324,8 +327,14 @@
         transition: transform 0.2s ease, color 0.2s ease;
     }
 
+    .payment-switch__thumb svg {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 auto;
+    }
+
     .payment-switch input:checked + .payment-switch__thumb {
-        transform: translateX(44px);
+        transform: translateX(28px);
         color: #049d94;
     }
 
@@ -497,6 +506,7 @@
 
         .payment-method__state {
             align-items: flex-start;
+            grid-template-columns: auto minmax(0, 1fr);
         }
 
         .payment-config__grid {
