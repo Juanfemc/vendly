@@ -1480,6 +1480,7 @@
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-pagination .store-pagination-list {
     gap: 16px;
     width: auto;
+    flex-wrap: nowrap;
 }
 
 .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-pagination .store-pagination-link {
@@ -2944,7 +2945,24 @@
         justify-content: flex-start;
         gap: 12px;
         overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
         padding-bottom: 42px;
+    }
+
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-pagination::-webkit-scrollbar {
+        display: none;
+    }
+
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-pagination .store-pagination-nav {
+        justify-content: flex-start;
+        min-width: max-content;
+    }
+
+    .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-pagination .store-pagination-list {
+        gap: 10px;
+        justify-content: flex-start;
+        min-width: max-content;
     }
 
     .storefront-page--technology.storefront-page--minimal-grid .minimal-shop-recommendation-track {

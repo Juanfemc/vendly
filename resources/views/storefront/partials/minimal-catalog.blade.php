@@ -17,7 +17,7 @@
 
     @if(method_exists($catalogProducts, 'hasPages') && $catalogProducts->hasPages())
         <div class="minimal-shop-pagination">
-            {{ $catalogProducts->fragment('catalogo')->links('storefront.partials.pagination') }}
+            {{ $catalogProducts->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
         </div>
     @endif
 

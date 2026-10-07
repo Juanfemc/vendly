@@ -598,7 +598,7 @@ class ProductController extends Controller
 
     private function productSearchEnabledForStore(Store $store): bool
     {
-        return $store->hasProductSearch() || $store->isFashionStore() || $store->isTechnologyStore();
+        return $store->isDefaultStore() || $store->hasProductSearch() || $store->isFashionStore() || $store->isTechnologyStore();
     }
 
     private function applyProductSearch($query, string $searchQuery)
