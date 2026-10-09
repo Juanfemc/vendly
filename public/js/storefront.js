@@ -92,6 +92,9 @@
     let activeDefaultOffer = 'all';
     let activeDefaultSize = 'all';
     let activeDefaultSort = 'default';
+    let defaultCatalogVersion = 0;
+    let defaultCategoryRequestController = null;
+    let defaultInfiniteRequestController = null;
     let lockedScrollY = 0;
     let isScrollLocked = false;
 
@@ -753,12 +756,34 @@
             return false;
         }
 
+        defaultCatalogVersion += 1;
+        const requestVersion = defaultCatalogVersion;
+
+        if (defaultCategoryRequestController) {
+            defaultCategoryRequestController.abort();
+        }
+
+        if (defaultInfiniteRequestController) {
+            defaultInfiniteRequestController.abort();
+            defaultInfiniteRequestController = null;
+        }
+
+        defaultCategoryRequestController = 'AbortController' in window
+            ? new AbortController()
+            : null;
+
         const loader = feed.querySelector('[data-infinite-loader]');
         const sentinel = feed.querySelector('[data-infinite-sentinel]');
         const endMessage = feed.querySelector('[data-infinite-end]');
+        feed.dataset.infiniteCatalogVersion = String(requestVersion);
+        feed.dataset.infiniteNextPageUrl = '';
 
         if (loader) {
             loader.hidden = false;
+        }
+
+        if (sentinel) {
+            sentinel.hidden = true;
         }
 
         if (endMessage) {
@@ -767,6 +792,7 @@
 
         try {
             const response = await fetch(infiniteUrl(categoryUrl), {
+                signal: defaultCategoryRequestController?.signal,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
@@ -778,8 +804,14 @@
             }
 
             const data = await response.json();
+
+            if (requestVersion !== defaultCatalogVersion) {
+                return true;
+            }
+
             replaceDefaultCatalogProducts(data.html || '');
             feed.dataset.infiniteNextPageUrl = data.next_page_url || '';
+            feed.dataset.infiniteCatalogVersion = String(defaultCatalogVersion);
 
             if (sentinel) {
                 sentinel.hidden = !data.next_page_url;
@@ -795,10 +827,22 @@
 
             return true;
         } catch (error) {
+            if (error.name === 'AbortError') {
+                return requestVersion === defaultCatalogVersion;
+            }
+
+            if (requestVersion === defaultCatalogVersion && sentinel) {
+                sentinel.hidden = true;
+            }
+
             return false;
         } finally {
-            if (loader) {
-                loader.hidden = true;
+            if (requestVersion === defaultCatalogVersion) {
+                defaultCategoryRequestController = null;
+
+                if (loader) {
+                    loader.hidden = true;
+                }
             }
         }
     };
@@ -814,7 +858,8 @@
                 const loadedFromServer = await loadDefaultCategoryProducts(button);
 
                 if (!loadedFromServer) {
-                    applyDefaultCategoryFilter();
+                    window.location.href = button.dataset.defaultCategoryUrl || button.href;
+                    return;
                 }
 
                 document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1494,8 +1539,10 @@
             const nextLink = () => pagination?.querySelector('a[rel="next"]');
             let nextPageUrl = nextLink()?.href || null;
             let isLoading = false;
+            let activeInfiniteController = null;
             feed.dataset.infiniteBound = 'true';
             feed.dataset.infiniteNextPageUrl = nextPageUrl || '';
+            feed.dataset.infiniteCatalogVersion = feed.dataset.infiniteCatalogVersion || String(defaultCatalogVersion);
 
             if (pagination) {
                 pagination.classList.add('is-infinite-hidden');
@@ -1561,6 +1608,7 @@
 
             const loadNextPage = async () => {
                 nextPageUrl = feed.dataset.infiniteNextPageUrl || nextPageUrl;
+                const requestVersion = Number.parseInt(feed.dataset.infiniteCatalogVersion || '0', 10);
 
                 if (isLoading || !nextPageUrl) {
                     return;
@@ -1568,12 +1616,26 @@
 
                 isLoading = true;
 
+                let infiniteController = null;
+
+                if (feed.matches('[data-default-catalog]') && 'AbortController' in window) {
+                    if (defaultInfiniteRequestController) {
+                        defaultInfiniteRequestController.abort();
+                    }
+
+                    infiniteController = new AbortController();
+                    defaultInfiniteRequestController = infiniteController;
+                }
+
+                activeInfiniteController = infiniteController;
+
                 if (loader) {
                     loader.hidden = false;
                 }
 
                 try {
                     const response = await fetch(infiniteUrl(nextPageUrl), {
+                        signal: infiniteController?.signal,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
@@ -1586,6 +1648,10 @@
 
                     const data = await response.json();
 
+                    if (requestVersion !== Number.parseInt(feed.dataset.infiniteCatalogVersion || '0', 10)) {
+                        return;
+                    }
+
                     if (data.html) {
                         appendProducts(data.html);
                     }
@@ -1596,18 +1662,38 @@
                     if (!nextPageUrl) {
                         sentinel.hidden = true;
                         showEndMessage();
-                        observer.disconnect();
+
+                        if (!feed.matches('[data-default-catalog]')) {
+                            observer.disconnect();
+                        }
                     }
                 } catch (error) {
-                    observer.disconnect();
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+
+                    if (!feed.matches('[data-default-catalog]')) {
+                        observer.disconnect();
+                    }
 
                     if (pagination) {
                         pagination.classList.remove('is-infinite-hidden');
                     }
                 } finally {
-                    isLoading = false;
+                    if (
+                        feed.matches('[data-default-catalog]')
+                        && infiniteController
+                        && defaultInfiniteRequestController === infiniteController
+                    ) {
+                        defaultInfiniteRequestController = null;
+                    }
 
-                    if (loader) {
+                    if (!feed.matches('[data-default-catalog]') || activeInfiniteController === infiniteController) {
+                        isLoading = false;
+                        activeInfiniteController = null;
+                    }
+
+                    if (requestVersion === Number.parseInt(feed.dataset.infiniteCatalogVersion || '0', 10) && loader) {
                         loader.hidden = true;
                     }
                 }
@@ -1618,7 +1704,7 @@
                     loadNextPage();
                 }
             }, {
-                rootMargin: '520px 0px',
+                rootMargin: feed.matches('[data-default-catalog]') ? '220px 0px' : '520px 0px',
                 threshold: 0,
             });
 
