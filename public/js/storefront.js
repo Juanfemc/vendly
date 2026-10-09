@@ -87,7 +87,7 @@
     let feedbackTimer;
     let activeFashionCategory = 'all';
     let activeFashionSize = 'all';
-    let activeDefaultCategory = 'all';
+    let activeDefaultCategory = document.querySelector('[data-default-category-filter].is-active')?.dataset.defaultCategoryFilter || 'all';
     let activeDefaultAvailability = 'all';
     let activeDefaultOffer = 'all';
     let activeDefaultSize = 'all';
@@ -96,6 +96,12 @@
     let isScrollLocked = false;
 
     resolveBrandContrast();
+
+    const infiniteUrl = (href) => {
+        const url = new URL(href, window.location.href);
+        url.searchParams.set('infinite', '1');
+        return url.toString();
+    };
 
     const minimalOverlayToggles = [minimalMenuToggle, cartDrawerToggle, minimalSearchToggle].filter(Boolean);
     let activeFilterDrawerName = null;
@@ -230,7 +236,11 @@
         scrollbar.appendChild(thumb);
         document.body.appendChild(scrollbar);
 
+        let scrollSyncFrame = null;
+
         const sync = () => {
+            scrollSyncFrame = null;
+
             if (document.documentElement.classList.contains('storefront-minimal-overlay-open')) {
                 scrollbar.hidden = true;
                 return;
@@ -255,7 +265,15 @@
             thumb.style.transform = `translateY(${thumbTop}px)`;
         };
 
-        window.addEventListener('scroll', sync, { passive: true });
+        const scheduleSync = () => {
+            if (scrollSyncFrame !== null) {
+                return;
+            }
+
+            scrollSyncFrame = window.requestAnimationFrame(sync);
+        };
+
+        window.addEventListener('scroll', scheduleSync, { passive: true });
         window.addEventListener('resize', sync);
         window.addEventListener('load', sync);
         minimalOverlayToggles.forEach((toggle) => {
@@ -566,13 +584,17 @@
 
     setupStorefrontSearchSuggestions();
 
-    const applyDefaultCategoryFilter = () => {
+    const applyDefaultCategoryFilter = (options = {}) => {
         if (!defaultCategoryButtons.length || (!defaultCategorySections.length && !defaultCategoryProducts.length)) {
             return;
         }
 
         let visibleSections = 0;
         let visibleProducts = 0;
+        const productsToFilter = options.products || defaultCategoryProducts;
+        const shouldSort = options.sort !== false;
+        const shouldSyncControls = options.syncControls !== false;
+        const shouldUpdateEmptyState = options.updateEmptyState !== false;
 
         const syncFilterButtons = (buttons, activeValue, dataKey) => {
             buttons.forEach((button) => {
@@ -640,10 +662,12 @@
             sortedProducts.forEach((product) => defaultProductGrid.appendChild(product));
         };
 
-        sortProducts();
+        if (shouldSort) {
+            sortProducts();
+        }
 
         if (defaultCategoryProducts.length) {
-            defaultCategoryProducts.forEach((product) => {
+            productsToFilter.forEach((product) => {
                 const productCategories = (product.dataset.defaultCategoryProduct || '')
                     .split(',')
                     .map((category) => category.trim())
@@ -675,36 +699,124 @@
             });
         }
 
-        syncFilterButtons(defaultAvailabilityButtons, activeDefaultAvailability, 'defaultAvailabilityFilter');
-        syncFilterButtons(defaultOfferButtons, activeDefaultOffer, 'defaultOfferFilter');
-        syncFilterButtons(defaultSizeButtons, activeDefaultSize, 'defaultSizeFilter');
+        if (!options.products) {
+            visibleProducts = defaultCategoryProducts.filter((product) => !product.hidden).length;
+        }
 
-        defaultCategoryButtons.forEach((button) => {
-            const isActive = (button.dataset.defaultCategoryFilter || 'all') === activeDefaultCategory;
-            button.classList.toggle('is-active', isActive);
-            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        if (shouldSyncControls) {
+            syncFilterButtons(defaultAvailabilityButtons, activeDefaultAvailability, 'defaultAvailabilityFilter');
+            syncFilterButtons(defaultOfferButtons, activeDefaultOffer, 'defaultOfferFilter');
+            syncFilterButtons(defaultSizeButtons, activeDefaultSize, 'defaultSizeFilter');
 
-            if (isActive && defaultCategoryCount) {
-                const count = Number.parseInt(button.dataset.defaultCategoryCount || '0', 10);
-                defaultCategoryCount.textContent = `${count} ${count === 1 ? 'producto' : 'productos'}`;
-            }
-        });
+            defaultCategoryButtons.forEach((button) => {
+                const isActive = (button.dataset.defaultCategoryFilter || 'all') === activeDefaultCategory;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 
-        if (defaultCategoryEmptyState) {
+                if (isActive && defaultCategoryCount) {
+                    const count = Number.parseInt(button.dataset.defaultCategoryCount || '0', 10);
+                    defaultCategoryCount.textContent = `${count} ${count === 1 ? 'producto' : 'productos'}`;
+                }
+            });
+        }
+
+        if (defaultCategoryEmptyState && shouldUpdateEmptyState) {
             const hasVisibleContent = defaultCategoryProducts.length ? visibleProducts > 0 : visibleSections > 0;
 
             defaultCategoryEmptyState.hidden = hasVisibleContent;
         }
     };
 
+    const replaceDefaultCatalogProducts = (html) => {
+        if (!defaultProductGrid) {
+            return;
+        }
+
+        const template = document.createElement('template');
+        template.innerHTML = (html || '').trim();
+        defaultProductGrid.replaceChildren(...Array.from(template.content.children));
+        bindAddToCartForms(defaultProductGrid);
+
+        if (typeof window.vendlyBindMinimalImageFallbacks === 'function') {
+            window.vendlyBindMinimalImageFallbacks(defaultProductGrid);
+        }
+
+        defaultCategoryProducts = Array.from(defaultProductGrid.querySelectorAll('[data-default-category-product]'));
+        applyDefaultCategoryFilter();
+    };
+
+    const loadDefaultCategoryProducts = async (button) => {
+        const feed = button.closest('[data-default-catalog]') || document.querySelector('[data-default-catalog]');
+        const categoryUrl = button.dataset.defaultCategoryUrl;
+
+        if (!feed || !categoryUrl || !defaultProductGrid) {
+            return false;
+        }
+
+        const loader = feed.querySelector('[data-infinite-loader]');
+        const sentinel = feed.querySelector('[data-infinite-sentinel]');
+        const endMessage = feed.querySelector('[data-infinite-end]');
+
+        if (loader) {
+            loader.hidden = false;
+        }
+
+        if (endMessage) {
+            endMessage.hidden = true;
+        }
+
+        try {
+            const response = await fetch(infiniteUrl(categoryUrl), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los productos de la categoría.');
+            }
+
+            const data = await response.json();
+            replaceDefaultCatalogProducts(data.html || '');
+            feed.dataset.infiniteNextPageUrl = data.next_page_url || '';
+
+            if (sentinel) {
+                sentinel.hidden = !data.next_page_url;
+            }
+
+            if (!data.next_page_url && endMessage && defaultCategoryProducts.length > 0) {
+                endMessage.hidden = false;
+            }
+
+            if (window.history?.replaceState) {
+                window.history.replaceState({}, '', categoryUrl);
+            }
+
+            return true;
+        } catch (error) {
+            return false;
+        } finally {
+            if (loader) {
+                loader.hidden = true;
+            }
+        }
+    };
+
     if (defaultCategoryButtons.length && (defaultCategorySections.length || defaultCategoryProducts.length)) {
         defaultCategoryButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
+            button.addEventListener('click', async (event) => {
                 const category = button.dataset.defaultCategoryFilter || 'all';
 
                 event.preventDefault();
                 activeDefaultCategory = category;
-                applyDefaultCategoryFilter();
+
+                const loadedFromServer = await loadDefaultCategoryProducts(button);
+
+                if (!loadedFromServer) {
+                    applyDefaultCategoryFilter();
+                }
+
                 document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
@@ -1364,12 +1476,6 @@
             return;
         }
 
-        const infiniteUrl = (href) => {
-            const url = new URL(href, window.location.href);
-            url.searchParams.set('infinite', '1');
-            return url.toString();
-        };
-
         feeds.forEach((feed) => {
             if (feed.dataset.infiniteBound === 'true') {
                 return;
@@ -1389,6 +1495,7 @@
             let nextPageUrl = nextLink()?.href || null;
             let isLoading = false;
             feed.dataset.infiniteBound = 'true';
+            feed.dataset.infiniteNextPageUrl = nextPageUrl || '';
 
             if (pagination) {
                 pagination.classList.add('is-infinite-hidden');
@@ -1396,7 +1503,6 @@
 
             if (!nextPageUrl) {
                 sentinel.hidden = true;
-                return;
             }
 
             const showEndMessage = () => {
@@ -1417,21 +1523,34 @@
                 const template = document.createElement('template');
                 template.innerHTML = html.trim();
                 const fragment = document.createDocumentFragment();
+                const appendedNodes = Array.from(template.content.children);
 
-                Array.from(template.content.children).forEach((node) => {
+                appendedNodes.forEach((node) => {
                     fragment.appendChild(node);
                 });
 
-                grid.appendChild(fragment);
-                bindAddToCartForms(grid);
+                bindAddToCartForms(fragment);
 
                 if (typeof window.vendlyBindMinimalImageFallbacks === 'function') {
-                    window.vendlyBindMinimalImageFallbacks(grid);
+                    window.vendlyBindMinimalImageFallbacks(fragment);
                 }
 
+                grid.appendChild(fragment);
+
                 if (feed.matches('[data-default-catalog]')) {
-                    defaultCategoryProducts = Array.from(document.querySelectorAll('[data-default-category-product]'));
-                    applyDefaultCategoryFilter();
+                    const appendedDefaultProducts = appendedNodes.filter((node) => node.matches?.('[data-default-category-product]'));
+                    defaultCategoryProducts = Array.from(grid.querySelectorAll('[data-default-category-product]'));
+
+                    if (activeDefaultSort === 'default') {
+                        applyDefaultCategoryFilter({
+                            products: appendedDefaultProducts,
+                            sort: false,
+                            syncControls: false,
+                            updateEmptyState: false,
+                        });
+                    } else {
+                        applyDefaultCategoryFilter();
+                    }
                 }
 
                 if (feed.classList.contains('fashion-arrivals')) {
@@ -1441,6 +1560,8 @@
             };
 
             const loadNextPage = async () => {
+                nextPageUrl = feed.dataset.infiniteNextPageUrl || nextPageUrl;
+
                 if (isLoading || !nextPageUrl) {
                     return;
                 }
@@ -1470,6 +1591,7 @@
                     }
 
                     nextPageUrl = data.next_page_url || null;
+                    feed.dataset.infiniteNextPageUrl = nextPageUrl || '';
 
                     if (!nextPageUrl) {
                         sentinel.hidden = true;

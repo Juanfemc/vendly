@@ -2262,6 +2262,15 @@ body.storefront-filter-drawer-open .default-filter-panel[data-filter-drawer]:not
     transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
+@supports (content-visibility: auto) {
+    .product-card,
+    .minimal-shop-product-card,
+    .fashion-product-card {
+        content-visibility: auto;
+        contain-intrinsic-size: 360px 520px;
+    }
+}
+
 .product-card:hover {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--brand-color, #111111) 18%, var(--line));

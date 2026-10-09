@@ -8,6 +8,19 @@
             ? collect($allProducts)->count()
             : collect($visibleCategorySections ?? [])->sum(fn ($section) => collect($section['products'] ?? [])->count()) + collect($otherProducts ?? [])->count());
     $homeTotalLabel = $homeTotalProducts === 1 ? 'producto' : $homeCategoryItemsLabel;
+    $activeHomeCategorySlug = $selectedHomeCategory->slug ?? null;
+    $homeQueryForCategory = function (?string $categorySlug = null) {
+        $query = request()->query();
+        unset($query['page'], $query['infinite'], $query['partial']);
+
+        if ($categorySlug) {
+            $query['categoria'] = $categorySlug;
+        } else {
+            unset($query['categoria']);
+        }
+
+        return url()->current() . ($query ? ('?' . http_build_query($query)) : '');
+    };
 @endphp
 
 @if($homeCategories->isNotEmpty())
@@ -24,10 +37,11 @@
             <div class="home-categories-track is-scrollable" data-default-category-tabs>
                 <a
                     href="#catalogo"
-                    class="home-category-card is-active"
+                    @class(['home-category-card', 'is-active' => ! $activeHomeCategorySlug])
                     data-default-category-filter="all"
                     data-default-category-count="{{ $homeTotalProducts }}"
-                    aria-pressed="true"
+                    data-default-category-url="{{ $homeQueryForCategory() }}"
+                    aria-pressed="{{ ! $activeHomeCategorySlug ? 'true' : 'false' }}"
                 >
                     <span class="home-category-copy">
                         <strong>Todos</strong>
@@ -42,10 +56,11 @@
                     @endphp
                     <a
                         href="{{ $storefrontUrls->category($store, $homeCategory) }}"
-                        class="home-category-card"
+                        @class(['home-category-card', 'is-active' => $activeHomeCategorySlug === $homeCategory->slug])
                         data-default-category-filter="{{ $homeCategory->slug }}"
                         data-default-category-count="{{ $homeCategoryCount }}"
-                        aria-pressed="false"
+                        data-default-category-url="{{ $homeQueryForCategory($homeCategory->slug) }}"
+                        aria-pressed="{{ $activeHomeCategorySlug === $homeCategory->slug ? 'true' : 'false' }}"
                     >
                         <span class="home-category-copy">
                             <strong>{{ $homeCategory->name }}</strong>

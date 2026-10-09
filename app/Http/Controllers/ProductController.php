@@ -556,9 +556,7 @@ class ProductController extends Controller
 
         $homeProductPageSize = self::PUBLIC_PRODUCTS_PAGE_SIZE;
         $customBadgeFilters = $this->customBadgeFilters($store);
-        $selectedHomeCategory = $store->isTechnologyStore()
-            ? $activeCategories->firstWhere('slug', request('categoria'))
-            : null;
+        $selectedHomeCategory = $activeCategories->firstWhere('slug', request('categoria'));
         $selectedHomeBadge = $store->isTechnologyStore()
             ? $customBadgeFilters->first(fn ($badge) => $badge === trim((string) request('etiqueta')))
             : null;
