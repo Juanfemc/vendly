@@ -32,6 +32,18 @@
         ->filter()
         ->unique()
         ->values();
+    $fashionQueryForCategory = function (?string $categorySlug = null) {
+        $query = request()->query();
+        unset($query['page'], $query['infinite'], $query['partial']);
+
+        if ($categorySlug && $categorySlug !== 'all') {
+            $query['categoria'] = $categorySlug;
+        } else {
+            unset($query['categoria']);
+        }
+
+        return url()->current() . ($query ? ('?' . http_build_query($query)) : '');
+    };
     $fashionPlaceholderCategoryTabs = $placeholderProducts
         ->pluck('category')
         ->unique()
@@ -61,6 +73,13 @@ $fashionTabs = collect([[
     'slug' => 'all',
     'url' => '#catalogo',
 ]])->concat($fashionTabs)->values();
+    $activeFashionCategorySlug = trim((string) (($selectedHomeCategory ?? null)?->slug ?? request('categoria', '')));
+    $activeFashionCategorySlug = $activeFashionCategorySlug !== '' ? $activeFashionCategorySlug : 'all';
+
+    if (! $fashionTabs->contains('slug', $activeFashionCategorySlug)) {
+        $activeFashionCategorySlug = 'all';
+    }
+
     $fashionSizeOptions = $fashionFilterProducts
         ->flatMap(fn ($product) => collect(is_array($product->sizes) ? $product->sizes : []))
         ->map(fn ($size) => trim((string) $size))
@@ -112,11 +131,13 @@ $fashionTabs = collect([[
     <div class="fashion-section-head">
         <nav class="fashion-category-tabs" aria-label="Categorias destacadas" data-fashion-category-tabs>
             @foreach($fashionTabs as $tab)
+                @php($isActiveFashionTab = $tab['slug'] === $activeFashionCategorySlug)
                 <button
                     type="button"
                     data-fashion-category-filter="{{ $tab['slug'] }}"
-                    aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
-                    @class(['is-active' => $loop->first])
+                    data-fashion-category-url="{{ $fashionQueryForCategory($tab['slug']) }}"
+                    aria-pressed="{{ $isActiveFashionTab ? 'true' : 'false' }}"
+                    @class(['is-active' => $isActiveFashionTab])
                 >
                     {{ $tab['name'] }}
                 </button>

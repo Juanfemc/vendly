@@ -85,7 +85,11 @@
     const addErrorText = page.dataset.feedbackError || 'No pudimos agregar el producto';
     const compactFashionCartDelay = 1000;
     let feedbackTimer;
-    let activeFashionCategory = 'all';
+    const initialFashionCategory = document.querySelector('[data-fashion-category-filter].is-active')?.dataset.fashionCategoryFilter || 'all';
+    let activeFashionCategory = initialFashionCategory;
+    let fashionCatalogVersion = 0;
+    let fashionCatalogIsServerFiltered = initialFashionCategory !== 'all';
+    let fashionCategoryRequestController = null;
     let activeFashionSize = 'all';
     let activeDefaultCategory = document.querySelector('[data-default-category-filter].is-active')?.dataset.defaultCategoryFilter || 'all';
     let activeDefaultAvailability = 'all';
@@ -427,6 +431,14 @@
 
     const applyFashionCatalogFilters = () => {
         if (!fashionProducts.length) {
+            if (fashionEmptyState) {
+                fashionEmptyState.hidden = false;
+            }
+
+            if (fashionEndMessage) {
+                fashionEndMessage.hidden = true;
+            }
+
             return;
         }
 
@@ -466,7 +478,7 @@
         fashionProducts.forEach((product) => {
             const productSizes = (product.dataset.fashionSizes || '').split(',').filter(Boolean);
             const productCategories = (product.dataset.fashionCategories || product.dataset.fashionCategory || '').split(',').filter(Boolean);
-            const matchesCategory = activeFashionCategory === 'all' || productCategories.includes(activeFashionCategory);
+            const matchesCategory = fashionCatalogIsServerFiltered || activeFashionCategory === 'all' || productCategories.includes(activeFashionCategory);
             const matchesSize = activeFashionSize === 'all' || productSizes.includes(activeFashionSize);
             const isVisible = matchesCategory && matchesSize;
 
@@ -498,8 +510,123 @@
         }
     };
 
+    const replaceFashionCatalogProducts = (html) => {
+        if (!fashionProductGrid) {
+            return;
+        }
+
+        const template = document.createElement('template');
+        template.innerHTML = (html || '').trim();
+        fashionProductGrid.replaceChildren(...Array.from(template.content.children));
+        bindAddToCartForms(fashionProductGrid);
+        fashionProducts = Array.from(fashionProductGrid.querySelectorAll('[data-fashion-product]'));
+        applyFashionCatalogFilters();
+    };
+
+    const loadFashionCategoryProducts = async (button) => {
+        const feed = button.closest('[data-infinite-products]') || document.querySelector('.fashion-arrivals[data-infinite-products]');
+        const categoryUrl = button.dataset.fashionCategoryUrl;
+
+        if (!feed || !categoryUrl || !fashionProductGrid) {
+            return false;
+        }
+
+        fashionCatalogVersion += 1;
+        const requestVersion = fashionCatalogVersion;
+
+        if (fashionCategoryRequestController) {
+            fashionCategoryRequestController.abort();
+        }
+
+        if (defaultInfiniteRequestController) {
+            defaultInfiniteRequestController.abort();
+            defaultInfiniteRequestController = null;
+        }
+
+        fashionCategoryRequestController = 'AbortController' in window
+            ? new AbortController()
+            : null;
+        const requestController = fashionCategoryRequestController;
+
+        const loader = feed.querySelector('[data-infinite-loader]');
+        const sentinel = feed.querySelector('[data-infinite-sentinel]');
+        const endMessage = feed.querySelector('[data-infinite-end]');
+        defaultCatalogVersion += 1;
+        feed.dataset.infiniteCatalogVersion = String(defaultCatalogVersion);
+        feed.dataset.fashionCatalogVersion = String(requestVersion);
+        feed.dataset.infiniteNextPageUrl = '';
+
+        if (loader) {
+            loader.hidden = false;
+        }
+
+        if (sentinel) {
+            sentinel.hidden = true;
+        }
+
+        if (endMessage) {
+            endMessage.hidden = true;
+        }
+
+        try {
+            const response = await fetch(infiniteUrl(categoryUrl), {
+                signal: fashionCategoryRequestController?.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los productos de la categoría.');
+            }
+
+            const data = await response.json();
+
+            if (requestVersion !== fashionCatalogVersion || activeFashionCategory !== (button.dataset.fashionCategoryFilter || 'all')) {
+                return true;
+            }
+
+            replaceFashionCatalogProducts(data.html || '');
+            feed.dataset.infiniteNextPageUrl = data.next_page_url || '';
+
+            if (sentinel) {
+                sentinel.hidden = !data.next_page_url;
+            }
+
+            if (!data.next_page_url && endMessage && fashionProducts.length > 0) {
+                endMessage.hidden = false;
+            }
+
+            if (window.history?.replaceState) {
+                window.history.replaceState({}, '', categoryUrl);
+            }
+
+            return true;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return null;
+            }
+
+            if (sentinel) {
+                sentinel.hidden = true;
+            }
+
+            return false;
+        } finally {
+            if (fashionCategoryRequestController === requestController) {
+                fashionCategoryRequestController = null;
+            }
+
+            if (requestVersion === fashionCatalogVersion && loader) {
+                loader.hidden = true;
+            }
+        }
+    };
+
     const syncFashionCategory = (category) => {
         activeFashionCategory = category || 'all';
+        fashionCatalogIsServerFiltered = activeFashionCategory !== 'all';
         applyFashionCatalogFilters();
     };
 
@@ -948,11 +1075,29 @@
         updateCategoryScrollButtons();
     }
 
-    if (fashionCategoryButtons.length && fashionProducts.length) {
+    if (fashionCategoryButtons.length) {
         fashionCategoryButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
-            event.preventDefault();
-            syncFashionCategory(button.dataset.fashionCategoryFilter);
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const category = button.dataset.fashionCategoryFilter || 'all';
+
+                activeFashionCategory = category;
+                fashionCatalogIsServerFiltered = category !== 'all';
+                activeFashionSize = 'all';
+                applyFashionCatalogFilters();
+
+                const loadedFromServer = await loadFashionCategoryProducts(button);
+
+                if (loadedFromServer === null || category !== activeFashionCategory) {
+                    return;
+                }
+
+                if (!loadedFromServer) {
+                    window.location.href = button.dataset.fashionCategoryUrl || button.dataset.fashionCategoryFilter || '#catalogo';
+                    return;
+                }
+
+                document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
     }
@@ -1614,7 +1759,7 @@
                 }
 
                 if (feed.classList.contains('fashion-arrivals')) {
-                    fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
+                    fashionProducts = Array.from(feed.querySelectorAll('[data-fashion-product]'));
                     applyFashionCatalogFilters();
                 }
             };
@@ -1631,7 +1776,9 @@
 
                 let infiniteController = null;
 
-                if (feed.matches('[data-default-catalog]') && 'AbortController' in window) {
+                const isCancelableCatalog = feed.matches('[data-default-catalog]') || feed.classList.contains('fashion-arrivals');
+
+                if (isCancelableCatalog && 'AbortController' in window) {
                     if (defaultInfiniteRequestController) {
                         defaultInfiniteRequestController.abort();
                     }
@@ -1676,7 +1823,7 @@
                         sentinel.hidden = true;
                         showEndMessage();
 
-                        if (!feed.matches('[data-default-catalog]')) {
+                        if (!feed.matches('[data-default-catalog]') && !feed.classList.contains('fashion-arrivals')) {
                             observer.disconnect();
                         }
                     }
@@ -1685,7 +1832,7 @@
                         return;
                     }
 
-                    if (!feed.matches('[data-default-catalog]')) {
+                    if (!feed.matches('[data-default-catalog]') && !feed.classList.contains('fashion-arrivals')) {
                         observer.disconnect();
                     }
 
@@ -1694,14 +1841,17 @@
                     }
                 } finally {
                     if (
-                        feed.matches('[data-default-catalog]')
+                        (feed.matches('[data-default-catalog]') || feed.classList.contains('fashion-arrivals'))
                         && infiniteController
                         && defaultInfiniteRequestController === infiniteController
                     ) {
                         defaultInfiniteRequestController = null;
                     }
 
-                    if (!feed.matches('[data-default-catalog]') || activeInfiniteController === infiniteController) {
+                    if (
+                        (!feed.matches('[data-default-catalog]') && !feed.classList.contains('fashion-arrivals'))
+                        || activeInfiniteController === infiniteController
+                    ) {
                         isLoading = false;
                         activeInfiniteController = null;
                     }
