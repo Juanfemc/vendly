@@ -93,6 +93,7 @@
     let activeDefaultSize = 'all';
     let activeDefaultSort = 'default';
     let defaultCatalogVersion = 0;
+    let defaultCatalogIsServerFiltered = activeDefaultCategory !== 'all';
     let defaultCategoryRequestController = null;
     let defaultInfiniteRequestController = null;
     let lockedScrollY = 0;
@@ -598,6 +599,7 @@
         const shouldSort = options.sort !== false;
         const shouldSyncControls = options.syncControls !== false;
         const shouldUpdateEmptyState = options.updateEmptyState !== false;
+        const ignoreCategory = options.ignoreCategory === true || defaultCatalogIsServerFiltered;
 
         const syncFilterButtons = (buttons, activeValue, dataKey) => {
             buttons.forEach((button) => {
@@ -675,7 +677,7 @@
                     .split(',')
                     .map((category) => category.trim())
                     .filter(Boolean);
-                const matchesCategory = activeDefaultCategory === 'all' || productCategories.includes(activeDefaultCategory);
+                const matchesCategory = ignoreCategory || activeDefaultCategory === 'all' || productCategories.includes(activeDefaultCategory);
                 const isVisible = matchesCategory
                     && matchesAvailability(product)
                     && matchesOffer(product)
@@ -730,7 +732,7 @@
         }
     };
 
-    const replaceDefaultCatalogProducts = (html) => {
+    const replaceDefaultCatalogProducts = (html, options = {}) => {
         if (!defaultProductGrid) {
             return;
         }
@@ -745,7 +747,9 @@
         }
 
         defaultCategoryProducts = Array.from(defaultProductGrid.querySelectorAll('[data-default-category-product]'));
-        applyDefaultCategoryFilter();
+        applyDefaultCategoryFilter({
+            ignoreCategory: options.ignoreCategory === true,
+        });
     };
 
     const loadDefaultCategoryProducts = async (button) => {
@@ -809,7 +813,10 @@
                 return true;
             }
 
-            replaceDefaultCatalogProducts(data.html || '');
+            defaultCatalogIsServerFiltered = activeDefaultCategory !== 'all';
+            replaceDefaultCatalogProducts(data.html || '', {
+                ignoreCategory: defaultCatalogIsServerFiltered,
+            });
             feed.dataset.infiniteNextPageUrl = data.next_page_url || '';
             feed.dataset.infiniteCatalogVersion = String(defaultCatalogVersion);
 
@@ -828,7 +835,7 @@
             return true;
         } catch (error) {
             if (error.name === 'AbortError') {
-                return requestVersion === defaultCatalogVersion;
+                return null;
             }
 
             if (requestVersion === defaultCatalogVersion && sentinel) {
@@ -854,8 +861,13 @@
 
                 event.preventDefault();
                 activeDefaultCategory = category;
+                defaultCatalogIsServerFiltered = category !== 'all';
 
                 const loadedFromServer = await loadDefaultCategoryProducts(button);
+
+                if (loadedFromServer === null || category !== activeDefaultCategory) {
+                    return;
+                }
 
                 if (!loadedFromServer) {
                     window.location.href = button.dataset.defaultCategoryUrl || button.href;
@@ -1591,6 +1603,7 @@
                     if (activeDefaultSort === 'default') {
                         applyDefaultCategoryFilter({
                             products: appendedDefaultProducts,
+                            ignoreCategory: defaultCatalogIsServerFiltered,
                             sort: false,
                             syncControls: false,
                             updateEmptyState: false,
