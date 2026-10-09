@@ -3,9 +3,10 @@
         ->when(! $store->isRestaurant(), fn ($categories) => $categories->filter(fn ($category) => ! $category->parent_id))
         ->values();
     $homeCategoryItemsLabel = $itemsLabel ?? 'productos';
-    $homeTotalProducts = isset($allProducts)
-        ? collect($allProducts)->count()
-        : collect($visibleCategorySections ?? [])->sum(fn ($section) => collect($section['products'] ?? [])->count()) + collect($otherProducts ?? [])->count();
+    $homeTotalProducts = $storeProductsTotal
+        ?? (isset($allProducts)
+            ? collect($allProducts)->count()
+            : collect($visibleCategorySections ?? [])->sum(fn ($section) => collect($section['products'] ?? [])->count()) + collect($otherProducts ?? [])->count());
     $homeTotalLabel = $homeTotalProducts === 1 ? 'producto' : $homeCategoryItemsLabel;
 @endphp
 

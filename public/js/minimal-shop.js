@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    window.vendlyBindMinimalImageFallbacks = bindImageFallbacks;
+
     const page = document.querySelector('.storefront-page--minimal-grid');
     const catalogSection = document.getElementById('catalogo');
     const mobileMenuToggle = document.getElementById('minimalShopMenuToggle');
@@ -347,6 +349,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentShell.replaceWith(nextShell);
         bindImageFallbacks(nextShell);
+        if (typeof window.vendlyInitializeInfiniteProducts === 'function') {
+            window.vendlyInitializeInfiniteProducts(nextShell);
+        }
         syncActiveFilters(href);
         applyTechProductFilters();
 

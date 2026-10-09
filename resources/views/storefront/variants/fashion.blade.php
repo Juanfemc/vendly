@@ -1,5 +1,6 @@
 @php
     $fashionProducts = ($allProducts ?? collect())->values();
+    $fashionFilterProducts = ($filterProducts ?? $fashionProducts)->values();
     $placeholderProducts = collect([
         ['category' => 'Jackets', 'name' => 'Urban Pop Polo shirt, navy / blue', 'price' => 69000],
         ['category' => 'Jackets', 'name' => 'Pop TRX Vintage, navy / white', 'price' => 69000],
@@ -26,7 +27,7 @@
 
             return [mb_strtolower(trim((string) $category->name)) => $slugs];
         });
-    $fashionProductCategoryTabs = $fashionProducts
+    $fashionProductCategoryTabs = $fashionFilterProducts
         ->pluck('category')
         ->filter()
         ->unique()
@@ -60,7 +61,7 @@ $fashionTabs = collect([[
     'slug' => 'all',
     'url' => '#catalogo',
 ]])->concat($fashionTabs)->values();
-    $fashionSizeOptions = $fashionProducts
+    $fashionSizeOptions = $fashionFilterProducts
         ->flatMap(fn ($product) => collect(is_array($product->sizes) ? $product->sizes : []))
         ->map(fn ($size) => trim((string) $size))
         ->filter()
@@ -107,7 +108,7 @@ $fashionTabs = collect([[
     @endif
 </section>
 
-<section class="fashion-arrivals" id="catalogo">
+<section class="fashion-arrivals" id="catalogo" data-infinite-products>
     <div class="fashion-section-head">
         <nav class="fashion-category-tabs" aria-label="Categorias destacadas" data-fashion-category-tabs>
             @foreach($fashionTabs as $tab)
@@ -169,7 +170,7 @@ $fashionTabs = collect([[
         <button type="button" class="fashion-filter-apply" data-filter-drawer-close="fashion">Ver productos</button>
     </div>
 
-    <div class="fashion-product-grid" data-fashion-product-grid>
+    <div class="fashion-product-grid" data-fashion-product-grid data-infinite-grid>
         @forelse($fashionProducts as $product)
             @include('storefront.partials.fashion-product-card')
         @empty
@@ -199,10 +200,16 @@ $fashionTabs = collect([[
     </div>
 
     @if($fashionProducts->isNotEmpty())
-        @if(($storeProductsTotal ?? $fashionProducts->count()) > $fashionProducts->count())
-            <a class="fashion-catalog-more-link" href="{{ $storefrontUrls->products($store) }}">Ver catálogo completo</a>
-        @else
-            <p class="catalog-end-message fashion-end-message" data-fashion-end-message>Has visto todos los productos</p>
+        @if(isset($catalogProducts) && method_exists($catalogProducts, 'hasPages') && $catalogProducts->hasPages())
+            <div class="store-pagination" data-infinite-pagination>
+                {{ $catalogProducts->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
+            </div>
+        @endif
+
+        @include('storefront.partials.infinite-products-controls')
+
+        @if(isset($catalogProducts) && (! method_exists($catalogProducts, 'hasMorePages') || ! $catalogProducts->hasMorePages()))
+            <p class="catalog-end-message fashion-end-message" data-fashion-end-message data-infinite-end>Has visto todos los productos</p>
         @endif
     @endif
     <p class="fashion-empty-state" data-fashion-empty-state hidden>No hay productos en esta categoria por ahora.</p>

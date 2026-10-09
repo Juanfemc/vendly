@@ -16,9 +16,12 @@ use App\Services\StoreVisitService;
 use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ProductController extends Controller
 {
+    private const PUBLIC_PRODUCTS_PAGE_SIZE = 20;
+
     public function __construct(
         private ProductContentService $productContentService,
         private ProductFileService $productFileService,
@@ -335,12 +338,13 @@ class ProductController extends Controller
     private function storeHome(Store $store)
     {
         $isCatalogPartial = $store->isTechnologyStore() && request('partial') === 'catalogo';
+        $isInfiniteProducts = $this->wantsInfiniteProducts();
 
-        if (! $isCatalogPartial) {
+        if (! $isCatalogPartial && ! $isInfiniteProducts) {
             $this->countStoreVisit($store);
         }
 
-        if (! $isCatalogPartial && $landing = $this->activeSingleProductLanding($store)) {
+        if (! $isCatalogPartial && ! $isInfiniteProducts && $landing = $this->activeSingleProductLanding($store)) {
             return view('store_single_product_landing', [
                 'store' => $store,
                 'landing' => $landing,
@@ -350,6 +354,13 @@ class ProductController extends Controller
         }
 
         $payload = $this->storefrontPayload($store);
+
+        if ($isInfiniteProducts) {
+            return $this->infiniteProductsResponse($store, $payload['products'], $this->storefrontVariant($store), [
+                'context' => 'home',
+                'activeCategories' => $payload['activeCategories'] ?? collect(),
+            ]);
+        }
 
         if ($isCatalogPartial) {
             return view('storefront.partials.minimal-catalog', $payload);
@@ -379,16 +390,22 @@ class ProductController extends Controller
 
         abort_if($category->parent_id && ! $store->allowsSubcategories(), 404);
 
-        $this->countStoreVisit($store);
+        if (! $this->wantsInfiniteProducts()) {
+            $this->countStoreVisit($store);
+        }
 
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
             ->whereIn('category', $this->categoryNamesForStorefront($store, $category))
-            ->paginate(8)
+            ->paginate(self::PUBLIC_PRODUCTS_PAGE_SIZE)
             ->withQueryString();
         $activeCategories = $this->activeCategories($store);
+
+        if ($this->wantsInfiniteProducts()) {
+            return $this->infiniteProductsResponse($store, $products, $this->storefrontVariant($store));
+        }
 
         return view('store_category', array_merge($this->storefrontNavigationPayload($store), [
             'category' => $category,
@@ -402,14 +419,24 @@ class ProductController extends Controller
 
     private function storeProducts(Store $store)
     {
-        $this->countStoreVisit($store);
+        if (! $this->wantsInfiniteProducts()) {
+            $this->countStoreVisit($store);
+        }
 
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
-            ->paginate(24)
+            ->paginate(self::PUBLIC_PRODUCTS_PAGE_SIZE)
             ->withQueryString();
+
+        if ($this->wantsInfiniteProducts()) {
+            return $this->infiniteProductsResponse(
+                $store,
+                $products,
+                $store->isTechnologyStore() ? 'default' : $this->storefrontVariant($store)
+            );
+        }
 
         return view('store_products', array_merge($this->storefrontNavigationPayload($store), [
             'products' => $products,
@@ -422,16 +449,22 @@ class ProductController extends Controller
     {
         abort_unless($store->hasOfferProducts(), 404);
 
-        $this->countStoreVisit($store);
+        if (! $this->wantsInfiniteProducts()) {
+            $this->countStoreVisit($store);
+        }
 
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
             ->where('has_offer', true)
-            ->paginate(24)
+            ->paginate(self::PUBLIC_PRODUCTS_PAGE_SIZE)
             ->withQueryString();
         $activeCategories = $this->activeCategories($store);
+
+        if ($this->wantsInfiniteProducts()) {
+            return $this->infiniteProductsResponse($store, $products, $this->storefrontVariant($store));
+        }
 
         return view('store_offers', array_merge($this->storefrontNavigationPayload($store), [
             'products' => $products,
@@ -521,7 +554,7 @@ class ProductController extends Controller
             ->take(5)
             ->get();
 
-        $homeProductPageSize = 12;
+        $homeProductPageSize = self::PUBLIC_PRODUCTS_PAGE_SIZE;
         $customBadgeFilters = $this->customBadgeFilters($store);
         $selectedHomeCategory = $store->isTechnologyStore()
             ? $activeCategories->firstWhere('slug', request('categoria'))
@@ -536,11 +569,8 @@ class ProductController extends Controller
             ->paginate($homeProductPageSize)
             ->withQueryString();
         $storeProductsTotal = $this->publicProductsQuery($store)->reorder()->count();
-        $allProductsQuery = $this->publicProductsQuery($store);
-
-        $allProducts = $store->isFashionStore() || ! $store->isTechnologyStore()
-            ? $allProductsQuery->get()
-            : $allProductsQuery->take(12)->get();
+        $allProducts = collect($products->items())->values();
+        $filterProducts = $this->publicProductMetadataQuery($store)->get();
         $productSearchEnabled = $this->productSearchEnabledForStore($store);
         $storefrontUrls = app(StorefrontUrlService::class);
 
@@ -549,6 +579,7 @@ class ProductController extends Controller
             'storefrontUrls',
             'products',
             'allProducts',
+            'filterProducts',
             'activeCategories',
             'categorySections',
             'categoryProductCounts',
@@ -572,6 +603,47 @@ class ProductController extends Controller
             'showAboutSection' => $store->hasAboutContent(),
             'productSearchEnabled' => $this->productSearchEnabledForStore($store),
         ];
+    }
+
+    private function storefrontVariant(Store $store): string
+    {
+        return $store->isTechnologyStore()
+            ? 'technology'
+            : ($store->isFashionStore()
+                ? 'fashion'
+                : ($store->isRestaurant()
+                    ? 'restaurant'
+                    : ($store->isSupplementStore() ? 'supplements' : 'default')));
+    }
+
+    private function wantsInfiniteProducts(): bool
+    {
+        return request()->boolean('infinite');
+    }
+
+    private function infiniteProductsResponse(Store $store, $products, string $storefrontVariant, array $extra = [])
+    {
+        $items = collect(method_exists($products, 'items') ? $products->items() : $products)->values();
+        $cardClass = $store->isTechnologyStore()
+            ? 'tech-product-card'
+            : ($store->isRestaurant()
+                ? 'restaurant-product-card'
+                : ($store->isSupplementStore() ? 'supplements-product-card' : ''));
+
+        return response()->json([
+            'html' => view('storefront.partials.infinite-product-items', [
+                'store' => $store,
+                'storefrontUrls' => app(StorefrontUrlService::class),
+                'products' => $items,
+                'storefrontVariant' => $storefrontVariant,
+                'cardClass' => $cardClass,
+                'infiniteContext' => $extra['context'] ?? 'catalog',
+                'activeCategories' => $extra['activeCategories'] ?? collect(),
+                'productIndexOffset' => method_exists($products, 'firstItem') ? max(0, ((int) $products->firstItem()) - 1) : 0,
+            ])->render(),
+            'next_page_url' => method_exists($products, 'nextPageUrl') ? $products->nextPageUrl() : null,
+            'has_more_pages' => method_exists($products, 'hasMorePages') ? $products->hasMorePages() : false,
+        ]);
     }
 
     private function customBadgeFilters(Store $store)
@@ -641,6 +713,26 @@ class ProductController extends Controller
             ->withReviewStats()
             ->when($searchQuery !== '', fn ($query) => $this->applyPublicProductSearch($query, $searchQuery))
             ->latest();
+    }
+
+    private function publicProductMetadataQuery(Store $store)
+    {
+        return Product::where('store_id', $store->id)
+            ->select($this->publicProductMetadataColumns())
+            ->latest();
+    }
+
+    private function publicProductMetadataColumns(): array
+    {
+        $columns = ['id', 'store_id', 'name', 'slug', 'category', 'material', 'price', 'image'];
+
+        foreach (['sizes', 'created_at'] as $column) {
+            if (Schema::hasColumn('products', $column)) {
+                $columns[] = $column;
+            }
+        }
+
+        return $columns;
     }
 
     private function productDataForStore(ProductRequest $request, Store $store): array

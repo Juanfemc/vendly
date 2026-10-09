@@ -37,7 +37,6 @@
         page.style.setProperty('--brand-contrast', contrast);
     };
 
-    const forms = document.querySelectorAll('.add-to-cart-form');
     const cartLink = document.querySelector('.cart-link');
     const feedback = document.getElementById('cartFeedback');
     const cartDrawer = document.querySelector('[data-cart-drawer]');
@@ -57,7 +56,7 @@
     const navPanelLinks = document.querySelectorAll('.nav-panel a');
     const navDropdowns = document.querySelectorAll('.nav-dropdown');
     const fashionCategoryButtons = Array.from(document.querySelectorAll('[data-fashion-category-filter]'));
-    const fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
+    let fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
     const fashionEmptyState = document.querySelector('[data-fashion-empty-state]');
     const fashionEndMessage = document.querySelector('[data-fashion-end-message]');
     const storefrontSearchForms = Array.from(document.querySelectorAll('[data-storefront-search], [data-fashion-search]'));
@@ -66,7 +65,7 @@
     const fashionSortSelect = document.querySelector('[data-fashion-sort]');
     const defaultCategoryButtons = Array.from(document.querySelectorAll('[data-default-category-filter]'));
     const defaultCategorySections = Array.from(document.querySelectorAll('[data-default-category-section]'));
-    const defaultCategoryProducts = Array.from(document.querySelectorAll('[data-default-category-product]'));
+    let defaultCategoryProducts = Array.from(document.querySelectorAll('[data-default-category-product]'));
     const defaultCategoryEmptyState = document.querySelector('[data-default-category-empty]');
     const defaultCategoryCount = document.querySelector('.home-categories-head [data-default-category-count]');
     const defaultCategoryTrack = document.querySelector('[data-default-category-tabs]');
@@ -1263,8 +1262,14 @@
         }
     });
 
-    forms.forEach((form) => {
-        form.addEventListener('submit', async (event) => {
+    const bindAddToCartForms = (root = document) => {
+        root.querySelectorAll('.add-to-cart-form').forEach((form) => {
+            if (form.dataset.cartFormBound === 'true') {
+                return;
+            }
+
+            form.dataset.cartFormBound = 'true';
+            form.addEventListener('submit', async (event) => {
             if (event.submitter?.matches('[data-direct-submit]')) {
                 return;
             }
@@ -1345,6 +1350,162 @@
                     button.innerHTML = originalHtml || originalText;
                 }
             }
+            });
         });
-    });
+    };
+
+    const initializeInfiniteProducts = (root = document) => {
+        const feeds = [
+            ...(root.matches?.('[data-infinite-products]') ? [root] : []),
+            ...Array.from(root.querySelectorAll('[data-infinite-products]')),
+        ];
+
+        if (feeds.length === 0 || !('IntersectionObserver' in window)) {
+            return;
+        }
+
+        const infiniteUrl = (href) => {
+            const url = new URL(href, window.location.href);
+            url.searchParams.set('infinite', '1');
+            return url.toString();
+        };
+
+        feeds.forEach((feed) => {
+            if (feed.dataset.infiniteBound === 'true') {
+                return;
+            }
+
+            const grid = feed.querySelector('[data-infinite-grid]');
+            const pagination = feed.querySelector('[data-infinite-pagination]');
+            const loader = feed.querySelector('[data-infinite-loader]');
+            const sentinel = feed.querySelector('[data-infinite-sentinel]');
+            let endMessage = feed.querySelector('[data-infinite-end]');
+
+            if (!grid || !sentinel) {
+                return;
+            }
+
+            const nextLink = () => pagination?.querySelector('a[rel="next"]');
+            let nextPageUrl = nextLink()?.href || null;
+            let isLoading = false;
+            feed.dataset.infiniteBound = 'true';
+
+            if (pagination) {
+                pagination.classList.add('is-infinite-hidden');
+            }
+
+            if (!nextPageUrl) {
+                sentinel.hidden = true;
+                return;
+            }
+
+            const showEndMessage = () => {
+                if (!endMessage) {
+                    endMessage = document.createElement('p');
+                    endMessage.className = feed.classList.contains('minimal-shop-catalog-shell')
+                        ? 'catalog-end-message minimal-shop-end-message'
+                        : 'catalog-end-message';
+                    endMessage.dataset.infiniteEnd = 'true';
+                    endMessage.textContent = 'Has visto todos los productos';
+                    feed.appendChild(endMessage);
+                }
+
+                endMessage.hidden = false;
+            };
+
+            const appendProducts = (html) => {
+                const template = document.createElement('template');
+                template.innerHTML = html.trim();
+                const fragment = document.createDocumentFragment();
+
+                Array.from(template.content.children).forEach((node) => {
+                    fragment.appendChild(node);
+                });
+
+                grid.appendChild(fragment);
+                bindAddToCartForms(grid);
+
+                if (typeof window.vendlyBindMinimalImageFallbacks === 'function') {
+                    window.vendlyBindMinimalImageFallbacks(grid);
+                }
+
+                if (feed.matches('[data-default-catalog]')) {
+                    defaultCategoryProducts = Array.from(document.querySelectorAll('[data-default-category-product]'));
+                    applyDefaultCategoryFilter();
+                }
+
+                if (feed.classList.contains('fashion-arrivals')) {
+                    fashionProducts = Array.from(document.querySelectorAll('[data-fashion-product]'));
+                    applyFashionCatalogFilters();
+                }
+            };
+
+            const loadNextPage = async () => {
+                if (isLoading || !nextPageUrl) {
+                    return;
+                }
+
+                isLoading = true;
+
+                if (loader) {
+                    loader.hidden = false;
+                }
+
+                try {
+                    const response = await fetch(infiniteUrl(nextPageUrl), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudieron cargar más productos.');
+                    }
+
+                    const data = await response.json();
+
+                    if (data.html) {
+                        appendProducts(data.html);
+                    }
+
+                    nextPageUrl = data.next_page_url || null;
+
+                    if (!nextPageUrl) {
+                        sentinel.hidden = true;
+                        showEndMessage();
+                        observer.disconnect();
+                    }
+                } catch (error) {
+                    observer.disconnect();
+
+                    if (pagination) {
+                        pagination.classList.remove('is-infinite-hidden');
+                    }
+                } finally {
+                    isLoading = false;
+
+                    if (loader) {
+                        loader.hidden = true;
+                    }
+                }
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    loadNextPage();
+                }
+            }, {
+                rootMargin: '520px 0px',
+                threshold: 0,
+            });
+
+            observer.observe(sentinel);
+        });
+    };
+
+    window.vendlyInitializeInfiniteProducts = initializeInfiniteProducts;
+
+    bindAddToCartForms();
+    initializeInfiniteProducts();
 })();

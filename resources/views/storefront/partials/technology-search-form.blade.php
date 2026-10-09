@@ -5,7 +5,8 @@
     $technologySearchProductsSource = collect($technologySearchProducts ?? []);
 
     if ($technologySearchProductsSource->isEmpty()) {
-        $technologySearchProductsSource = collect($allProducts ?? [])
+        $technologySearchProductsSource = collect($filterProducts ?? [])
+            ->merge(collect($allProducts ?? []))
             ->merge(collect($products ?? []))
             ->merge(collect($relatedProducts ?? []));
     }

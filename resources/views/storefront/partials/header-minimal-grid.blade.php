@@ -39,7 +39,7 @@
             : (isset($allProducts) ? $allProducts->count() : $store->products()->count()));
     $techHeaderProductPool = collect();
 
-    foreach (['allProducts', 'products', 'relatedProducts'] as $techHeaderProductSource) {
+    foreach (['filterProducts', 'allProducts', 'products', 'relatedProducts'] as $techHeaderProductSource) {
         if (isset(${$techHeaderProductSource})) {
             $techHeaderProductValue = ${$techHeaderProductSource};
             $techHeaderProductItems = method_exists($techHeaderProductValue, 'getCollection')

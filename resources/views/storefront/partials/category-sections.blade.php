@@ -1,4 +1,4 @@
-<section class="catalog-section category-showcase" id="catalogo" data-default-catalog>
+<section class="catalog-section category-showcase" id="catalogo" data-default-catalog data-infinite-products>
     @php
         $renderedDefaultProductIds = collect();
         $hasDefaultProducts = false;
@@ -41,7 +41,9 @@
                 'label' => $category->name,
             ];
         };
-        $defaultFilterProducts = $defaultCatalogProducts;
+        $defaultFilterProducts = isset($filterProducts)
+            ? collect($filterProducts)
+            : $defaultCatalogProducts;
         $defaultSizeOptions = $defaultFilterProducts
             ->flatMap(fn ($product) => collect(is_array($product->sizes) ? $product->sizes : []))
             ->map(function ($size) {
@@ -129,7 +131,7 @@
             <h2>Todos los productos</h2>
         </div>
 
-        <div class="products-grid" data-default-category-grid>
+        <div class="products-grid" data-default-category-grid data-infinite-grid>
             @foreach($defaultCatalogProducts as $product)
                 @if(! $renderedDefaultProductIds->contains($product->id))
                     @php
@@ -144,6 +146,18 @@
                 @endif
             @endforeach
         </div>
+
+        @if(isset($catalogProducts) && method_exists($catalogProducts, 'hasPages') && $catalogProducts->hasPages())
+            <div class="store-pagination" data-infinite-pagination>
+                {{ $catalogProducts->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
+            </div>
+        @endif
+
+        @include('storefront.partials.infinite-products-controls')
+
+        @if(isset($catalogProducts) && (! method_exists($catalogProducts, 'hasMorePages') || ! $catalogProducts->hasMorePages()))
+            <p class="catalog-end-message" data-infinite-end>Has visto todos los productos</p>
+        @endif
     @endif
 
     @unless($hasDefaultProducts)

@@ -91,7 +91,7 @@
             </section>
             @endif
 
-            <section class="catalog-section" id="catalogo">
+            <section class="catalog-section" id="catalogo" data-infinite-products>
                 @if($storefrontVariant === 'fashion')
                     <div class="fashion-catalog-head">
                         <h1>Ofertas</h1>
@@ -105,7 +105,7 @@
                 ])
 
                 @if($products->isNotEmpty())
-                    <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}">
+                    <div class="{{ $storefrontVariant === 'fashion' ? 'fashion-product-grid fashion-catalog-product-grid' : 'products-grid' }}" data-infinite-grid>
                         @foreach($products as $product)
                             @if($storefrontVariant === 'fashion')
                                 @include('storefront.partials.fashion-product-card')
@@ -116,13 +116,15 @@
                     </div>
 
                     @if($products->hasPages())
-                        <div class="store-pagination">
-                            {{ $products->fragment('catalogo')->links('storefront.partials.pagination') }}
+                        <div class="store-pagination" data-infinite-pagination>
+                            {{ $products->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
                         </div>
                     @endif
 
+                    @include('storefront.partials.infinite-products-controls')
+
                     @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
-                        <p class="catalog-end-message">Has visto todos los productos</p>
+                        <p class="catalog-end-message" data-infinite-end>Has visto todos los productos</p>
                     @endif
                 @else
                     <div class="empty-state">

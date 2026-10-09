@@ -16,7 +16,7 @@
         ->map(fn ($word) => mb_substr($word, 0, 1))
         ->implode('');
     $fashionBrandInitials = mb_strtoupper($fashionBrandInitials !== '' ? $fashionBrandInitials : 'T');
-    $fashionSearchProductsSource = collect($allProducts ?? []);
+    $fashionSearchProductsSource = collect($filterProducts ?? $allProducts ?? []);
 
     if ($fashionSearchProductsSource->isEmpty()) {
         $fashionSearchProductsSource = $store->products()

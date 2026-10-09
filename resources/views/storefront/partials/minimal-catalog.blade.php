@@ -6,8 +6,8 @@
         : $minimalProducts->take(6);
 @endphp
 
-<div class="minimal-shop-catalog-shell" data-minimal-catalog-shell>
-    <div class="minimal-shop-product-grid">
+<div class="minimal-shop-catalog-shell" data-minimal-catalog-shell data-infinite-products>
+    <div class="minimal-shop-product-grid" data-infinite-grid>
         @forelse($minimalCatalogProducts as $product)
             @include('storefront.partials.minimal-product-card', ['product' => $product, 'isRecommendation' => false])
         @empty
@@ -16,12 +16,14 @@
     </div>
 
     @if(method_exists($catalogProducts, 'hasPages') && $catalogProducts->hasPages())
-        <div class="minimal-shop-pagination">
+        <div class="minimal-shop-pagination" data-infinite-pagination>
             {{ $catalogProducts->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
         </div>
     @endif
 
+    @include('storefront.partials.infinite-products-controls')
+
     @if($minimalCatalogProducts->isNotEmpty() && (! method_exists($catalogProducts, 'hasMorePages') || ! $catalogProducts->hasMorePages()))
-        <p class="catalog-end-message minimal-shop-end-message">Has visto todos los productos</p>
+        <p class="catalog-end-message minimal-shop-end-message" data-infinite-end>Has visto todos los productos</p>
     @endif
 </div>

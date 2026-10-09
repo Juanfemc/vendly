@@ -48,21 +48,23 @@
 
     <div class="tech-collection-results">
         @if($collectionProducts->isNotEmpty())
-            <div class="minimal-shop-catalog-shell tech-collection-catalog-shell" data-minimal-catalog-shell>
-                <div class="minimal-shop-product-grid">
+            <div class="minimal-shop-catalog-shell tech-collection-catalog-shell" data-minimal-catalog-shell data-infinite-products>
+                <div class="minimal-shop-product-grid" data-infinite-grid>
                     @foreach($collectionProducts as $product)
                         @include('storefront.partials.minimal-product-card', ['product' => $product, 'isRecommendation' => false])
                     @endforeach
                 </div>
 
                 @if(method_exists($products, 'hasPages') && $products->hasPages())
-                    <div class="minimal-shop-pagination">
+                    <div class="minimal-shop-pagination" data-infinite-pagination>
                         {{ $products->onEachSide(1)->fragment('catalogo')->links('storefront.partials.pagination') }}
                     </div>
                 @endif
 
+                @include('storefront.partials.infinite-products-controls')
+
                 @if(! method_exists($products, 'hasMorePages') || ! $products->hasMorePages())
-                    <p class="catalog-end-message minimal-shop-end-message">Has visto todos los productos</p>
+                    <p class="catalog-end-message minimal-shop-end-message" data-infinite-end>Has visto todos los productos</p>
                 @endif
             </div>
         @else
