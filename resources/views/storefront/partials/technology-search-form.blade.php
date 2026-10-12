@@ -25,7 +25,7 @@
         ->map(fn ($product) => [
             'name' => (string) $product->name,
             'search' => \Illuminate\Support\Str::lower((string) $product->name . ' ' . (string) $product->category . ' ' . (string) $product->material),
-            'price' => '$ ' . number_format((float) $product->price, 0, ',', '.'),
+            'price' => '$ ' . number_format((float) $product->displayPrice($store), 0, ',', '.'),
             'image' => $product->image ? asset('storage/' . $product->image) : null,
             'url' => $storefrontUrls->product($store, $product),
         ])

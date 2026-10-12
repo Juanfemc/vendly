@@ -64,11 +64,17 @@
         ->map(fn ($size) => trim((string) $size))
         ->filter()
         ->values();
+    $minimalPendingVariantLabel = $minimalColorOptions->isNotEmpty() && $minimalSizeOptions->isNotEmpty()
+        ? 'Selecciona color y talla'
+        : ($minimalColorOptions->isNotEmpty()
+            ? 'Selecciona color'
+            : ($minimalSizeOptions->isNotEmpty() ? 'Selecciona talla' : 'Selecciona una opción'));
     $minimalCartIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M3 4h2.4l2.2 10.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H7"/></svg>';
     $minimalBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
     $minimalIcons = \App\Support\MinimalShopIcons::class;
-    $minimalDisplayPrice = (float) $product->price;
-    $minimalShowsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
+    $minimalDisplayPrice = $product->displayPrice($store);
+    $minimalOriginalPrice = $product->displayOriginalPrice($store);
+    $minimalShowsOfferPricing = $store->allowsOfferBadges() && $minimalOriginalPrice !== null;
     $minimalDescription = \App\Support\ProductText::plain($product->description);
     $minimalFeatureItems = collect(preg_split('/\R+/', \App\Support\ProductText::featureLines($product->features)) ?: [])
         ->map(fn ($feature) => trim($feature, " \t\n\r\0\x0B-*"))
@@ -334,7 +340,7 @@
                 @endif
                 <div class="minimal-product-price">
                     @if($minimalShowsOfferPricing)
-                        <span class="minimal-product-price-before">${{ number_format((float) $product->offer_original_price, 2, '.', ',') }}</span>
+                        <span class="minimal-product-price-before">${{ number_format((float) $minimalOriginalPrice, 2, '.', ',') }}</span>
                     @endif
                     <span>${{ number_format((float) $minimalDisplayPrice, 2, '.', ',') }}</span>
                 </div>
@@ -429,7 +435,7 @@
                                     @disabled($product->hasVariants())
                                 >
                                     {!! $minimalCartIcon !!}
-                                    <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opcion' : 'Agregar al carrito' }}</span>
+                                    <span data-variant-label>{{ $product->hasVariants() ? $minimalPendingVariantLabel : 'Agregar al carrito' }}</span>
                                     <span class="minimal-product-add-count" data-cart-count-badge @if(($cartCount ?? 0) < 1) hidden @endif>{{ $cartCount ?? 0 }}</span>
                                 </button>
                             </form>

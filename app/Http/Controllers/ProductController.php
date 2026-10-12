@@ -457,7 +457,7 @@ class ProductController extends Controller
         $searchQuery = $productSearchEnabled ? $this->searchQuery() : '';
 
         $products = $this->publicProductsQuery($store, $searchQuery)
-            ->where('has_offer', true)
+            ->when(! $store->hasActiveGlobalDiscount(), fn ($query) => $query->where('has_offer', true))
             ->paginate(self::PUBLIC_PRODUCTS_PAGE_SIZE)
             ->withQueryString();
         $activeCategories = $this->activeCategories($store);

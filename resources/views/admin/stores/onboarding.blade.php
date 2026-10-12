@@ -937,7 +937,7 @@
         <nav class="onboarding-steps">
             @foreach($steps as $stepKey => $step)
                 <a
-                    href="{{ route('admin.store.onboarding', ['step' => $stepKey]) }}"
+                    href="{{ route('admin.store.onboarding.wizard', ['step' => $stepKey]) }}"
                     class="onboarding-step {{ $currentStep === $stepKey ? 'is-active' : '' }} {{ ($step['complete'] ?? false) ? 'is-complete' : '' }}"
                 >
                     <span class="onboarding-step__dot">{{ ($step['complete'] ?? false) ? 'OK' : $loop->iteration }}</span>
@@ -1427,7 +1427,7 @@
             <footer class="onboarding-actions">
                 <div class="onboarding-actions__group">
                     @if($previousStep)
-                        <a href="{{ route('admin.store.onboarding', ['step' => $previousStep]) }}" class="btn btn-secondary">Atrás</a>
+                        <a href="{{ route('admin.store.onboarding.wizard', ['step' => $previousStep]) }}" class="btn btn-secondary">Atrás</a>
                     @endif
                     <button type="submit" class="btn btn-secondary" data-intent-submit="exit">Guardar y salir</button>
                 </div>

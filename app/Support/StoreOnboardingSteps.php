@@ -17,6 +17,10 @@ class StoreOnboardingSteps
     public const ORDERS = 'orders';
     public const PAYMENTS = 'payments';
     public const REVIEW = 'review';
+    public const SETUP_PRODUCT = 'setup_product';
+    public const SETUP_IDENTITY = 'setup_identity';
+    public const SETUP_DELIVERY = 'setup_delivery';
+    public const SETUP_SHARE = 'setup_share';
 
     public static function allKeys(): array
     {
@@ -85,14 +89,7 @@ class StoreOnboardingSteps
 
     public static function checklist(Store $store): array
     {
-        return collect(self::available($store))
-            ->except(self::REVIEW)
-            ->map(fn (array $step) => [
-                'label' => $step['label'],
-                'description' => $step['summary'],
-                'complete' => (bool) ($step['complete'] ?? false),
-            ])
-            ->all();
+        return self::setupTasks($store);
     }
 
     public static function progress(Store $store): int
@@ -120,7 +117,55 @@ class StoreOnboardingSteps
             return false;
         }
 
+        if (
+            Store::supportsOnboardingSetupColumns()
+            && blank($store->onboarding_choice)
+            && self::productComplete($store)
+            && self::identityComplete($store)
+            && self::deliveryComplete($store)
+        ) {
+            return false;
+        }
+
         return self::progress($store) < 100;
+    }
+
+    public static function setupTasks(Store $store): array
+    {
+        return [
+            self::SETUP_PRODUCT => [
+                'label' => 'Agregar el primer producto',
+                'title' => 'Agrega tu primer producto',
+                'description' => 'Publica al menos un producto con nombre, precio e imagen para que tu tienda tenga algo listo para vender.',
+                'action' => 'Agregar producto',
+                'href' => route('admin.products.create'),
+                'complete' => self::productComplete($store),
+            ],
+            self::SETUP_IDENTITY => [
+                'label' => 'Personalizar tienda',
+                'title' => 'Personaliza tu tienda',
+                'description' => 'Ajusta logo, portada, colores o texto para que la tienda se vea como tu marca. El logo y la portada son opcionales.',
+                'action' => 'Personalizar tienda',
+                'href' => url('/admin/store-settings'),
+                'complete' => self::identityComplete($store),
+            ],
+            self::SETUP_DELIVERY => [
+                'label' => 'Configurar WhatsApp y entregas',
+                'title' => 'Configura WhatsApp y entregas',
+                'description' => 'Confirma el WhatsApp de pedidos y agrega las opciones de envío o entrega que tus clientes deben elegir.',
+                'action' => 'Configurar entregas',
+                'href' => url('/admin/store-settings#delivery-settings'),
+                'complete' => self::deliveryComplete($store),
+            ],
+            self::SETUP_SHARE => [
+                'label' => 'Compartir la tienda',
+                'title' => 'Comparte tu tienda',
+                'description' => 'Copia el enlace o compártelo por WhatsApp para empezar a recibir visitas reales.',
+                'action' => 'Compartir tienda',
+                'href' => route('admin.store.onboarding'),
+                'complete' => self::shareComplete($store),
+            ],
+        ];
     }
 
     public static function firstIncompleteRequiredStep(Store $store): ?string
@@ -155,6 +200,17 @@ class StoreOnboardingSteps
     public static function ordersComplete(Store $store): bool
     {
         return count($store->shippingMethods()) > 0 || $store->localDeliveryEnabled();
+    }
+
+    public static function deliveryComplete(Store $store): bool
+    {
+        return trim((string) $store->whatsapp) !== '' && self::ordersComplete($store);
+    }
+
+    public static function shareComplete(Store $store): bool
+    {
+        return (Store::supportsOnboardingSetupColumns() && filled($store->onboarding_store_shared_at))
+            || ((int) ($store->views_count ?? 0) > 0);
     }
 
     public static function paymentsComplete(Store $store): bool

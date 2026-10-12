@@ -66,7 +66,7 @@ test('optional turnstile with incomplete credentials does not block trial signup
         'store_name' => 'Tienda Sin Turnstile',
         'whatsapp' => '573001112244',
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     $this->assertDatabaseHas('users', ['email' => 'cliente-sin-turnstile@example.com']);
 });
@@ -96,7 +96,7 @@ test('trial signup always creates a normal store', function () {
         'whatsapp' => '573001112233',
         'location' => 'Bogota',
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     $user = User::where('email', 'cliente-demo@example.com')->firstOrFail();
     $store = Store::where('user_id', $user->id)->firstOrFail();
@@ -111,10 +111,11 @@ test('trial signup always creates a normal store', function () {
         ->and($store->whatsapp_consent_source)->toBe('trial_signup')
         ->and(strlen($store->whatsapp_consent_ip_hash))->toBe(64);
 
-    $this->get(route('admin.store.onboarding'))
+    $this->get(route('admin.store.onboarding.choice'))
         ->assertOk()
-        ->assertSee('Paso 1 de')
-        ->assertSee('Información básica')
+        ->assertSee('¡Vamos a preparar tu tienda!')
+        ->assertSee('Quiero crear mi tienda')
+        ->assertSee('Quiero que me ayuden')
         ->assertDontSee('Tipo de negocio')
         ->assertDontSee('name="business_type"', false);
 });
@@ -140,7 +141,7 @@ test('trial signup sends server side meta events with website action source', fu
             'store_name' => 'Tienda Meta',
             'whatsapp' => '573001112245',
             'whatsapp_consent' => '1',
-        ])->assertRedirect(route('admin.store.onboarding'))
+        ])->assertRedirect(route('admin.store.onboarding.choice'))
         ->assertSessionHas('meta_pixel_events');
 
     $store = Store::where('name', 'Tienda Meta')->firstOrFail();
@@ -198,7 +199,7 @@ test('trial signup queues admin and customer whatsapp templates when configured'
         'whatsapp' => '+57 300 111 2233',
         'location' => 'Bogota',
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     Queue::assertPushed(SendWhatsAppTemplate::class, 2);
     expect(WhatsAppMessage::where('audience', 'admin')->firstOrFail()->template)
@@ -244,7 +245,7 @@ test('trial signup succeeds when whatsapp notification scheduling fails', functi
         'store_name' => 'Tienda Cola',
         'whatsapp' => '3001112233',
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     $this->assertDatabaseHas('users', ['email' => 'cliente-cola@example.com']);
 });
@@ -289,7 +290,7 @@ test('trial signup permanently limits free trials for the same whatsapp number',
         'store_name' => 'Primera Tienda',
         'whatsapp' => $phone,
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     auth()->logout();
     Cache::flush();
@@ -319,7 +320,7 @@ test('deleting a trial store does not release its phone claim', function () {
         'store_name' => 'Tienda Eliminada',
         'whatsapp' => $phone,
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     Store::where('whatsapp', $phone)->firstOrFail()->delete();
     auth()->logout();
@@ -354,7 +355,7 @@ test('trial signup defers whatsapp verification to onboarding when api is config
         'store_name' => 'Tienda Sin Codigo',
         'whatsapp' => '573001234567',
         'whatsapp_consent' => '1',
-    ])->assertRedirect(route('admin.store.onboarding'));
+    ])->assertRedirect(route('admin.store.onboarding.choice'));
 
     $user = User::where('email', 'cliente-sin-codigo@example.com')->firstOrFail();
     $store = Store::where('user_id', $user->id)->firstOrFail();

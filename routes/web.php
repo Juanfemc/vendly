@@ -111,7 +111,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
     Route::get('/admin/store-settings', [StoreController::class, 'settings']);
     Route::post('/admin/store-settings', [StoreController::class, 'updateSettings']);
-    Route::get('/admin/onboarding', [StoreOnboardingController::class, 'edit'])->name('admin.store.onboarding');
+    Route::get('/admin/onboarding/choice', [StoreOnboardingController::class, 'choice'])->name('admin.store.onboarding.choice');
+    Route::post('/admin/onboarding/choice', [StoreOnboardingController::class, 'selectChoice'])->name('admin.store.onboarding.choice.store');
+    Route::get('/admin/onboarding', [StoreOnboardingController::class, 'overview'])->name('admin.store.onboarding');
+    Route::post('/admin/onboarding/share', [StoreOnboardingController::class, 'markShared'])->name('admin.store.onboarding.share');
+    Route::get('/admin/onboarding/wizard', [StoreOnboardingController::class, 'edit'])->name('admin.store.onboarding.wizard');
     Route::post('/admin/onboarding', [StoreOnboardingController::class, 'update'])->name('admin.store.onboarding.update');
     Route::post('/admin/onboarding/whatsapp/send-code', [StoreOnboardingController::class, 'sendWhatsAppVerificationCode'])
         ->middleware('throttle:6,1')

@@ -38,6 +38,91 @@ class StoreOnboardingController extends Controller
     ) {
     }
 
+    public function choice(): View
+    {
+        $store = $this->currentStore();
+
+        return view('admin.stores.onboarding-choice', [
+            'store' => $store,
+            'storeUrl' => $this->storefrontUrls->publicHome($store),
+            'supportWhatsappUrl' => $this->supportWhatsappUrl($store),
+        ]);
+    }
+
+    public function selectChoice(Request $request): RedirectResponse
+    {
+        $store = $this->currentStore();
+
+        $validated = $request->validate([
+            'choice' => ['required', 'in:guided,assisted'],
+        ]);
+
+        if (Store::supportsOnboardingSetupColumns()) {
+            $data = ['onboarding_choice' => $validated['choice']];
+
+            if ($validated['choice'] === 'assisted' && blank($store->onboarding_assistance_requested_at)) {
+                $data['onboarding_assistance_requested_at'] = now();
+            }
+
+            $store->forceFill($data)->save();
+        }
+
+        if ($validated['choice'] === 'assisted') {
+            return redirect()->away($this->supportWhatsappUrl($store->refresh()));
+        }
+
+        return redirect()
+            ->route('admin.store.onboarding')
+            ->with('success', 'Perfecto. Te guiamos paso a paso sin bloquearte el panel.');
+    }
+
+    public function overview(Request $request): View
+    {
+        $store = $this->currentStore();
+        $justCompleted = $this->syncSetupCompletion($store);
+        $store = $store->refresh();
+        $tasks = StoreOnboardingSteps::setupTasks($store);
+
+        return view('admin.stores.onboarding-overview', [
+            'store' => $store,
+            'storeUrl' => $this->storefrontUrls->publicHome($store),
+            'tasks' => $tasks,
+            'progress' => $store->onboardingProgress(),
+            'completedCount' => collect($tasks)->filter(fn (array $task) => (bool) ($task['complete'] ?? false))->count(),
+            'totalCount' => count($tasks),
+            'justCompleted' => $justCompleted || $request->session()->get('onboarding_completed_now', false),
+            'supportWhatsappUrl' => $this->supportWhatsappUrl($store),
+            'shareWhatsappUrl' => $this->shareWhatsappUrl($store),
+        ]);
+    }
+
+    public function markShared(Request $request): RedirectResponse
+    {
+        $store = $this->currentStore();
+
+        $validated = $request->validate([
+            'channel' => ['nullable', 'in:copy,whatsapp,open'],
+        ]);
+
+        if (Store::supportsOnboardingSetupColumns() && blank($store->onboarding_store_shared_at)) {
+            $store->forceFill(['onboarding_store_shared_at' => now()])->save();
+        }
+
+        $this->syncSetupCompletion($store->refresh());
+
+        if (($validated['channel'] ?? null) === 'whatsapp') {
+            return redirect()->away($this->shareWhatsappUrl($store->refresh()));
+        }
+
+        if (($validated['channel'] ?? null) === 'open') {
+            return redirect()->away($this->storefrontUrls->publicHome($store->refresh()));
+        }
+
+        return redirect()
+            ->route('admin.store.onboarding')
+            ->with('success', 'Listo. Marcamos tu tienda como compartida.');
+    }
+
     public function edit(Request $request): View
     {
         $store = $this->currentStore();
@@ -73,7 +158,7 @@ class StoreOnboardingController extends Controller
             }
 
             return redirect()
-                ->route('admin.store.onboarding', ['step' => $step])
+                ->route('admin.store.onboarding.wizard', ['step' => $step])
                 ->with('error', 'Ese paso no está disponible para esta tienda.');
         }
 
@@ -141,7 +226,7 @@ class StoreOnboardingController extends Controller
                 }
 
                 return redirect()
-                    ->route('admin.store.onboarding', ['step' => $blockingStep])
+                    ->route('admin.store.onboarding.wizard', ['step' => $blockingStep])
                     ->with('error', 'Completa primero la información necesaria para finalizar.');
             }
 
@@ -184,7 +269,7 @@ class StoreOnboardingController extends Controller
         }
 
         return redirect()
-            ->route('admin.store.onboarding', ['step' => $nextStep])
+            ->route('admin.store.onboarding.wizard', ['step' => $nextStep])
             ->with('meta_pixel_events', $metaEvents)
             ->with('success', 'Paso guardado.');
     }
@@ -474,5 +559,40 @@ class StoreOnboardingController extends Controller
         $claim = TrialSignupClaim::where('phone_hash', $phoneHash)->first();
 
         return ! $claim || (int) $claim->store_id === (int) $store->id;
+    }
+
+    private function syncSetupCompletion(Store $store): bool
+    {
+        if (! Store::supportsOnboardingStateColumns()) {
+            return false;
+        }
+
+        if ($store->onboarding_completed_at || $store->onboardingProgress() < 100) {
+            return false;
+        }
+
+        $store->forceFill([
+            'onboarding_completed_at' => now(),
+            'onboarding_last_step' => null,
+        ])->save();
+
+        session()->flash('onboarding_completed_now', true);
+
+        return true;
+    }
+
+    private function supportWhatsappUrl(Store $store): string
+    {
+        $phone = preg_replace('/\D+/', '', (string) config('services.support.whatsapp', '573170613664'));
+        $message = 'Hola, quiero que me ayuden a preparar mi tienda ' . $store->name . ' en Vendly.';
+
+        return 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
+    }
+
+    private function shareWhatsappUrl(Store $store): string
+    {
+        $message = 'Hola, esta es mi tienda: ' . $this->storefrontUrls->publicHome($store);
+
+        return 'https://wa.me/?text=' . rawurlencode($message);
     }
 }

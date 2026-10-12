@@ -15,6 +15,10 @@
         : \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH;
     $showFashionDeliveryTimes = (bool) old('show_fashion_delivery_times', $store->showsFashionDeliveryTimes());
     $showSizeFilter = (bool) old('show_fashion_size_filter', $store->showsSizeFilter());
+    $globalDiscountEnabled = (bool) old('global_discount_enabled', $store->global_discount_enabled ?? false);
+    $globalDiscountType = old('global_discount_type', $store->global_discount_type ?: 'percentage');
+    $globalDiscountValue = old('global_discount_value', $store->global_discount_value);
+    $globalDiscountLabel = old('global_discount_label', $store->global_discount_label ?: 'Oferta');
 @endphp
 
 <style>
@@ -1186,6 +1190,53 @@
             </div>
         </section>
 
+        @if(\App\Models\Store::supportsGlobalDiscountColumns())
+            <section class="catalog-settings-card">
+                <div class="catalog-card-head">
+                    <div class="catalog-card-title">
+                        <span class="catalog-card-icon" aria-hidden="true">%</span>
+                        <div>
+                            <h3>Oferta global</h3>
+                            <p>Aplica un descuento a todos los productos sin cambiar sus precios originales.</p>
+                        </div>
+                    </div>
+                    <span class="catalog-pro-pill">Premium</span>
+                </div>
+
+                @if($store->allowsGlobalDiscount())
+                    <label class="catalog-switch">
+                        <input type="checkbox" name="global_discount_enabled" value="1" @checked($globalDiscountEnabled)>
+                        <i></i>
+                        <span>Activar oferta en toda la tienda</span>
+                    </label>
+
+                    <div class="catalog-settings-grid catalog-settings-grid--three" style="margin-top:18px;">
+                        <div class="catalog-field">
+                            <label for="global_discount_type">Tipo de descuento</label>
+                            <select id="global_discount_type" name="global_discount_type">
+                                <option value="percentage" @selected($globalDiscountType === 'percentage')>Porcentaje</option>
+                                <option value="fixed" @selected($globalDiscountType === 'fixed')>Valor fijo</option>
+                            </select>
+                        </div>
+
+                        <div class="catalog-field">
+                            <label for="global_discount_value">Descuento</label>
+                            <input id="global_discount_value" type="number" min="0" step="0.01" name="global_discount_value" value="{{ $globalDiscountValue }}" placeholder="Ej: 20">
+                            <small>Si eliges porcentaje, máximo se aplicará 99%.</small>
+                        </div>
+
+                        <div class="catalog-field">
+                            <label for="global_discount_label">Etiqueta visible</label>
+                            <input id="global_discount_label" type="text" name="global_discount_label" value="{{ $globalDiscountLabel }}" maxlength="40" placeholder="Oferta">
+                            <small>Se mostrará como insignia en los productos.</small>
+                        </div>
+                    </div>
+                @else
+                    <p class="catalog-help">Actualiza a Premium para activar descuentos en toda la tienda.</p>
+                @endif
+            </section>
+        @endif
+
         <section class="catalog-settings-card" id="store-domain">
             <div class="catalog-card-head">
                 <div class="catalog-card-title">
@@ -1709,7 +1760,7 @@
         </section>
 
         @if(\App\Models\Store::supportsShippingMethodsColumn())
-            <section class="catalog-settings-card">
+            <section class="catalog-settings-card" id="delivery-settings">
                 <div class="catalog-card-head">
                     <div class="catalog-card-title">
                         <span class="catalog-card-icon" aria-hidden="true">

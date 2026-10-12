@@ -6,8 +6,10 @@
     $stockLabel = $product->stockLabel();
     $isSoldOut = $product->isSoldOut();
     $isRestaurantCard = isset($store) && $store->isRestaurant();
-    $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge();
-    $showsOfferPricing = $showsOfferBadge && $product->hasOfferPricing();
+    $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge($store);
+    $displayPrice = $product->displayPrice($store ?? null);
+    $displayOriginalPrice = $product->displayOriginalPrice($store ?? null);
+    $showsOfferPricing = $showsOfferBadge && $displayOriginalPrice !== null;
     $displayBadges = $product->displayBadges($store ?? null);
     $productUrl = $storefrontUrls->product($store, $product);
     $defaultCategoryProduct = $defaultCategoryProduct ?? null;
@@ -26,7 +28,7 @@
     @if($defaultCategoryProduct) data-default-category-product="{{ $defaultCategoryProduct }}" @endif
     data-default-product-available="{{ $isSoldOut ? 'false' : 'true' }}"
     data-default-product-offer="{{ $showsOfferBadge ? 'true' : 'false' }}"
-    data-default-product-price="{{ (float) $product->price }}"
+    data-default-product-price="{{ (float) $displayPrice }}"
     data-default-product-name="{{ $product->name }}"
     data-default-product-index="{{ $defaultProductIndex }}"
     data-default-product-sizes="{{ $defaultProductSizes }}"
@@ -64,11 +66,11 @@
         <div class="price-row">
             @if($showsOfferPricing)
                 <span class="price-stack">
-                    <span class="price-before">${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
-                    <span class="price">${{ number_format((float) $product->price, 0, ',', '.') }}</span>
+                    <span class="price-before">${{ number_format((float) $displayOriginalPrice, 0, ',', '.') }}</span>
+                    <span class="price">${{ number_format((float) $displayPrice, 0, ',', '.') }}</span>
                 </span>
             @else
-                <span class="price">${{ number_format((float) $product->price, 0, ',', '.') }}</span>
+                <span class="price">${{ number_format((float) $displayPrice, 0, ',', '.') }}</span>
             @endif
         </div>
 

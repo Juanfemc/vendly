@@ -10,9 +10,10 @@
         ? $product->material
         : $productCategory;
     $placeholderText = strtoupper(substr($product->name, 0, 2));
-    $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge();
-    $cardPrice = (float) $product->price;
-    $showsOfferPricing = $showsOfferBadge && $product->hasOfferPricing();
+    $showsOfferBadge = isset($store) && $store->allowsOfferBadges() && $product->hasOfferBadge($store);
+    $cardPrice = $product->displayPrice($store ?? null);
+    $cardOriginalPrice = $product->displayOriginalPrice($store ?? null);
+    $showsOfferPricing = $showsOfferBadge && $cardOriginalPrice !== null;
     $displayBadges = $product->displayBadges($store ?? null);
     $stockLabel = $product->stockLabel();
     $reviewsEnabled = isset($store) && $store->allowsProductReviews();
@@ -77,7 +78,7 @@
             @endif
             <span class="minimal-shop-price-stack">
                 @if($showsOfferPricing)
-                    <span class="minimal-shop-price-before">${{ number_format((float) $product->offer_original_price, 2, '.', ',') }}</span>
+                    <span class="minimal-shop-price-before">${{ number_format((float) $cardOriginalPrice, 2, '.', ',') }}</span>
                 @endif
                 <strong>${{ number_format((float) $cardPrice, 2, '.', ',') }}</strong>
             </span>

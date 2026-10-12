@@ -62,6 +62,10 @@ trait ValidatesStoreProfile
             'announcement_items' => ['nullable', 'array', 'max:5'],
             'announcement_items.*.text' => ['nullable', 'string', 'max:140'],
             'free_shipping_minimum' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'global_discount_enabled' => ['nullable', 'boolean'],
+            'global_discount_type' => ['nullable', Rule::in(['percentage', 'fixed'])],
+            'global_discount_value' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'global_discount_label' => ['nullable', 'string', 'max:40'],
             'shipping_methods' => ['nullable', 'array', 'max:5'],
             'shipping_methods.*.name' => ['nullable', 'string', 'max:80'],
             'shipping_methods.*.cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
@@ -152,6 +156,39 @@ trait ValidatesStoreProfile
         if ($requestedPlan) {
             $data['plan'] = $effectivePlan;
         }
+        $usesGlobalDiscount = (bool) array_intersect($fields, [
+            'global_discount_enabled',
+            'global_discount_type',
+            'global_discount_value',
+            'global_discount_label',
+        ]);
+
+        if ($usesGlobalDiscount && Store::supportsGlobalDiscountColumns()) {
+            $data['global_discount_enabled'] = $effectivePlan === Store::PLAN_PREMIUM
+                && $this->boolean('global_discount_enabled', false);
+            $data['global_discount_type'] = $data['global_discount_type'] ?? 'percentage';
+            $data['global_discount_value'] = $data['global_discount_enabled']
+                ? (float) ($data['global_discount_value'] ?? 0)
+                : null;
+            $data['global_discount_label'] = trim((string) ($data['global_discount_label'] ?? '')) ?: 'Oferta';
+
+            if (! $data['global_discount_enabled'] || $data['global_discount_value'] <= 0) {
+                $data['global_discount_enabled'] = false;
+                $data['global_discount_type'] = null;
+                $data['global_discount_value'] = null;
+                $data['global_discount_label'] = null;
+            } elseif ($data['global_discount_type'] === 'percentage') {
+                $data['global_discount_value'] = min(99, $data['global_discount_value']);
+            }
+        } elseif ($usesGlobalDiscount) {
+            unset(
+                $data['global_discount_enabled'],
+                $data['global_discount_type'],
+                $data['global_discount_value'],
+                $data['global_discount_label']
+            );
+        }
+
         if (Store::supportsSubdomainColumn()) {
             $data['subdomain'] = Store::normalizeSubdomain($data['subdomain'] ?? null);
         } else {

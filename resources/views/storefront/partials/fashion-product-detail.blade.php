@@ -2,7 +2,8 @@
     $fashionGalleryImages = $productGallery->filter()->values();
     $fashionGallery = $fashionGalleryImages->isNotEmpty() ? $fashionGalleryImages : collect([null]);
     $fashionRelated = $relatedProducts->take(4);
-    $fashionProductPrice = (float) $product->price;
+    $fashionProductPrice = $product->displayPrice($store);
+    $fashionProductOriginalPrice = $product->displayOriginalPrice($store);
     $fashionSizes = $product->hasSizes() ? collect($product->sizes)->values() : collect();
     $fashionColors = $product->hasColors() ? collect($product->colors)->values() : collect();
     $fashionColorDisplay = $store->colorVariantDisplay();
@@ -64,6 +65,11 @@
         })
         ->filter(fn ($color) => $color['label'] !== '')
         ->values();
+    $fashionPendingVariantLabel = $fashionColorOptions->isNotEmpty() && $fashionSizes->isNotEmpty()
+        ? 'Selecciona color y talla'
+        : ($fashionColorOptions->isNotEmpty()
+            ? 'Selecciona color'
+            : ($fashionSizes->isNotEmpty() ? 'Selecciona talla' : 'Selecciona una opción'));
     $fashionDescription = $productDescriptionText ?? \App\Support\ProductText::plain($product->description);
     $fashionDescription = $fashionDescription ?: 'Este producto aún no tiene una descripción amplia configurada.';
     $fashionFeaturesText = $productFeaturesText ?? \App\Support\ProductText::featureLines($product->features);
@@ -173,7 +179,7 @@
             @endif
             <div class="fashion-product-price">
                 @if($showsOfferPricing)
-                    <span>${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
+                    <span>${{ number_format((float) $fashionProductOriginalPrice, 0, ',', '.') }}</span>
                 @endif
                 <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
             </div>
@@ -309,7 +315,7 @@
                             @disabled($product->hasVariants())
                         >
                             {!! $fashionCartIcon !!}
-                            <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opción' : 'Agregar al carrito' }}</span>
+                            <span data-variant-label>{{ $product->hasVariants() ? $fashionPendingVariantLabel : 'Agregar al carrito' }}</span>
                         </button>
                         <button
                             type="submit"
@@ -452,7 +458,7 @@
             <h2>También te puede interesar</h2>
             <div class="fashion-related-grid">
                 @foreach($fashionRelated as $relatedProduct)
-                    @php($relatedPrice = (float) $relatedProduct->price)
+                    @php($relatedPrice = $relatedProduct->displayPrice($store))
                     <article class="fashion-related-card">
                         <a href="{{ $storefrontUrls->product($store, $relatedProduct) }}" class="fashion-related-media">
                             @if($relatedProduct->image)

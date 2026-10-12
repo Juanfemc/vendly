@@ -5,7 +5,7 @@
                 <span>NUEVO</span>
                 IA integrada para potenciar tus ventas
             </div>
-            <h1>Crea tu tienda online gratis en menos de 2 minutos.</h1>
+            <h1>Crea tu tienda online <strong>gratis</strong> en menos de <strong>2 minutos</strong>.</h1>
             <p>Sin tarjeta de crédito. Sin conocimientos técnicos. Lista para vender hoy.</p>
 
             <div class="action-row">

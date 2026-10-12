@@ -226,18 +226,63 @@ class Product extends Model
         return self::$supportsCustomBadgesColumn ??= Schema::hasColumn('products', 'custom_badges');
     }
 
-    public function hasOfferBadge(): bool
+    public function hasOfferBadge(?Store $store = null): bool
     {
-        return self::supportsOfferColumn() && (bool) $this->has_offer;
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        return (self::supportsOfferColumn() && (bool) $this->has_offer)
+            || ($store?->hasActiveGlobalDiscount() ?? false);
     }
 
-    public function hasOfferPricing(): bool
+    public function hasOfferPricing(?Store $store = null): bool
     {
-        if (! $this->hasOfferBadge() || ! self::supportsOfferPricingColumn() || $this->offer_original_price === null) {
-            return false;
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        if ($store?->hasActiveGlobalDiscount() && $this->globalDiscountedPrice($store) < (float) $this->price) {
+            return true;
         }
 
-        return (float) $this->offer_original_price > (float) $this->price;
+        return $this->manualOfferOriginalPrice() > (float) $this->price;
+    }
+
+    public function displayPrice(?Store $store = null): float
+    {
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        return $store?->hasActiveGlobalDiscount()
+            ? $this->globalDiscountedPrice($store)
+            : (float) $this->price;
+    }
+
+    public function displayOriginalPrice(?Store $store = null): ?float
+    {
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        if ($store?->hasActiveGlobalDiscount() && $this->displayPrice($store) < (float) $this->price) {
+            return (float) $this->price;
+        }
+
+        $manualOriginal = $this->manualOfferOriginalPrice();
+
+        return $manualOriginal > (float) $this->price ? $manualOriginal : null;
+    }
+
+    private function manualOfferOriginalPrice(): float
+    {
+        if (! self::supportsOfferColumn()
+            || ! (bool) $this->has_offer
+            || ! self::supportsOfferPricingColumn()
+            || $this->offer_original_price === null
+        ) {
+            return 0;
+        }
+
+        return (float) $this->offer_original_price;
+    }
+
+    private function globalDiscountedPrice(Store $store): float
+    {
+        return $store->discountedPriceFor((float) $this->price);
     }
 
     public function hasWholesalePricing(?Store $store = null): bool
@@ -251,13 +296,15 @@ class Product extends Model
             && (float) $this->wholesale_price > 0;
     }
 
-    public function priceForQuantity(int $quantity): float
+    public function priceForQuantity(int $quantity, ?Store $store = null): float
     {
-        if ($this->hasWholesalePricing() && $quantity >= (int) $this->wholesale_min_quantity) {
+        $store ??= $this->relationLoaded('store') ? $this->store : null;
+
+        if ($this->hasWholesalePricing($store) && $quantity >= (int) $this->wholesale_min_quantity) {
             return (float) $this->wholesale_price;
         }
 
-        return (float) $this->price;
+        return $this->displayPrice($store);
     }
 
     public function customBadges(): array
@@ -279,8 +326,8 @@ class Product extends Model
         $store ??= $this->store;
         $badges = [];
 
-        if ($store?->allowsOfferBadges() && $this->hasOfferBadge()) {
-            $badges[] = 'Oferta';
+        if ($store?->allowsOfferBadges() && $this->hasOfferBadge($store)) {
+            $badges[] = $store->hasActiveGlobalDiscount() ? $store->globalDiscountLabel() : 'Oferta';
         }
 
         if ($store?->allowsCustomProductBadges()) {

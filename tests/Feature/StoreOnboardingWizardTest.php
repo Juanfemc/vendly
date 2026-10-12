@@ -33,7 +33,7 @@ test('onboarding wizard shows only available steps for pro stores', function () 
     ]);
 
     $this->actingAs($user)
-        ->get(route('admin.store.onboarding'))
+        ->get(route('admin.store.onboarding.wizard'))
         ->assertOk()
         ->assertSee('Paso 1 de 5')
         ->assertSee('Información básica')
@@ -60,7 +60,7 @@ test('onboarding wizard saves basic step and resumes from next step', function (
             'whatsapp' => '3001234567',
             'location' => 'Cali',
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'identity']));
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'identity']));
 
     $store->refresh();
 
@@ -72,7 +72,7 @@ test('onboarding wizard saves basic step and resumes from next step', function (
         ->and($store->onboarding_last_step)->toBe('identity');
 
     $this->actingAs($user)
-        ->get(route('admin.store.onboarding'))
+        ->get(route('admin.store.onboarding.wizard'))
         ->assertOk()
         ->assertSee('Identidad visual')
         ->assertSee('Paso 2 de 5');
@@ -90,7 +90,7 @@ test('onboarding wizard starts at basic information when there is no saved progr
     ]);
 
     $this->actingAs($user)
-        ->get(route('admin.store.onboarding'))
+        ->get(route('admin.store.onboarding.wizard'))
         ->assertOk()
         ->assertSee('Paso 1 de 5')
         ->assertSee('Información básica')
@@ -106,7 +106,7 @@ test('onboarding wizard still resumes saved progress', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('admin.store.onboarding'))
+        ->get(route('admin.store.onboarding.wizard'))
         ->assertOk()
         ->assertSee('Paso 3 de 5')
         ->assertSee('Primer producto');
@@ -127,7 +127,7 @@ test('onboarding wizard cannot be finished when required steps are incomplete', 
             'step' => 'review',
             'intent' => 'finish',
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'basic']));
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'basic']));
 
     expect($store->fresh()->onboarding_completed_at)->toBeNull()
         ->and($store->fresh()->onboarding_last_step)->toBe('basic');
@@ -145,7 +145,7 @@ test('onboarding wizard rejects unavailable posted steps before processing data'
             'step' => 'payments',
             'intent' => 'continue',
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'basic']));
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'basic']));
 
     expect($store->fresh()->name)->toBe('')
         ->and($store->fresh()->onboarding_completed_at)->toBeNull()
@@ -168,7 +168,7 @@ test('onboarding wizard does not validate fields from unavailable steps', functi
                 ['name' => 'Envío local', 'cost' => 'costo inválido'],
             ],
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'basic']))
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'basic']))
         ->assertSessionHasNoErrors();
 
     expect($store->fresh()->onboarding_completed_at)->toBeNull()
@@ -191,7 +191,7 @@ test('onboarding wizard can create the first product inline', function () {
             'product_sizes' => 'S, M, L',
             'product_colors' => 'Negro, Blanco',
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'orders']));
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'orders']));
 
     $product = Product::where('store_id', $store->id)->firstOrFail();
 
@@ -218,7 +218,7 @@ test('onboarding wizard ignores product categories when categories are unavailab
             'product_price' => '25000',
             'product_category' => 'Categoría manipulada',
         ])
-        ->assertRedirect(route('admin.store.onboarding', ['step' => 'review']))
+        ->assertRedirect(route('admin.store.onboarding.wizard', ['step' => 'review']))
         ->assertSessionHasNoErrors();
 
     $product = Product::where('store_id', $store->id)->firstOrFail();
@@ -227,12 +227,12 @@ test('onboarding wizard ignores product categories when categories are unavailab
         ->and($store->fresh()->onboarding_last_step)->toBe('review');
 });
 
-test('store onboarding progress uses the same dynamic checklist as the wizard', function () {
+test('store onboarding progress uses the setup checklist', function () {
     [, $store] = createOnboardingStore([
         'logo_image' => 'stores/logo.webp',
         'brand_color' => '#ff6b00',
     ]);
 
-    expect(array_keys($store->onboardingChecklist()))->toBe(['basic', 'identity', 'product', 'orders'])
-        ->and($store->onboardingProgress())->toBe(50);
+    expect(array_keys($store->onboardingChecklist()))->toBe(['setup_product', 'setup_identity', 'setup_delivery', 'setup_share'])
+        ->and($store->onboardingProgress())->toBe(25);
 });

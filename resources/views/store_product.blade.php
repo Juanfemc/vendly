@@ -68,8 +68,9 @@
         $detailIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
         $detailBuyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z"/></svg>';
         $quantityMax = $product->stock_quantity !== null && ! $isReservationStore ? max(1, min(99, (int) $product->stock_quantity)) : 99;
-        $productDisplayPrice = (float) $product->price;
-        $showsOfferPricing = $store->allowsOfferBadges() && $product->hasOfferPricing();
+        $productDisplayPrice = $product->displayPrice($store);
+        $productOriginalPrice = $product->displayOriginalPrice($store);
+        $showsOfferPricing = $store->allowsOfferBadges() && $productOriginalPrice !== null;
         $productBadges = $product->displayBadges($store);
         $productReviewsEnabled = $store->allowsProductReviews();
         $productReviews = $productReviewsEnabled
@@ -134,6 +135,11 @@
             ->map(fn ($size) => trim((string) $size))
             ->filter()
             ->values();
+        $detailPendingVariantLabel = $detailColorOptions->isNotEmpty() && $detailSizeOptions->isNotEmpty()
+            ? 'Selecciona color y talla'
+            : ($detailColorOptions->isNotEmpty()
+                ? 'Selecciona color'
+                : ($detailSizeOptions->isNotEmpty() ? 'Selecciona talla' : 'Selecciona una opción'));
     @endphp
     @include('storefront.partials.seo', ['seo' => $seo])
     @include('storefront.partials.meta-pixel', ['store' => $store])
@@ -249,7 +255,7 @@
 
                 <div class="product-detail-price">
                     @if($showsOfferPricing)
-                        <span class="product-detail-price-before">${{ number_format((float) $product->offer_original_price, 0, ',', '.') }}</span>
+                        <span class="product-detail-price-before">${{ number_format((float) $productOriginalPrice, 0, ',', '.') }}</span>
                     @endif
                     <span>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</span>
                 </div>
@@ -345,7 +351,7 @@
                                 @disabled($product->hasVariants())
                             >
                                 {!! $detailCartIcon !!}
-                                <span data-variant-label>{{ $product->hasVariants() ? 'Selecciona una opción' : ($isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito')) }}</span>
+                                <span data-variant-label>{{ $product->hasVariants() ? $detailPendingVariantLabel : ($isRestaurant ? 'Agregar al pedido' : ($isReservationStore ? 'Agregar a la reserva' : 'Agregar al carrito')) }}</span>
                             </button>
 
                         </div>
@@ -495,7 +501,8 @@
                         <article class="product-card">
                             @php($relatedBadges = $relatedProduct->displayBadges($store))
                             @php($relatedProductUrl = $storefrontUrls->product($store, $relatedProduct))
-                            @php($relatedDisplayPrice = (float) $relatedProduct->price)
+                            @php($relatedDisplayPrice = $relatedProduct->displayPrice($store))
+                            @php($relatedOriginalPrice = $relatedProduct->displayOriginalPrice($store))
                             <a href="{{ $relatedProductUrl }}" class="product-image" aria-label="Ver detalle de {{ $relatedProduct->name }}">
                                 @if($relatedBadges !== [])
                                     <div class="product-badges">
@@ -512,9 +519,9 @@
                             <h3><a href="{{ $relatedProductUrl }}">{{ $relatedProduct->name }}</a></h3>
 
                             <div class="price-row">
-                                @if($store->allowsOfferBadges() && $relatedProduct->hasOfferPricing())
+                                @if($store->allowsOfferBadges() && $relatedOriginalPrice !== null)
                                     <span class="price-stack">
-                                        <span class="price-before">${{ number_format((float) $relatedProduct->offer_original_price, 0, ',', '.') }}</span>
+                                        <span class="price-before">${{ number_format((float) $relatedOriginalPrice, 0, ',', '.') }}</span>
                                         <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
                                     </span>
                                 @else
@@ -797,8 +804,6 @@
 
             const hasRequiredSize = Boolean(selectedSize || document.querySelector('[data-role="selected-size-radio"]'));
             const hasRequiredColor = Boolean(selectedColor || document.querySelector('[data-role="selected-color-radio"]'));
-            const isFashionStorefront = document.body.classList.contains('storefront-page--fashion');
-
             const variantsAreSelected = () => {
                 const sizeSelected = !hasRequiredSize || Boolean(selectedSize?.value || selectedSizeRadio()?.value);
                 const colorSelected = !hasRequiredColor || Boolean(selectedColor?.value || selectedColorRadio()?.value);
@@ -807,23 +812,19 @@
             };
 
             const pendingVariantLabel = () => {
-                if (!isFashionStorefront) {
-                    return 'Selecciona una opción';
-                }
-
                 const needsSize = hasRequiredSize && !Boolean(selectedSize?.value || selectedSizeRadio()?.value);
                 const needsColor = hasRequiredColor && !Boolean(selectedColor?.value || selectedColorRadio()?.value);
 
                 if (needsColor && needsSize) {
-                    return 'Elige color y talla';
+                    return 'Selecciona color y talla';
                 }
 
                 if (needsColor) {
-                    return 'Elige color';
+                    return 'Selecciona color';
                 }
 
                 if (needsSize) {
-                    return 'Elige talla';
+                    return 'Selecciona talla';
                 }
 
                 return 'Selecciona una opción';

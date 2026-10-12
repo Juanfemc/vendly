@@ -394,6 +394,6 @@ class CartService
 
     private function priceForQuantity(Product $product, int $quantity): float
     {
-        return $product->priceForQuantity($quantity);
+        return $product->priceForQuantity($quantity, $product->store);
     }
 }

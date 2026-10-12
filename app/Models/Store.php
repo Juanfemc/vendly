@@ -33,9 +33,11 @@ class Store extends Model
     private static ?bool $supportsFashionDeliveryTimesColumn = null;
     private static ?bool $supportsFashionSizeFilterColumn = null;
     private static ?bool $supportsOnboardingStateColumns = null;
+    private static ?bool $supportsOnboardingSetupColumns = null;
     private static ?bool $supportsStoreLandingsTable = null;
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
+    private static ?bool $supportsGlobalDiscountColumns = null;
 
     protected static function booted(): void
     {
@@ -129,6 +131,10 @@ class Store extends Model
         'business_hours',
         'announcement_items',
         'free_shipping_minimum',
+        'global_discount_enabled',
+        'global_discount_type',
+        'global_discount_value',
+        'global_discount_label',
         'shipping_methods',
         'show_shipping_options_at_checkout_start',
         'checkout_fields',
@@ -161,6 +167,9 @@ class Store extends Model
         'hero_overlay_button_url',
         'onboarding_completed_at',
         'onboarding_last_step',
+        'onboarding_choice',
+        'onboarding_assistance_requested_at',
+        'onboarding_store_shared_at',
         'instagram_url',
         'facebook_url',
         'tiktok_url',
@@ -178,6 +187,8 @@ class Store extends Model
         'views_count' => 'integer',
         'announcement_items' => 'array',
         'free_shipping_minimum' => 'decimal:2',
+        'global_discount_enabled' => 'boolean',
+        'global_discount_value' => 'decimal:2',
         'shipping_methods' => 'array',
         'show_shipping_options_at_checkout_start' => 'boolean',
         'checkout_whatsapp_enabled' => 'boolean',
@@ -198,6 +209,8 @@ class Store extends Model
         'subscription_ends_at' => 'datetime',
         'whatsapp_consent_at' => 'datetime',
         'onboarding_completed_at' => 'datetime',
+        'onboarding_assistance_requested_at' => 'datetime',
+        'onboarding_store_shared_at' => 'datetime',
     ];
 
     public function isRestaurant(): bool
@@ -757,11 +770,50 @@ class Store extends Model
             && Product::supportsWholesalePricingColumns();
     }
 
+    public function allowsGlobalDiscount(): bool
+    {
+        return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM
+            && self::supportsGlobalDiscountColumns();
+    }
+
+    public function hasActiveGlobalDiscount(): bool
+    {
+        return $this->allowsGlobalDiscount()
+            && (bool) $this->global_discount_enabled
+            && in_array($this->global_discount_type, ['percentage', 'fixed'], true)
+            && (float) $this->global_discount_value > 0;
+    }
+
+    public function globalDiscountLabel(): string
+    {
+        return trim((string) ($this->global_discount_label ?: 'Oferta'));
+    }
+
+    public function discountedPriceFor(float $price): float
+    {
+        if ($price <= 0) {
+            return 0;
+        }
+
+        if (! $this->hasActiveGlobalDiscount()) {
+            return max(0, $price);
+        }
+
+        $value = (float) $this->global_discount_value;
+        $discounted = $this->global_discount_type === 'percentage'
+            ? $price * (1 - min($value, 99) / 100)
+            : $price - $value;
+
+        return max(1, round($discounted, 2));
+    }
+
     public function hasOfferProducts(): bool
     {
         return $this->allowsOfferBadges()
-            && Product::supportsOfferColumn()
-            && $this->products()->where('has_offer', true)->exists();
+            && (
+                $this->hasActiveGlobalDiscount()
+                || (Product::supportsOfferColumn() && $this->products()->where('has_offer', true)->exists())
+            );
     }
 
     public static function supportsShippingMethodsColumn(): bool
@@ -777,6 +829,14 @@ class Store extends Model
     public static function supportsCheckoutWhatsappColumn(): bool
     {
         return self::$supportsCheckoutWhatsappColumn ??= Schema::hasColumn('stores', 'checkout_whatsapp_enabled');
+    }
+
+    public static function supportsGlobalDiscountColumns(): bool
+    {
+        return self::$supportsGlobalDiscountColumns ??= Schema::hasColumn('stores', 'global_discount_enabled')
+            && Schema::hasColumn('stores', 'global_discount_type')
+            && Schema::hasColumn('stores', 'global_discount_value')
+            && Schema::hasColumn('stores', 'global_discount_label');
     }
 
     public static function supportsAiTables(): bool
@@ -828,6 +888,13 @@ class Store extends Model
     {
         return self::$supportsOnboardingStateColumns ??= Schema::hasColumn('stores', 'onboarding_completed_at')
             && Schema::hasColumn('stores', 'onboarding_last_step');
+    }
+
+    public static function supportsOnboardingSetupColumns(): bool
+    {
+        return self::$supportsOnboardingSetupColumns ??= Schema::hasColumn('stores', 'onboarding_choice')
+            && Schema::hasColumn('stores', 'onboarding_assistance_requested_at')
+            && Schema::hasColumn('stores', 'onboarding_store_shared_at');
     }
 
     public static function supportsLocalDeliveryColumns(): bool

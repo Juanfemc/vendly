@@ -487,7 +487,7 @@
             </div>
         </div>
 
-        @if($dashboardChecklist->isNotEmpty())
+        @if(!empty($needsOnboarding) && $dashboardChecklist->isNotEmpty())
             <div class="vendly-home-section vendly-home-progress">
                 <div class="vendly-home-progress-head">
                     <h3>Completa tu tienda</h3>

@@ -627,7 +627,7 @@ class CartController extends Controller
 
     private function metaProductPayload(Product $product, int $quantity = 1): array
     {
-        $unitPrice = (float) $product->priceForQuantity($quantity);
+        $unitPrice = (float) $product->priceForQuantity($quantity, $product->store);
         $payload = [
             'content_ids' => [(string) $product->id],
             'contents' => [[

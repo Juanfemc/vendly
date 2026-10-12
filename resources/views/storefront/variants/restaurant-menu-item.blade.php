@@ -3,6 +3,8 @@
     $productUrl = $storefrontUrls->product($store, $product);
     $productDescription = \App\Support\ProductText::plain($product->description) ?: 'Plato disponible para pedir por WhatsApp.';
     $productInitial = mb_substr($product->name, 0, 1);
+    $productDisplayPrice = $product->displayPrice($store);
+    $productOriginalPrice = $product->displayOriginalPrice($store);
 @endphp
 
 <article class="restaurant-menu-item">
@@ -41,7 +43,10 @@
             </div>
         @endif
 
-        <strong>${{ number_format((float) $product->price, 0, ',', '.') }}</strong>
+        @if($productOriginalPrice !== null)
+            <span class="price-before">${{ number_format((float) $productOriginalPrice, 0, ',', '.') }}</span>
+        @endif
+        <strong>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</strong>
         @if($product->hasWholesalePricing($store))
             <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
         @endif

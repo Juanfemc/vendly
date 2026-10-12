@@ -137,7 +137,7 @@ class TrialSignupController extends Controller
         $this->dispatchSignupMetaEventsAfterResponse($store, $metaEvents, $request);
 
         return redirect()
-            ->route('admin.store.onboarding')
+            ->route('admin.store.onboarding.choice')
             ->with('meta_pixel_events', $metaEvents)
             ->with('success', 'Tu tienda ya está creada. Verifica tu WhatsApp para completar la activación.');
     }
