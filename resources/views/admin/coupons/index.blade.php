@@ -167,7 +167,7 @@
                         <div class="resource-card__header">
                             <div>
                                 <h3 class="resource-card__title">{{ $coupon->code }}</h3>
-                                <p class="resource-card__subtitle">{{ $coupon->typeLabel() }}: {{ $coupon->formattedValue() }}</p>
+                                <p class="resource-card__subtitle">{{ $coupon->typeLabel() }}: {{ $coupon->formattedValue($store) }}</p>
                             </div>
                             <div class="resource-badges">
                                 <span class="resource-badge {{ $coupon->statusBadgeClass() }}">{{ $coupon->statusLabel() }}</span>
@@ -178,7 +178,7 @@
                         <div class="resource-metrics">
                             <div class="resource-metric">
                                 <span class="resource-metric__label">Compra minima</span>
-                                <span class="resource-metric__value">$ {{ number_format((float) $coupon->min_subtotal, 0, ',', '.') }}</span>
+                                <span class="resource-metric__value">{{ $store->formatMoney($coupon->min_subtotal) }}</span>
                             </div>
                             <div class="resource-metric">
                                 <span class="resource-metric__label">Aplica a</span>
@@ -195,7 +195,7 @@
                             @if($coupon->max_discount_amount)
                                 <div class="resource-metric">
                                     <span class="resource-metric__label">Máximo</span>
-                                    <span class="resource-metric__value">$ {{ number_format((float) $coupon->max_discount_amount, 0, ',', '.') }}</span>
+                                    <span class="resource-metric__value">{{ $store->formatMoney($coupon->max_discount_amount) }}</span>
                                 </div>
                             @endif
                         </div>

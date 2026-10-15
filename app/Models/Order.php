@@ -84,6 +84,7 @@ class Order extends Model
         'stock_restored_at',
         'stock_restored_by',
         'total',
+        'currency_code',
         'store_id',
         'admin_token',
     ];
@@ -103,6 +104,20 @@ class Order extends Model
         return self::STATUSES[$this->status] ?? ucfirst((string) $this->status);
     }
 
+    public function currencyCode(): string
+    {
+        $code = strtoupper((string) ($this->currency_code ?? $this->store?->currencyCode() ?? Store::DEFAULT_CURRENCY));
+
+        return array_key_exists($code, Store::CURRENCIES) ? $code : Store::DEFAULT_CURRENCY;
+    }
+
+    public function formatMoney(float|int|string|null $amount): string
+    {
+        $currency = Store::CURRENCIES[$this->currencyCode()];
+
+        return $currency['prefix'] . number_format((float) ($amount ?? 0), $currency['decimals'], $currency['decimal'], $currency['thousands']);
+    }
+
     public static function statusOptions(): array
     {
         return self::STATUSES;
@@ -111,6 +126,11 @@ class Order extends Model
     public static function supportsPaymentExpirationColumn(): bool
     {
         return Schema::hasColumn('orders', 'payment_expires_at');
+    }
+
+    public static function supportsCurrencyColumn(): bool
+    {
+        return Schema::hasColumn('orders', 'currency_code');
     }
 
     public static function supportsShippingColumns(): bool

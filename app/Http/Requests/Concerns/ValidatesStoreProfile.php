@@ -48,6 +48,7 @@ trait ValidatesStoreProfile
         return [
             'name' => ['required', 'string', 'max:255'],
             'business_type' => ['required', 'in:' . implode(',', array_keys(Store::businessTypeOptions()))],
+            'currency_code' => ['nullable', Rule::in(array_keys(Store::currencyOptions()))],
             'plan' => ['nullable', Rule::in(array_keys(Store::planOptions()))],
             'subdomain' => $subdomainRules,
             'custom_domain' => $customDomainRules,

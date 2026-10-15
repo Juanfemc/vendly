@@ -53,6 +53,33 @@
             box-shadow: 10px 0 34px rgba(8, 20, 47, .035);
         }
 
+        [data-admin-live-search-region] {
+            position: relative;
+        }
+
+        [data-admin-live-search-region].is-live-search-loading {
+            opacity: .68;
+            pointer-events: none;
+            transition: opacity .16s ease;
+        }
+
+        [data-admin-live-search-region].is-live-search-loading::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 106, 0, .22);
+            border-top-color: var(--vendly-brand);
+            border-radius: 50%;
+            animation: admin-live-search-spin .7s linear infinite;
+        }
+
+        @keyframes admin-live-search-spin {
+            to { transform: rotate(360deg); }
+        }
+
         .sidebar-brand-title,
         .sidebar-store-text strong,
         .sidebar-plan-text strong {
@@ -4319,38 +4346,133 @@
     </script>
     <script>
         (() => {
-            const forms = document.querySelectorAll('form[data-admin-live-search]');
+            const getRegion = (form) => form.closest('[data-admin-live-search-region]');
+            let liveSearchRequestId = 0;
 
-            forms.forEach((form) => {
-                const input = form.querySelector('input[type="search"][name="q"]');
+            const loadRegion = async (url, region, replaceHistory = true) => {
+                if (!region || !window.fetch || !window.DOMParser) {
+                    return false;
+                }
+
+                region.setAttribute('aria-busy', 'true');
+                region.classList.add('is-live-search-loading');
+                const requestId = ++liveSearchRequestId;
+                const activeSearchInput = document.activeElement;
+                const shouldRestoreFocus = activeSearchInput
+                    && region.contains(activeSearchInput)
+                    && activeSearchInput.matches('input[type="search"][name="q"]');
+                const selectionStart = shouldRestoreFocus ? activeSearchInput.selectionStart : null;
+                const selectionEnd = shouldRestoreFocus ? activeSearchInput.selectionEnd : null;
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return false;
+                    }
+
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const nextRegion = doc.querySelector('[data-admin-live-search-region]');
+
+                    if (!nextRegion) {
+                        return false;
+                    }
+
+                    if (requestId !== liveSearchRequestId) {
+                        return true;
+                    }
+
+                    region.replaceWith(nextRegion);
+                    if (shouldRestoreFocus) {
+                        const nextSearchInput = nextRegion.querySelector('input[type="search"][name="q"]');
+                        nextSearchInput?.focus({ preventScroll: true });
+                        if (nextSearchInput && selectionStart !== null && selectionEnd !== null) {
+                            const cursorStart = Math.min(selectionStart, nextSearchInput.value.length);
+                            const cursorEnd = Math.min(selectionEnd, nextSearchInput.value.length);
+                            nextSearchInput.setSelectionRange(cursorStart, cursorEnd);
+                        }
+                    }
+                    window.history[replaceHistory ? 'replaceState' : 'pushState']({}, '', url);
+                    return true;
+                } finally {
+                    if (requestId === liveSearchRequestId) {
+                        const currentRegion = region.isConnected
+                            ? region
+                            : document.querySelector('[data-admin-live-search-region][aria-busy="true"]');
+
+                        currentRegion?.removeAttribute('aria-busy');
+                        currentRegion?.classList.remove('is-live-search-loading');
+                    }
+                }
+            };
+
+            const submitSearch = (form, replaceHistory = true) => {
+                const region = getRegion(form);
+                const url = new URL(form.action, window.location.href);
+                url.search = new URLSearchParams(new FormData(form)).toString();
+
+                return loadRegion(url.href, region, replaceHistory).catch(() => false);
+            };
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target.closest('form[data-admin-live-search]');
+
+                if (!form || !getRegion(form)) {
+                    return;
+                }
+
+                event.preventDefault();
+                submitSearch(form, false).then((loaded) => {
+                    if (!loaded) {
+                        HTMLFormElement.prototype.submit.call(form);
+                    }
+                });
+            });
+
+            document.addEventListener('input', (event) => {
+                const input = event.target.closest('form[data-admin-live-search] input[type="search"][name="q"]');
 
                 if (!input) {
                     return;
                 }
 
-                let timer = null;
-                let lastSubmittedValue = input.value.trim();
+                const form = input.form;
+                window.clearTimeout(form._liveSearchTimer);
+                form._liveSearchTimer = window.setTimeout(() => submitSearch(form), 350);
+            });
 
-                const submitSearch = () => {
-                    const nextValue = input.value.trim();
+            document.addEventListener('search', (event) => {
+                const input = event.target.closest('form[data-admin-live-search] input[type="search"][name="q"]');
 
-                    if (nextValue === lastSubmittedValue) {
-                        return;
-                    }
+                if (!input) {
+                    return;
+                }
 
-                    lastSubmittedValue = nextValue;
-                    form.requestSubmit();
-                };
+                window.clearTimeout(input.form._liveSearchTimer);
+                submitSearch(input.form);
+            });
 
-                input.addEventListener('input', () => {
-                    window.clearTimeout(timer);
-                    timer = window.setTimeout(submitSearch, 350);
-                });
+            document.addEventListener('click', (event) => {
+                const link = event.target.closest('[data-admin-live-search-clear]');
 
-                input.addEventListener('search', () => {
-                    window.clearTimeout(timer);
-                    submitSearch();
-                });
+                if (!link) {
+                    return;
+                }
+
+                const region = link.closest('[data-admin-live-search-region]');
+
+                if (!region) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadRegion(link.href, region, false).catch(() => { window.location.href = link.href; });
             });
         })();
     </script>

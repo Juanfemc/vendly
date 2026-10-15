@@ -35,6 +35,7 @@
     $itemsLabel = $isRestaurant ? 'platos' : ($isReservationStore ? 'servicios' : 'productos');
     $itemLabel = $isRestaurant ? 'plato' : ($isReservationStore ? 'servicio' : 'producto');
     $brandTheme = \App\Support\BrandTheme::from($store?->brand_color);
+    $currencyCode = $store?->currencyCode() ?? 'COP';
     $storefrontUrls = app(\App\Services\StorefrontUrlService::class);
     $storeHomeUrl = $store ? $storefrontUrls->publicHome($store) : url('/');
     $cartCount = collect($cart)->sum('quantity');
@@ -111,7 +112,7 @@
         'content_type' => 'product',
         'num_items' => (int) $cartCount,
         'value' => (float) $checkoutTotal,
-        'currency' => 'COP',
+        'currency' => $currencyCode,
     ];
     $metaCheckoutEventKey = 'checkout-' . sha1(json_encode([
         'store_id' => $store?->id,
@@ -126,6 +127,7 @@
     data-feedback-update-error="{{ $isRestaurant ? 'No se pudo actualizar el pedido.' : ($isReservationStore ? 'No se pudo actualizar la reserva.' : 'No se pudo actualizar el carrito.') }}"
     data-feedback-empty-error="{{ $isRestaurant ? 'No se pudo vaciar el pedido.' : ($isReservationStore ? 'No se pudo vaciar la reserva.' : 'No se pudo vaciar el carrito.') }}"
     data-store-slug="{{ $store?->slug }}"
+    data-currency-code="{{ $currencyCode }}"
     data-cart-subtotal="{{ $total }}"
     data-cart-discount="{{ $discountAmount }}"
     data-coupon-preview-url="{{ route('cart.coupon.preview') }}"
@@ -233,7 +235,7 @@
                                                 <small>{{ ((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</small>
                                             </span>
                                             <span class="checkout-shipping-info-price {{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">
-                                                {{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}
+                                                {{ ((float) $method['checkout_cost']) > 0 ? $store->formatMoney($method['checkout_cost']) : 'Gratis' }}
                                             </span>
                                         </div>
                                     @endforeach
@@ -387,7 +389,7 @@
                                                     <small>{{ ((float) $method['cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional' }}</small>
                                                 </span>
                                                 <span class="shipping-option-price" data-shipping-price>
-                                                    {{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}
+                                                    {{ ((float) $method['checkout_cost']) > 0 ? $store->formatMoney($method['checkout_cost']) : 'Gratis' }}
                                                 </span>
                                             </label>
                                         @endforeach
@@ -579,7 +581,7 @@
                             </div>
                         </div>
 
-                        <div class="item-price" data-role="item-total">$ {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</div>
+                        <div class="item-price" data-role="item-total">{{ $store->formatMoney($item['price'] * $item['quantity']) }}</div>
                     </div>
                 @endforeach
 
@@ -591,35 +593,35 @@
                     <div class="summary-total">
                         <div class="summary-total-label">{{ $hasShippingCost || $store?->allowsDiscountCoupons() ? 'Subtotal' : 'Total' }}</div>
                         <div class="summary-total-price">
-                            <small>COP</small>
-                            <strong data-role="total">$ {{ number_format($total, 0, ',', '.') }}</strong>
+                            <small>{{ $currencyCode }}</small>
+                            <strong data-role="total">{{ $store->formatMoney($total) }}</strong>
                         </div>
                     </div>
 
                     <div class="summary-line {{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
                         <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
-                        <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
+                        <strong data-role="discount-total">- {{ $store->formatMoney($discountAmount) }}</strong>
                     </div>
 
                     @if($hasShippingCost)
                         <div class="summary-line">
                             <span>Envío</span>
-                            <strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis') }}</strong>
+                            <strong data-role="shipping-total">{{ $hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? $store->formatMoney($shippingCost) : 'Gratis') }}</strong>
                         </div>
 
                         <div class="summary-total summary-total--grand">
                             <div class="summary-total-label">Total</div>
                             <div class="summary-total-price">
-                                <small>COP</small>
-                                <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                                <small>{{ $currencyCode }}</small>
+                                <strong data-role="grand-total">{{ $store->formatMoney($checkoutTotal) }}</strong>
                             </div>
                         </div>
                     @elseif($store?->allowsDiscountCoupons())
                         <div class="summary-total summary-total--grand">
                             <div class="summary-total-label">Total</div>
                             <div class="summary-total-price">
-                                <small>COP</small>
-                                <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                                <small>{{ $currencyCode }}</small>
+                                <strong data-role="grand-total">{{ $store->formatMoney($checkoutTotal) }}</strong>
                             </div>
                         </div>
                     @endif
@@ -629,7 +631,7 @@
         <div class="checkout-mobile-bar" aria-label="Resumen de compra">
             <div>
                 <span>Total</span>
-                <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                <strong data-role="grand-total">{{ $store->formatMoney($checkoutTotal) }}</strong>
             </div>
             <button type="submit" form="checkoutForm" {{ ($isSingleProductLandingCheckout || $isTechnologyStore) ? 'data-payment-submit' : '' }}>
                 <span>{{ $isSingleProductLandingCheckout ? 'Pagar ahora' : ($isRestaurant ? 'Enviar' : ($isReservationStore ? 'Reservar' : 'Finalizar')) }}</span>

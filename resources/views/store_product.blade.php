@@ -255,12 +255,12 @@
 
                 <div class="product-detail-price">
                     @if($showsOfferPricing)
-                        <span class="product-detail-price-before">${{ number_format((float) $productOriginalPrice, 0, ',', '.') }}</span>
+                        <span class="product-detail-price-before">{{ $store->formatMoney($productOriginalPrice) }}</span>
                     @endif
-                    <span>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</span>
+                    <span>{{ $store->formatMoney($productDisplayPrice) }}</span>
                 </div>
                 @if($product->hasWholesalePricing($store))
-                    <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+                    <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
                 @endif
 
                 @if($product->stockLabel())
@@ -521,15 +521,15 @@
                             <div class="price-row">
                                 @if($store->allowsOfferBadges() && $relatedOriginalPrice !== null)
                                     <span class="price-stack">
-                                        <span class="price-before">${{ number_format((float) $relatedOriginalPrice, 0, ',', '.') }}</span>
-                                        <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
+                                        <span class="price-before">{{ $store->formatMoney($relatedOriginalPrice) }}</span>
+                                        <span class="price">{{ $store->formatMoney($relatedDisplayPrice) }}</span>
                                     </span>
                                 @else
-                                    <span class="price">${{ number_format((float) $relatedDisplayPrice, 0, ',', '.') }}</span>
+                                    <span class="price">{{ $store->formatMoney($relatedDisplayPrice) }}</span>
                                 @endif
                             </div>
                             @if($relatedProduct->hasWholesalePricing($store))
-                                <span class="product-wholesale-note">Mayorista desde {{ $relatedProduct->wholesale_min_quantity }} unidades: ${{ number_format((float) $relatedProduct->wholesale_price, 0, ',', '.') }}</span>
+                                <span class="product-wholesale-note">Mayorista desde {{ $relatedProduct->wholesale_min_quantity }} unidades: {{ $store->formatMoney($relatedProduct->wholesale_price) }}</span>
                             @endif
 
                             <div class="product-card-actions">

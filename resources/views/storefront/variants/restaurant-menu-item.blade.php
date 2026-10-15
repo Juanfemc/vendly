@@ -44,11 +44,11 @@
         @endif
 
         @if($productOriginalPrice !== null)
-            <span class="price-before">${{ number_format((float) $productOriginalPrice, 0, ',', '.') }}</span>
+            <span class="price-before">{{ $store->formatMoney($productOriginalPrice) }}</span>
         @endif
-        <strong>${{ number_format((float) $productDisplayPrice, 0, ',', '.') }}</strong>
+        <strong>{{ $store->formatMoney($productDisplayPrice) }}</strong>
         @if($product->hasWholesalePricing($store))
-            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
         @endif
     </div>
 

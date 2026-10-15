@@ -75,14 +75,14 @@ class WhatsAppOrderMessageBuilder
                 $line .= ' | ' . $variantText;
             }
 
-            $lines[] = $line . ' | ' . $this->money($itemTotal);
+            $lines[] = $line . ' | ' . $this->money($itemTotal, $order);
         }
 
         $lines[] = '';
-        $lines[] = 'Subtotal: ' . $this->money($subtotal);
+        $lines[] = 'Subtotal: ' . $this->money($subtotal, $order);
 
         if ($order->shipping_method) {
-            $lines[] = 'Envío: ' . $order->shipping_method . ' (' . $this->money((float) $order->shipping_cost) . ')';
+            $lines[] = 'Envío: ' . $order->shipping_method . ' (' . $this->money((float) $order->shipping_cost, $order) . ')';
         }
 
         if (Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0) {
@@ -92,10 +92,10 @@ class WhatsAppOrderMessageBuilder
                 $discountLine .= ' (' . $order->discount_code . ')';
             }
 
-            $lines[] = $discountLine . ': -' . $this->money((float) $order->discount_amount);
+            $lines[] = $discountLine . ': -' . $this->money((float) $order->discount_amount, $order);
         }
 
-        $lines[] = 'Total: ' . $this->money((float) $order->total);
+        $lines[] = 'Total: ' . $this->money((float) $order->total, $order);
 
         if ($order->notes) {
             $lines[] = '';
@@ -110,8 +110,8 @@ class WhatsAppOrderMessageBuilder
         return implode("\n", $lines);
     }
 
-    private function money(float $amount): string
+    private function money(float $amount, Order $order): string
     {
-        return '$' . number_format($amount, 0, ',', '.');
+        return $order->formatMoney($amount);
     }
 }

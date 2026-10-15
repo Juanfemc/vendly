@@ -33,9 +33,10 @@ class StoreSettingsRequest extends FormRequest
 
     public function settingsData(): array
     {
-        return $this->storeProfileData([
+        $data = $this->storeProfileData([
             'name',
             'business_type',
+            'currency_code',
             'subdomain',
             'custom_domain',
             'whatsapp',
@@ -85,5 +86,11 @@ class StoreSettingsRequest extends FormRequest
             'terms_url',
             'terms_version',
         ]);
+
+        if (! Store::supportsCurrencyColumn()) {
+            unset($data['currency_code']);
+        }
+
+        return $data;
     }
 }

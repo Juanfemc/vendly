@@ -116,10 +116,11 @@ class CartController extends Controller
         $colombiaLocations = ColombiaLocation::citiesForSelect();
         $whatsappAvailable = $store?->acceptsWhatsappCheckout() ?? false;
         $mercadoPagoAccount = $store?->mercadoPagoAccount()->first();
-        $mercadoPagoAvailable = ($store?->allowsOnlinePayments() ?? false)
+        $onlineCurrencySupported = ($store?->currencyCode() ?? 'COP') === 'COP';
+        $mercadoPagoAvailable = $onlineCurrencySupported && ($store?->allowsOnlinePayments() ?? false)
             && ($mercadoPagoAccount?->isConnected() ?? false);
         $wompiAccount = $store?->wompiAccount()->first();
-        $wompiAvailable = ($store?->allowsOnlinePayments() ?? false)
+        $wompiAvailable = $onlineCurrencySupported && ($store?->allowsOnlinePayments() ?? false)
             && ($wompiAccount?->isWompiReady() ?? false);
         $isSingleProductLandingCheckout = $this->isSingleProductLandingCheckout($store);
         $shippingMethodCollection = collect($shippingMethods);
@@ -271,6 +272,11 @@ class CartController extends Controller
             return redirect()->route('cart.index', ['store' => $store->slug])->with('error', 'Los pagos en linea estan disponibles solo en el plan Premium.');
         }
 
+        if ($store->currencyCode() !== 'COP') {
+            return redirect()->route('cart.index', ['store' => $store->slug])
+                ->with('error', 'Los pagos online de esta integración solo están disponibles en COP. Usa WhatsApp para pedidos en ' . $store->currencyCode() . '.');
+        }
+
         $mercadoPagoAccount = $store->mercadoPagoAccount()->first();
 
         if (! ($mercadoPagoAccount?->isConnected() ?? false)) {
@@ -349,6 +355,11 @@ class CartController extends Controller
 
         if (! $store->allowsOnlinePayments()) {
             return redirect()->route('cart.index', ['store' => $store->slug])->with('error', 'Los pagos en linea estan disponibles solo en el plan Premium.');
+        }
+
+        if ($store->currencyCode() !== 'COP') {
+            return redirect()->route('cart.index', ['store' => $store->slug])
+                ->with('error', 'Los pagos online de esta integración solo están disponibles en COP. Usa WhatsApp para pedidos en ' . $store->currencyCode() . '.');
         }
 
         $wompiAccount = $store->wompiAccount()->first();
@@ -639,7 +650,7 @@ class CartController extends Controller
             'content_type' => 'product',
             'content_category' => $product->category,
             'value' => $unitPrice * $quantity,
-            'currency' => 'COP',
+            'currency' => $product->store?->currencyCode() ?? 'COP',
         ];
 
         return array_filter($payload, fn ($value) => $value !== null && $value !== '');

@@ -63,7 +63,7 @@
                                     <strong>{{ $method['name'] }}</strong>
                                     <em>{{ $showFashionDeliveryTimes && $deliveryTime !== '' ? $deliveryTime : (((float) $method['checkout_cost']) > 0 ? 'Costo de envío' : 'Sin costo adicional') }}</em>
                                 </span>
-                                <b class="{{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
+                                <b class="{{ ((float) $method['checkout_cost']) <= 0 ? 'is-free' : '' }}">{{ ((float) $method['checkout_cost']) > 0 ? $store->formatMoney($method['checkout_cost']) : 'Gratis' }}</b>
                             </div>
                         @endforeach
                     </div>
@@ -245,7 +245,7 @@
                                 @if($showFashionDeliveryTimes && $deliveryTime !== '')
                                     <em>{{ $deliveryTime }}</em>
                                 @endif
-                                <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? '$ ' . number_format((float) $method['checkout_cost'], 0, ',', '.') : 'Gratis' }}</b>
+                                <b data-shipping-price>{{ ((float) $method['checkout_cost']) > 0 ? $store->formatMoney($method['checkout_cost']) : 'Gratis' }}</b>
                             </label>
                         @endforeach
                     </fieldset>
@@ -366,7 +366,7 @@
         <aside class="fashion-checkout-summary">
             <div class="fashion-checkout-summary-head">
                 <h2>Resumen del pedido ({{ $cartCount }})</h2>
-                <strong class="fashion-checkout-summary-total" data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                <strong class="fashion-checkout-summary-total" data-role="grand-total">{{ $store->formatMoney($checkoutTotal) }}</strong>
                 <button
                     type="button"
                     class="fashion-checkout-summary-toggle"
@@ -415,24 +415,24 @@
                                     </div>
                                 </div>
 
-                                <strong data-role="item-total">$ {{ number_format($item['price'] * $item['quantity'], 0, ',', '.') }}</strong>
+                                <strong data-role="item-total">{{ $store->formatMoney($item['price'] * $item['quantity']) }}</strong>
                             </article>
                         @endforeach
                     </div>
 
                     <div class="fashion-summary-totals">
-                        <p><span>Subtotal</span><strong data-role="total">$ {{ number_format($subtotal, 0, ',', '.') }}</strong></p>
+                        <p><span>Subtotal</span><strong data-role="total">{{ $store->formatMoney($subtotal) }}</strong></p>
                         <p class="{{ $discountAmount > 0 ? '' : 'is-hidden' }}" data-discount-row>
                             <span>Descuento <small data-discount-code-label>{{ $discount['code'] ?? '' }}</small></span>
-                            <strong data-role="discount-total">- $ {{ number_format($discountAmount, 0, ',', '.') }}</strong>
+                            <strong data-role="discount-total">- {{ $store->formatMoney($discountAmount) }}</strong>
                         </p>
                         @if($hasShippingCost)
-                            <p><span>Envío</span><strong data-role="shipping-total">{{ $awaitingShippingSelection ? 'Por seleccionar' : ($hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? '$ ' . number_format($shippingCost, 0, ',', '.') : 'Gratis')) }}</strong></p>
+                        <p><span>Envío</span><strong data-role="shipping-total">{{ $awaitingShippingSelection ? 'Por seleccionar' : ($hasLocalDelivery && ! $hasSelectedDeliveryCity ? 'Por calcular' : ($shippingCost > 0 ? $store->formatMoney($shippingCost) : 'Gratis')) }}</strong></p>
                         @endif
                         <p class="fashion-summary-grand">
                             <span>Total</span>
-                            <small>COP</small>
-                            <strong data-role="grand-total">$ {{ number_format($checkoutTotal, 0, ',', '.') }}</strong>
+                            <small>{{ $currencyCode }}</small>
+                            <strong data-role="grand-total">{{ $store->formatMoney($checkoutTotal) }}</strong>
                         </p>
                     </div>
                 </div>

@@ -1281,10 +1281,15 @@
         }, 1800);
     };
 
-    const formatMoney = (value) => `$${Number(value || 0).toLocaleString('es-CO', {
-        maximumFractionDigits: 0,
-        minimumFractionDigits: 0,
-    })}`;
+    const currencyCode = cartDrawer?.dataset.currencyCode || 'COP';
+    const currencyLocale = currencyCode === 'COP' ? 'es-CO' : (currencyCode === 'EUR' ? 'es-ES' : 'en-US');
+    const moneyFormatter = new Intl.NumberFormat(currencyLocale, {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: currencyCode === 'COP' ? 0 : 2,
+        maximumFractionDigits: currencyCode === 'COP' ? 0 : 2,
+    });
+    const formatMoney = (value) => moneyFormatter.format(Number(value || 0));
     const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

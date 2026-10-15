@@ -54,6 +54,10 @@ class CheckoutService
                 'store_id' => $store->id,
             ], $paymentData);
 
+            if (Order::supportsCurrencyColumn()) {
+                $orderData['currency_code'] = $store->currencyCode();
+            }
+
             if (Order::supportsShippingColumns()) {
                 $orderData['shipping_method'] = $shipping['name'];
                 $orderData['shipping_cost'] = $shipping['cost'];

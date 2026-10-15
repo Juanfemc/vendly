@@ -25,11 +25,11 @@ class StoreNotificationService
         $label = $store->isReservationStore() ? 'Nueva reserva' : 'Nuevo pedido';
 
         $this->create($store, StoreNotification::TYPE_NEW_ORDER, $label, sprintf(
-            '%s #%s por %s - $%s',
+            '%s #%s por %s - %s',
             $store->isReservationStore() ? 'Reserva' : 'Pedido',
             $order->id,
             $order->customer_name,
-            number_format((float) $order->total, 0, ',', '.')
+            $order->formatMoney($order->total)
         ), '/admin/orders', [
             'order_id' => $order->id,
             'total' => (float) $order->total,

@@ -377,6 +377,7 @@
     }
 </style>
 
+<div data-admin-live-search-region>
 <div class="list-card users-filter-card">
     <div class="users-filter-head">
         <strong>Buscar usuarios</strong>
@@ -394,7 +395,7 @@
         </label>
         <button type="submit" class="btn">Buscar</button>
         @if(($userSearch ?? '') !== '')
-            <a href="{{ url('/admin/users') }}" class="btn btn-secondary">Limpiar</a>
+            <a href="{{ url('/admin/users') }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar</a>
         @endif
     </form>
 </div>
@@ -404,7 +405,7 @@
         <h3>{{ ($userSearch ?? '') !== '' ? 'No encontramos usuarios' : 'No hay usuarios registrados' }}</h3>
         <p>{{ ($userSearch ?? '') !== '' ? 'Prueba con otro nombre, correo, rol, tienda o WhatsApp.' : 'Crea el primer usuario para asignarle una tienda y controlar su acceso.' }}</p>
         @if(($userSearch ?? '') !== '')
-            <a href="{{ url('/admin/users') }}" class="btn btn-secondary">Limpiar búsqueda</a>
+            <a href="{{ url('/admin/users') }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
         @else
             <a href="/admin/users/create" class="btn">Crear usuario</a>
         @endif
@@ -583,4 +584,5 @@
     })();
 </script>
 @endpush
+</div>
 @endsection

@@ -9,6 +9,12 @@
     $productLimit = $currentProductStore?->productLimit();
     $isProductSearchActive = trim((string) $productSearch) !== '';
     $canManageCategories = auth()->user()->isAdmin() || ($currentProductStore?->allowsCategories() ?? true);
+    $ordering = $ordering ?? request()->boolean('ordering');
+    $orderUrl = $currentProductStore
+        ? (auth()->user()->isAdmin()
+            ? route('admin.stores.products.index', ['store' => $currentProductStore, 'ordering' => ! $ordering])
+            : route('admin.products.index', ['ordering' => ! $ordering]))
+        : null;
 @endphp
 
 <style>
@@ -672,9 +678,102 @@
         border-color: var(--vendly-brand);
         box-shadow: 0 0 0 4px var(--vendly-brand-focus);
     }
+
+    .products-order-note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border: 1px solid #bdeee1;
+        border-radius: 14px;
+        background: #effcf8;
+        color: #145c54;
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .products-order-note svg {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+    }
+
+    .products-order-handle {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #d8e2e8;
+        border-radius: 10px;
+        background: #f7fafb;
+        color: #557679;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    .products-order-handle:active { cursor: grabbing; }
+
+    .products-order-handle svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .products-order-position {
+        width: 62px;
+        min-height: 36px;
+        padding: 0 8px;
+        border: 1px solid #d8e2e8;
+        border-radius: 9px;
+        color: #063a39;
+        text-align: center;
+        font-weight: 800;
+    }
+
+    .products-order-position:focus {
+        outline: none;
+        border-color: var(--vendly-brand);
+        box-shadow: 0 0 0 3px var(--vendly-brand-focus);
+    }
+
+    .products-order-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+    }
+
+    .products-order-arrow {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #d8e2e8;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #063a39;
+        cursor: pointer;
+    }
+
+    .products-order-arrow:hover { background: #effcf8; }
+
+    .products-order-arrow svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .products-order-row.is-dragging { opacity: .45; }
+    .products-order-row.is-drag-over { outline: 2px dashed var(--vendly-brand); outline-offset: -2px; }
+
+    @media (max-width: 760px) {
+        .products-order-note { align-items: flex-start; }
+        .products-order-actions { justify-content: flex-start; }
+    }
 </style>
 
-<div class="products-console">
+<div class="products-console" data-admin-live-search-region>
     <div class="products-console-head">
         <div class="products-console-title">
             <h1>Productos</h1>
@@ -689,6 +788,12 @@
             @if($canManageCategories)
                 <a href="{{ auth()->user()->isAdmin() && ! empty($selectedStore) ? route('admin.stores.categories.index', $selectedStore) : route('admin.categories.index') }}" class="products-action products-action--secondary">
                     Categorías
+                </a>
+            @endif
+            @if($orderUrl)
+                <a href="{{ $orderUrl }}" class="products-action products-action--secondary" aria-pressed="{{ $ordering ? 'true' : 'false' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+                    {{ $ordering ? 'Ver catálogo' : 'Ordenar productos' }}
                 </a>
             @endif
             <a href="/admin/products/create" class="products-action">
@@ -712,7 +817,17 @@
         </div>
     @endif
 
+    @if($ordering && $currentProductStore)
+        <div class="products-order-note" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"></path><path d="m7 8 5-5 5 5"></path><path d="m7 16 5 5 5-5"></path></svg>
+            <span data-order-status>Arrastra un producto, usa las flechas o escribe su posición. El orden se aplicará a toda la tienda, incluso entre páginas.</span>
+        </div>
+    @endif
+
     <form method="GET" action="{{ url()->current() }}" class="products-toolbar" data-admin-live-search>
+        @if($ordering)
+            <input type="hidden" name="ordering" value="1">
+        @endif
         <div class="products-search-field">
             <span class="products-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
@@ -729,7 +844,7 @@
         <div class="products-toolbar-actions">
             <button type="submit" class="btn">Buscar</button>
             @if($isProductSearchActive)
-                <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar</a>
+                <a href="{{ url()->current() }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar</a>
             @endif
         </div>
     </form>
@@ -755,7 +870,7 @@
                 </span>
                 <h3>No encontramos tiendas o productos</h3>
                 <p>Prueba con otro nombre de tienda o producto.</p>
-                <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar búsqueda</a>
+                <a href="{{ url()->current() }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
             </div>
         @endif
 
@@ -783,7 +898,7 @@
                 @if($isProductSearchActive)
                     <h3>No encontramos productos</h3>
                     <p>Prueba con otro nombre, categoría, material o descripción.</p>
-                    <a href="{{ url()->current() }}" class="btn btn-secondary">Limpiar búsqueda</a>
+                    <a href="{{ url()->current() }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
                 @else
                     <h3>No hay productos registrados</h3>
                     <p>Agrega el primer producto para empezar a mostrar el catálogo en la tienda.</p>
@@ -796,6 +911,10 @@
                     <table class="vendly-data-table products-data-table">
                         <thead>
                             <tr>
+                                @if($ordering)
+                                    <th aria-label="Orden"></th>
+                                    <th>Posición</th>
+                                @endif
                                 <th>Producto</th>
                                 <th>Categoría</th>
                                 <th>Precio</th>
@@ -813,7 +932,21 @@
                                     $isSoldOut = (bool) ($product->is_sold_out ?? false);
                                     $inventoryLabel = ($product->store?->isReservationStore() ?? false) ? 'No aplica' : ($product->stockLabel() ?? 'Ilimitado');
                                 @endphp
-                                <tr>
+                                <tr @class(['products-order-row' => $ordering]) @if($ordering) draggable="true" data-product-id="{{ $product->id }}" data-position="{{ max(1, (int) $product->sort_order) }}" @endif>
+                                    @if($ordering)
+                                        <td>
+                                            <button type="button" class="products-order-handle" aria-label="Arrastrar {{ $product->name }}" title="Arrastrar para ordenar">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5h.01"></path><path d="M16 5h.01"></path><path d="M8 12h.01"></path><path d="M16 12h.01"></path><path d="M8 19h.01"></path><path d="M16 19h.01"></path></svg>
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <div class="products-order-actions">
+                                                <input class="products-order-position" type="number" min="1" value="{{ max(1, (int) $product->sort_order) }}" aria-label="Posición de {{ $product->name }}">
+                                                <button type="button" class="products-order-arrow" data-order-shift="-1" aria-label="Mover {{ $product->name }} arriba" title="Mover arriba"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 15 6-6 6 6"></path></svg></button>
+                                                <button type="button" class="products-order-arrow" data-order-shift="1" aria-label="Mover {{ $product->name }} abajo" title="Mover abajo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>
+                                            </div>
+                                        </td>
+                                    @endif
                                     <td>
                                         <a href="{{ route('admin.products.edit', $product) }}" class="vendly-product-cell">
                                             <span class="vendly-product-thumb">
@@ -832,7 +965,7 @@
                                         </a>
                                     </td>
                                     <td>{{ $product->category ?: 'Sin categoría' }}</td>
-                                    <td><strong>$ {{ number_format((float) $product->price, 0, ',', '.') }}</strong></td>
+                                    <td><strong>{{ $currentProductStore?->formatMoney($product->price) ?? '$ 0' }}</strong></td>
                                     <td>{{ $inventoryLabel }}</td>
                                     <td>
                                         <span @class(['vendly-status', 'is-danger' => $isSoldOut, 'is-success' => ! $isSoldOut])>
@@ -867,4 +1000,126 @@
         @endif
     @endif
 </div>
+
+@if($ordering && $currentProductStore)
+    <script>
+        (() => {
+            let rows = [...document.querySelectorAll('.products-order-row')];
+            const endpoint = @json(route('admin.products.reorder'));
+            const storeId = @json($currentProductStore->id);
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+            const status = document.querySelector('[data-order-status]');
+            const tableBody = rows[0]?.parentElement;
+            let draggedRow = null;
+            let saveInFlight = false;
+
+            const setStatus = (message, isError = false) => {
+                if (!status) return;
+                status.textContent = message;
+                status.classList.toggle('is-error', isError);
+            };
+
+            const syncPositions = () => {
+                rows = tableBody ? [...tableBody.querySelectorAll('.products-order-row')] : rows;
+                rows.forEach((item, index) => {
+                    const position = index + 1;
+                    item.dataset.position = position;
+                    const input = item.querySelector('.products-order-position');
+                    if (input) input.value = position;
+                    item.querySelectorAll('[data-order-shift]').forEach((button) => {
+                        const shift = Number(button.dataset.orderShift);
+                        button.disabled = (shift < 0 && index === 0) || (shift > 0 && index === rows.length - 1);
+                    });
+                });
+            };
+
+            const restoreOrder = (previousOrder) => {
+                if (!tableBody) return;
+                previousOrder.forEach((item) => tableBody.appendChild(item));
+                syncPositions();
+            };
+
+            const moveRow = (row, requestedPosition) => {
+                if (!tableBody) return 1;
+                const previousRows = [...rows];
+                const position = Math.min(rows.length, Math.max(1, Number.parseInt(requestedPosition, 10) || 1));
+                const remainingRows = previousRows.filter((item) => item !== row);
+                const reference = remainingRows[position - 1];
+
+                if (reference) {
+                    tableBody.insertBefore(row, reference);
+                } else {
+                    tableBody.appendChild(row);
+                }
+
+                syncPositions();
+                return rows.indexOf(row) + 1;
+            };
+
+            const savePosition = async (row, position) => {
+                if (saveInFlight) return;
+
+                const previousOrder = [...rows];
+                const previousPosition = rows.indexOf(row) + 1;
+                const normalized = moveRow(row, position);
+
+                if (normalized === previousPosition) {
+                    return;
+                }
+
+                saveInFlight = true;
+                row.classList.add('is-dragging');
+                setStatus('Guardando orden...');
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                        body: JSON.stringify({ product_id: row.dataset.productId, position: normalized, store_id: storeId }),
+                    });
+                    if (!response.ok) throw new Error('No se pudo guardar el orden');
+                    row.classList.remove('is-dragging');
+                    setStatus('Orden guardado.');
+                } catch (error) {
+                    restoreOrder(previousOrder);
+                    row.classList.remove('is-dragging');
+                    setStatus(error.message, true);
+                } finally {
+                    saveInFlight = false;
+                }
+            };
+
+            syncPositions();
+
+            rows.forEach((row) => {
+                row.addEventListener('dragstart', (event) => {
+                    draggedRow = row;
+                    row.classList.add('is-dragging');
+                    event.dataTransfer.effectAllowed = 'move';
+                });
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('is-dragging');
+                    rows.forEach((item) => item.classList.remove('is-drag-over'));
+                    draggedRow = null;
+                });
+                row.addEventListener('dragover', (event) => {
+                    if (!draggedRow || draggedRow === row) return;
+                    event.preventDefault();
+                    row.classList.add('is-drag-over');
+                });
+                row.addEventListener('dragleave', () => row.classList.remove('is-drag-over'));
+                row.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    row.classList.remove('is-drag-over');
+                    if (!draggedRow || draggedRow === row) return;
+                    savePosition(draggedRow, Number(row.dataset.position));
+                });
+                row.querySelector('.products-order-position')?.addEventListener('change', (event) => savePosition(row, event.target.value));
+                row.querySelectorAll('[data-order-shift]').forEach((button) => {
+                    button.addEventListener('click', () => savePosition(row, Number(row.dataset.position) + Number(button.dataset.orderShift)));
+                });
+            });
+        })();
+    </script>
+@endif
 @endsection

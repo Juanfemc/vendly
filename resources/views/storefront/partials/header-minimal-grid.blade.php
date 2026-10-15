@@ -57,7 +57,7 @@
 
     if ($techHeaderProductPool->count() < min(max((int) $mobileProductCount, 1), 48)) {
         $techHeaderProductPool = $store->products()
-            ->latest()
+            ->orderedForDisplay()
             ->take(80)
             ->get();
     }
@@ -299,6 +299,7 @@
         data-cart-drawer
         data-cart-subtotal="{{ $drawerSubtotal }}"
         data-cart-shipping="{{ $drawerShipping }}"
+        data-currency-code="{{ $store->currencyCode() }}"
         data-store-url="{{ $storefrontUrls->home($store) }}"
     >
         <div class="minimal-shop-cart-head">
@@ -326,7 +327,7 @@
                     </div>
                     <div class="minimal-shop-cart-info">
                         <strong>{{ $item['name'] ?? 'Producto' }}</strong>
-                        <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
+                        <b data-cart-item-total>{{ $store->formatMoney($drawerItemPrice * $drawerItemQuantity) }}</b>
                     </div>
                     <div class="minimal-shop-cart-controls">
                         <button type="button" data-cart-drawer-minus aria-label="Restar">&minus;</button>
@@ -344,9 +345,9 @@
         </div>
 
         <div class="minimal-shop-cart-summary">
-            <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
+            <p><span>Subtotal</span><strong data-cart-drawer-subtotal>{{ $store->formatMoney($drawerSubtotal) }}</strong></p>
             <p><span>Envio</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
-            <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
+            <p class="minimal-shop-cart-total"><span>Total</span><strong data-cart-drawer-total>{{ $store->formatMoney($drawerTotal) }}</strong></p>
         </div>
 
         <div class="minimal-shop-cart-actions">

@@ -281,7 +281,7 @@
                             <option value="">Selecciona un producto</option>
                             @foreach($products as $product)
                                 <option value="{{ $product->id }}" @selected($selectedProductId === (int) $product->id)>
-                                    {{ $product->name }} - ${{ number_format((float) $product->price, 0, ',', '.') }}
+                                    {{ $product->name }} - {{ $store->formatMoney($product->price) }}
                                 </option>
                             @endforeach
                         </select>

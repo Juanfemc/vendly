@@ -78,7 +78,15 @@
         }
     };
 
-    const money = (value) => `$ ${new Intl.NumberFormat('es-CO').format(value || 0)}`;
+    const currencyCode = page.dataset.currencyCode || 'COP';
+    const currencyLocale = currencyCode === 'COP' ? 'es-CO' : (currencyCode === 'EUR' ? 'es-ES' : 'en-US');
+    const moneyFormatter = new Intl.NumberFormat(currencyLocale, {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: currencyCode === 'COP' ? 0 : 2,
+        maximumFractionDigits: currencyCode === 'COP' ? 0 : 2,
+    });
+    const money = (value) => moneyFormatter.format(value || 0);
     const grandTotal = (cost) => Math.max(0, subtotal + cost - discountAmount);
     const freeShippingApplies = () => freeShippingMinimum > 0 && subtotal >= freeShippingMinimum;
     const normalizeArea = (value) => String(value || '')

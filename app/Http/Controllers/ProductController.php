@@ -55,6 +55,7 @@ class ProductController extends Controller
         $selectedStore = null;
         $productsPerPage = 12;
         $productSearch = trim((string) $request->query('q', ''));
+        $ordering = $request->boolean('ordering');
 
         if (auth()->user()?->isAdmin()) {
             $selectedStore = $store?->exists ? $store : null;
@@ -72,24 +73,65 @@ class ProductController extends Controller
                     ->paginate(10)
                     ->withQueryString();
             $products = $selectedStore
-                ? $this->applyProductSearch(Product::with('store')->where('store_id', $selectedStore->id), $productSearch)
-                    ->latest()
+                ? $this->orderedProductSearchQuery($selectedStore, $productSearch, true)
                     ->paginate($productsPerPage)
                     ->withQueryString()
                 : collect();
 
-            return view('admin.products.index', compact('products', 'stores', 'selectedStore', 'productSearch'));
+            return view('admin.products.index', compact('products', 'stores', 'selectedStore', 'productSearch', 'ordering'));
         }
 
         $store = $this->currentStore();
         $products = $store
-            ? $this->applyProductSearch(Product::with('store')->where('store_id', $store->id), $productSearch)
-                ->latest()
+            ? $this->orderedProductSearchQuery($store, $productSearch, true)
                 ->paginate($productsPerPage)
                 ->withQueryString()
             : collect();
 
-        return view('admin.products.index', compact('products', 'store', 'productSearch'));
+        return view('admin.products.index', compact('products', 'store', 'productSearch', 'ordering'));
+    }
+
+    public function reorder(Request $request)
+    {
+        abort_unless(Product::supportsSortOrderColumn(), 503, 'La actualización de productos está pendiente en la base de datos.');
+
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer'],
+            'position' => ['required', 'integer', 'min:1'],
+            'store_id' => ['nullable', 'integer', 'exists:stores,id'],
+        ]);
+
+        $store = auth()->user()?->isAdmin()
+            ? Store::findOrFail($validated['store_id'] ?? 0)
+            : $this->currentStore();
+
+        abort_unless($store, 404);
+
+        $product = Product::where('store_id', $store->id)->findOrFail($validated['product_id']);
+        $this->authorize('update', $product);
+
+        DB::transaction(function () use ($store, $product, $validated): void {
+            $ids = Product::where('store_id', $store->id)
+                ->orderedForDisplay()
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+
+            $ids = array_values(array_filter($ids, fn (int $id) => $id !== (int) $product->id));
+            $position = min((int) $validated['position'], count($ids) + 1);
+            array_splice($ids, $position - 1, 0, [(int) $product->id]);
+
+            foreach ($ids as $index => $productId) {
+                Product::where('id', $productId)->update(['sort_order' => $index + 1]);
+            }
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Orden guardado.']);
+        }
+
+        return back()->with('success', 'Orden guardado.');
     }
 
     public function create()
@@ -484,7 +526,7 @@ class ProductController extends Controller
         $relatedProducts = Product::where('store_id', $store->id)
             ->withReviewStats()
             ->whereKeyNot($product->id)
-            ->latest()
+            ->orderedForDisplay()
             ->take(4)
             ->get();
 
@@ -536,7 +578,7 @@ class ProductController extends Controller
                     'products' => Product::where('store_id', $store->id)
                         ->withReviewStats()
                         ->whereIn('category', $this->categoryNamesForStorefront($store, $category))
-                        ->latest()
+                        ->orderedForDisplay()
                         ->take(5)
                         ->get(),
                     'total' => (int) ($categoryProductCounts[$category->name] ?? 0),
@@ -550,7 +592,7 @@ class ProductController extends Controller
             ->where(function ($query) {
                 $query->whereNull('category')->orWhere('category', '');
             })
-            ->latest()
+            ->orderedForDisplay()
             ->take(5)
             ->get();
 
@@ -710,14 +752,25 @@ class ProductController extends Controller
         return Product::where('store_id', $store->id)
             ->withReviewStats()
             ->when($searchQuery !== '', fn ($query) => $this->applyPublicProductSearch($query, $searchQuery))
-            ->latest();
+            ->orderedForDisplay();
     }
 
     private function publicProductMetadataQuery(Store $store)
     {
         return Product::where('store_id', $store->id)
             ->select($this->publicProductMetadataColumns())
-            ->latest();
+            ->orderedForDisplay();
+    }
+
+    private function orderedProductSearchQuery(Store $store, string $search, bool $withStore = false)
+    {
+        $query = Product::where('store_id', $store->id);
+
+        if ($withStore) {
+            $query->with('store');
+        }
+
+        return $this->applyProductSearch($query, $search)->orderedForDisplay();
     }
 
     private function publicProductMetadataColumns(): array

@@ -131,7 +131,7 @@
     }
 </style>
 
-<div data-store-filter-region>
+<div data-store-filter-region data-admin-live-search-region>
     <div class="list-card store-filter-card" data-store-filter-card>
         <div class="store-filter-head">
             <strong>Filtrar tiendas</strong>

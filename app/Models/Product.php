@@ -16,6 +16,7 @@ class Product extends Model
     private static ?bool $supportsOfferPricingColumn = null;
     private static ?bool $supportsWholesalePricingColumns = null;
     private static ?bool $supportsCustomBadgesColumn = null;
+    private static ?bool $supportsSortOrderColumn = null;
 
     protected $fillable = [
         'name',
@@ -39,6 +40,7 @@ class Product extends Model
         'images',
         'user_id',
         'store_id',
+        'sort_order',
         'admin_token',
     ];
 
@@ -54,15 +56,45 @@ class Product extends Model
         'wholesale_min_quantity' => 'integer',
         'wholesale_price' => 'decimal:2',
         'custom_badges' => 'array',
+        'sort_order' => 'integer',
     ];
 
     protected static function booted(): void
     {
+        static::creating(function (Product $product) {
+            if (! self::supportsSortOrderColumn()
+                || (int) $product->sort_order > 0
+                || ! $product->store_id
+            ) {
+                return;
+            }
+
+            $product->sort_order = ((int) self::where('store_id', $product->store_id)->max('sort_order')) + 1;
+        });
+
         static::saving(function (Product $product) {
             if (! $product->slug && $product->name && $product->store_id) {
                 $product->slug = self::uniqueSlugFor((int) $product->store_id, $product->name, $product->id);
             }
         });
+    }
+
+    public function scopeOrderedForDisplay($query)
+    {
+        if (! self::supportsSortOrderColumn()) {
+            return $query->latest();
+        }
+
+        return $query
+            ->orderByRaw('CASE WHEN sort_order = 0 THEN 1 ELSE 0 END')
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
+    public static function supportsSortOrderColumn(): bool
+    {
+        return self::$supportsSortOrderColumn ??= Schema::hasColumn('products', 'sort_order');
     }
 
     public static function uniqueSlugFor(int $storeId, string $name, ?int $ignoreProductId = null): string

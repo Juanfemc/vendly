@@ -369,9 +369,9 @@
                     <h3 data-product-preview-name>{{ $previewName }}</h3>
                     <div class="product-editor-preview-price">
                         <span data-product-preview-price-before @if(! $previewHasOffer || ! old('offer_original_price', $formProduct?->offer_original_price)) hidden @endif>
-                            ${{ number_format((float) old('offer_original_price', $formProduct?->offer_original_price), 0, ',', '.') }}
+                            {{ $formStore?->formatMoney(old('offer_original_price', $formProduct?->offer_original_price)) ?? '$ 0' }}
                         </span>
-                        <strong data-product-preview-price>${{ number_format($previewPrice, 0, ',', '.') }}</strong>
+                        <strong data-product-preview-price>{{ $formStore?->formatMoney($previewPrice) ?? '$ 0' }}</strong>
                     </div>
                     <p @class(['is-sold-out' => $previewIsSoldOut]) data-product-preview-stock>
                         {{ $previewIsSoldOut ? 'Agotado' : ($previewStock !== null && $previewStock !== '' ? $previewStock . ' disponibles' : 'Disponible') }}

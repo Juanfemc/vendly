@@ -85,7 +85,7 @@ class DiscountCouponService
 
         if ($subtotal < (float) $coupon->min_subtotal) {
             throw ValidationException::withMessages([
-                'discount_code' => 'Este cupon requiere una compra minima de $ ' . number_format((float) $coupon->min_subtotal, 0, ',', '.'),
+                'discount_code' => 'Este cupon requiere una compra minima de ' . $store->formatMoney($coupon->min_subtotal),
             ]);
         }
 
@@ -106,7 +106,7 @@ class DiscountCouponService
             'coupon' => $coupon,
             'code' => $coupon->code,
             'amount' => $amount,
-            'snapshot' => $coupon->formattedValue() . ' - ' . $coupon->appliesToLabel() . ' - compra minima $ ' . number_format((float) $coupon->min_subtotal, 0, ',', '.'),
+            'snapshot' => $coupon->formattedValue($store) . ' - ' . $coupon->appliesToLabel() . ' - compra minima ' . $store->formatMoney($coupon->min_subtotal),
         ];
     }
 

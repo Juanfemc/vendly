@@ -212,7 +212,7 @@ $fashionTabs = collect([[
                         <p class="fashion-product-category">{{ $placeholder['category'] }}</p>
                         <h3>{{ $placeholder['name'] }}</h3>
                         <div class="fashion-product-foot">
-                            <strong>${{ number_format($placeholder['price'], 0, ',', '.') }}</strong>
+                            <strong>{{ $store->formatMoney($placeholder['price']) }}</strong>
                         </div>
                     </div>
                 </article>

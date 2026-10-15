@@ -1190,6 +1190,28 @@
             </div>
         </section>
 
+        <section class="catalog-settings-card">
+            <div class="catalog-card-head">
+                <div class="catalog-card-title">
+                    <span class="catalog-card-icon" aria-hidden="true">$</span>
+                    <div>
+                        <h3>Moneda de la tienda</h3>
+                        <p>Define la moneda real de tus productos, pedidos y checkout.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="catalog-field">
+                <label for="currency_code">Moneda base</label>
+                <select id="currency_code" name="currency_code">
+                    @foreach(\App\Models\Store::currencyOptions() as $currencyCode => $currencyLabel)
+                        <option value="{{ $currencyCode }}" @selected(old('currency_code', $store->currencyCode()) === $currencyCode)>{{ $currencyLabel }}</option>
+                    @endforeach
+                </select>
+                <small>Los precios nuevos y existentes se interpretan en esta moneda. Las órdenes guardan la moneda usada al comprar.</small>
+            </div>
+        </section>
+
         @if(\App\Models\Store::supportsGlobalDiscountColumns())
             <section class="catalog-settings-card">
                 <div class="catalog-card-head">

@@ -85,14 +85,18 @@
             placeholder: preview.querySelector('[data-product-preview-placeholder]'),
         };
 
-        const money = new Intl.NumberFormat('es-CO', {
+        const currencyCode = @json($formStore?->currencyCode() ?? 'COP');
+        const currencyLocale = currencyCode === 'COP' ? 'es-CO' : (currencyCode === 'EUR' ? 'es-ES' : 'en-US');
+        const money = new Intl.NumberFormat(currencyLocale, {
+            style: 'currency',
+            currency: currencyCode,
             maximumFractionDigits: 0,
-            minimumFractionDigits: 0,
+            minimumFractionDigits: currencyCode === 'COP' ? 0 : 2,
         });
 
         const formatMoney = (value) => {
             const number = Number.parseFloat(String(value || '').replace(',', '.'));
-            return `$${money.format(Number.isFinite(number) ? number : 0)}`;
+            return money.format(Number.isFinite(number) ? number : 0);
         };
 
         const selectedCategoryText = () => {

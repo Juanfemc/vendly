@@ -120,13 +120,13 @@ class DiscountCoupon extends Model
         return $this->statusLabel() === 'Activo' ? 'resource-badge--success' : 'resource-badge--warning';
     }
 
-    public function formattedValue(): string
+    public function formattedValue(?Store $store = null): string
     {
         if ($this->type === self::TYPE_PERCENT) {
             return rtrim(rtrim(number_format((float) $this->value, 2, ',', '.'), '0'), ',') . '%';
         }
 
-        return '$ ' . number_format((float) $this->value, 0, ',', '.');
+        return ($store ?? $this->store)?->formatMoney($this->value) ?? '$ ' . number_format((float) $this->value, 0, ',', '.');
     }
 
     public function store()

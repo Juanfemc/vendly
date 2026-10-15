@@ -59,18 +59,18 @@
     @endif
 
     @if($product->hasWholesalePricing($store ?? null))
-        <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+        <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
     @endif
 
     <div class="product-card-footer">
         <div class="price-row">
             @if($showsOfferPricing)
                 <span class="price-stack">
-                    <span class="price-before">${{ number_format((float) $displayOriginalPrice, 0, ',', '.') }}</span>
-                    <span class="price">${{ number_format((float) $displayPrice, 0, ',', '.') }}</span>
+                    <span class="price-before">{{ $store->formatMoney($displayOriginalPrice) }}</span>
+                    <span class="price">{{ $store->formatMoney($displayPrice) }}</span>
                 </span>
             @else
-                <span class="price">${{ number_format((float) $displayPrice, 0, ',', '.') }}</span>
+                <span class="price">{{ $store->formatMoney($displayPrice) }}</span>
             @endif
         </div>
 

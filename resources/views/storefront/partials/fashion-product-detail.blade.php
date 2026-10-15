@@ -179,15 +179,15 @@
             @endif
             <div class="fashion-product-price">
                 @if($showsOfferPricing)
-                    <span>${{ number_format((float) $fashionProductOriginalPrice, 0, ',', '.') }}</span>
+                    <span>{{ $store->formatMoney($fashionProductOriginalPrice) }}</span>
                 @endif
-                <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
+                <strong>{{ $store->formatMoney($fashionProductPrice) }}</strong>
             </div>
             @if($fashionStockLabel)
                 <div class="fashion-product-stock-state {{ $isProductSoldOut ? 'is-sold-out' : '' }}">{{ $fashionStockLabel }}</div>
             @endif
             @if($product->hasWholesalePricing($store))
-                <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+                <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
             @endif
 
             <div class="fashion-product-compact-info" aria-label="Informacion rapida del producto">
@@ -471,7 +471,7 @@
                             <p>{{ $relatedProduct->category }}</p>
                         @endif
                         <h3>{{ $relatedProduct->name }}</h3>
-                        <strong>${{ number_format((float) $relatedPrice, 0, ',', '.') }}</strong>
+                        <strong>{{ $store->formatMoney($relatedPrice) }}</strong>
                     </article>
                 @endforeach
             </div>

@@ -254,6 +254,7 @@
     <div class="flash error">{{ $errors->first() }}</div>
 @endif
 
+<div data-admin-live-search-region>
 <div class="list-card whatsapp-search-card">
     <div class="whatsapp-search-head">
         <strong>Buscar conversaciones</strong>
@@ -271,7 +272,7 @@
         </label>
         <button type="submit" class="btn">Buscar</button>
         @if(($whatsappSearch ?? '') !== '')
-            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary">Limpiar</a>
+            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar</a>
         @endif
     </form>
 </div>
@@ -281,7 +282,7 @@
         <h3>{{ ($whatsappSearch ?? '') !== '' ? 'No encontramos conversaciones' : 'No hay conversaciones todavía' }}</h3>
         <p>{{ ($whatsappSearch ?? '') !== '' ? 'Prueba con otro cliente, teléfono, tienda o texto del mensaje.' : 'Cuando un cliente responda un mensaje de WhatsApp enviado desde Vendly, aparecerá aquí.' }}</p>
         @if(($whatsappSearch ?? '') !== '')
-            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary">Limpiar búsqueda</a>
+            <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
         @endif
     </div>
 @else
@@ -391,4 +392,5 @@
         </section>
     </div>
 @endif
+</div>
 @endsection

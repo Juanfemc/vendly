@@ -20,7 +20,7 @@
 
     if ($fashionSearchProductsSource->isEmpty()) {
         $fashionSearchProductsSource = $store->products()
-            ->latest()
+            ->orderedForDisplay()
             ->take(48)
             ->get();
     }
@@ -30,7 +30,7 @@
         ->map(fn ($product) => [
             'name' => (string) $product->name,
             'search' => \Illuminate\Support\Str::lower((string) $product->name . ' ' . (string) $product->category . ' ' . (string) $product->material),
-            'price' => '$ ' . number_format((float) $product->displayPrice($store), 0, ',', '.'),
+            'price' => $store->formatMoney($product->displayPrice($store)),
             'image' => $product->image ? asset('storage/' . $product->image) : null,
             'url' => $storefrontUrls->product($store, $product),
         ])

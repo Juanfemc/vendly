@@ -3,6 +3,7 @@
 @section('content')
 @php
     $preview = $preview ?? null;
+    $currencyStore = $currencyStore ?? $store ?? null;
     $summary = $preview['summary'] ?? null;
     $rows = collect($preview['rows'] ?? []);
     $zipFiles = collect($preview['zip_files'] ?? []);
@@ -662,7 +663,7 @@
                                 <td>{{ $row['data']['name'] ?: 'Sin nombre' }}</td>
                                 <td>
                                     @if($row['data']['price'] !== null)
-                                        ${{ number_format((float) $row['data']['price'], 0, ',', '.') }}
+                                        {{ $currencyStore?->formatMoney($row['data']['price']) ?? '$ 0' }}
                                     @else
                                         -
                                     @endif

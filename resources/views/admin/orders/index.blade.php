@@ -81,7 +81,7 @@
                                     @endif
                                 </small>
                             </td>
-                            <td><strong>${{ number_format($order->total, 0, ',', '.') }}</strong></td>
+                            <td><strong>{{ $order->formatMoney($order->total) }}</strong></td>
                             <td>{{ $order->paymentMethodLabel() }}</td>
                             <td>{{ $order->shipping_method ?: 'Sin envío' }}</td>
                             <td><span class="vendly-status {{ $statusClass }}">{{ $order->statusLabel() }}</span></td>
@@ -130,7 +130,7 @@
                                     <span>
                                         <strong>Envío:</strong>
                                         @if((float) ($order->shipping_cost ?? 0) > 0)
-                                            ${{ number_format((float) $order->shipping_cost, 0, ',', '.') }}
+                                            {{ $order->formatMoney($order->shipping_cost) }}
                                         @elseif($order->shipping_method)
                                             Gratis
                                         @else
@@ -146,7 +146,7 @@
                                         @endif
                                     </span>
                                     @if(\App\Models\Order::supportsDiscountColumns() && (float) ($order->discount_amount ?? 0) > 0)
-                                        <span><strong>Cupón:</strong> {{ $order->discount_code ?: 'Descuento' }} (-${{ number_format((float) $order->discount_amount, 0, ',', '.') }})</span>
+                                        <span><strong>Cupón:</strong> {{ $order->discount_code ?: 'Descuento' }} (-{{ $order->formatMoney($order->discount_amount) }})</span>
                                     @endif
                                     @if ($order->items->isNotEmpty())
                                         <span class="vendly-order-products">

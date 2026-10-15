@@ -78,9 +78,9 @@
             @endif
             <span class="minimal-shop-price-stack">
                 @if($showsOfferPricing)
-                    <span class="minimal-shop-price-before">${{ number_format((float) $cardOriginalPrice, 2, '.', ',') }}</span>
+                    <span class="minimal-shop-price-before">{{ $store->formatMoney($cardOriginalPrice) }}</span>
                 @endif
-                <strong>${{ number_format((float) $cardPrice, 2, '.', ',') }}</strong>
+                <strong>{{ $store->formatMoney($cardPrice) }}</strong>
             </span>
         </div>
         @if($isTechnologyProductCard)
@@ -89,7 +89,7 @@
             </span>
         @endif
         @if($product->hasWholesalePricing($store ?? null))
-            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
         @endif
     </div>
 

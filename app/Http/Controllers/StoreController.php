@@ -310,6 +310,18 @@ class StoreController extends Controller
         abort_if(! $store, 404);
         $this->authorize('update', $store);
 
+        $newCurrency = strtoupper((string) $request->input('currency_code', $store->currencyCode()));
+
+        if ($newCurrency !== $store->currencyCode()
+            && $store->products()->exists()
+        ) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'currency_code' => 'No puedes cambiar la moneda después de crear productos. Ajusta los precios o crea una nueva tienda para evitar vender con valores interpretados en otra moneda.',
+                ]);
+        }
+
         $store->update($this->storeFileService->replaceUploadedImages($store, $request, $request->settingsData()));
         $this->enforcePlanLimits($store);
         $store = $store->refresh();

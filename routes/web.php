@@ -90,6 +90,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::match(['get', 'patch'], '/admin/notifications/{notification}/read', [StoreNotificationController::class, 'read'])->name('admin.notifications.read');
 
     Route::get('/admin/products', [ProductController::class, 'index'])->name('admin.products.index');
+    Route::patch('/admin/products/reorder', [ProductController::class, 'reorder'])->name('admin.products.reorder');
     Route::post('/admin/ai/content', [AiContentController::class, 'generate'])->middleware('throttle:30,1')->name('admin.ai.content');
     Route::post('/admin/ai/images', [AiContentController::class, 'generateImage'])->middleware('throttle:10,1')->name('admin.ai.images');
     Route::get('/admin/products/import', [ProductImportController::class, 'create'])->name('admin.products.import');

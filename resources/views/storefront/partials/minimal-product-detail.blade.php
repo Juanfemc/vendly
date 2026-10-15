@@ -253,7 +253,7 @@
                                                 <li>Envio local disponible.</li>
                                             @endif
                                             @foreach($minimalShippingMethods->take(4) as $method)
-                                                <li>{{ $method['name'] }}@if((float) ($method['cost'] ?? 0) > 0): ${{ number_format((float) $method['cost'], 0, ',', '.') }}@endif</li>
+                                                <li>{{ $method['name'] }}@if((float) ($method['cost'] ?? 0) > 0): {{ $store->formatMoney($method['cost']) }}@endif</li>
                                             @endforeach
                                             @if($minimalTermsUrl !== '')
                                                 <li><a href="{{ $minimalTermsUrl }}" target="_blank" rel="noopener noreferrer">Ver terminos y condiciones</a></li>
@@ -340,12 +340,12 @@
                 @endif
                 <div class="minimal-product-price">
                     @if($minimalShowsOfferPricing)
-                        <span class="minimal-product-price-before">${{ number_format((float) $minimalOriginalPrice, 2, '.', ',') }}</span>
+                        <span class="minimal-product-price-before">{{ $store->formatMoney($minimalOriginalPrice) }}</span>
                     @endif
-                    <span>${{ number_format((float) $minimalDisplayPrice, 2, '.', ',') }}</span>
+                    <span>{{ $store->formatMoney($minimalDisplayPrice) }}</span>
                 </div>
                 @if($product->hasWholesalePricing($store))
-                    <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 2, '.', ',') }}</span>
+                        <span class="product-wholesale-note product-wholesale-note--detail">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
                 @endif
                 @if($minimalTechSpecItems->isNotEmpty())
                     <div class="minimal-product-spec-chips" aria-label="Resumen del producto">

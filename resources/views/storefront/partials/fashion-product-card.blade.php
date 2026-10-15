@@ -83,12 +83,12 @@
         </h3>
         <div class="fashion-product-foot">
             @if($fashionProductShowsOfferPricing)
-                <span class="fashion-product-price-before">${{ number_format((float) $fashionProductOriginalPrice, 0, ',', '.') }}</span>
+                <span class="fashion-product-price-before">{{ $store->formatMoney($fashionProductOriginalPrice) }}</span>
             @endif
-            <strong>${{ number_format((float) $fashionProductPrice, 0, ',', '.') }}</strong>
+            <strong>{{ $store->formatMoney($fashionProductPrice) }}</strong>
         </div>
         @if($product->hasWholesalePricing($store ?? null))
-            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: ${{ number_format((float) $product->wholesale_price, 0, ',', '.') }}</span>
+            <span class="product-wholesale-note">Mayorista desde {{ $product->wholesale_min_quantity }} unidades: {{ $store->formatMoney($product->wholesale_price) }}</span>
         @endif
     </div>
 </article>

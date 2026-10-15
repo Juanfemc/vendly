@@ -38,6 +38,7 @@ class Store extends Model
     private static ?bool $supportsAiTables = null;
     private static ?bool $supportsDiscountCouponsTable = null;
     private static ?bool $supportsGlobalDiscountColumns = null;
+    private static ?bool $supportsCurrencyColumn = null;
 
     protected static function booted(): void
     {
@@ -74,6 +75,43 @@ class Store extends Model
     public const COLOR_VARIANT_DISPLAY_SWATCH = 'swatch';
     public const COLOR_VARIANT_DISPLAY_LABEL = 'label';
 
+    public const DEFAULT_CURRENCY = 'COP';
+    public const CURRENCIES = [
+        'COP' => ['label' => 'Peso colombiano (COP)', 'prefix' => '$ ', 'decimals' => 0, 'thousands' => '.', 'decimal' => ','],
+        'USD' => ['label' => 'Dólar estadounidense (USD)', 'prefix' => 'US$ ', 'decimals' => 2, 'thousands' => ',', 'decimal' => '.'],
+        'EUR' => ['label' => 'Euro (EUR)', 'prefix' => '€ ', 'decimals' => 2, 'thousands' => '.', 'decimal' => ','],
+        'MXN' => ['label' => 'Peso mexicano (MXN)', 'prefix' => 'MX$ ', 'decimals' => 2, 'thousands' => ',', 'decimal' => '.'],
+    ];
+
+    public static function currencyOptions(): array
+    {
+        return collect(self::CURRENCIES)->mapWithKeys(fn (array $currency, string $code) => [$code => $currency['label']])->all();
+    }
+
+    public static function supportsCurrencyColumn(): bool
+    {
+        return self::$supportsCurrencyColumn ??= Schema::hasColumn('stores', 'currency_code');
+    }
+
+    public function currencyCode(): string
+    {
+        $code = strtoupper((string) ($this->currency_code ?? self::DEFAULT_CURRENCY));
+
+        return array_key_exists($code, self::CURRENCIES) ? $code : self::DEFAULT_CURRENCY;
+    }
+
+    public function currencyLabel(): string
+    {
+        return self::CURRENCIES[$this->currencyCode()]['label'];
+    }
+
+    public function formatMoney(float|int|string|null $amount): string
+    {
+        $currency = self::CURRENCIES[$this->currencyCode()];
+
+        return $currency['prefix'] . number_format((float) ($amount ?? 0), $currency['decimals'], $currency['decimal'], $currency['thousands']);
+    }
+
     public const FONT_FAMILIES = [
         'system' => [
             'label' => 'Sistema moderna',
@@ -109,6 +147,7 @@ class Store extends Model
         'views_count',
         'name',
         'business_type',
+        'currency_code',
         'plan',
         'subscription_status',
         'trial_starts_at',
@@ -201,6 +240,7 @@ class Store extends Model
         'show_fashion_size_filter' => 'boolean',
         'show_hero_products_action' => 'boolean',
         'show_hero_overlay' => 'boolean',
+        'currency_code' => 'string',
         'require_terms_acceptance' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'whatsapp_verified_at' => 'datetime',
@@ -1157,7 +1197,7 @@ class Store extends Model
             ->values();
 
         if ($this->free_shipping_minimum !== null && (float) $this->free_shipping_minimum > 0) {
-            $messages->prepend('Envío gratis desde $' . number_format((float) $this->free_shipping_minimum, 0, ',', '.'));
+            $messages->prepend('Envío gratis desde ' . $this->formatMoney($this->free_shipping_minimum));
         }
 
         return $messages->unique()->values()->all();

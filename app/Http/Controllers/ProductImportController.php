@@ -35,6 +35,9 @@ class ProductImportController extends Controller
             ? Store::orderBy('name')->get()
             : collect();
         $preview = session(ProductImportService::SESSION_KEY);
+        $currencyStore = ! empty($preview['store_id'])
+            ? Store::find($preview['store_id'])
+            : $store;
         $ocrBatches = auth()->user()?->isAdmin()
             ? ProductImportBatch::with('store')
                 ->where('type', ProductImportBatch::TYPE_OCR_PDF)
@@ -45,6 +48,7 @@ class ProductImportController extends Controller
 
         return view('admin.products.import', [
             'store' => $store,
+            'currencyStore' => $currencyStore,
             'stores' => $stores,
             'preview' => $preview,
             'ocrBatches' => $ocrBatches,

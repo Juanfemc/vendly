@@ -19,6 +19,7 @@
     data-cart-subtotal="{{ $drawerSubtotal }}"
     data-cart-shipping="{{ $drawerShipping }}"
     data-cart-tax="{{ $drawerTax }}"
+    data-currency-code="{{ $store->currencyCode() }}"
     data-store-url="{{ $storefrontUrls->home($store) }}"
 >
     <div class="minimal-shop-cart-head">
@@ -48,7 +49,7 @@
                 </div>
                 <div class="minimal-shop-cart-info">
                     <strong>{{ $item['name'] ?? 'Producto' }}</strong>
-                    <b data-cart-item-total>${{ number_format($drawerItemPrice * $drawerItemQuantity, 0, ',', '.') }}</b>
+                    <b data-cart-item-total>{{ $store->formatMoney($drawerItemPrice * $drawerItemQuantity) }}</b>
                 </div>
                 <div class="minimal-shop-cart-controls">
                     <button type="button" data-cart-drawer-minus aria-label="Restar">&minus;</button>
@@ -73,12 +74,12 @@
     </div>
 
     <div class="minimal-shop-cart-summary">
-        <p><span>Subtotal</span><strong data-cart-drawer-subtotal>${{ number_format($drawerSubtotal, 0, ',', '.') }}</strong></p>
+        <p><span>Subtotal</span><strong data-cart-drawer-subtotal>{{ $store->formatMoney($drawerSubtotal) }}</strong></p>
         <p><span>Envío</span><strong data-cart-drawer-shipping>Por calcular</strong></p>
         @if($cartShowTax)
-            <p><span>Impuestos</span><strong data-cart-drawer-tax>$0</strong></p>
+            <p><span>Impuestos</span><strong data-cart-drawer-tax>{{ $store->formatMoney(0) }}</strong></p>
         @endif
-        <p class="minimal-shop-cart-total"><span>Total</span>@if($cartShowTax)<small>COP</small>@endif<strong data-cart-drawer-total>${{ number_format($drawerTotal, 0, ',', '.') }}</strong></p>
+        <p class="minimal-shop-cart-total"><span>Total</span>@if($cartShowTax)<small>{{ $store->currencyCode() }}</small>@endif<strong data-cart-drawer-total>{{ $store->formatMoney($drawerTotal) }}</strong></p>
     </div>
 
     <div class="minimal-shop-cart-actions">
