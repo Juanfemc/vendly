@@ -244,7 +244,11 @@
             </div>
 
             <div class="setup-actions">
-                @php($firstPendingTask = collect($tasks)->first(fn (array $task) => ! ($task['complete'] ?? false)))
+                @php
+                    $firstPendingTask = collect($tasks)->first(function (array $task) {
+                        return ! ($task['complete'] ?? false);
+                    });
+                @endphp
                 @if($firstPendingTask)
                     <a class="setup-link-button setup-link-button--primary" href="{{ $firstPendingTask['href'] }}">
                         {{ $firstPendingTask['action'] }}
