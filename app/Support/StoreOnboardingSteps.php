@@ -18,6 +18,7 @@ class StoreOnboardingSteps
     public const PAYMENTS = 'payments';
     public const REVIEW = 'review';
     public const SETUP_PRODUCT = 'setup_product';
+    public const SETUP_BASIC = 'setup_basic';
     public const SETUP_IDENTITY = 'setup_identity';
     public const SETUP_DELIVERY = 'setup_delivery';
     public const SETUP_SHARE = 'setup_share';
@@ -122,6 +123,7 @@ class StoreOnboardingSteps
             && blank($store->onboarding_choice)
             && self::productComplete($store)
             && self::identityComplete($store)
+            && self::basicComplete($store)
             && self::deliveryComplete($store)
         ) {
             return false;
@@ -134,15 +136,23 @@ class StoreOnboardingSteps
     {
         return [
             self::SETUP_PRODUCT => [
-                'label' => 'Agregar el primer producto',
-                'title' => 'Agrega tu primer producto',
+                'label' => 'Sube tu primer producto',
+                'title' => 'Sube tu primer producto',
                 'description' => 'Publica al menos un producto con nombre, precio e imagen para que tu tienda tenga algo listo para vender.',
-                'action' => 'Agregar producto',
+                'action' => 'Subir producto',
                 'href' => route('admin.products.create'),
                 'complete' => self::productComplete($store),
             ],
+            self::SETUP_BASIC => [
+                'label' => 'Información de tu negocio',
+                'title' => 'Completa la información de tu negocio',
+                'description' => 'Agrega el nombre, WhatsApp y enlace público para que tus clientes sepan dónde encontrarte.',
+                'action' => 'Completar información',
+                'href' => route('admin.store.onboarding.wizard', ['step' => self::BASIC]),
+                'complete' => self::basicComplete($store),
+            ],
             self::SETUP_IDENTITY => [
-                'label' => 'Personalizar tienda',
+                'label' => 'Personaliza tu tienda',
                 'title' => 'Personaliza tu tienda',
                 'description' => 'Ajusta logo, portada, colores o texto para que la tienda se vea como tu marca. El logo y la portada son opcionales.',
                 'action' => 'Personalizar tienda',

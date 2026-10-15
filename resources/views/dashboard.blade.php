@@ -490,7 +490,7 @@
         @if(!empty($needsOnboarding) && $dashboardChecklist->isNotEmpty())
             <div class="vendly-home-section vendly-home-progress">
                 <div class="vendly-home-progress-head">
-                    <h3>Completa tu tienda</h3>
+                    <h3>Deja tu tienda lista para vender</h3>
                     <span>{{ $dashboardCompletedSteps }} de {{ $dashboardTotalSteps }} pasos</span>
                 </div>
                 <div class="vendly-home-progress-track" aria-hidden="true">
@@ -500,7 +500,11 @@
                     @foreach($dashboardChecklist as $step)
                         <div @class(['is-complete' => (bool) ($step['complete'] ?? false)])>
                             <span aria-hidden="true">{{ (bool) ($step['complete'] ?? false) ? '✓' : '' }}</span>
-                            <strong>{{ $step['label'] ?? 'Paso pendiente' }}</strong>
+                            @if(!empty($step['href']) && !($step['complete'] ?? false))
+                                <a href="{{ $step['href'] }}"><strong>{{ $step['label'] ?? 'Paso pendiente' }}</strong></a>
+                            @else
+                                <strong>{{ $step['label'] ?? 'Paso pendiente' }}</strong>
+                            @endif
                         </div>
                     @endforeach
                 </div>

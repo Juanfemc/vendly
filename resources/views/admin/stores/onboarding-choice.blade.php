@@ -160,7 +160,11 @@
 
         <div class="setup-choice-foot">
             <span>Puedes cambiar esta decisión más adelante.</span>
-            <a href="{{ route('dashboard') }}">Entrar al panel</a>
+            <span>
+                <a href="{{ $storeUrl }}" target="_blank" rel="noopener noreferrer">Ver mi tienda</a>
+                ·
+                <a href="{{ route('dashboard') }}">Entrar al panel</a>
+            </span>
         </div>
     </section>
 </div>

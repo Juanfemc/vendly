@@ -123,6 +123,12 @@
         color: #fff;
     }
 
+    .setup-link-button--store {
+        border-color: #0f172a;
+        background: #0f172a;
+        color: #fff;
+    }
+
     .setup-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -238,6 +244,13 @@
             </div>
 
             <div class="setup-actions">
+                @php($firstPendingTask = collect($tasks)->first(fn (array $task) => ! ($task['complete'] ?? false)))
+                @if($firstPendingTask)
+                    <a class="setup-link-button setup-link-button--primary" href="{{ $firstPendingTask['href'] }}">
+                        {{ $firstPendingTask['action'] }}
+                    </a>
+                @endif
+                <a class="setup-link-button setup-link-button--store" href="{{ $storeUrl }}" target="_blank" rel="noopener noreferrer">Ver mi tienda ↗</a>
                 <a class="setup-link-button" href="{{ route('dashboard') }}">Entrar al panel</a>
                 <a class="setup-link-button" href="{{ route('admin.store.onboarding.choice') }}">Cambiar opción</a>
                 <a class="setup-link-button" href="{{ $supportWhatsappUrl }}" target="_blank" rel="noopener noreferrer">Pedir ayuda</a>

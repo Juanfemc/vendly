@@ -233,6 +233,6 @@ test('store onboarding progress uses the setup checklist', function () {
         'brand_color' => '#ff6b00',
     ]);
 
-    expect(array_keys($store->onboardingChecklist()))->toBe(['setup_product', 'setup_identity', 'setup_delivery', 'setup_share'])
-        ->and($store->onboardingProgress())->toBe(25);
+    expect(array_keys($store->onboardingChecklist()))->toBe(['setup_product', 'setup_basic', 'setup_identity', 'setup_delivery', 'setup_share'])
+        ->and($store->onboardingProgress())->toBe(20);
 });
