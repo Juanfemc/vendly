@@ -236,3 +236,27 @@ test('store onboarding progress uses the setup checklist', function () {
     expect(array_keys($store->onboardingChecklist()))->toBe(['setup_product', 'setup_basic', 'setup_identity', 'setup_delivery', 'setup_share'])
         ->and($store->onboardingProgress())->toBe(20);
 });
+
+test('new products are inserted at the beginning of the store order', function () {
+    [$user, $store] = createOnboardingStore();
+
+    $first = Product::create([
+        'name' => 'Producto anterior',
+        'slug' => 'producto-anterior-' . Str::random(6),
+        'price' => 10000,
+        'store_id' => $store->id,
+        'user_id' => $user->id,
+    ]);
+
+    $newest = Product::create([
+        'name' => 'Producto nuevo',
+        'slug' => 'producto-nuevo-' . Str::random(6),
+        'price' => 20000,
+        'store_id' => $store->id,
+        'user_id' => $user->id,
+    ]);
+
+    expect($newest->fresh()->sort_order)->toBe(1)
+        ->and($first->fresh()->sort_order)->toBe(2)
+        ->and(Product::where('store_id', $store->id)->orderedForDisplay()->value('id'))->toBe($newest->id);
+});

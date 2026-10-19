@@ -62,14 +62,23 @@ class Product extends Model
     protected static function booted(): void
     {
         static::creating(function (Product $product) {
-            if (! self::supportsSortOrderColumn()
-                || (int) $product->sort_order > 0
-                || ! $product->store_id
-            ) {
+            if (! self::supportsSortOrderColumn() || ! $product->store_id) {
                 return;
             }
 
-            $product->sort_order = ((int) self::where('store_id', $product->store_id)->max('sort_order')) + 1;
+            // New products should be visible first; existing products move down after insert.
+            $product->sort_order = 1;
+        });
+
+        static::created(function (Product $product) {
+            if (! self::supportsSortOrderColumn() || ! $product->store_id || (int) $product->sort_order !== 1) {
+                return;
+            }
+
+            self::where('store_id', $product->store_id)
+                ->whereKeyNot($product->getKey())
+                ->where('sort_order', '>=', 1)
+                ->increment('sort_order');
         });
 
         static::saving(function (Product $product) {

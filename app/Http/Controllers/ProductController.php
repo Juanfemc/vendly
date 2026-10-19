@@ -57,6 +57,11 @@ class ProductController extends Controller
         $productSearch = trim((string) $request->query('q', ''));
         $ordering = $request->boolean('ordering');
 
+        // Ordering must operate on the complete catalog, not only the visible page.
+        if ($ordering) {
+            $productSearch = '';
+        }
+
         if (auth()->user()?->isAdmin()) {
             $selectedStore = $store?->exists ? $store : null;
             $stores = $selectedStore
@@ -73,9 +78,11 @@ class ProductController extends Controller
                     ->paginate(10)
                     ->withQueryString();
             $products = $selectedStore
-                ? $this->orderedProductSearchQuery($selectedStore, $productSearch, true)
-                    ->paginate($productsPerPage)
-                    ->withQueryString()
+                ? ($ordering
+                    ? $this->orderedProductSearchQuery($selectedStore, $productSearch, true)->get()
+                    : $this->orderedProductSearchQuery($selectedStore, $productSearch, true)
+                        ->paginate($productsPerPage)
+                        ->withQueryString())
                 : collect();
 
             return view('admin.products.index', compact('products', 'stores', 'selectedStore', 'productSearch', 'ordering'));
@@ -83,9 +90,11 @@ class ProductController extends Controller
 
         $store = $this->currentStore();
         $products = $store
-            ? $this->orderedProductSearchQuery($store, $productSearch, true)
-                ->paginate($productsPerPage)
-                ->withQueryString()
+            ? ($ordering
+                ? $this->orderedProductSearchQuery($store, $productSearch, true)->get()
+                : $this->orderedProductSearchQuery($store, $productSearch, true)
+                    ->paginate($productsPerPage)
+                    ->withQueryString())
             : collect();
 
         return view('admin.products.index', compact('products', 'store', 'productSearch', 'ordering'));
@@ -764,10 +773,32 @@ class ProductController extends Controller
 
     private function orderedProductSearchQuery(Store $store, string $search, bool $withStore = false)
     {
-        $query = Product::where('store_id', $store->id);
+        $columns = [
+            'id',
+            'store_id',
+            'name',
+            'category',
+            'material',
+            'price',
+            'image',
+            'created_at',
+        ];
+
+        if (Product::supportsInventoryColumns()) {
+            $columns[] = 'stock_quantity';
+            $columns[] = 'is_sold_out';
+        }
+
+        if (Product::supportsSortOrderColumn()) {
+            $columns[] = 'sort_order';
+        }
+
+        $query = Product::query()
+            ->select($columns)
+            ->where('store_id', $store->id);
 
         if ($withStore) {
-            $query->with('store');
+            $query->with('store:id,name,business_type');
         }
 
         return $this->applyProductSearch($query, $search)->orderedForDisplay();
