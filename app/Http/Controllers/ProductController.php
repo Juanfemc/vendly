@@ -775,6 +775,7 @@ class ProductController extends Controller
     {
         $columns = [
             'id',
+            'admin_token',
             'store_id',
             'name',
             'category',
