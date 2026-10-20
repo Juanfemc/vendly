@@ -131,6 +131,7 @@
             })
             ->filter(fn ($color) => $color['label'] !== '')
             ->values();
+        $detailColorDisplay = $store->colorVariantDisplay();
         $detailSizeOptions = collect($product->sizes ?? [])
             ->map(fn ($size) => trim((string) $size))
             ->filter()
@@ -302,13 +303,24 @@
                                 @if($product->hasColors())
                                     <fieldset class="product-variant-group product-variant-group--colors">
                                         <legend>{{ $isRestaurant ? 'Opción' : 'Color' }}</legend>
-                                        <div class="product-variant-list product-variant-list--colors">
+                                        <div @class([
+                                            'product-variant-list',
+                                            'product-variant-list--colors',
+                                            'product-variant-list--color-labels' => $detailColorDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                                            'product-variant-list--color-swatches' => $detailColorDisplay !== \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                                        ])>
                                             @foreach($detailColorOptions as $color)
                                                 <label class="product-variant-choice" title="{{ $color['label'] }}">
                                                     <input type="radio" name="color" value="{{ $color['value'] }}" data-role="selected-color-radio" required @checked(old('color') === $color['value'])>
-                                                    <span class="product-variant-option product-variant-color-option">
-                                                        <i class="product-variant-swatch" style="--swatch: {{ $color['swatch'] }}" aria-hidden="true"></i>
-                                                        <b>{{ $color['label'] }}</b>
+                                                    <span @class([
+                                                        'product-variant-option',
+                                                        'product-variant-color-option' => $detailColorDisplay !== \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL,
+                                                    ])>
+                                                        @if($detailColorDisplay === \App\Models\Store::COLOR_VARIANT_DISPLAY_LABEL)
+                                                            <b>{{ $color['label'] }}</b>
+                                                        @else
+                                                            <i class="product-variant-swatch" style="--swatch: {{ $color['swatch'] }}" aria-hidden="true"></i>
+                                                        @endif
                                                     </span>
                                                 </label>
                                             @endforeach

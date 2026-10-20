@@ -1708,7 +1708,7 @@
                         <small>Elige cómo se acomodan los productos en pantallas pequeñas.</small>
                     </div>
                 </div>
-                @if($store->isFashionStore() && \App\Models\Store::supportsColorVariantDisplayColumn())
+                @if(($store->isFashionStore() || $store->isDefaultStore() || $store->isTechnologyStore()) && \App\Models\Store::supportsColorVariantDisplayColumn())
                     <div class="catalog-option-row" style="margin-top:12px;">
                         <span class="catalog-card-icon" aria-hidden="true">●</span>
                         <div class="catalog-field">
@@ -1735,7 +1735,7 @@
                                     <span>Muestra botones con texto para clientes que prefieren leer la opción.</span>
                                 </label>
                             </div>
-                            <small>Solo afecta la vista detalle de producto de la plantilla de ropa.</small>
+                            <small>Afecta la vista de detalle de productos con colores en tu tienda normal, de tecnología o de ropa.</small>
                         </div>
                     </div>
                 @endif

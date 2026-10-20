@@ -205,7 +205,7 @@ trait ValidatesStoreProfile
 
         $data['responsive_product_columns'] = (int) ($data['responsive_product_columns'] ?? 2);
         if (Store::supportsColorVariantDisplayColumn()) {
-            $data['color_variant_display'] = $data['business_type'] === 'fashion'
+            $data['color_variant_display'] = in_array($data['business_type'], ['fashion', 'store', 'technology'], true)
                 ? ($data['color_variant_display'] ?? Store::COLOR_VARIANT_DISPLAY_SWATCH)
                 : Store::COLOR_VARIANT_DISPLAY_SWATCH;
         } else {
