@@ -41,8 +41,19 @@ class TrialSignupController extends Controller
 
     public function create(): View
     {
+        $selectedPlan = array_key_exists((string) request('plan'), Store::planOptions())
+            ? (string) request('plan')
+            : Store::PLAN_PREMIUM;
+        $selectedCycle = array_key_exists((string) request('billing_cycle'), config('plans.cycles'))
+            ? (string) request('billing_cycle')
+            : 'monthly';
+
         return view('auth.trial-signup', [
             'trialDays' => Store::TRIAL_DAYS,
+            'selectedPlan' => $selectedPlan,
+            'selectedPlanLabel' => Store::planOptions()[$selectedPlan],
+            'selectedCycle' => $selectedCycle,
+            'selectedCycleLabel' => config('plans.cycles.'.$selectedCycle.'.label'),
             'turnstileSiteKey' => $this->turnstile->isReady() ? $this->turnstile->siteKey() : null,
             'requiresTurnstile' => $this->turnstile->isRequired(),
             'turnstileReady' => $this->turnstile->isReady(),
@@ -180,7 +191,8 @@ class TrialSignupController extends Controller
                 $eventTime,
                 $eventPayload,
                 false,
-                'website'
+                'website',
+                route('trial-signup.create')
             );
         }
     }

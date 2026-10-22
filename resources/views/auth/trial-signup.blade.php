@@ -406,10 +406,13 @@
                 <span>Inicio rápido</span>
                 <h2>Crear mi tienda gratis</h2>
                 <p>Solo necesitamos estos datos para crear tu cuenta y activar tu prueba.</p>
+                <p style="margin-top:10px;color:#b84a00;font-weight:800;">Preferencia después de la prueba: {{ $selectedPlanLabel }} · {{ $selectedCycleLabel }}</p>
             </div>
 
             <form class="signup-form" method="POST" action="{{ route('trial-signup.store') }}">
                 @csrf
+                <input type="hidden" name="plan" value="{{ $selectedPlan }}">
+                <input type="hidden" name="billing_cycle" value="{{ $selectedCycle }}">
 
                 <div class="field">
                     <label for="user_name">Tu nombre</label>

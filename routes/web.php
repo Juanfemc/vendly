@@ -156,6 +156,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/users/create', [AdminUserController::class, 'create']);
     Route::post('/admin/users', [AdminUserController::class, 'store'])->middleware('password.confirm');
     Route::get('/admin/users/{user}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
+    Route::post('/admin/users/{user}/subscription-payments', [\App\Http\Controllers\SubscriptionPaymentController::class, 'store'])
+        ->middleware('password.confirm')->name('admin.users.subscription-payments.store');
     Route::put('/admin/users/{user}', [AdminUserController::class, 'update'])->middleware('password.confirm')->name('admin.users.update');
     Route::patch('/admin/users/{user}/extend', [AdminUserController::class, 'extendAccess'])->middleware('password.confirm')->name('admin.users.extend');
     Route::patch('/admin/users/{user}/toggle', [AdminUserController::class, 'toggleActive'])->middleware('password.confirm')->name('admin.users.toggle');

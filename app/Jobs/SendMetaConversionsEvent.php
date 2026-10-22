@@ -37,6 +37,12 @@ class SendMetaConversionsEvent implements ShouldBeEncrypted, ShouldQueue
 
     public function handle(MetaConversionsApiService $metaConversions): void
     {
+        // Discard pre-fix queued access-change events: they have no verified receipt.
+        // Confirmed payments now use the durable measurement outbox, not this job.
+        if (in_array($this->eventName, ['SubscriptionActivated', 'SubscriptionRenewed'], true)) {
+            return;
+        }
+
         $store = Store::with('user')->find($this->storeId);
 
         if (! $store) {

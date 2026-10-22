@@ -47,6 +47,7 @@ class MetaConversionsApiService
         array $eventPayload = [],
         bool $throwOnFailure = false,
         string $actionSource = 'system_generated',
+        ?string $eventSourceUrl = null,
     ): void {
         $pixelId = trim((string) config('services.meta.landing_pixel_id'));
         $accessToken = trim((string) config('services.meta.conversions_access_token'));
@@ -66,7 +67,8 @@ class MetaConversionsApiService
             return;
         }
 
-        if (! in_array($eventPlan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)) {
+        if (! in_array($eventPlan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)
+            && ! ($eventPlan === Store::PLAN_BASIC && $eventName === 'StoreConfigured')) {
             return;
         }
 
@@ -96,6 +98,10 @@ class MetaConversionsApiService
             ], $customData), fn ($value) => $value !== null && $value !== ''),
         ];
 
+        if ($actionSource === 'website' && filter_var($eventSourceUrl, FILTER_VALIDATE_URL)) {
+            $event['event_source_url'] = $eventSourceUrl;
+        }
+
         $payload = [
             'data' => [$event],
             'access_token' => $accessToken,
@@ -109,10 +115,13 @@ class MetaConversionsApiService
 
         try {
             $version = $this->graphVersion();
-            Http::timeout(6)
+            $response = Http::timeout(6)
                 ->asJson()
                 ->post("https://graph.facebook.com/{$version}/{$pixelId}/events", $payload)
                 ->throw();
+            if ($throwOnFailure && (int) $response->json('events_received', 0) < 1) {
+                throw new RuntimeException('Meta no confirmó la recepción del evento.');
+            }
         } catch (RequestException $exception) {
             $status = $exception->response?->status();
 
@@ -124,7 +133,7 @@ class MetaConversionsApiService
                 'exception' => $exception::class,
             ]);
 
-            if ($throwOnFailure && ($status === null || $status === 429 || $status >= 500)) {
+            if ($throwOnFailure) {
                 throw $exception;
             }
         } catch (Throwable $exception) {

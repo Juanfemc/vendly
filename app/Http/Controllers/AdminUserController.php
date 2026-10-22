@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendMetaConversionsEvent;
 use App\Models\User;
 use App\Models\Store;
 use App\Services\AdminUpdateService;
 use App\Services\CustomerFollowupScheduler;
-use App\Services\MetaConversionsApiService;
 use App\Services\StoreFileService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +61,10 @@ class AdminUserController extends Controller
 
     public function edit(User $user): View
     {
-        return view('admin.users.edit', compact('user'));
+        $payments = \App\Models\SubscriptionPayment::where('user_id', $user->id)->orderByDesc('paid_at')->get();
+        $measurementEvents = \App\Models\VendlyMeasurementEvent::whereIn('store_id', $user->stores()->select('id'))->latest()->limit(20)->get();
+
+        return view('admin.users.edit', compact('user', 'payments', 'measurementEvents'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -163,9 +164,7 @@ class AdminUserController extends Controller
             'active_ends_at' => $newEndsAt->toDateString(),
         ]);
 
-        $user->stores()->get()->each(function ($store) use ($newEndsAt, $days) {
-            $wasActivePaidSubscription = $this->hasActivePaidSubscription($store);
-
+        $user->stores()->get()->each(function ($store) use ($newEndsAt) {
             $store->update([
                 'is_active' => true,
                 'subscription_status' => Store::SUBSCRIPTION_ACTIVE,
@@ -174,7 +173,6 @@ class AdminUserController extends Controller
 
             $store = $store->refresh();
             $this->scheduleSubscriptionReminders($store);
-            $this->dispatchSubscriptionMetaEvent($store, $wasActivePaidSubscription, $days, now()->timestamp);
         });
 
         $this->adminUpdateService->record(
@@ -352,35 +350,6 @@ class AdminUserController extends Controller
                 'error' => $exception->getMessage(),
             ]);
         }
-    }
-
-    private function hasActivePaidSubscription(Store $store): bool
-    {
-        return in_array((string) $store->plan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)
-            && $store->subscriptionStatus() === Store::SUBSCRIPTION_ACTIVE
-            && $store->hasActiveSubscription();
-    }
-
-    private function dispatchSubscriptionMetaEvent(Store $store, bool $wasActivePaidSubscription, int $durationDays, int $eventTime): void
-    {
-        if (! in_array((string) $store->plan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)) {
-            return;
-        }
-
-        $metaEventName = $wasActivePaidSubscription ? 'SubscriptionRenewed' : 'SubscriptionActivated';
-        $metaEventData = ['duration_days' => $durationDays];
-        $metaEventPayload = MetaConversionsApiService::subscriptionPayloadForStore($store);
-        $metaUserData = MetaConversionsApiService::userDataForStore($store);
-
-        SendMetaConversionsEvent::dispatch(
-            $store->id,
-            $metaEventName,
-            $metaEventData,
-            $metaEventPayload,
-            $metaUserData,
-            MetaConversionsApiService::subscriptionEventId($store, $metaEventName, $metaEventData),
-            $eventTime
-        );
     }
 
 }

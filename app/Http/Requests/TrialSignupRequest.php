@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Store;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class TrialSignupRequest extends FormRequest
@@ -33,6 +34,8 @@ class TrialSignupRequest extends FormRequest
             'user_email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', Password::defaults()],
             'store_name' => ['nullable', 'string', 'max:255'],
+            'plan' => ['nullable', Rule::in(array_keys(Store::planOptions()))],
+            'billing_cycle' => ['nullable', Rule::in(array_keys(config('plans.cycles')))],
             'whatsapp' => ['required', 'regex:/^573\d{9}$/'],
             'whatsapp_consent' => ['accepted'],
             'turnstile_token' => ['nullable', 'string'],

@@ -234,7 +234,8 @@ test('store onboarding progress uses the setup checklist', function () {
     ]);
 
     expect(array_keys($store->onboardingChecklist()))->toBe(['setup_product', 'setup_basic', 'setup_identity', 'setup_delivery', 'setup_share'])
-        ->and($store->onboardingProgress())->toBe(20);
+        // The fixture already completes basic information and identity: two of five tasks.
+        ->and($store->onboardingProgress())->toBe(40);
 });
 
 test('new products are inserted at the beginning of the store order', function () {

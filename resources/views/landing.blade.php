@@ -31,10 +31,12 @@
     $plans = [
         [
             'eyebrow' => 'Plan 01',
+            'key' => 'basic',
             'name' => 'Básico',
             'summary' => 'Ideal para empezar',
             'badge' => 'Inicio simple',
             'price' => '$0',
+            'prices' => config('plans.prices.basic'),
             'button' => 'Comenzar gratis',
             'features' => [
                 '1 tienda',
@@ -52,10 +54,12 @@
         ],
         [
             'eyebrow' => 'Plan 02',
+            'key' => 'pro',
             'name' => 'Pro',
             'summary' => 'Para negocios en crecimiento',
             'badge' => 'Más popular',
             'price' => '$10.000',
+            'prices' => config('plans.prices.pro'),
             'button' => 'Probar Pro gratis',
             'features' => [
                 'Todo lo del Starter',
@@ -74,10 +78,12 @@
         ],
         [
             'eyebrow' => 'Plan 03',
+            'key' => 'premium',
             'name' => 'Premium',
             'summary' => 'Para marcas que escalan',
             'badge' => 'Más completo',
             'price' => '$25.000',
+            'prices' => config('plans.prices.premium'),
             'button' => 'Probar Premium',
             'features' => [
                 'Todo lo del plan Pro',

@@ -260,18 +260,20 @@
                     >
                         @csrf
                         @method('PATCH')
-                        <select name="plan" aria-label="Plan de suscripcion">
+                        <select name="plan" aria-label="Plan de suscripcion" data-subscription-plan>
                             @foreach(\App\Models\Store::planOptions() as $planValue => $planLabel)
                                 <option value="{{ $planValue }}" @selected(($store->plan ?? \App\Models\Store::PLAN_PRO) === $planValue)>
                                     {{ $planLabel }}
                                 </option>
                             @endforeach
                         </select>
-                        <select name="duration_days" aria-label="Duración de suscripcion">
-                            <option value="30">30 días</option>
-                            <option value="90">90 días</option>
-                            <option value="365">1 ano</option>
+                        <select name="duration_days" aria-label="Duración de suscripcion" data-subscription-cycle>
+                            @foreach(config('plans.cycles') as $cycleKey => $cycle)
+                                <option value="{{ $cycle['days'] }}" data-cycle-key="{{ $cycleKey }}">{{ $cycle['label'] }}</option>
+                            @endforeach
                         </select>
+                        <span data-subscription-price style="min-width:130px;font-size:13px;color:#64748b"></span>
+                        <input type="hidden" value='@json(config('plans.prices'))' data-subscription-prices>
                         <button type="submit" class="btn btn-secondary">Activar</button>
                     </form>
                 @endif
@@ -328,11 +330,28 @@
 
                 document.querySelectorAll('[data-subscription-form]:not([data-bound])').forEach((form) => {
                     form.dataset.bound = 'true';
+                    const planSelect = form.querySelector('[data-subscription-plan]');
+                    const cycleSelect = form.querySelector('[data-subscription-cycle]');
+                    const priceLabel = form.querySelector('[data-subscription-price]');
+                    const prices = JSON.parse(form.querySelector('[data-subscription-prices]')?.value || '{}');
+                    const formatCop = (amount) => amount > 0 ? `$${new Intl.NumberFormat('es-CO').format(amount)}` : 'Gratis';
+                    const updateSubscriptionPrice = () => {
+                        const plan = planSelect?.value;
+                        const cycle = cycleSelect?.selectedOptions[0]?.dataset.cycleKey || 'monthly';
+                        const amount = Number(prices[plan]?.[cycle] || 0);
+                        if (priceLabel) {
+                            priceLabel.textContent = formatCop(amount);
+                        }
+                    };
+                    planSelect?.addEventListener('change', updateSubscriptionPrice);
+                    cycleSelect?.addEventListener('change', updateSubscriptionPrice);
+                    updateSubscriptionPrice();
                     form.addEventListener('submit', (event) => {
                         const duration = form.querySelector('select[name="duration_days"]')?.selectedOptions[0]?.textContent?.trim() || 'esta duracion';
                         const plan = form.querySelector('select[name="plan"]')?.selectedOptions[0]?.textContent?.trim() || 'este plan';
+                        const amount = priceLabel?.textContent?.trim() || '';
                         const storeName = form.dataset.storeName || 'esta tienda';
-                        const confirmed = window.confirm(`Confirmar pago validado y activar ${storeName} en ${plan} por ${duration}?`);
+                        const confirmed = window.confirm(`Confirmar pago validado y activar ${storeName} en ${plan} por ${duration} (${amount})?`);
 
                         if (!confirmed) {
                             event.preventDefault();

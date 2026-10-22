@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRequest;
 use App\Http\Requests\StoreSettingsRequest;
 use App\Http\Requests\StoreWithUserRequest;
-use App\Jobs\SendMetaConversionsEvent;
 use App\Models\ColombiaLocation;
 use App\Models\Product;
 use App\Models\Store;
@@ -13,7 +12,6 @@ use App\Models\User;
 use App\Services\AdminUpdateService;
 use App\Services\AiCreditService;
 use App\Services\CustomerFollowupScheduler;
-use App\Services\MetaConversionsApiService;
 use App\Services\StoreFileService;
 use App\Services\StorefrontUrlService;
 use App\Support\VendlyMetaPixelEvents;
@@ -259,7 +257,7 @@ class StoreController extends Controller
         abort_unless(auth()->user()?->isAdmin(), 403);
 
         $validated = $request->validate([
-            'duration_days' => ['required', 'integer', 'min:1', 'max:3650'],
+            'duration_days' => ['required', 'integer', Rule::in(collect(config('plans.cycles'))->pluck('days')->all())],
             'plan' => ['nullable', Rule::in(array_keys(Store::planOptions()))],
         ]);
 
@@ -270,15 +268,12 @@ class StoreController extends Controller
                 ->with('error', 'Esta tienda tiene mas productos que los permitidos por el plan ' . Store::planOptions()[$requestedPlan] . '.');
         }
 
-        $wasActivePaidSubscription = $this->hasActivePaidSubscription($store);
-
         $store->activateSubscription((int) $validated['duration_days'], $requestedPlan);
         $store = $store->refresh();
         $this->enforcePlanLimits($store);
         $store = $store->refresh();
 
         $this->scheduleSubscriptionReminders($store);
-        $this->dispatchSubscriptionMetaEvent($store, $wasActivePaidSubscription, (int) $validated['duration_days'], now()->timestamp);
 
         $this->adminUpdateService->record(
             'Suscripcion activada',
@@ -336,9 +331,7 @@ class StoreController extends Controller
         $metaEvents = [];
 
         if (VendlyMetaPixelEvents::shouldTrackForUser(auth()->user(), $store)) {
-            $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, [
-                VendlyMetaPixelEvents::storeConfigured($store),
-            ]);
+            $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, []);
         }
 
         return redirect('/admin/store-settings')
@@ -429,35 +422,6 @@ class StoreController extends Controller
         };
 
         return $limit === null || $store->products()->count() <= $limit;
-    }
-
-    private function hasActivePaidSubscription(Store $store): bool
-    {
-        return in_array((string) $store->plan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)
-            && $store->subscriptionStatus() === Store::SUBSCRIPTION_ACTIVE
-            && $store->hasActiveSubscription();
-    }
-
-    private function dispatchSubscriptionMetaEvent(Store $store, bool $wasActivePaidSubscription, int $durationDays, int $eventTime): void
-    {
-        if (! in_array((string) $store->plan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)) {
-            return;
-        }
-
-        $metaEventName = $wasActivePaidSubscription ? 'SubscriptionRenewed' : 'SubscriptionActivated';
-        $metaEventData = ['duration_days' => $durationDays];
-        $metaEventPayload = MetaConversionsApiService::subscriptionPayloadForStore($store);
-        $metaUserData = MetaConversionsApiService::userDataForStore($store);
-
-        SendMetaConversionsEvent::dispatch(
-            $store->id,
-            $metaEventName,
-            $metaEventData,
-            $metaEventPayload,
-            $metaUserData,
-            MetaConversionsApiService::subscriptionEventId($store, $metaEventName, $metaEventData),
-            $eventTime
-        );
     }
 
     private function normalizeStoreStatus(?string $status): string

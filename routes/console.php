@@ -17,6 +17,53 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+// Durable Vendly SaaS events only. Store customer orders use their own tracking.
+\Illuminate\Support\Facades\Artisan::command('vendly:send-measurements {--limit=50}', function () {
+    $ids = \App\Models\VendlyMeasurementEvent::whereNull('sent_at')->whereNull('discarded_at')
+        ->where(fn ($query) => $query->whereNull('next_attempt_at')->orWhere('next_attempt_at', '<=', now()))
+        ->orderBy('id')->limit(max(1, min(100, (int) $this->option('limit'))))->pluck('id');
+    foreach ($ids as $id) {
+        app(\App\Services\DeliverVendlyMeasurement::class)->send($id);
+    }
+    $this->info('Eventos revisados: '.$ids->count().'. Consulta enviados y pendientes en medición.');
+})->purpose('Entrega eventos verificados de suscripciones y activación de Vendly');
+
+\Illuminate\Support\Facades\Schedule::command('vendly:send-measurements')->everyFiveMinutes()->withoutOverlapping();
+
+\Illuminate\Support\Facades\Artisan::command('vendly:baseline-measurements', function () {
+    // Run once in maintenance mode after migration and before enabling delivery.
+    // Already-ready stores are a baseline, never new ad conversions.
+    $count = 0;
+    \App\Models\Store::with('user')->chunkById(100, function ($stores) use (&$count) {
+        foreach ($stores as $store) {
+            $id = 'store-configured-v2-'.$store->id;
+            if (\App\Models\VendlyMeasurementEvent::where('event_id', $id)->exists()) {
+                continue;
+            }
+            app(\App\Services\VendlyMeasurementService::class)->storeConfigured($store);
+            $count += \App\Models\VendlyMeasurementEvent::where('event_id', $id)
+                ->whereNull('sent_at')->update(['discarded_at' => now(), 'last_error' => 'baseline_existing_store']);
+        }
+    });
+    $this->info('Tiendas existentes marcadas como base, sin enviar a Meta: '.$count);
+})->purpose('Establece la base histórica de tiendas listas sin generar conversiones nuevas');
+
+\Illuminate\Support\Facades\Artisan::command('vendly:measurement-status', function () {
+    $this->line('Pixel SaaS configurado: '.(filled(config('services.meta.landing_pixel_id')) ? 'sí' : 'no'));
+    $this->line('Token CAPI configurado: '.(filled(config('services.meta.conversions_access_token')) ? 'sí' : 'no'));
+    $this->line('Código de prueba habilitado: '.(filled(config('services.meta.test_event_code')) ? 'sí (entrega real bloqueada)' : 'no'));
+    if (! \Illuminate\Support\Facades\Schema::hasTable('vendly_measurement_events')) {
+        $this->error('Falta aplicar la migración de medición.');
+        return 1;
+    }
+    $events = \App\Models\VendlyMeasurementEvent::query();
+    $this->line('Recibidos por Meta: '.(clone $events)->whereNotNull('sent_at')->count());
+    $this->line('Pendientes: '.(clone $events)->whereNull('sent_at')->whereNull('discarded_at')->count());
+    $this->line('Históricos/base sin enviar: '.(clone $events)->whereNotNull('discarded_at')->count());
+    $this->line('Cobros registrados: '.\App\Models\SubscriptionPayment::count());
+    return 0;
+})->purpose('Muestra el estado de medición sin exponer credenciales ni datos personales');
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

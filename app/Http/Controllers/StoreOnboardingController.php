@@ -244,7 +244,6 @@ class StoreOnboardingController extends Controller
                     $metaEvents[] = VendlyMetaPixelEvents::firstProductCreated($store);
                 }
 
-                $metaEvents[] = VendlyMetaPixelEvents::storeConfigured($store);
                 $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
             }
 

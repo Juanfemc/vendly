@@ -4,14 +4,10 @@ namespace App\Services;
 
 use App\Models\Store;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class SubscriptionStatsService
 {
-    private const MONTHLY_PLAN_PRICES = [
-        Store::PLAN_PRO => 10000,
-        Store::PLAN_PREMIUM => 25000,
-    ];
-
     public function summary(?array $dateRange = null): array
     {
         if (! Store::supportsSubscriptionColumns()) {
@@ -65,6 +61,29 @@ class SubscriptionStatsService
             'conversion_rate' => $conversionBase > 0 ? round(($paidTotal / $conversionBase) * 100, 1) : 0,
             'mrr' => $this->monthlyRecurringRevenue($paidActive),
             'attention_stores' => $this->attentionStores($stores),
+            ...$this->verifiedReceipts($dateRange),
+        ];
+    }
+
+    private function verifiedReceipts(?array $dateRange): array
+    {
+        $result = ['received_total' => 0, 'first_payments' => 0, 'renewal_payments' => 0, 'measured_activations' => 0];
+        if (! Schema::hasTable('subscription_payments') || ! Schema::hasTable('vendly_measurement_events')) {
+            return $result;
+        }
+        $payments = \App\Models\SubscriptionPayment::where('currency', 'COP');
+        $activations = \App\Models\VendlyMeasurementEvent::where('event_name', 'StoreConfigured')
+            ->where(fn ($query) => $query->whereNull('last_error')->orWhere('last_error', '!=', 'baseline_existing_store'));
+        if ($dateRange) {
+            $payments->whereBetween('paid_at', $dateRange);
+            $activations->whereBetween('occurred_at', $dateRange);
+        }
+
+        return [
+            'received_total' => (int) (clone $payments)->sum('amount'),
+            'first_payments' => (clone $payments)->where('kind', 'first_payment')->count(),
+            'renewal_payments' => (clone $payments)->where('kind', 'renewal')->count(),
+            'measured_activations' => $activations->count(),
         ];
     }
 
@@ -105,7 +124,9 @@ class SubscriptionStatsService
 
     private function monthlyRecurringRevenue(Collection $paidActive): int
     {
-        return (int) $paidActive->sum(fn (Store $store) => self::MONTHLY_PLAN_PRICES[$store->plan] ?? 0);
+        $monthlyPrices = config('plans.prices', []);
+
+        return (int) $paidActive->sum(fn (Store $store) => $monthlyPrices[$store->plan]['monthly'] ?? 0);
     }
 
     private function matchesSubscriptionPeriod(Store $store, ?array $dateRange): bool

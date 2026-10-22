@@ -94,6 +94,12 @@ body.landing-page video {
     box-shadow: 0 14px 28px rgba(255, 107, 0, 0.22);
 }
 
+/* Keep CTA labels readable against their colored backgrounds. */
+.landing-page a.btn--primary,
+.landing-page a.btn--dark {
+    color: var(--vendly-white);
+}
+
 .btn--primary:hover {
     background: var(--vendly-orange-dark);
 }
@@ -634,6 +640,53 @@ body.landing-page video {
     align-items: stretch;
 }
 
+.billing-cycle-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto 28px;
+    padding: 6px;
+    width: fit-content;
+    border: 1px solid var(--vendly-line);
+    border-radius: 999px;
+    background: var(--vendly-white);
+}
+
+.billing-cycle-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--vendly-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 850;
+}
+
+.billing-cycle-option small {
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: #fff3ea;
+    color: var(--vendly-orange);
+    font-size: .72rem;
+}
+
+.billing-cycle-option.is-active {
+    background: var(--vendly-orange);
+    color: var(--vendly-white);
+}
+
+.billing-cycle-option.is-active small {
+    background: rgba(255, 255, 255, .18);
+    color: var(--vendly-white);
+}
+
 .plan-card {
     position: relative;
     display: flex;
@@ -684,6 +737,14 @@ body.landing-page video {
 .plan-price span {
     color: var(--vendly-muted);
     font-weight: 800;
+}
+
+.plan-price-note {
+    min-height: 22px;
+    margin: -8px 0 18px;
+    color: var(--vendly-muted);
+    font-size: .78rem;
+    font-weight: 700;
 }
 
 .plan-features {
@@ -1044,6 +1105,18 @@ body.landing-page video {
     .mobile-drawer-menu a.is-active {
         border-color: #ffd8bd;
         background: #fff7f1;
+    }
+
+    .mobile-drawer-menu a.mobile-drawer-login {
+        margin-top: 12px;
+        border-color: var(--vendly-orange);
+        background: var(--vendly-orange);
+        color: var(--vendly-white);
+    }
+
+    .mobile-drawer-menu a.mobile-drawer-login .drawer-icon {
+        background: rgba(255, 255, 255, 0.18);
+        color: var(--vendly-white);
     }
 
     .drawer-icon {

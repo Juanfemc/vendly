@@ -64,5 +64,9 @@
             <strong>Contacto</strong>
             <em aria-hidden="true">&rsaquo;</em>
         </a>
+        <a href="{{ route('login') }}" class="mobile-drawer-login" data-menu-close>
+            <span class="drawer-icon" aria-hidden="true">&#8594;</span>
+            <strong>Iniciar sesión</strong>
+        </a>
     </nav>
 </aside>

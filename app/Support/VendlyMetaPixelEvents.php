@@ -46,11 +46,6 @@ class VendlyMetaPixelEvents
         ], 'template-selected-' . $store->id . '-' . $store->business_type);
     }
 
-    public static function storeConfigured(Store $store): array
-    {
-        return self::event('StoreConfigured', $store, eventKey: 'store-configured-' . $store->id);
-    }
-
     public static function highIntent(Store $store): ?array
     {
         $productCount = (int) $store->products()->count();

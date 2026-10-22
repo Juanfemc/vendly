@@ -197,7 +197,7 @@
                     <small>{{ $subscriptionStats['trial_ending_soon'] ?? 0 }} por vencer</small>
                 </div>
                 <div class="dashboard-subscription-metric">
-                    <span>Pagos activos</span>
+                    <span>Planes activos</span>
                     <strong>{{ $subscriptionStats['paid_active'] ?? 0 }}</strong>
                     <small>{{ $subscriptionStats['paid_ending_soon'] ?? 0 }} por vencer</small>
                 </div>
@@ -209,8 +209,17 @@
                 <div class="dashboard-subscription-metric dashboard-subscription-metric--mrr">
                     <span>MRR estimado</span>
                     <strong>$ {{ number_format($subscriptionStats['mrr'] ?? 0, 0, ',', '.') }}</strong>
-                    <small>{{ number_format($subscriptionStats['conversion_rate'] ?? 0, 1, ',', '.') }}% conversión</small>
+                    <small>Estimación por estado del plan; no acredita cobros.</small>
                 </div>
+            </div>
+
+            <h3>Cobros confirmados de Vendly · {{ $metricsPeriodLabel ?? 'Mensual' }}</h3>
+            <p>Solo comprobantes registrados. Los estados de acceso y los pedidos de las tiendas no cuentan como ingresos de suscripción.</p>
+            <div class="dashboard-subscription-grid">
+                <div class="dashboard-subscription-metric"><span>Recibido en COP</span><strong>$ {{ number_format($subscriptionStats['received_total'] ?? 0, 0, ',', '.') }}</strong><small>Bruto registrado; no resta devoluciones ni costos.</small></div>
+                <div class="dashboard-subscription-metric"><span>Primeros pagos</span><strong>{{ $subscriptionStats['first_payments'] ?? 0 }}</strong><small>Clientes nuevos con primer cobro confirmado.</small></div>
+                <div class="dashboard-subscription-metric"><span>Renovaciones cobradas</span><strong>{{ $subscriptionStats['renewal_payments'] ?? 0 }}</strong><small>Cobros, no cambios de fecha.</small></div>
+                <div class="dashboard-subscription-metric"><span>Tiendas configuradas</span><strong>{{ $subscriptionStats['measured_activations'] ?? 0 }}</strong><small>Medición nueva: tienda disponible, WhatsApp y producto con foto y precio.</small></div>
             </div>
 
             @if (!empty($subscriptionStats['attention_stores']) && $subscriptionStats['attention_stores']->isNotEmpty())

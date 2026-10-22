@@ -30,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Store::observe(\App\Observers\StoreMeasurementObserver::class);
+        Product::observe(\App\Observers\StoreMeasurementObserver::class);
+
         if (! $this->app->runningInConsole()) {
             $request = request();
 
