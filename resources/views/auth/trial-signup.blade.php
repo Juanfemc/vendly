@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Crear tienda gratis | Vendly</title>
+    @include('landing.partials.meta-pixel')
     <style>
         :root {
             --bg: #080808;
@@ -383,6 +384,7 @@
 </head>
 
 <body>
+    @include('landing.partials.meta-pixel-noscript')
     <main class="signup-shell">
         <section class="signup-copy" aria-label="Beneficios">
             <a href="{{ url('/') }}" class="signup-brand">
