@@ -2000,7 +2000,13 @@
                 <span>Así se ve tu tienda pública</span>
             </div>
         </div>
-        <iframe class="catalog-live-preview-frame" src="{{ $storeUrl }}" data-preview-url="{{ $storeUrl }}" title="Vista previa de la tienda" loading="lazy"></iframe>
+        @php
+            // Keep the embedded preview on the current application host. The public
+            // subdomain may not have DNS/SSL configured yet, while the slug route
+            // renders the same storefront without depending on that infrastructure.
+            $previewUrl = route('store.show', ['slug' => $store->slug]);
+        @endphp
+        <iframe class="catalog-live-preview-frame" src="{{ $previewUrl }}" data-preview-url="{{ $previewUrl }}" title="Vista previa de la tienda" loading="lazy"></iframe>
         <div class="catalog-live-preview-actions">
             <button type="button" data-refresh-preview>Actualizar</button>
             <a href="{{ $storeUrl }}" target="_blank" rel="noopener">Abrir tienda</a>
