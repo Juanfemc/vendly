@@ -2032,6 +2032,41 @@
             rounded: '"Trebuchet MS", Arial, sans-serif',
             mono: '"Courier New", monospace',
         };
+        const previewMedia = {
+            logoImage: null,
+            coverImage: null,
+        };
+        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener('load', () => resolve(typeof reader.result === 'string' ? reader.result : null));
+            reader.addEventListener('error', reject);
+            reader.readAsDataURL(file);
+        });
+        const contrastColorFor = (hex) => {
+            const value = String(hex || '').replace('#', '');
+            if (!/^[0-9a-f]{6}$/i.test(value)) {
+                return '#ffffff';
+            }
+
+            const channels = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255);
+            const luminance = channels.map((channel) => channel <= .03928 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4);
+            const relativeLuminance = .2126 * luminance[0] + .7152 * luminance[1] + .0722 * luminance[2];
+
+            return relativeLuminance > .42 ? '#111111' : '#ffffff';
+        };
+        const syncPreviewFile = async (input, key) => {
+            const file = input?.files?.[0];
+            if (!file) {
+                return;
+            }
+
+            try {
+                previewMedia[key] = await fileToDataUrl(file);
+                postPreviewUpdate();
+            } catch (error) {
+                // The upload validation still handles the real form submission.
+            }
+        };
         const postPreviewUpdate = () => {
             if (!previewFrame?.contentWindow) {
                 return;
@@ -2039,15 +2074,26 @@
 
             const valueFor = (selector, fallback = '') => document.querySelector(selector)?.value || fallback;
             const fontValue = valueFor('#font_family', 'system');
+            const brandColor = valueFor('[data-theme-color-input="brand"]', '#111111');
 
             previewFrame.contentWindow.postMessage({
                 type: 'vendly-live-preview',
-                brandColor: valueFor('[data-theme-color-input="brand"]', '#111111'),
+                brandColor,
+                brandContrast: contrastColorFor(brandColor),
                 backgroundColor: valueFor('[data-theme-color-input="background"]', '#ffffff'),
                 textColor: valueFor('[data-theme-color-input="text"]', '#111111'),
                 fontFamily: fontCssByValue[fontValue] || fontCssByValue.system,
                 columns: valueFor('#responsive_product_columns', '2'),
                 storeName: valueFor('[name="name"]', ''),
+                heroOverlayEnabled: Boolean(document.querySelector('[name="show_hero_overlay"]')?.checked),
+                heroOverlayEyebrow: valueFor('#hero_overlay_eyebrow'),
+                heroOverlayTitle: valueFor('#hero_overlay_title'),
+                heroOverlaySubtitle: valueFor('#hero_overlay_subtitle'),
+                heroOverlayButtonText: valueFor('#hero_overlay_button_text'),
+                heroOverlayButtonUrl: valueFor('#hero_overlay_button_url'),
+                shopCopy: valueFor('#shop_copy'),
+                logoImage: previewMedia.logoImage,
+                coverImage: previewMedia.coverImage,
             }, '*');
         };
         const refreshPreview = () => {
@@ -2097,6 +2143,10 @@
         previewFrame?.addEventListener('load', postPreviewUpdate);
         settingsForm?.addEventListener('input', postPreviewUpdate);
         settingsForm?.addEventListener('change', postPreviewUpdate);
+        document.getElementById('store_logo_image')?.addEventListener('change', (event) => syncPreviewFile(event.currentTarget, 'logoImage'));
+        document.getElementById('store_cover_image')?.addEventListener('change', (event) => syncPreviewFile(event.currentTarget, 'coverImage'));
+        document.getElementById('store_logo_image')?.addEventListener('image-upload:optimized', (event) => syncPreviewFile(event.currentTarget, 'logoImage'));
+        document.getElementById('store_cover_image')?.addEventListener('image-upload:optimized', (event) => syncPreviewFile(event.currentTarget, 'coverImage'));
 
         previewTabs.forEach((tab) => {
             tab.addEventListener('click', () => {
@@ -2141,6 +2191,7 @@
             button.addEventListener('click', () => {
                 setSelectedFont(button.dataset.fontValue);
                 syncSelectedFashionPreset();
+                postPreviewUpdate();
                 closeAppearanceModals();
             });
         });
@@ -2220,6 +2271,7 @@
 	                syncPaletteLabel();
                     syncSelectedFashionPreset();
 	                syncDerivedColors();
+                    postPreviewUpdate();
                 closeAppearanceModals();
 	            });
 	        });
@@ -2235,6 +2287,7 @@
                     syncPaletteLabel();
                     syncSelectedFashionPreset();
 	                syncDerivedColors();
+                    postPreviewUpdate();
                 });
             });
 
@@ -2243,17 +2296,23 @@
                 syncPaletteLabel();
                 syncSelectedFashionPreset();
 	                syncDerivedColors();
+                postPreviewUpdate();
             });
 	        backgroundInput?.addEventListener('input', () => {
                 syncSelectedPalette();
                 syncPaletteLabel();
                 syncSelectedFashionPreset();
 	                syncDerivedColors();
+                postPreviewUpdate();
             });
-	        textInput?.addEventListener('input', syncDerivedColors);
+	        textInput?.addEventListener('input', () => {
+                syncDerivedColors();
+                postPreviewUpdate();
+            });
 	        fontSelect?.addEventListener('change', () => {
                 syncSelectedFashionPreset();
                 syncDerivedColors();
+                postPreviewUpdate();
             });
 	        syncSelectedPalette();
         syncPaletteLabel();
@@ -2270,6 +2329,7 @@
                 syncPaletteLabel();
                     syncSelectedFashionPreset();
 	                syncDerivedColors();
+	                postPreviewUpdate();
 	            });
 	        });
 

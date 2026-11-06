@@ -134,6 +134,10 @@
     @endif
     <script>
         window.addEventListener('message', (event) => {
+            if (event.source !== window.parent) {
+                return;
+            }
+
             const payload = event.data;
             if (!payload || payload.type !== 'vendly-live-preview') {
                 return;
@@ -142,6 +146,10 @@
             const page = document.body;
             if (payload.brandColor) {
                 page.style.setProperty('--brand-color', payload.brandColor);
+            }
+            if (payload.brandContrast) {
+                page.style.setProperty('--brand-contrast', payload.brandContrast);
+                page.style.setProperty('--store-nav-text', payload.brandContrast);
             }
             if (payload.backgroundColor) {
                 page.style.setProperty('--store-bg', payload.backgroundColor);
@@ -170,6 +178,54 @@
                 });
                 document.title = payload.storeName;
             }
+
+            const updateSlotImage = (selector, source, className) => {
+                if (!source) {
+                    return;
+                }
+
+                document.querySelectorAll(selector).forEach((slot) => {
+                    let image = slot.querySelector('img');
+
+                    if (!image) {
+                        image = document.createElement('img');
+                        image.className = className;
+                        image.alt = payload.storeName || '';
+                        image.loading = 'eager';
+                        image.decoding = 'async';
+                        slot.querySelector('.minimal-shop-logo-fallback, .hero-fallback, .fashion-hero-fallback, .restaurant-hero-fallback')?.remove();
+                        slot.prepend(image);
+                    }
+
+                    image.src = source;
+                });
+            };
+
+            updateSlotImage('[data-store-logo-slot]', payload.logoImage, 'brand-logo');
+            updateSlotImage('[data-store-cover-slot]', payload.coverImage, 'store-live-preview-cover');
+
+            const overlayText = (selector, value) => {
+                document.querySelectorAll(selector).forEach((element) => {
+                    element.textContent = value || '';
+                    element.hidden = !value;
+                });
+            };
+
+            const overlay = document.querySelector('.store-hero-products-action, .tech-hero-copy, .fashion-hero-copy');
+            if (overlay && payload.heroOverlayEnabled !== undefined) {
+                overlay.hidden = !payload.heroOverlayEnabled;
+            }
+            overlayText('.store-hero-overlay-title, .tech-hero-copy h1, .fashion-hero-copy h1', payload.heroOverlayTitle);
+            overlayText('.tech-hero-copy p', payload.heroOverlaySubtitle);
+
+            document.querySelectorAll('.store-hero-products-action a, .tech-hero-primary, .fashion-hero-copy a').forEach((link) => {
+                if (payload.heroOverlayButtonText !== undefined) {
+                    link.textContent = payload.heroOverlayButtonText || 'Comprar ahora';
+                }
+                if (payload.heroOverlayButtonUrl) {
+                    link.href = payload.heroOverlayButtonUrl;
+                }
+            });
         });
     </script>
 </body>

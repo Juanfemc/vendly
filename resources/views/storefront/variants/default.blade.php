@@ -10,7 +10,7 @@
         </div>
     @endif
 
-    <div class="store-hero-media">
+    <div class="store-hero-media" data-store-cover-slot>
         @if($heroImage)
             <img src="{{ $heroImage }}" alt="{{ $store->name }}" loading="eager" fetchpriority="high" decoding="async">
         @else

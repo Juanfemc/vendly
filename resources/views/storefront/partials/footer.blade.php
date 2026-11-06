@@ -8,7 +8,7 @@
     <div class="shell">
         <div class="store-footer-main">
             <div class="store-footer-brand">
-                <div class="store-footer-logo">
+                <div class="store-footer-logo" data-store-logo-slot>
                     @if($store->logo_image)
                         <img src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}">
                     @else

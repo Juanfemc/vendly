@@ -43,7 +43,7 @@
 @endphp
 
 <section @class(['minimal-shop-hero', 'tech-hero--image-only' => ! $showTechHeroOverlay])>
-    <div @class([
+    <div data-store-cover-slot @class([
         'minimal-shop-hero-media',
         'tech-hero-showcase',
         'tech-hero-showcase--image-only' => ! $showTechHeroOverlay,

@@ -34,7 +34,7 @@
 
         <div class="restaurant-footer-main">
             <section class="restaurant-footer-brand" aria-label="{{ $store->name }}">
-                <a href="{{ $storefrontUrls->home($store) }}" class="restaurant-footer-logo" aria-label="{{ $store->name }}">
+                <a href="{{ $storefrontUrls->home($store) }}" class="restaurant-footer-logo" data-store-logo-slot aria-label="{{ $store->name }}">
                     @if($restaurantLogoUrl)
                         <img src="{{ $restaurantLogoUrl }}" alt="{{ $store->name }}" loading="lazy" decoding="async">
                     @else

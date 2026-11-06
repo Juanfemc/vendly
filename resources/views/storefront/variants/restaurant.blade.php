@@ -70,7 +70,7 @@
         </div>
     </div>
 
-    <a href="#catalogo" class="restaurant-menu-hero-media" aria-label="Ver carta de {{ $store->name }}">
+    <a href="#catalogo" class="restaurant-menu-hero-media" data-store-cover-slot aria-label="Ver carta de {{ $store->name }}">
         @if($restaurantHeroImage)
             <img src="{{ $restaurantHeroImage }}" alt="{{ $store->name }}" loading="eager" fetchpriority="high" decoding="async">
         @else

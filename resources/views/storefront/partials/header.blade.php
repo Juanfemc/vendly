@@ -27,7 +27,7 @@
     <header class="navbar">
     <input class="store-cart-state" type="checkbox" id="minimalShopCartToggle" aria-hidden="true">
     <div class="shell navbar-inner">
-        <a href="{{ $storefrontUrls->home($store) }}" class="brand" aria-label="{{ $store->name }}">
+        <a href="{{ $storefrontUrls->home($store) }}" class="brand" data-store-logo-slot aria-label="{{ $store->name }}">
             @if($store->logo_image)
                 <img src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}" class="brand-logo" loading="eager" decoding="async">
             @endif

@@ -103,7 +103,7 @@ $fashionTabs = collect([[
     $fashionCartIcon = '<svg class="fashion-product-cart-bag-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><g class="fashion-product-cart-bag-outline" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M126 185H386V400H126Z"/><path d="M190 215V155C190 105 220 76 256 76C292 76 322 105 322 155V215"/></g><circle class="fashion-product-cart-bag-badge" cx="374" cy="386" r="90" fill="#fff"/><path class="fashion-product-cart-bag-plus" d="M374 336V436M324 386H424" fill="none" stroke="#111" stroke-width="40" stroke-linecap="round"/></svg>';
 @endphp
 
-<section @class(['fashion-hero', 'has-copy' => $fashionHeroHasCopy, 'is-cover-only' => ! $fashionHeroHasCopy])>
+<section data-store-cover-slot @class(['fashion-hero', 'has-copy' => $fashionHeroHasCopy, 'is-cover-only' => ! $fashionHeroHasCopy])>
     @if($fashionHeroHasCopy)
         <div class="fashion-hero-copy">
             @if($fashionHeroEyebrow !== '')

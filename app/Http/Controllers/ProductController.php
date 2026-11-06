@@ -394,12 +394,13 @@ class ProductController extends Controller
     {
         $isCatalogPartial = $store->isTechnologyStore() && request('partial') === 'catalogo';
         $isInfiniteProducts = $this->wantsInfiniteProducts();
+        $isPreviewRequest = request()->has('preview');
 
         if (! $isCatalogPartial && ! $isInfiniteProducts) {
             $this->countStoreVisit($store);
         }
 
-        if (! $isCatalogPartial && ! $isInfiniteProducts && $landing = $this->activeSingleProductLanding($store)) {
+        if (! $isPreviewRequest && ! $isCatalogPartial && ! $isInfiniteProducts && $landing = $this->activeSingleProductLanding($store)) {
             return view('store_single_product_landing', [
                 'store' => $store,
                 'landing' => $landing,

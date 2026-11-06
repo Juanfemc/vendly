@@ -164,7 +164,7 @@
             {!! $icons::icon('menu') !!}
         </label>
 
-        <a href="{{ $storefrontUrls->home($store) }}" class="minimal-shop-brand" aria-label="{{ $store->name }}">
+        <a href="{{ $storefrontUrls->home($store) }}" class="minimal-shop-brand" data-store-logo-slot aria-label="{{ $store->name }}">
             @if($store->logo_image)
                 <img src="{{ asset('storage/' . $store->logo_image) }}" alt="{{ $store->name }}" class="minimal-shop-logo" loading="eager" decoding="async">
             @else
