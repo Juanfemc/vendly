@@ -2,18 +2,13 @@
 
 @section('content')
 @php
-    $storefrontHost = parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost();
-    $customDomain = old('custom_domain', $store->custom_domain);
-    $colombiaLocations = collect($colombiaLocations ?? []);
     $announcementItems = old('announcement_items', $store->announcement_items ?? []);
     $announcementTexts = collect($announcementItems)->pluck('text')->values();
-    $shippingMethods = old('shipping_methods', $store->shipping_methods ?? []);
     $selectedReservationDays = old('reservation_available_days', $store->reservation_available_days ?? []);
     $selectedColorVariantDisplay = old('color_variant_display', $store->colorVariantDisplay());
     $selectedColorVariantDisplay = array_key_exists($selectedColorVariantDisplay, \App\Models\Store::colorVariantDisplayOptions())
         ? $selectedColorVariantDisplay
         : \App\Models\Store::COLOR_VARIANT_DISPLAY_SWATCH;
-    $showFashionDeliveryTimes = (bool) old('show_fashion_delivery_times', $store->showsFashionDeliveryTimes());
     $showSizeFilter = (bool) old('show_fashion_size_filter', $store->showsSizeFilter());
     $globalDiscountEnabled = (bool) old('global_discount_enabled', $store->global_discount_enabled ?? false);
     $globalDiscountType = old('global_discount_type', $store->global_discount_type ?: 'percentage');
@@ -108,6 +103,102 @@
         gap: 22px;
         min-width: 0;
         max-width: 100%;
+    }
+
+    .catalog-settings-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        align-items: start;
+        gap: 24px;
+    }
+
+    .catalog-live-preview {
+        position: sticky;
+        top: 16px;
+        align-self: start;
+        max-height: calc(100vh - 32px);
+        overflow: auto;
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid #d9e4e7;
+        border-radius: 18px;
+        background: #f8fafc;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, .055);
+        z-index: 3;
+    }
+
+    .catalog-live-preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .catalog-live-preview-head strong { display: block; color: #073241; font-size: 15px; }
+    .catalog-live-preview-head span { display: block; margin-top: 3px; color: #64748b; font-size: 12px; }
+    .catalog-live-preview-frame { width: 100%; height: 610px; display: block; border: 1px solid #d9e4e7; border-radius: 14px; background: #fff; }
+    .catalog-live-preview-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .catalog-live-preview-actions a,
+    .catalog-live-preview-actions button { min-height: 36px; padding: 8px 12px; border: 1px solid #d9e4e7; border-radius: 9px; background: #fff; color: #006857; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+    .catalog-preview-mobile-tabs { display: none; }
+
+    .catalog-appearance-tools { display: grid; gap: 18px; }
+    .catalog-appearance-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .catalog-appearance-toolbar p { margin: 0; color: #6b7a90; font-size: 13px; }
+    .catalog-appearance-toolbar .catalog-link-action { white-space: nowrap; }
+    .catalog-palette-trigger { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: min(100%, 360px); min-height: 62px; padding: 9px 14px; border: 1px solid #cdd7e2; border-radius: 12px; background: #fff; color: #172033; cursor: pointer; text-align: left; }
+    .catalog-palette-trigger:hover { border-color: #1edca7; }
+    .catalog-palette-trigger .catalog-palette-swatches { flex: 1; }
+    .catalog-palette-trigger-copy { display: grid; gap: 2px; min-width: 0; }
+    .catalog-palette-trigger-copy strong { color: #172033; font-size: 13px; }
+    .catalog-palette-trigger-copy span { color: #688092; font-size: 11px; }
+    .catalog-palette-trigger svg { width: 18px; height: 18px; color: #688092; }
+    .catalog-role-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; padding-top: 2px; }
+    .catalog-role-item { display: grid; justify-items: center; gap: 8px; min-width: 0; color: #172033; font-size: 12px; font-weight: 700; text-align: center; }
+    .catalog-role-grid .catalog-color-item { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 8px; }
+    .catalog-role-grid .catalog-color-item strong { margin: 0; }
+    .catalog-role-item input, .catalog-role-swatch { width: 42px; height: 42px; padding: 0; border: 1px solid #cdd7e2; border-radius: 10px; background: #fff; box-sizing: border-box; }
+    .catalog-role-item input[type="color"] { overflow: hidden; cursor: pointer; }
+    .catalog-role-grid input[type="color"][disabled] { cursor: not-allowed; opacity: .75; }
+    .catalog-role-swatch { display: block; }
+    .catalog-font-grid--featured { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .catalog-font-option { min-height: 96px; text-align: left; }
+    .catalog-font-option strong { display: block; font-size: 18px; line-height: 1.1; }
+    .catalog-font-option span { display: block; margin-top: 8px; color: #688092; font-size: 12px; }
+    .catalog-font-more { min-height: 96px; border: 1px solid #cdd7e2; border-radius: 12px; background: #fff; color: #006857; font-weight: 800; cursor: pointer; }
+    .catalog-font-more:hover { border-color: #1edca7; }
+    .catalog-appearance-modal[hidden] { display: none; }
+    .catalog-appearance-modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: rgba(7, 20, 47, .46); }
+    .catalog-appearance-modal-card { width: min(640px, 100%); max-height: min(720px, calc(100vh - 48px)); overflow: hidden; border: 1px solid #d9e4e7; border-radius: 20px; background: #fff; box-shadow: 0 24px 70px rgba(7, 20, 47, .24); }
+    .catalog-appearance-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 24px 14px; }
+    .catalog-appearance-modal-head h4 { margin: 0; color: #172033; font-size: 20px; }
+    .catalog-appearance-modal-close { border: 0; background: transparent; color: #688092; font-size: 26px; line-height: 1; cursor: pointer; }
+    .catalog-appearance-modal-body { max-height: 560px; overflow: auto; padding: 0 24px 20px; }
+    .catalog-appearance-modal-body .catalog-palette-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .catalog-appearance-modal-body .catalog-font-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .catalog-appearance-modal-foot { padding: 12px 24px 18px; border-top: 1px solid #edf1f5; text-align: center; }
+    .catalog-appearance-modal-cancel { border: 0; background: transparent; color: #006857; font-weight: 800; cursor: pointer; }
+    .catalog-palette-trigger:focus-visible,
+    .catalog-font-option:focus-visible,
+    .catalog-font-more:focus-visible,
+    .catalog-appearance-modal-close:focus-visible,
+    .catalog-appearance-modal-cancel:focus-visible,
+    .catalog-link-action:focus-visible { outline: 3px solid rgba(30, 220, 167, .35); outline-offset: 2px; }
+
+    @media (min-width: 821px) {
+        .catalog-live-preview {
+            position: fixed;
+            top: 92px;
+            right: 24px;
+            width: min(360px, calc(100vw - 300px));
+            max-height: calc(100vh - 108px);
+            box-sizing: border-box;
+        }
+
+        .catalog-live-preview-frame {
+            height: min(610px, calc(100vh - 220px));
+        }
     }
 
     .catalog-settings-card {
@@ -1023,6 +1114,67 @@
             grid-template-columns: 1fr;
         }
 
+        .catalog-role-grid {
+            grid-template-columns: repeat(5, minmax(58px, 1fr));
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .catalog-role-item {
+            min-width: 58px;
+        }
+
+        .catalog-appearance-modal {
+            padding: 12px;
+        }
+
+        .catalog-appearance-modal-head,
+        .catalog-appearance-modal-body,
+        .catalog-appearance-modal-foot {
+            padding-inline: 16px;
+        }
+
+        .catalog-appearance-modal-body .catalog-palette-grid,
+        .catalog-appearance-modal-body .catalog-font-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .catalog-settings-workspace {
+            display: block;
+        }
+
+        .catalog-preview-mobile-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 14px;
+            padding: 4px;
+            border: 1px solid #d9e4e7;
+            border-radius: 12px;
+            background: #eef3f5;
+        }
+
+        .catalog-preview-mobile-tabs button {
+            min-height: 42px;
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            color: #64748b;
+            font-weight: 800;
+        }
+
+        .catalog-preview-mobile-tabs button.is-active {
+            background: #ffffff;
+            color: #006857;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+        }
+
+        .catalog-settings-workspace.is-preview-mode .catalog-settings-form { display: none; }
+        .catalog-settings-workspace:not(.is-preview-mode) .catalog-live-preview { display: none; }
+        .catalog-live-preview { position: static; padding: 12px; }
+        .catalog-live-preview-frame { height: min(70vh, 640px); }
+
         .catalog-settings-card {
             padding: 18px;
             border-radius: 16px;
@@ -1150,7 +1302,7 @@
                 </svg>
             </a>
             <div>
-                <h2>Apariencia del Catálogo</h2>
+                <h2>Configurar tienda</h2>
                 <p>Personaliza el diseño, información y contenido público de tu tienda online.</p>
             </div>
         </div>
@@ -1169,6 +1321,12 @@
         </div>
     @endif
 
+    <div class="catalog-preview-mobile-tabs" data-preview-tabs>
+        <button type="button" class="is-active" data-preview-mode="edit">Editar</button>
+        <button type="button" data-preview-mode="preview">Vista previa</button>
+    </div>
+
+    <div class="catalog-settings-workspace" data-settings-workspace>
     <form method="POST" action="/admin/store-settings" enctype="multipart/form-data" class="catalog-settings-form">
         @csrf
 
@@ -1178,7 +1336,6 @@
                     <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                     <div>
                         <h3>Identidad de tu tienda</h3>
-                        <p>Nombre visible en tu catálogo público.</p>
                     </div>
                 </div>
             </div>
@@ -1196,7 +1353,6 @@
                     <span class="catalog-card-icon" aria-hidden="true">$</span>
                     <div>
                         <h3>Moneda de la tienda</h3>
-                        <p>Define la moneda real de tus productos, pedidos y checkout.</p>
                     </div>
                 </div>
             </div>
@@ -1219,7 +1375,6 @@
                         <span class="catalog-card-icon" aria-hidden="true">%</span>
                         <div>
                             <h3>Oferta global</h3>
-                            <p>Aplica un descuento a todos los productos sin cambiar sus precios originales.</p>
                         </div>
                     </div>
                     <span class="catalog-pro-pill">Premium</span>
@@ -1259,58 +1414,6 @@
             </section>
         @endif
 
-        <section class="catalog-settings-card" id="store-domain">
-            <div class="catalog-card-head">
-                <div class="catalog-card-title">
-                    <span class="catalog-card-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93"></path><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07"></path></svg>
-                    </span>
-                    <div>
-                        <h3>Enlace de tu tienda</h3>
-                        <p>Comparte esta URL con tus clientes.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="catalog-url-row">
-                <div class="catalog-url-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93"></path><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07"></path></svg>
-                    <span>{{ $storeUrl }}</span>
-                </div>
-                <button type="button" class="catalog-copy-button" data-copy-store-url="{{ $storeUrl }}">Copiar</button>
-                <a class="catalog-visit-button" href="{{ $storeUrl }}" target="_blank" rel="noopener">Visitar</a>
-            </div>
-
-            <div class="catalog-link-list">
-                @if($store->allowsSubdomain())
-                    <span class="catalog-link-action">Cambiar enlace Vendly</span>
-                    <div class="catalog-settings-grid catalog-settings-grid--three" style="width:100%; margin-top:4px;">
-                        <div class="catalog-field">
-                            <label for="store_subdomain">Subdominio</label>
-                            <input id="store_subdomain" type="text" name="subdomain" value="{{ old('subdomain', $store->subdomain) }}" placeholder="mitienda">
-                            <small>Tu tienda podrá usarse como {{ old('subdomain', $store->subdomain) ?: 'mitienda' }}.{{ $storefrontHost }}.</small>
-                        </div>
-
-                        @if($store->allowsCustomDomain())
-                            <div class="catalog-field catalog-field--full">
-                                <label for="store_custom_domain">Dominio personalizado <span class="catalog-pro-pill">Premium</span></label>
-                                <input id="store_custom_domain" type="text" name="custom_domain" value="{{ $customDomain }}" placeholder="www.tudominio.com">
-                                <small>Guarda el dominio y apunta un CNAME hacia {{ $storefrontHost }}. Estado: {{ ($store->custom_domain_status ?? 'pending') === 'verified' ? 'verificado' : 'pendiente de verificación' }}.</small>
-                            </div>
-                        @else
-                            <div class="catalog-field">
-                                <label for="store_custom_domain_locked">Dominio personalizado <span class="catalog-pro-pill">Premium</span></label>
-                                <input id="store_custom_domain_locked" class="catalog-readonly" type="text" value="Disponible desde Premium" readonly>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <span class="catalog-link-action">Subdominio disponible desde Pro</span>
-                    <span class="catalog-link-action is-muted">Conectar dominio <span class="catalog-pro-pill">Premium</span></span>
-                @endif
-            </div>
-        </section>
-
         <section class="catalog-settings-card">
             <div class="catalog-card-head">
                 <div class="catalog-card-title">
@@ -1319,7 +1422,6 @@
                     </span>
                     <div>
                         <h3>Identidad visual</h3>
-                        <p>Logo, banner y descripción de tu tienda.</p>
                     </div>
                 </div>
             </div>
@@ -1414,7 +1516,6 @@
                         </span>
                         <div>
                             <h3>Colores</h3>
-                            <p>Personaliza los colores de tu catálogo.</p>
                         </div>
                     </div>
                     <button type="button" class="catalog-link-action" data-reset-theme>Restaurar</button>
@@ -1444,6 +1545,11 @@
 	                        ['name' => 'Premium', 'description' => 'Dorado sobrio para tiendas finas.', 'brand' => '#b7791f', 'background' => '#fffaf0'],
 	                        ['name' => 'Minimal', 'description' => 'Gris moderno y muy neutral.', 'brand' => '#334155', 'background' => '#f8fafc'],
 	                    ];
+	                    $selectedPalette = collect($catalogPalettes)->first(function ($palette) use ($selectedBrandColor, $selectedBackgroundColor) {
+	                        return strcasecmp($selectedBrandColor, $palette['brand']) === 0
+	                            && strcasecmp($selectedBackgroundColor, $palette['background']) === 0;
+	                    });
+	                    $selectedPaletteName = $selectedPalette['name'] ?? 'Personalizada';
 	                @endphp
 
                     @if(($store->business_type ?? 'store') === 'fashion')
@@ -1485,7 +1591,31 @@
                         </div>
                     @endif
 
-	                <div class="catalog-palette-grid" data-palette-picker>
+                <div class="catalog-appearance-tools">
+                    <div class="catalog-appearance-toolbar">
+                        <p>¿No sabes qué elegir? Carga una paleta lista:</p>
+                        <button type="button" class="catalog-link-action" data-reset-theme>Volver a los originales</button>
+                    </div>
+                    <button type="button" class="catalog-palette-trigger" data-appearance-modal-trigger="palette" aria-haspopup="dialog" aria-controls="palette-modal" aria-expanded="false">
+                        <span class="catalog-palette-trigger-copy">
+                            <strong data-selected-palette-name>{{ $selectedPaletteName }}</strong>
+                            <span>Paleta de colores</span>
+                        </span>
+                        <span class="catalog-palette-swatches" aria-hidden="true">
+                            <span class="catalog-palette-swatch" style="background: {{ $selectedBrandColor }}"></span>
+                            <span class="catalog-palette-swatch" style="background: {{ $selectedBackgroundColor }}"></span>
+                            <span class="catalog-palette-swatch" style="background: {{ $selectedTextColor }}"></span>
+                            <span class="catalog-palette-swatch" style="background: {{ \App\Support\BrandTheme::mixWithWhite($selectedBrandColor, .1) }}"></span>
+                        </span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
+                    </button>
+                </div>
+
+                <div class="catalog-appearance-modal" data-appearance-modal="palette" hidden>
+                    <div id="palette-modal" class="catalog-appearance-modal-card" role="dialog" aria-modal="true" aria-labelledby="palette-modal-title">
+                        <div class="catalog-appearance-modal-head"><h4 id="palette-modal-title">Elige una paleta</h4><button type="button" class="catalog-appearance-modal-close" data-appearance-modal-close aria-label="Cerrar">&times;</button></div>
+                        <div class="catalog-appearance-modal-body">
+                            <div class="catalog-palette-grid" data-palette-picker>
 	                    @foreach($catalogPalettes as $palette)
 	                        @php
 	                            $paletteText = \App\Models\Store::automaticTextColorFor($palette['background']);
@@ -1495,6 +1625,7 @@
 	                        <button
 	                            type="button"
 	                            class="catalog-palette-option @if($isSelectedPalette) is-selected @endif"
+	                            data-palette-name="{{ $palette['name'] }}"
 	                            data-palette-brand="{{ $palette['brand'] }}"
 	                            data-palette-background="{{ $palette['background'] }}"
 	                            data-palette-text="{{ $paletteText }}"
@@ -1510,22 +1641,28 @@
 	                            </span>
 	                        </button>
 	                    @endforeach
-	                </div>
+                            </div>
+                        </div>
+                        <div class="catalog-appearance-modal-foot"><button type="button" class="catalog-appearance-modal-cancel" data-appearance-modal-close>Cancelar</button></div>
+                    </div>
+                </div>
 
-	                <div class="catalog-color-grid">
+	                <div class="catalog-role-grid">
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="brand_color" value="{{ $selectedBrandColor }}" data-theme-color-input="brand">
-                        <span><strong>Acento</strong><span>Precios, botones, carrito y enlaces.</span></span>
+                        <strong>Acento</strong>
                     </label>
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" name="background_color" value="{{ $selectedBackgroundColor }}" data-theme-color-input="background">
-                        <span><strong>Fondo</strong><span>Fondo de páginas y secciones.</span></span>
+                        <strong>Fondo</strong>
                     </label>
+                    <span class="catalog-role-item"><span class="catalog-role-swatch" data-derived-color="header" style="background: {{ \App\Support\BrandTheme::mixWithWhite($selectedBrandColor, .1) }}"></span><strong>Encabezado</strong></span>
                     <label class="catalog-color-item">
                         <input class="catalog-color-swatch" type="color" value="{{ $selectedTextColor }}" disabled>
                         <input type="hidden" name="text_color" value="{{ $selectedTextColor }}" data-theme-color-input="text">
-                        <span><strong>Texto</strong><span>Se ajusta automáticamente para contraste.</span></span>
+                        <strong>Texto</strong>
                     </label>
+                    <span class="catalog-role-item"><span class="catalog-role-swatch" data-derived-color="secondary" style="background: {{ $selectedBackgroundColor }}"></span><strong>Secundario</strong></span>
                 </div>
             </section>
 
@@ -1535,18 +1672,31 @@
                         <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                         <div>
                             <h3>Tipografía</h3>
-                            <p>Elige el estilo tipográfico de tu catálogo.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="catalog-font-grid" data-font-picker>
-                    @foreach(\App\Models\Store::FONT_FAMILIES as $value => $font)
+                <div class="catalog-font-grid catalog-font-grid--featured" data-font-picker>
+                    @foreach(array_slice(\App\Models\Store::FONT_FAMILIES, 0, 3, true) as $value => $font)
                         <button type="button" class="catalog-font-option @if($selectedFontFamily === $value) is-selected @endif" data-font-value="{{ $value }}" style="font-family: {{ $font['css'] }};">
                             <strong>{{ $font['label'] }}</strong>
-                            <span>{{ $font['css'] }}</span>
+                            <span>AaBbCc 123</span>
                         </button>
                     @endforeach
+                    <button type="button" class="catalog-font-more" data-appearance-modal-trigger="font" aria-haspopup="dialog" aria-controls="font-modal" aria-expanded="false">+<br>Ver más</button>
+                </div>
+                <div class="catalog-appearance-modal" data-appearance-modal="font" hidden>
+                    <div id="font-modal" class="catalog-appearance-modal-card" role="dialog" aria-modal="true" aria-labelledby="font-modal-title">
+                        <div class="catalog-appearance-modal-head"><h4 id="font-modal-title">Elige una tipografía</h4><button type="button" class="catalog-appearance-modal-close" data-appearance-modal-close aria-label="Cerrar">&times;</button></div>
+                        <div class="catalog-appearance-modal-body">
+                            <div class="catalog-font-grid" data-font-picker>
+                                @foreach(\App\Models\Store::FONT_FAMILIES as $value => $font)
+                                    <button type="button" class="catalog-font-option @if($selectedFontFamily === $value) is-selected @endif" data-font-value="{{ $value }}" style="font-family: {{ $font['css'] }};"><strong>{{ $font['label'] }}</strong><span>AaBbCc 123</span></button>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="catalog-appearance-modal-foot"><button type="button" class="catalog-appearance-modal-cancel" data-appearance-modal-close>Cancelar</button></div>
+                    </div>
                 </div>
                 <select id="font_family" class="catalog-font-select" name="font_family">
                     @foreach(\App\Models\Store::fontFamilyOptions() as $value => $label)
@@ -1561,7 +1711,6 @@
                         <span class="catalog-card-icon" aria-hidden="true">Aa</span>
                         <div>
                             <h3>Apariencia avanzada</h3>
-                            <p>Colores, fuentes y vistas completas están disponibles desde Pro.</p>
                         </div>
                     </div>
                     <span class="catalog-pro-pill">Pro</span>
@@ -1578,7 +1727,6 @@
                     </span>
                     <div>
                         <h3>WhatsApp de contacto</h3>
-                        <p>Número público para compras, contacto y confirmaciones.</p>
                     </div>
                 </div>
             </div>
@@ -1603,7 +1751,6 @@
                     </span>
                     <div>
                         <h3>Redes sociales</h3>
-                        <p>Conecta tus redes con el catálogo.</p>
                     </div>
                 </div>
             </div>
@@ -1648,7 +1795,6 @@
                         </span>
                         <div>
                             <h3>Barra de anuncios</h3>
-                            <p>Muestra mensajes destacados en la parte superior.</p>
                         </div>
                     </div>
                 </div>
@@ -1690,7 +1836,6 @@
                     </span>
                     <div>
                         <h3>Opciones</h3>
-                        <p>Configura el comportamiento de tu tienda.</p>
                     </div>
                 </div>
             </div>
@@ -1781,165 +1926,6 @@
             </div>
         </section>
 
-        @if(\App\Models\Store::supportsShippingMethodsColumn())
-            <section class="catalog-settings-card" id="delivery-settings">
-                <div class="catalog-card-head">
-                    <div class="catalog-card-title">
-                        <span class="catalog-card-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17h4V5H2v12h3"></path><path d="M14 17h1m4 0h3v-6h-3l-2-4h-3v10h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-                        </span>
-                        <div>
-                            <h3>Envíos</h3>
-                            <p>Costos por ciudad y métodos manuales.</p>
-                        </div>
-                    </div>
-                    @unless($store->allowsShippingMethods())
-                        <span class="catalog-pro-pill">Pro</span>
-                    @endunless
-                </div>
-
-                @if($store->allowsShippingMethods())
-                    @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
-                        <div class="catalog-toggle-row" style="margin-bottom:18px;">
-                            <div>
-                                <strong>Mostrar tiempos de entrega en ropa</strong>
-                                <p class="catalog-help" style="margin:4px 0 0;">Activa esta opción para mostrar textos como “1-3 días hábiles” debajo de cada método de envío.</p>
-                            </div>
-                            <label class="catalog-switch">
-                                <input type="hidden" name="show_fashion_delivery_times" value="0">
-                                <input type="checkbox" name="show_fashion_delivery_times" value="1" @checked($showFashionDeliveryTimes)>
-                                <i></i>
-                            </label>
-                        </div>
-                    @endif
-
-                    @if(\App\Models\Store::supportsLocalDeliveryColumns())
-                        <div class="catalog-settings-grid catalog-settings-grid--three">
-                            <div class="catalog-field">
-                                <label for="local_delivery_area">Ciudad local</label>
-                                @if($colombiaLocations->isNotEmpty())
-                                    <select id="local_delivery_area" name="local_delivery_city_code">
-                                        <option value="">Selecciona ciudad</option>
-                                        @foreach($colombiaLocations->groupBy('department_name') as $departmentName => $locations)
-                                            <optgroup label="{{ $departmentName }}">
-                                                @foreach($locations as $location)
-                                                    <option value="{{ $location->city_code }}" @selected(old('local_delivery_city_code', $store->local_delivery_city_code) === $location->city_code || old('local_delivery_area', $store->local_delivery_area) === $location->city_name)>{{ $location->city_name }}</option>
-                                                @endforeach
-                                            </optgroup>
-                                        @endforeach
-                                    </select>
-                                @else
-                                    <input id="local_delivery_area" type="text" name="local_delivery_area" value="{{ old('local_delivery_area', $store->local_delivery_area) }}" maxlength="120" placeholder="Ej: Cali">
-                                @endif
-                            </div>
-                            <div class="catalog-field">
-                                <label for="local_delivery_cost">Precio local</label>
-                                <input id="local_delivery_cost" type="number" name="local_delivery_cost" value="{{ old('local_delivery_cost', $store->local_delivery_cost) }}" min="0" step="1" placeholder="5000">
-                            </div>
-                            <div class="catalog-field">
-                                <label for="outside_delivery_cost">Precio fuera de ciudad</label>
-                                <input id="outside_delivery_cost" type="number" name="outside_delivery_cost" value="{{ old('outside_delivery_cost', $store->outside_delivery_cost) }}" min="0" step="1" placeholder="10000">
-                            </div>
-                        </div>
-                    @endif
-
-                    <div class="catalog-field catalog-field--full" style="margin-top:18px;">
-                        <span>Métodos manuales</span>
-                        <div class="catalog-shipping-list">
-                            @for($shippingIndex = 0; $shippingIndex < 5; $shippingIndex++)
-                                @php($shippingMethod = $shippingMethods[$shippingIndex] ?? [])
-                                <div @class([
-                                    'catalog-shipping-row',
-                                    'catalog-shipping-row--delivery-time' => $store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn(),
-                                ])>
-                                    <span class="catalog-number-badge">{{ $shippingIndex + 1 }}</span>
-                                    <input type="text" name="shipping_methods[{{ $shippingIndex }}][name]" value="{{ old('shipping_methods.' . $shippingIndex . '.name', $shippingMethod['name'] ?? '') }}" maxlength="80" placeholder="{{ ['Domicilio local', 'Envío nacional', 'Recoger en tienda', 'Mensajería express', 'Contra entrega'][$shippingIndex] }}">
-                                    <input type="number" name="shipping_methods[{{ $shippingIndex }}][cost]" value="{{ old('shipping_methods.' . $shippingIndex . '.cost', $shippingMethod['cost'] ?? '') }}" min="0" step="1" placeholder="Costo">
-                                    @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
-                                        <input type="text" name="shipping_methods[{{ $shippingIndex }}][delivery_time]" value="{{ old('shipping_methods.' . $shippingIndex . '.delivery_time', $shippingMethod['delivery_time'] ?? '') }}" maxlength="80" placeholder="{{ ['1-3 días hábiles', '3-5 días hábiles', 'Disponible hoy', 'Entrega express', 'Según coordinación'][$shippingIndex] }}">
-                                    @endif
-                                </div>
-                            @endfor
-                        </div>
-                        @if($store->isFashionStore() && \App\Models\Store::supportsFashionDeliveryTimesColumn())
-                            <small>Los tiempos solo se muestran en la plantilla de ropa cuando el interruptor está activado.</small>
-                        @endif
-                    </div>
-
-                    @if(\App\Models\Store::supportsCheckoutShippingOptionsCardColumn())
-                        <div class="catalog-toggle-row" style="margin-top:18px;">
-                            <div>
-                                <strong>Mostrar opciones de envío al inicio del checkout</strong>
-                                <p class="catalog-help" style="margin:4px 0 0;">Actívalo manualmente si quieres que el cliente vea una tarjeta informativa con los métodos disponibles antes de llenar sus datos.</p>
-                            </div>
-                            <label class="catalog-switch">
-                                <input type="hidden" name="show_shipping_options_at_checkout_start" value="0">
-                                <input type="checkbox" name="show_shipping_options_at_checkout_start" value="1" @checked((bool) old('show_shipping_options_at_checkout_start', $store->show_shipping_options_at_checkout_start ?? false))>
-                                <i></i>
-                            </label>
-                        </div>
-                    @endif
-                @else
-                    <p class="catalog-help">Actualiza a Pro o Premium para ofrecer costos de envío y opciones como domicilio local, envío nacional o recogida en tienda.</p>
-                @endif
-            </section>
-        @endif
-
-        <?php
-            $supportsCheckoutFields = \App\Models\Store::supportsCheckoutFieldsColumn();
-            $checkoutFieldDefinitions = $supportsCheckoutFields ? \App\Models\Store::checkoutFieldDefinitions() : [];
-            $checkoutFieldsInput = $supportsCheckoutFields ? old('checkout_fields', $store->checkoutFields()) : [];
-        ?>
-        <?php if ($supportsCheckoutFields): ?>
-            <section class="catalog-settings-card">
-                <div class="catalog-card-head">
-                    <div class="catalog-card-title">
-                        <span class="catalog-card-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                        </span>
-                        <div>
-                            <h3>Campos del checkout</h3>
-                            <p>Reduce fricción mostrando solo los datos que necesitas para procesar pedidos.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="catalog-toggle-row" style="margin-bottom:12px;">
-                    <div>
-                        <strong>Campos fijos</strong>
-                        <p class="catalog-help" style="margin:4px 0 0;">Nombre y WhatsApp siempre se solicitan para poder confirmar el pedido. Si tienes envío local, ciudad y departamento también se exigen para calcular el costo.</p>
-                    </div>
-                </div>
-
-                <div class="catalog-checkout-grid">
-                    <?php foreach ($checkoutFieldDefinitions as $fieldKey => $fieldDefinition): ?>
-                        <?php
-                            $fieldState = $checkoutFieldsInput[$fieldKey] ?? $store->checkoutField($fieldKey);
-                            $fieldEnabled = (bool) ($fieldState['enabled'] ?? false);
-                            $fieldRequired = $fieldEnabled && (bool) ($fieldState['required'] ?? false);
-                            $forcedByShipping = $fieldKey === 'city' && $store->localDeliveryEnabled();
-                        ?>
-                        <div class="catalog-checkout-item">
-                            <div>
-                                <strong>{{ $fieldDefinition['label'] }}</strong>
-                                <small>{{ $forcedByShipping ? 'Obligatorio porque tienes envío local/fuera de ciudad activo.' : $fieldDefinition['description'] }}</small>
-                            </div>
-                            <label class="catalog-checkout-toggle">
-                                <input type="hidden" name="checkout_fields[{{ $fieldKey }}][enabled]" value="{{ $forcedByShipping ? '1' : '0' }}">
-                                <input type="checkbox" name="checkout_fields[{{ $fieldKey }}][enabled]" value="1" {{ ($fieldEnabled || $forcedByShipping) ? 'checked' : '' }} {{ $forcedByShipping ? 'disabled' : '' }}>
-                                Mostrar
-                            </label>
-                            <label class="catalog-checkout-toggle">
-                                <input type="hidden" name="checkout_fields[{{ $fieldKey }}][required]" value="{{ $forcedByShipping ? '1' : '0' }}">
-                                <input type="checkbox" name="checkout_fields[{{ $fieldKey }}][required]" value="1" {{ ($fieldRequired || $forcedByShipping) ? 'checked' : '' }} {{ $forcedByShipping ? 'disabled' : '' }}>
-                                Obligatorio
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        <?php endif; ?>
-
         @if($store->isReservationStore())
             <section class="catalog-settings-card">
                 <div class="catalog-card-head">
@@ -1949,7 +1935,6 @@
                         </span>
                         <div>
                             <h3>Reservas</h3>
-                            <p>Define días y horas disponibles.</p>
                         </div>
                     </div>
                 </div>
@@ -1974,52 +1959,6 @@
             </section>
         @endif
 
-        @if(\App\Models\Store::supportsTermsAcceptanceColumns())
-            <section class="catalog-settings-card">
-                <div class="catalog-card-head">
-                    <div class="catalog-card-title">
-                        <span class="catalog-card-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h8"></path></svg>
-                        </span>
-                        <div>
-                            <h3>Páginas legales</h3>
-                            <p>Información legal para tus clientes.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="catalog-toggle-row">
-                    <div>
-                        <strong>Aceptación en checkout</strong>
-                        <p class="catalog-help" style="margin:4px 0 0;">Solicita que el cliente acepte condiciones antes de enviar el pedido o pagar.</p>
-                    </div>
-                    <label class="catalog-switch">
-                        <input type="checkbox" name="require_terms_acceptance" value="1" @checked(old('require_terms_acceptance', $store->require_terms_acceptance))>
-                        <i></i>
-                    </label>
-                </div>
-
-                <div class="catalog-settings-grid" style="margin-top:18px;">
-                    <div class="catalog-field">
-                        <label for="terms_title">Texto del checkbox</label>
-                        <input id="terms_title" type="text" name="terms_title" value="{{ old('terms_title', $store->terms_title) }}" maxlength="120" placeholder="Acepto los términos y condiciones">
-                    </div>
-                    <div class="catalog-field">
-                        <label for="terms_version">Versión</label>
-                        <input id="terms_version" type="text" name="terms_version" value="{{ old('terms_version', $store->terms_version) }}" maxlength="80" placeholder="v1">
-                    </div>
-                    <div class="catalog-field catalog-field--full">
-                        <label for="terms_content">Términos y condiciones</label>
-                        <textarea id="terms_content" name="terms_content" maxlength="5000" placeholder="Escribe aquí tus términos y condiciones...">{{ old('terms_content', $store->terms_content) }}</textarea>
-                    </div>
-                    <div class="catalog-field catalog-field--full">
-                        <label for="terms_url">Enlace externo opcional</label>
-                        <input id="terms_url" type="url" name="terms_url" value="{{ old('terms_url', $store->terms_url) }}" maxlength="255" placeholder="https://tu-dominio.com/términos">
-                    </div>
-                </div>
-            </section>
-        @endif
-
         <section class="catalog-settings-card">
             <div class="catalog-card-head">
                 <div class="catalog-card-title">
@@ -2028,7 +1967,6 @@
                     </span>
                     <div>
                         <h3>Información del negocio</h3>
-                        <p>Textos para la página de nosotros.</p>
                     </div>
                 </div>
             </div>
@@ -2044,30 +1982,6 @@
             </div>
         </section>
 
-        @if(\App\Models\Store::supportsMetaPixelColumn())
-            <section class="catalog-settings-card">
-                <div class="catalog-card-head">
-                    <div class="catalog-card-title">
-                        <span class="catalog-card-icon" aria-hidden="true">PX</span>
-                        <div>
-                            <h3>Meta Pixel</h3>
-                            <p>Medición de visitas y eventos de la tienda.</p>
-                        </div>
-                    </div>
-                    <span class="catalog-pro-pill">Premium</span>
-                </div>
-                @if($store->allowsMetaPixel())
-                    <div class="catalog-field">
-                        <label for="meta_pixel_id">Pixel ID</label>
-                        <input id="meta_pixel_id" type="text" inputmode="numeric" pattern="[0-9]*" name="meta_pixel_id" value="{{ old('meta_pixel_id', $store->meta_pixel_id) }}" maxlength="50" placeholder="Ej: 123456789012345">
-                        <small>Pega solo el ID numerico del pixel.</small>
-                    </div>
-                @else
-                    <p class="catalog-help">Actualiza a Premium para activar Meta Pixel.</p>
-                @endif
-            </section>
-        @endif
-
         <div class="catalog-actions">
             <div class="catalog-actions-inner">
                 <span class="catalog-help">Los cambios pueden tardar unos segundos en verse en tu tienda.</span>
@@ -2078,6 +1992,21 @@
             </div>
         </div>
     </form>
+
+    <aside class="catalog-live-preview" data-live-preview aria-label="Vista previa de tu tienda">
+        <div class="catalog-live-preview-head">
+            <div>
+                <strong>Vista previa</strong>
+                <span>Así se ve tu tienda pública</span>
+            </div>
+        </div>
+        <iframe class="catalog-live-preview-frame" src="{{ $storeUrl }}" data-preview-url="{{ $storeUrl }}" title="Vista previa de la tienda" loading="lazy"></iframe>
+        <div class="catalog-live-preview-actions">
+            <button type="button" data-refresh-preview>Actualizar</button>
+            <a href="{{ $storeUrl }}" target="_blank" rel="noopener">Abrir tienda</a>
+        </div>
+    </aside>
+    </div>
 </div>
 
 @if($store->allowsAiContent())
@@ -2086,6 +2015,97 @@
 
 <script>
     (() => {
+        const workspace = document.querySelector('[data-settings-workspace]');
+        const previewFrame = document.querySelector('[data-live-preview] iframe');
+        const previewTabs = document.querySelectorAll('[data-preview-mode]');
+        const previewUrl = previewFrame?.dataset.previewUrl || '';
+        const settingsForm = document.querySelector('.catalog-settings-form');
+        const fontCssByValue = {
+            system: 'Arial, sans-serif',
+            serif: 'Georgia, "Times New Roman", serif',
+            rounded: '"Trebuchet MS", Arial, sans-serif',
+            mono: '"Courier New", monospace',
+        };
+        const postPreviewUpdate = () => {
+            if (!previewFrame?.contentWindow) {
+                return;
+            }
+
+            const valueFor = (selector, fallback = '') => document.querySelector(selector)?.value || fallback;
+            const fontValue = valueFor('#font_family', 'system');
+
+            previewFrame.contentWindow.postMessage({
+                type: 'vendly-live-preview',
+                brandColor: valueFor('[data-theme-color-input="brand"]', '#111111'),
+                backgroundColor: valueFor('[data-theme-color-input="background"]', '#ffffff'),
+                textColor: valueFor('[data-theme-color-input="text"]', '#111111'),
+                fontFamily: fontCssByValue[fontValue] || fontCssByValue.system,
+                columns: valueFor('#responsive_product_columns', '2'),
+                storeName: valueFor('[name="name"]', ''),
+            }, '*');
+        };
+        const refreshPreview = () => {
+            if (!previewFrame || !previewUrl) {
+                return;
+            }
+
+            previewFrame.src = `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}preview=${Date.now()}`;
+        };
+
+        const appearanceModals = document.querySelectorAll('[data-appearance-modal]');
+        const closeAppearanceModals = () => {
+            appearanceModals.forEach((modal) => {
+                modal.hidden = true;
+            });
+            document.querySelectorAll('[data-appearance-modal-trigger]').forEach((trigger) => {
+                trigger.setAttribute('aria-expanded', 'false');
+            });
+        };
+
+        document.querySelectorAll('[data-appearance-modal-trigger]').forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+                closeAppearanceModals();
+                document.querySelector(`[data-appearance-modal="${trigger.dataset.appearanceModalTrigger}"]`)?.removeAttribute('hidden');
+                trigger.setAttribute('aria-expanded', 'true');
+            });
+        });
+
+        document.querySelectorAll('[data-appearance-modal-close]').forEach((button) => {
+            button.addEventListener('click', closeAppearanceModals);
+        });
+
+        appearanceModals.forEach((modal) => {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeAppearanceModals();
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeAppearanceModals();
+            }
+        });
+
+        previewFrame?.addEventListener('load', postPreviewUpdate);
+        settingsForm?.addEventListener('input', postPreviewUpdate);
+        settingsForm?.addEventListener('change', postPreviewUpdate);
+
+        previewTabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const previewMode = tab.dataset.previewMode === 'preview';
+                workspace?.classList.toggle('is-preview-mode', previewMode);
+                previewTabs.forEach((item) => item.classList.toggle('is-active', item === tab));
+            });
+        });
+
+        document.querySelector('[data-refresh-preview]')?.addEventListener('click', () => {
+            refreshPreview();
+        });
+
+        refreshPreview();
+
         document.querySelectorAll('[data-copy-store-url]').forEach((button) => {
             button.addEventListener('click', async () => {
                 try {
@@ -2114,7 +2134,8 @@
         fontButtons.forEach((button) => {
             button.addEventListener('click', () => {
                 setSelectedFont(button.dataset.fontValue);
-                    syncSelectedFashionPreset();
+                syncSelectedFashionPreset();
+                closeAppearanceModals();
             });
         });
 
@@ -2138,6 +2159,26 @@
             const fashionPresetButtons = document.querySelectorAll('[data-fashion-preset-brand]');
 
 	        const normalizeColor = (value) => String(value || '').trim().toLowerCase();
+	        const syncDerivedColors = () => {
+	            const brand = normalizeColor(brandInput?.value || '#111111');
+	            const background = normalizeColor(backgroundInput?.value || '#ffffff');
+	            const text = normalizeColor(textInput?.value || '#111111');
+	            const triggerSwatches = document.querySelectorAll('[data-appearance-modal-trigger="palette"] .catalog-palette-swatch');
+
+	            [brand, background, text, brand].forEach((color, index) => {
+	                if (triggerSwatches[index]) {
+	                    triggerSwatches[index].style.background = color;
+	                }
+	            });
+
+	            const headerSwatch = document.querySelector('[data-derived-color="header"]');
+	            const secondarySwatch = document.querySelector('[data-derived-color="secondary"]');
+	            const textColorPicker = document.querySelector('.catalog-role-grid input[type="color"][disabled]');
+
+	            if (headerSwatch) headerSwatch.style.background = brand;
+	            if (secondarySwatch) secondarySwatch.style.background = background;
+	            if (textColorPicker) textColorPicker.value = text;
+	        };
 	        const syncSelectedPalette = () => {
 	            paletteButtons.forEach((button) => {
 	                const isSelected = normalizeColor(button.dataset.paletteBrand) === normalizeColor(brandInput?.value)
@@ -2146,6 +2187,13 @@
 	                button.classList.toggle('is-selected', isSelected);
 	            });
 	        };
+        const syncPaletteLabel = () => {
+            const selectedButton = Array.from(paletteButtons).find((button) => button.classList.contains('is-selected'));
+            const label = document.querySelector('[data-selected-palette-name]');
+            if (label) {
+                label.textContent = selectedButton?.dataset.paletteName || 'Personalizada';
+            }
+        };
             const syncSelectedFashionPreset = () => {
                 fashionPresetButtons.forEach((button) => {
                     const isSelected = normalizeColor(button.dataset.fashionPresetBrand) === normalizeColor(brandInput?.value)
@@ -2163,7 +2211,10 @@
 	                if (textInput) textInput.value = button.dataset.paletteText;
 
 	                syncSelectedPalette();
+	                syncPaletteLabel();
                     syncSelectedFashionPreset();
+	                syncDerivedColors();
+                closeAppearanceModals();
 	            });
 	        });
 
@@ -2175,21 +2226,33 @@
                     setSelectedFont(button.dataset.fashionPresetFont);
 
                     syncSelectedPalette();
+                    syncPaletteLabel();
                     syncSelectedFashionPreset();
+	                syncDerivedColors();
                 });
             });
 
 	        brandInput?.addEventListener('input', () => {
                 syncSelectedPalette();
+                syncPaletteLabel();
                 syncSelectedFashionPreset();
+	                syncDerivedColors();
             });
 	        backgroundInput?.addEventListener('input', () => {
                 syncSelectedPalette();
+                syncPaletteLabel();
                 syncSelectedFashionPreset();
+	                syncDerivedColors();
             });
-            fontSelect?.addEventListener('change', syncSelectedFashionPreset);
+	        textInput?.addEventListener('input', syncDerivedColors);
+	        fontSelect?.addEventListener('change', () => {
+                syncSelectedFashionPreset();
+                syncDerivedColors();
+            });
 	        syncSelectedPalette();
+        syncPaletteLabel();
             syncSelectedFashionPreset();
+	        syncDerivedColors();
 
 	        document.querySelectorAll('[data-reset-theme]').forEach((button) => {
 	            button.addEventListener('click', () => {
@@ -2198,7 +2261,9 @@
 	                if (textInput) textInput.value = '#111111';
                     setSelectedFont('system');
 	                syncSelectedPalette();
+                syncPaletteLabel();
                     syncSelectedFashionPreset();
+	                syncDerivedColors();
 	            });
 	        });
 

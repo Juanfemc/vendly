@@ -132,8 +132,11 @@
 
     <main>
         @include('landing.partials.hero', ['hasPortfolio' => $hasPortfolio])
+        @include('landing.partials.process', [
+            'steps' => $steps,
+            'portfolioStores' => $portfolioStores,
+        ])
         @include('landing.partials.portfolio', ['portfolioStores' => $portfolioStores, 'proofStores' => $proofStores, 'hasPortfolio' => $hasPortfolio])
-        @include('landing.partials.process', ['steps' => $steps])
         @include('landing.partials.features', ['features' => $features])
         @include('landing.partials.plans', ['plans' => $plans])
         @includeWhen($hasTestimonials, 'landing.partials.testimonials', ['testimonials' => $testimonials])
@@ -141,6 +144,7 @@
     </main>
 
     @include('landing.partials.footer')
+    @include('landing.partials.mobile-cta')
     @include('landing.partials.whatsapp')
     <script src="{{ asset('js/landing.js') }}{{ $landingJsVersion ? '?v=' . $landingJsVersion : '' }}" defer></script>
 </body>

@@ -56,142 +56,125 @@
     })();
 
     (() => {
-        const preview = document.querySelector('[data-product-preview]');
+        const modal = document.querySelector('[data-category-create-modal]');
+        const openButton = document.querySelector('[data-open-category-create]');
+        const closeButtons = document.querySelectorAll('[data-close-category-create]');
+        const nameInput = document.querySelector('[data-category-create-name]');
+        const storeSelect = document.querySelector('#store_id');
+        const storeInput = document.querySelector('[data-category-create-store]');
+        const submitButton = document.querySelector('[data-submit-category-create]');
+        const select = document.querySelector('#category_select');
+        const feedback = document.querySelector('[data-category-create-feedback]');
 
-        if (!preview) {
+        if (!modal || !openButton || !nameInput || !submitButton || !select) {
             return;
         }
 
-        const fields = {
-            name: document.querySelector('[data-product-preview-field="name"]'),
-            category: document.querySelector('[data-product-preview-field="category"]'),
-            price: document.querySelector('[data-product-preview-field="price"]'),
-            priceBefore: document.querySelector('[data-product-preview-field="priceBefore"]'),
-            stock: document.querySelector('[data-product-preview-field="stock"]'),
-            soldout: document.querySelector('[data-product-preview-field="soldout"]'),
-            offer: document.querySelector('[data-product-preview-field="offer"]'),
-            badges: document.querySelector('[data-product-preview-field="badges"]'),
-            image: document.querySelector('[data-product-preview-field="image"]'),
+        const setFeedback = (message = '', isError = true) => {
+            feedback.textContent = message;
+            feedback.hidden = !message;
+            feedback.style.color = isError ? '#b42318' : '#007c68';
         };
 
-        const nodes = {
-            name: preview.querySelector('[data-product-preview-name]'),
-            category: preview.querySelector('[data-product-preview-category]'),
-            price: preview.querySelector('[data-product-preview-price]'),
-            priceBefore: preview.querySelector('[data-product-preview-price-before]'),
-            stock: preview.querySelector('[data-product-preview-stock]'),
-            badges: preview.querySelector('[data-product-preview-badges]'),
-            image: preview.querySelector('[data-product-preview-image]'),
-            placeholder: preview.querySelector('[data-product-preview-placeholder]'),
+        const closeModal = () => {
+            modal.hidden = true;
+            setFeedback();
+            submitButton.disabled = false;
+            submitButton.textContent = 'Crear categoría';
         };
 
-        const currencyCode = @json($formStore?->currencyCode() ?? 'COP');
-        const currencyLocale = currencyCode === 'COP' ? 'es-CO' : (currencyCode === 'EUR' ? 'es-ES' : 'en-US');
-        const money = new Intl.NumberFormat(currencyLocale, {
-            style: 'currency',
-            currency: currencyCode,
-            maximumFractionDigits: 0,
-            minimumFractionDigits: currencyCode === 'COP' ? 0 : 2,
-        });
+        const openModal = () => {
+            if (storeInput && storeSelect) {
+                storeInput.value = storeSelect.value;
+            }
 
-        const formatMoney = (value) => {
-            const number = Number.parseFloat(String(value || '').replace(',', '.'));
-            return money.format(Number.isFinite(number) ? number : 0);
-        };
+            modal.hidden = false;
 
-        const selectedCategoryText = () => {
-            const select = fields.category;
-            const option = select?.selectedOptions?.[0];
-            const text = option?.textContent?.trim() || '';
-
-            return text !== '' && option?.value ? text : 'Categoria';
-        };
-
-        const syncBadges = () => {
-            if (!nodes.badges) {
+            if (storeSelect && !storeSelect.value) {
+                setFeedback('Selecciona primero la tienda del producto.');
+                storeSelect.focus();
                 return;
             }
 
-            const items = [];
-
-            if (fields.offer?.checked) {
-                items.push('Oferta');
-            }
-
-            String(fields.badges?.value || '')
-                .split(',')
-                .map((badge) => badge.trim())
-                .filter(Boolean)
-                .slice(0, 3)
-                .forEach((badge) => items.push(badge));
-
-            nodes.badges.hidden = items.length === 0;
-            nodes.badges.replaceChildren(...items.map((badge) => {
-                const item = document.createElement('span');
-                item.textContent = badge;
-
-                return item;
-            }));
+            nameInput.focus();
         };
 
-        const syncPreview = () => {
-            const productName = fields.name?.value.trim() || 'Nombre del producto';
-            const soldOut = Boolean(fields.soldout?.checked);
-            const stock = fields.stock?.value;
-
-            if (nodes.name) {
-                nodes.name.textContent = productName;
+        openButton.addEventListener('click', openModal);
+        closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
             }
-
-            if (nodes.category) {
-                nodes.category.textContent = selectedCategoryText();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modal.hidden) {
+                closeModal();
             }
-
-            if (nodes.price) {
-                nodes.price.textContent = formatMoney(fields.price?.value);
-            }
-
-            if (nodes.priceBefore) {
-                const showBefore = Boolean(fields.offer?.checked && fields.priceBefore?.value);
-                nodes.priceBefore.hidden = !showBefore;
-                nodes.priceBefore.textContent = showBefore ? formatMoney(fields.priceBefore.value) : '';
-            }
-
-            if (nodes.stock) {
-                nodes.stock.textContent = soldOut
-                    ? 'Agotado'
-                    : (stock !== undefined && stock !== '' ? `${stock} disponibles` : 'Disponible');
-                nodes.stock.classList.toggle('is-sold-out', soldOut);
-            }
-
-            if (nodes.placeholder) {
-                nodes.placeholder.textContent = productName.charAt(0).toUpperCase() || 'P';
-            }
-
-            syncBadges();
-        };
-
-        Object.values(fields).forEach((field) => {
-            field?.addEventListener('input', syncPreview);
-            field?.addEventListener('change', syncPreview);
         });
 
-        fields.image?.addEventListener('change', () => {
-            const file = fields.image.files?.[0];
+        storeSelect?.addEventListener('change', () => {
+            if (storeInput) {
+                storeInput.value = storeSelect.value;
+            }
+        });
 
-            if (!file || !nodes.image) {
-                syncPreview();
+        const createCategory = async () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                setFeedback('Escribe un nombre para la categoría.');
+                nameInput.focus();
                 return;
             }
 
-            const imageUrl = URL.createObjectURL(file);
-            nodes.image.src = imageUrl;
-            nodes.image.alt = fields.name?.value || 'Producto';
-            nodes.image.hidden = false;
-            nodes.placeholder?.setAttribute('hidden', 'hidden');
-        });
+            const token = document.querySelector('input[name="_token"]')?.value;
+            const payload = new FormData();
+            payload.append('_token', token || '');
+            payload.append('name', name);
+            payload.append('is_active', '1');
 
-        syncPreview();
+            if (storeInput?.value) {
+                payload.append('store_id', storeInput.value);
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creando...';
+            setFeedback();
+
+            try {
+                const response = await fetch(@json(route('admin.categories.store')), {
+                    method: 'POST',
+                    body: payload,
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    const validationMessage = Object.values(result.errors || {}).flat()[0];
+                    throw new Error(validationMessage || result.message || 'No se pudo crear la categoría.');
+                }
+
+                const option = new Option(result.category.label, result.category.value, true, true);
+                select.append(option);
+                select.value = result.category.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                closeModal();
+            } catch (error) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Crear categoría';
+                setFeedback(error.message || 'No se pudo crear la categoría.');
+            }
+        };
+
+        submitButton.addEventListener('click', createCategory);
+        nameInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                createCategory();
+            }
+        });
     })();
 </script>
 

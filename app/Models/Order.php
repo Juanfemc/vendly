@@ -16,6 +16,7 @@ class Order extends Model
 
     public const PAYMENT_STATUS_NOT_REQUIRED = 'not_required';
     public const PAYMENT_STATUS_PENDING = 'pending';
+    public const PAYMENT_STATUS_PARTIAL = 'partial';
     public const PAYMENT_STATUS_APPROVED = 'approved';
     public const PAYMENT_STATUS_REJECTED = 'rejected';
     public const PAYMENT_STATUS_CANCELLED = 'cancelled';
@@ -43,6 +44,7 @@ class Order extends Model
     public const PAYMENT_STATUS_LABELS = [
         self::PAYMENT_STATUS_NOT_REQUIRED => 'No requerido',
         self::PAYMENT_STATUS_PENDING => 'Pendiente',
+        self::PAYMENT_STATUS_PARTIAL => 'Pago parcial',
         self::PAYMENT_STATUS_APPROVED => 'Pagado',
         self::PAYMENT_STATUS_REJECTED => 'Rechazado',
         self::PAYMENT_STATUS_CANCELLED => 'Cancelado',
@@ -200,6 +202,7 @@ class Order extends Model
             self::PAYMENT_STATUS_REJECTED,
             self::PAYMENT_STATUS_CANCELLED => 'resource-badge--danger',
             self::PAYMENT_STATUS_PENDING => 'resource-badge--warning',
+            self::PAYMENT_STATUS_PARTIAL => 'resource-badge--warning',
             default => '',
         };
     }

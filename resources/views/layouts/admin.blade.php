@@ -196,6 +196,56 @@
             box-shadow: 0 10px 26px rgba(8, 20, 47, .045);
         }
 
+        .admin-support-fab {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 60;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            min-height: 46px;
+            padding: 0 16px;
+            border: 1px solid #e85d00;
+            border-radius: 999px;
+            background: #ff6a00;
+            color: #fff;
+            box-shadow: 0 12px 26px rgba(255, 106, 0, .28);
+            font-size: 13px;
+            font-weight: 900;
+            text-decoration: none;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .admin-support-fab:hover {
+            background: #e85d00;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(255, 106, 0, .34);
+        }
+
+        .admin-support-fab svg,
+        .mobile-support-link svg {
+            width: 19px;
+            height: 19px;
+            flex: 0 0 auto;
+        }
+
+        .mobile-support-link {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #fed7aa;
+            border-radius: 12px;
+            background: #fff7ed;
+            color: #e85d00;
+            text-decoration: none;
+        }
+
+        .mobile-support-link:hover { color: #e85d00; background: #ffeddc; }
+
         .notification-toggle,
         .notification-dropdown,
         .card,
@@ -204,9 +254,7 @@
         .panel-empty,
         .dashboard-welcome-card,
         .dashboard-progress-card,
-        .dashboard-products-panel,
         .product-editor-card,
-        .product-editor-preview-panel,
         .products-toolbar,
         .products-summary-card,
         .products-grid-card,
@@ -369,7 +417,6 @@
         .products-search-icon,
         .categories-search-icon,
         .dashboard-kicker,
-        .product-editor-preview-panel__head span,
         .payments-panel__eyebrow,
         .catalog-settings-back,
         .catalog-link-action,
@@ -396,8 +443,7 @@
 
         .catalog-plan-pill,
         .catalog-pro-pill,
-        .payment-status,
-        .product-editor-preview-badges span {
+        .payment-status {
             background: var(--admin-orange-soft) !important;
             color: var(--admin-orange) !important;
             border: 1px solid rgba(255, 106, 0, .24) !important;
@@ -3337,6 +3383,18 @@
             font-size: 13px;
         }
 
+        .orders-managed-state,
+        .orders-payment-note {
+            color: var(--admin-muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .orders-managed-state {
+            padding: 4px 0;
+            font-weight: 700;
+        }
+
         .vendly-order-detail-row td {
             padding-top: 0;
             background: #ffffff;
@@ -3416,6 +3474,61 @@
             font-weight: 700;
         }
 
+        .orders-payment-filter {
+            position: relative;
+            min-width: 294px;
+        }
+
+        .orders-payment-filter summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 14px;
+            border: 1px solid var(--admin-border);
+            border-radius: 12px;
+            background: #fff;
+            color: var(--admin-text);
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .orders-payment-filter summary::-webkit-details-marker { display: none; }
+        .orders-payment-filter summary > span:first-child { color: var(--admin-muted); }
+        .orders-payment-filter summary strong { font-weight: 700; }
+        .orders-payment-filter__chevron { margin-left: auto; color: #6b9d99; font-size: 20px; line-height: 1; transform: rotate(180deg); }
+        .orders-payment-filter[open] .orders-payment-filter__chevron { transform: none; }
+
+        .orders-payment-filter__menu {
+            position: absolute;
+            z-index: 20;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 0 12px 12px;
+            background: #fff;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, .12);
+        }
+
+        .orders-payment-option {
+            display: grid;
+            grid-template-columns: 18px minmax(0, 1fr);
+            gap: 8px;
+            padding: 13px 16px;
+            color: var(--admin-text);
+            text-decoration: none;
+        }
+
+        .orders-payment-option:hover,
+        .orders-payment-option.is-selected { background: #e9fbf4; }
+        .orders-payment-option__check { color: #00a878; font-weight: 800; opacity: 0; }
+        .orders-payment-option.is-selected .orders-payment-option__check { opacity: 1; }
+        .orders-payment-option strong,
+        .orders-payment-option small { display: block; }
+        .orders-payment-option small { margin-top: 4px; color: #4f8b8b; font-size: 12px; line-height: 1.35; }
+
         @media (max-width: 760px) {
             .vendly-data-table {
                 min-width: 720px;
@@ -3443,9 +3556,12 @@
             .products-actions .products-action,
             .products-toolbar-actions .btn,
             .products-toolbar-actions .btn-secondary,
-            .order-filter-panel select {
+            .order-filter-panel select,
+            .orders-payment-filter {
                 width: 100%;
             }
+
+            .orders-payment-filter__menu { position: static; margin-top: 8px; }
         }
         /* Sidebar-only redesign based on the Vendly Suite reference. */
         .container {
@@ -4017,6 +4133,8 @@
 </head>
 
 @php
+    $adminSupportPhone = preg_replace('/\D+/', '', (string) config('services.support.whatsapp', '573170613664')) ?: '573170613664';
+    $adminSupportUrl = 'https://wa.me/' . $adminSupportPhone . '?text=' . rawurlencode('Hola, necesito ayuda con mi tienda en Vendly.');
     $adminBodyClasses = collect([
         request()->is('admin/products/create') || request()->is('admin/products/*/edit') ? 'is-product-editor-route' : null,
     ])->filter()->implode(' ');
@@ -4026,8 +4144,17 @@
     <div class="mobile-topbar">
         <div class="mobile-brand">
             <img src="{{ asset('images/vendly-logo.svg') }}" alt="Vendly">
-            <span>{{ auth()->user()->isAdmin() ? 'Vendly Admin' : 'Vendly Store' }}</span>
+            <span>{{ auth()->user()->isAdmin() ? 'Panel admin' : 'Mi tienda' }}</span>
         </div>
+        <a class="mobile-support-link" href="{{ $adminSupportUrl }}" target="_blank" rel="noopener noreferrer" aria-label="Contactar soporte" title="Contactar soporte">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.5 9.5 0 0 1-4.1-.9L3 21l1.8-4.3A8.3 8.3 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z"></path>
+                <path d="M8 12h.01M12 12h.01M16 12h.01"></path>
+            </svg>
+        </a>
+        <a class="mobile-profile-link" href="/profile" aria-label="Abrir perfil">
+            {{ strtoupper(mb_substr((string) auth()->user()->name, 0, 1)) }}
+        </a>
         <button type="button" class="mobile-sidebar-toggle" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar" aria-label="Abrir menú">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                 <path d="M4 6h16"></path>
@@ -4036,6 +4163,14 @@
             </svg>
         </button>
     </div>
+
+    <a class="admin-support-fab" href="{{ $adminSupportUrl }}" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.5 9.5 0 0 1-4.1-.9L3 21l1.8-4.3A8.3 8.3 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z"></path>
+            <path d="M8 12h.01M12 12h.01M16 12h.01"></path>
+        </svg>
+        <span>Soporte</span>
+    </a>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
@@ -4126,11 +4261,333 @@
             @endif
 
             @yield('content')
+
+            <style>
+                /* Shared Vendly workspace layer: keeps every existing admin view visually related. */
+                .main > .header,
+                .main > .products-console > .products-console-head,
+                .main > .categories-console > .categories-console-head {
+                    margin-bottom: 22px;
+                }
+
+                .main .header h1,
+                .main .header h2,
+                .main .products-console-head h1,
+                .main .categories-console-head h1 {
+                    color: #07142f;
+                    letter-spacing: -.025em;
+                }
+
+                .main .header p,
+                .main .products-console-head p,
+                .main .categories-console-head p,
+                .main .vendly-page-subtitle {
+                    color: #61708a;
+                }
+
+                .main .list-card,
+                .main .card,
+                .main .products-toolbar,
+                .main .products-owner-panel,
+                .main .category-create-card,
+                .main .catalog-card,
+                .main .payment-method,
+                .main .onboarding-card,
+                .main .onboarding-overview-card,
+                .main .settings-card {
+                    border-color: #dfe7ef !important;
+                    border-radius: 14px !important;
+                    background: #ffffff !important;
+                    box-shadow: 0 12px 28px rgba(7, 20, 47, .055) !important;
+                }
+
+                .main .btn:not(.btn-secondary):not(.btn-danger),
+                .main button.btn:not(.btn-secondary):not(.btn-danger),
+                .main a.btn:not(.btn-secondary):not(.btn-danger),
+                .main .products-action:not(.products-action--secondary),
+                .main .category-main-action {
+                    border-color: #ff6b00 !important;
+                    border-radius: 10px !important;
+                    background: #ff6b00 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 8px 18px rgba(255, 107, 0, .18) !important;
+                }
+
+                .main .btn:not(.btn-secondary):not(.btn-danger):hover,
+                .main .products-action:not(.products-action--secondary):hover,
+                .main .category-main-action:hover {
+                    border-color: #e85d00 !important;
+                    background: #e85d00 !important;
+                }
+
+                .main .btn-secondary,
+                .main a.btn-secondary,
+                .main .products-action--secondary {
+                    border-color: #d5deea !important;
+                    background: #ffffff !important;
+                    color: #07142f !important;
+                    box-shadow: none !important;
+                }
+
+                .main input:not([type="checkbox"]):not([type="radio"]),
+                .main select,
+                .main textarea {
+                    border-color: #d5deea;
+                    border-radius: 10px;
+                    color: #07142f;
+                    background: #ffffff;
+                }
+
+                .main input:not([type="checkbox"]):not([type="radio"]):focus,
+                .main select:focus,
+                .main textarea:focus {
+                    border-color: #ff6b00;
+                    box-shadow: 0 0 0 3px rgba(255, 107, 0, .14);
+                    outline: none;
+                }
+
+                .main .vendly-table-card,
+                .main .orders-table-card,
+                .main .table-card {
+                    overflow: hidden;
+                    border: 1px solid #dfe7ef;
+                    border-radius: 14px;
+                    background: #ffffff;
+                    box-shadow: 0 12px 28px rgba(7, 20, 47, .055);
+                }
+
+                .main .vendly-data-table thead th,
+                .main table thead th {
+                    background: #f7f9fc;
+                    color: #61708a;
+                    font-size: 11px;
+                    letter-spacing: .06em;
+                    text-transform: uppercase;
+                }
+
+                .main .vendly-data-table tbody tr:hover,
+                .main table tbody tr:hover {
+                    background: #fffaf5;
+                }
+
+                .main .products-tabs,
+                .main .catalog-tabs {
+                    border-color: #dfe7ef;
+                    background: #f7f9fc;
+                    border-radius: 12px;
+                }
+
+                .main .products-tab.is-active,
+                .main .catalog-tab.is-active {
+                    color: #ff6b00;
+                    box-shadow: inset 0 0 0 1px #ffe0cc, 0 6px 14px rgba(7, 20, 47, .06);
+                }
+
+                .main .flash.success {
+                    border-color: #b7ead2;
+                    background: #edfbf4;
+                    color: #087443;
+                }
+
+                .main .flash.error,
+                .main .dashboard-notification--warning {
+                    border-color: #fed7aa;
+                    background: #fff7ed;
+                    color: #9a4b08;
+                }
+
+                .mobile-topbar {
+                    align-items: center;
+                    border-bottom: 1px solid #dfe7ef;
+                    background: #ffffff;
+                }
+
+                .mobile-brand {
+                    color: #07142f;
+                }
+
+                .mobile-brand img {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 999px;
+                    background: #07142f;
+                }
+
+                .mobile-profile-link {
+                    display: inline-grid;
+                    place-items: center;
+                    width: 38px;
+                    height: 38px;
+                    margin-left: auto;
+                    margin-right: 8px;
+                    border: 1px solid #ffd8bf;
+                    border-radius: 999px;
+                    background: #fff4ec;
+                    color: #ff6b00;
+                    font-size: 14px;
+                    font-weight: 900;
+                    text-decoration: none;
+                }
+
+                @media (max-width: 900px) {
+                    .admin-mobile-bottom-nav--store {
+                        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+                    }
+
+                    .admin-mobile-bottom-nav--admin {
+                        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                    }
+
+                    .mobile-brand {
+                        min-width: 0;
+                    }
+
+                    .mobile-brand span {
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+
+                    .onboarding-actions {
+                        position: static !important;
+                        flex-direction: column;
+                        align-items: stretch;
+                        margin: 8px 0 0;
+                        padding: 12px 0 0;
+                        border-top: 1px solid #dfe7ef;
+                        background: #ffffff;
+                    }
+
+                    .onboarding-actions__group {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                    }
+
+                    .onboarding-actions .btn,
+                    .onboarding-actions__group .btn {
+                        width: 100%;
+                    }
+
+                    .admin-mobile-bottom-nav {
+                        border: 1px solid #dfe7ef;
+                        border-radius: 18px;
+                        background: rgba(255, 255, 255, .97);
+                        box-shadow: 0 14px 32px rgba(7, 20, 47, .14);
+                        backdrop-filter: blur(16px);
+                    }
+
+                    .admin-mobile-bottom-nav a,
+                    .admin-mobile-bottom-nav button {
+                        color: #74829a;
+                    }
+
+                    .admin-mobile-bottom-nav a.is-active,
+                    .admin-mobile-bottom-nav button.is-active,
+                    .admin-mobile-bottom-nav a:hover,
+                    .admin-mobile-bottom-nav button:hover {
+                        background: #fff4ec;
+                        color: #ff6b00;
+                    }
+
+                    .admin-mobile-bottom-nav svg {
+                        color: currentColor;
+                    }
+
+                    .admin-mobile-bottom-nav--store a:nth-child(3) {
+                        position: relative;
+                        margin-top: -22px;
+                        min-height: 68px;
+                        border: 5px solid #ffffff;
+                        border-radius: 999px;
+                        background: #ff6b00;
+                        color: #ffffff;
+                        box-shadow: 0 8px 18px rgba(255, 107, 0, .28);
+                    }
+
+                    .admin-mobile-bottom-nav--store a:nth-child(3):hover,
+                    .admin-mobile-bottom-nav--store a:nth-child(3).is-active {
+                        background: #e85d00;
+                        color: #ffffff;
+                    }
+                }
+
+                @media (max-width: 900px) {
+                    .main > .header,
+                    .main > .products-console > .products-console-head,
+                    .main > .categories-console > .categories-console-head {
+                        margin-bottom: 16px;
+                    }
+
+                    .main .list-card,
+                    .main .card,
+                    .main .products-toolbar,
+                    .main .products-owner-panel,
+                    .main .category-create-card,
+                    .main .catalog-card,
+                    .main .payment-method,
+                    .main .onboarding-card,
+                    .main .onboarding-overview-card,
+                    .main .settings-card {
+                        border-radius: 12px !important;
+                    }
+
+                    .main .products-console-head,
+                    .main .categories-console-head,
+                    .main .products-actions,
+                    .main .products-toolbar-actions,
+                    .main .catalog-card-head,
+                    .main .payment-method__main {
+                        min-width: 0;
+                        max-width: 100%;
+                    }
+
+                    .main .products-console-title h1,
+                    .main .categories-console-title h1,
+                    .main .header h2 {
+                        overflow-wrap: anywhere;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .main .products-grid,
+                    .main .products-admin-store-grid {
+                        grid-template-columns: minmax(0, 1fr) !important;
+                    }
+
+                    .main .vendly-home-metrics {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+
+                    .main .vendly-home-metric:nth-child(3n) {
+                        border-right: 1px solid #dfe7ef;
+                    }
+
+                    .main .vendly-home-metric:nth-child(2n) {
+                        border-right: 0;
+                    }
+
+                    .main .admin-topbar-store,
+                    .main .notification-toggle {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+
+                @media (max-width: 900px) {
+                    .admin-support-fab { display: none; }
+                    .mobile-support-link { display: inline-flex; }
+                }
+            </style>
         </main>
     </div>
 
     @php
         $mobileNavUser = auth()->user();
+        $mobileNavStore = $mobileNavUser?->store ?? $mobileNavUser?->stores()->first();
+        $mobileNavStoreUrl = $mobileNavStore?->slug
+            ? app(\App\Services\StorefrontUrlService::class)->publicHome($mobileNavStore)
+            : null;
         $mobileNavIsActive = fn (...$patterns) => collect($patterns)->contains(fn ($pattern) => request()->is($pattern));
         $mobileNavClass = fn (...$patterns) => $mobileNavIsActive(...$patterns) ? 'is-active' : '';
         $mobileNavIcon = function (string $name): string {
@@ -4157,7 +4614,7 @@
         };
     @endphp
 
-    <nav class="admin-mobile-bottom-nav" aria-label="Navegación rápida del panel">
+    <nav class="admin-mobile-bottom-nav {{ $mobileNavUser?->isAdmin() ? 'admin-mobile-bottom-nav--admin' : 'admin-mobile-bottom-nav--store' }}" aria-label="Navegación rápida del panel">
         <a href="/dashboard" class="{{ $mobileNavClass('dashboard') }}">
             {!! $mobileNavIcon('home') !!}
             <span>Inicio</span>
@@ -4175,12 +4632,19 @@
             </a>
         @endif
 
+        @if(!$mobileNavUser?->isAdmin())
+            <a href="{{ $mobileNavStoreUrl ?: '/dashboard' }}" class="{{ $mobileNavStoreUrl ? '' : 'is-disabled' }}" @if($mobileNavStoreUrl) target="_blank" rel="noopener noreferrer" @endif>
+                {!! $mobileNavIcon('store') !!}
+                <span>Mi tienda</span>
+            </a>
+        @endif
+
         <a href="/admin/products" class="{{ $mobileNavClass('admin/products*') }}">
             {!! $mobileNavIcon('box') !!}
             <span>Productos</span>
         </a>
 
-        <button type="button" class="{{ $mobileNavClass('admin/onboarding', 'admin/store-settings', 'admin/categories*', 'admin/coupons*', 'admin/payments*', 'admin/templates*', 'admin/notifications*', 'admin/whatsapp*', 'profile') }}" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar">
+        <button type="button" class="{{ $mobileNavClass('admin/onboarding', 'admin/store-settings', 'admin/metrics', 'admin/categories*', 'admin/coupons*', 'admin/payments*', 'admin/templates*', 'admin/notifications*', 'admin/whatsapp*', 'profile') }}" data-sidebar-toggle aria-expanded="false" aria-controls="adminSidebar">
             {!! $mobileNavIcon('more') !!}
             <span>Más</span>
         </button>
@@ -4308,6 +4772,7 @@
             const openModal = (form) => {
                 pendingForm = form;
                 message.textContent = form.dataset.confirmMessage || 'Esta acción no se puede deshacer.';
+                submitButton.textContent = form.dataset.confirmSubmitLabel || 'Eliminar';
                 modal.hidden = false;
                 document.body.classList.add('delete-confirm-open');
                 submitButton.focus();

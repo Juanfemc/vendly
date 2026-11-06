@@ -462,6 +462,11 @@ Artisan::command('followups:send {--limit=50 : Cantidad maxima de seguimientos a
             && $user->isActive()
             && $store->isTrialing()
             && $store->whatsappNumber() !== '';
+        $setupFollowupIsComplete = in_array($followup->type, [
+            CustomerFollowup::TYPE_TWO_HOURS_SETUP,
+            CustomerFollowup::TYPE_DAY_1_SETUP,
+        ], true) && $store
+            && ($store->onboarding_completed_at || $store->onboardingProgress() >= 100);
 
         if ($message && in_array($message->status, [
             WhatsAppMessage::STATUS_SENT,
@@ -486,7 +491,8 @@ Artisan::command('followups:send {--limit=50 : Cantidad maxima de seguimientos a
             continue;
         }
 
-        if (($isSubscriptionReminder && ! $subscriptionReminderIsEligible)
+        if ($setupFollowupIsComplete
+            || ($isSubscriptionReminder && ! $subscriptionReminderIsEligible)
             || (! $isSubscriptionReminder && ! $trialFollowupIsEligible)) {
             if ($message && in_array($message->status, [
                 WhatsAppMessage::STATUS_QUEUED,

@@ -855,7 +855,6 @@
                 <article class="products-store-card">
                     <div>
                         <h3>{{ $storeOption->name }}</h3>
-                        <p>Productos registrados en esta tienda.</p>
                     </div>
                     <span class="products-store-count">{{ $storeOption->products_count }} producto(s)</span>
                     <a href="{{ route('admin.stores.products.index', $storeOption) }}" class="btn">Ver productos</a>
@@ -869,7 +868,6 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                 </span>
                 <h3>No encontramos tiendas o productos</h3>
-                <p>Prueba con otro nombre de tienda o producto.</p>
                 <a href="{{ url()->current() }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
             </div>
         @endif
@@ -884,7 +882,6 @@
             <div class="products-owner-panel">
                 <div>
                     <h3>{{ $selectedStore->name }}</h3>
-                    <p>Productos de esta tienda</p>
                 </div>
                 <a href="/admin/products" class="btn btn-secondary">Volver a tiendas</a>
             </div>
@@ -897,11 +894,9 @@
                 </span>
                 @if($isProductSearchActive)
                     <h3>No encontramos productos</h3>
-                    <p>Prueba con otro nombre, categoría, material o descripción.</p>
                     <a href="{{ url()->current() }}" class="btn btn-secondary" data-admin-live-search-clear>Limpiar búsqueda</a>
                 @else
                     <h3>No hay productos registrados</h3>
-                    <p>Agrega el primer producto para empezar a mostrar el catálogo en la tienda.</p>
                     <a href="/admin/products/create" class="btn">Nuevo producto</a>
                 @endif
             </div>

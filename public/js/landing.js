@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const heroCta = document.querySelector('.hero-primary-cta');
+    const mobileCta = document.querySelector('.landing-mobile-cta');
+
+    if (heroCta && mobileCta && 'IntersectionObserver' in window) {
+        const heroCtaObserver = new IntersectionObserver(([entry]) => {
+            mobileCta.classList.toggle('is-visible', !entry.isIntersecting);
+        }, { threshold: 0.1 });
+
+        heroCtaObserver.observe(heroCta);
+    }
+
     const cycleOptions = document.querySelectorAll('[data-billing-cycle]');
     const cyclePicker = document.querySelector('[data-billing-config]');
     const cycleConfig = JSON.parse(cyclePicker?.dataset.billingConfig || '{}');

@@ -132,6 +132,46 @@
     @if($storefrontVariant === 'technology')
         <script src="{{ asset('js/minimal-shop.js') }}?v={{ filemtime(public_path('js/minimal-shop.js')) }}" defer></script>
     @endif
+    <script>
+        window.addEventListener('message', (event) => {
+            const payload = event.data;
+            if (!payload || payload.type !== 'vendly-live-preview') {
+                return;
+            }
+
+            const page = document.body;
+            if (payload.brandColor) {
+                page.style.setProperty('--brand-color', payload.brandColor);
+            }
+            if (payload.backgroundColor) {
+                page.style.setProperty('--store-bg', payload.backgroundColor);
+                page.style.setProperty('--store-secondary-color', payload.backgroundColor);
+            }
+            if (payload.textColor) {
+                page.style.setProperty('--store-text', payload.textColor);
+            }
+            if (payload.fontFamily) {
+                page.style.setProperty('--store-font', payload.fontFamily);
+            }
+
+            const columns = String(payload.columns || '');
+            if (['1', '2', '3'].includes(columns)) {
+                page.classList.remove('storefront-cols-1', 'storefront-cols-2', 'storefront-cols-3');
+                page.classList.add(`storefront-cols-${columns}`);
+                page.style.setProperty('--responsive-product-columns', columns);
+            }
+
+            if (payload.storeName) {
+                document.querySelectorAll('.brand-mark > span, .minimal-shop-brand > span:not(.minimal-shop-logo), .minimal-shop-mobile-brand > span:not(.minimal-shop-logo)').forEach((element) => {
+                    element.textContent = payload.storeName;
+                });
+                document.querySelectorAll('.brand, .minimal-shop-brand, .minimal-shop-mobile-brand').forEach((element) => {
+                    element.setAttribute('aria-label', payload.storeName);
+                });
+                document.title = payload.storeName;
+            }
+        });
+    </script>
 </body>
 
 </html>

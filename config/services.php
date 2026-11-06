@@ -112,6 +112,7 @@ return [
         'admin_registration_template' => env('WHATSAPP_ADMIN_REGISTRATION_TEMPLATE', 'vendly_nuevo_registro'),
         'customer_welcome_template' => env('WHATSAPP_CUSTOMER_WELCOME_TEMPLATE', 'vendly_bienvenida_cliente'),
         'phone_verification_template' => env('WHATSAPP_PHONE_VERIFICATION_TEMPLATE', 'vendly_verificar_numero'),
+        'followup_two_hours_setup_template' => env('WHATSAPP_FOLLOWUP_TWO_HOURS_SETUP_TEMPLATE', 'seguimiento_2_horas_configuracion'),
         'followup_day_1_template' => env('WHATSAPP_FOLLOWUP_DAY_1_TEMPLATE', 'seguimiento_dia_1_tienda'),
         'followup_day_3_template' => env('WHATSAPP_FOLLOWUP_DAY_3_TEMPLATE', 'seguimiento_dia_3_productos'),
         'followup_day_6_template' => env('WHATSAPP_FOLLOWUP_DAY_6_TEMPLATE', 'seguimiento_dia_6_prueba'),

@@ -382,8 +382,134 @@ body.landing-page video {
 
 .portfolio-section,
 .process-section,
+.catalog-section,
 .plans-section {
     background: var(--vendly-soft);
+}
+
+.catalog-showcase {
+    display: grid;
+    grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
+    gap: clamp(26px, 5vw, 72px);
+    align-items: center;
+    min-height: 420px;
+    padding: clamp(28px, 5vw, 58px);
+    overflow: hidden;
+    border: 1px solid var(--vendly-line);
+    border-radius: calc(var(--vendly-radius) + 8px);
+    background: var(--vendly-white);
+    box-shadow: var(--vendly-shadow);
+}
+
+.catalog-showcase-copy {
+    max-width: 390px;
+}
+
+.catalog-showcase-copy h2 {
+    max-width: 380px;
+    margin: 12px 0 14px;
+    color: var(--vendly-ink);
+    font-size: clamp(2.3rem, 4.5vw, 4.6rem);
+    line-height: .96;
+}
+
+.catalog-showcase-copy h2 strong {
+    color: var(--vendly-orange);
+}
+
+.catalog-showcase-copy p {
+    max-width: 350px;
+    margin: 0;
+    color: var(--vendly-muted);
+    font-size: 1.05rem;
+}
+
+.catalog-showcase-copy .btn {
+    margin-top: 24px;
+}
+
+.catalog-showcase-products {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-self: stretch;
+}
+
+.catalog-product {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--vendly-line);
+    background: var(--vendly-white);
+    color: var(--vendly-ink);
+    text-decoration: none;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.catalog-product:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--vendly-shadow-soft);
+}
+
+.catalog-product-media {
+    display: block;
+    aspect-ratio: 1.35 / 1;
+    overflow: hidden;
+    background: var(--vendly-soft-strong);
+}
+
+.catalog-product-media img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.catalog-product-name {
+    overflow: hidden;
+    font-weight: 850;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.catalog-product-type {
+    overflow: hidden;
+    color: var(--vendly-muted);
+    font-size: .8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.catalog-empty-state {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(180px, .8fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--vendly-line);
+    background: var(--vendly-soft);
+}
+
+.catalog-empty-state img {
+    width: 100%;
+    aspect-ratio: 1.35 / 1;
+    object-fit: cover;
+}
+
+.catalog-empty-state div {
+    display: grid;
+    gap: 8px;
+}
+
+.catalog-empty-state span {
+    color: var(--vendly-muted);
+}
+
+.process-intro {
+    margin-top: clamp(64px, 9vw, 104px);
 }
 
 .proof-strip {
@@ -934,6 +1060,10 @@ body.landing-page video {
     height: 30px;
 }
 
+.landing-mobile-cta {
+    display: none;
+}
+
 @media (max-width: 1080px) {
     .hero-layout {
         grid-template-columns: 1fr;
@@ -953,8 +1083,13 @@ body.landing-page video {
 
     .proof-strip,
     .catalog-copy,
+    .catalog-showcase,
     .final-card {
         grid-template-columns: 1fr;
+    }
+
+    .catalog-showcase-copy {
+        max-width: 620px;
     }
 
     .proof-metrics {
@@ -972,9 +1107,12 @@ body.landing-page video {
         min-height: 68px;
     }
 
-    .landing-menu,
-    .landing-nav-actions .login-link {
+    .landing-menu {
         display: none;
+    }
+
+    .landing-nav-actions .login-link {
+        display: inline-flex;
     }
 
     .landing-menu-open {
@@ -1142,8 +1280,27 @@ body.landing-page video {
 }
 
 @media (max-width: 640px) {
+    body.landing-page {
+        padding-bottom: 88px;
+    }
+
     .landing-shell {
         width: min(100% - 28px, var(--vendly-container));
+    }
+
+    .landing-nav-inner {
+        gap: 8px;
+    }
+
+    .brand-link {
+        gap: 6px;
+        font-size: 0.95rem;
+    }
+
+    .brand-link img {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
     }
 
     .landing-hero {
@@ -1167,11 +1324,16 @@ body.landing-page video {
 
     .landing-nav-actions {
         justify-self: end;
+        gap: 6px;
     }
 
     .landing-nav-actions .btn {
-        min-width: 126px;
+        min-width: 0;
         width: auto;
+        min-height: 38px;
+        padding-inline: 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
     }
 
     .hero-phone-demo {
@@ -1190,12 +1352,21 @@ body.landing-page video {
 
     .proof-strip,
     .catalog-preview,
+    .catalog-showcase,
     .step-card,
     .feature-card,
     .plan-card,
     .testimonial-card,
     .final-card {
         border-radius: 18px;
+    }
+
+    .catalog-showcase-products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .catalog-empty-state {
+        grid-template-columns: 1fr;
     }
 
     .footer-grid {
@@ -1205,7 +1376,46 @@ body.landing-page video {
 
     .whatsapp-float {
         right: 16px;
-        bottom: 16px;
+        bottom: 82px;
+    }
+
+    .landing-mobile-cta {
+        position: fixed;
+        left: 14px;
+        right: 14px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        z-index: 35;
+        display: flex;
+        min-height: 54px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        border: 1px solid #ff6b00;
+        border-radius: 999px;
+        background: #ff6b00;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 850;
+        line-height: 1;
+        text-decoration: none;
+        box-shadow: 0 12px 28px rgba(255, 107, 0, 0.28);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(120%);
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+    }
+
+    .landing-mobile-cta.is-visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+
+    .landing-mobile-cta:focus-visible {
+        outline: 3px solid rgba(255, 107, 0, 0.28);
+        outline-offset: 3px;
     }
 }
 

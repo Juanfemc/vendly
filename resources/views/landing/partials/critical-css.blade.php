@@ -43,7 +43,8 @@
     @media (max-width: 860px) {
         .landing-shell { width: min(100% - 28px, 1200px); }
         .landing-nav-inner { grid-template-columns: auto 1fr auto; min-height: 68px; }
-        .landing-menu, .landing-nav-actions .login-link { display: none; }
+        .landing-menu { display: none; }
+        .landing-nav-actions .login-link { display: inline-flex; }
         .landing-menu-open { display: inline-grid; width: 42px; height: 42px; place-items: center; border: 1px solid #e6e8ec; border-radius: 50%; background: #fff; cursor: pointer; }
         .landing-menu-open span, .landing-menu-open span::before, .landing-menu-open span::after { content: ""; display: block; width: 18px; height: 2px; border-radius: 999px; background: #101114; }
         .landing-menu-open span { position: relative; }
@@ -55,7 +56,11 @@
         .landing-hero { padding-top: 48px; }
         .hero-content h1 { font-size: clamp(2.75rem, 15vw, 4.25rem); }
         .landing-nav-actions { justify-self: end; }
-        .landing-nav-actions .btn { min-width: 126px; width: auto; }
+        .landing-nav-inner { gap: 8px; }
+        .brand-link { gap: 6px; font-size: .95rem; }
+        .brand-link img { width: 32px; height: 32px; border-radius: 9px; }
+        .landing-nav-actions { gap: 6px; }
+        .landing-nav-actions .btn { min-width: 0; width: auto; min-height: 38px; padding-inline: 8px; font-size: .75rem; white-space: nowrap; }
         .hero-phone-demo { width: min(100%, 340px); border-radius: 30px; }
         .hero-phone-frame { border-width: 8px; border-radius: 26px; }
     }

@@ -40,6 +40,7 @@ class WhatsAppRegistrationNotifier
                 'parameters' => [
                     $user->name,
                     $store->name,
+                    $this->supportPhone(),
                 ],
             ],
         ];
@@ -119,5 +120,20 @@ class WhatsAppRegistrationNotifier
                 'exception' => $exception::class,
             ]);
         }
+    }
+
+    private function supportPhone(): string
+    {
+        $phone = preg_replace('/\D+/', '', (string) config('services.support.whatsapp')) ?: '';
+
+        if (strlen($phone) === 10 && str_starts_with($phone, '3')) {
+            $phone = '57'.$phone;
+        }
+
+        if (strlen($phone) === 12 && str_starts_with($phone, '57')) {
+            return '+57 '.substr($phone, 2, 3).' '.substr($phone, 5, 3).' '.substr($phone, 8, 4);
+        }
+
+        return $phone !== '' ? '+'.$phone : 'soporte de Vendly';
     }
 }

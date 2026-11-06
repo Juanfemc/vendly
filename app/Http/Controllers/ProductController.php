@@ -37,7 +37,7 @@ class ProductController extends Controller
         return $user?->store ?? $user?->stores()->first();
     }
 
-    protected function countStoreVisit(Store $store): void
+    protected function countStoreVisit(Store $store, ?Product $product = null): void
     {
         $user = auth()->user();
 
@@ -46,6 +46,10 @@ class ProductController extends Controller
         }
 
         $this->storeVisitService->record($store, request());
+
+        if ($product) {
+            $this->storeVisitService->recordProduct($store, $product, request());
+        }
     }
 
     public function index(Request $request, ?Store $store = null)
@@ -530,7 +534,7 @@ class ProductController extends Controller
     {
         $product = $this->publicProductFromKey($store, $productKey);
 
-        $this->countStoreVisit($store);
+        $this->countStoreVisit($store, $product);
 
         $relatedProducts = Product::where('store_id', $store->id)
             ->withReviewStats()

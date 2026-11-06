@@ -8,6 +8,7 @@ use App\Models\StoreCategory;
 use App\Services\AdminUpdateService;
 use App\Services\PublicFileService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -78,10 +79,16 @@ class StoreCategoryController extends Controller
         return view('admin.categories.index', compact('store', 'categories', 'selectedStore', 'categoryProductCounts', 'parentCategoryOptions'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $store = $this->storeForRequest($request);
         if (! $store->allowsCategories()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'El plan ' . $store->planLabel() . ' no incluye categorías.',
+                ], 422);
+            }
+
             return $this->redirectToCategories($store)
                 ->with('error', 'El plan ' . $store->planLabel() . ' no incluye categorías.');
         }
@@ -134,6 +141,16 @@ class StoreCategoryController extends Controller
             'categoría',
             route('admin.categories.edit', $category)
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'category' => [
+                    'value' => $category->name,
+                    'label' => $category->displayName(),
+                ],
+                'message' => 'Categoría creada.',
+            ], 201);
+        }
 
         return $this->redirectToCategories($store)->with('success', 'Categoría creada.');
     }

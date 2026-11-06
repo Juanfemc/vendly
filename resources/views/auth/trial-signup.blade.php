@@ -5,17 +5,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Crear tienda gratis | Vendly</title>
+    <title>Crear tu cuenta | Vendly</title>
     @include('landing.partials.meta-pixel')
     <style>
         :root {
-            --bg: #080808;
-            --panel: #111111;
+            --bg: #f7f8fa;
             --card: #ffffff;
             --ink: #111111;
-            --muted: #656565;
-            --line: #e9e9e9;
-            --soft: #f7f7f7;
+            --muted: #667085;
+            --line: #d9dee7;
+            --soft: #f8fafc;
             --brand: #ff6b00;
         }
 
@@ -27,10 +26,8 @@
             margin: 0;
             min-height: 100vh;
             font-family: Arial, sans-serif;
-            background:
-                radial-gradient(circle at 16% 10%, rgba(255, 107, 0, 0.2), transparent 26%),
-                linear-gradient(135deg, #030303 0%, #101010 52%, #1a120c 100%);
-            color: #ffffff;
+            background: var(--bg);
+            color: var(--ink);
         }
 
         a {
@@ -39,79 +36,70 @@
         }
 
         .signup-shell {
-            width: min(1080px, calc(100% - 32px));
+            width: min(560px, calc(100% - 32px));
             min-height: 100vh;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: minmax(0, 0.92fr) minmax(380px, 460px);
-            gap: 42px;
-            align-items: center;
-            padding: 36px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 32px 0;
         }
 
         .signup-copy {
             display: grid;
-            gap: 22px;
+            justify-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
         }
 
         .signup-brand {
             display: inline-flex;
             width: fit-content;
             align-items: center;
-            gap: 12px;
-            font-size: 28px;
+            gap: 9px;
+            color: var(--ink);
+            font-size: 25px;
             font-weight: 900;
             letter-spacing: -0.04em;
         }
 
         .signup-brand img {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             object-fit: cover;
         }
 
         .signup-badge {
             width: fit-content;
-            min-height: 30px;
-            display: inline-flex;
-            align-items: center;
-            padding: 0 12px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.82);
-            font-size: 12px;
-            font-weight: 800;
+            min-height: 0;
+            padding: 0;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
         }
 
         .signup-copy h1 {
-            max-width: 620px;
+            max-width: 520px;
             margin: 0;
-            font-size: clamp(38px, 5vw, 66px);
-            line-height: 0.96;
-            letter-spacing: -0.06em;
+            color: var(--ink);
+            font-size: 34px;
+            line-height: 1.08;
+            text-align: center;
+            letter-spacing: -0.04em;
         }
 
         .signup-copy h1 span {
-            color: var(--brand);
+            color: var(--ink);
         }
 
         .signup-copy p {
-            max-width: 520px;
+            display: none;
             margin: 0;
-            color: rgba(255, 255, 255, 0.74);
-            font-size: 16px;
-            line-height: 1.65;
         }
 
         .signup-benefits {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 2px 0 0;
-            padding: 0;
-            list-style: none;
+            display: none;
         }
 
         .signup-benefits li {
@@ -138,72 +126,42 @@
         }
 
         .signup-card {
-            border-radius: 24px;
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 16px;
             background: var(--card);
             color: var(--ink);
-            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+            box-shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
             overflow: hidden;
-        }
-
-        .signup-card-head {
-            padding: 26px 28px 16px;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .signup-card-head span {
-            display: inline-flex;
-            min-height: 28px;
-            align-items: center;
-            padding: 0 11px;
-            border-radius: 999px;
-            background: rgba(255, 107, 0, 0.12);
-            color: #b84a00;
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .signup-card-head h2 {
-            margin: 14px 0 6px;
-            font-size: 28px;
-            line-height: 1.08;
-            letter-spacing: -0.04em;
-        }
-
-        .signup-card-head p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.5;
         }
 
         .signup-form {
             display: grid;
-            gap: 15px;
-            padding: 22px 28px 28px;
+            gap: 16px;
+            padding: 18px 38px 32px;
         }
 
         .field {
             display: grid;
-            gap: 7px;
+            gap: 8px;
         }
 
         .field label {
             color: #232323;
-            font-size: 13px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: 700;
         }
 
         .field input {
             width: 100%;
             min-height: 48px;
             border: 1px solid var(--line);
-            border-radius: 14px;
-            background: #fbfbfb;
+            border-radius: 9px;
+            background: var(--soft);
             color: #111111;
             padding: 0 14px;
             font: inherit;
+            font-size: 16px;
             outline: none;
             transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
         }
@@ -234,10 +192,10 @@
             top: 8px;
             height: 32px;
             border: 0;
-            border-radius: 999px;
-            background: #eeeeee;
-            color: #111111;
-            padding: 0 12px;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            padding: 0 8px;
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
@@ -264,10 +222,10 @@
             width: 100%;
             min-height: 52px;
             border: 0;
-            border-radius: 999px;
+            border-radius: 9px;
             background: var(--brand);
-            color: #111111;
-            font-size: 15px;
+            color: #ffffff;
+            font-size: 16px;
             font-weight: 900;
             cursor: pointer;
             box-shadow: 0 18px 38px rgba(255, 107, 0, 0.28);
@@ -293,7 +251,7 @@
         }
 
         .signup-login a {
-            color: #111111;
+            color: var(--brand);
             font-weight: 900;
         }
 
@@ -323,27 +281,6 @@
             line-height: 1.45;
         }
 
-        @media (max-width: 900px) {
-            .signup-shell {
-                grid-template-columns: 1fr;
-                gap: 26px;
-                align-items: start;
-                padding-top: 24px;
-            }
-
-            .signup-copy {
-                gap: 16px;
-            }
-
-            .signup-copy h1 {
-                max-width: 720px;
-            }
-
-            .signup-copy p {
-                font-size: 15px;
-            }
-        }
-
         @media (max-width: 560px) {
             .signup-shell {
                 width: min(100% - 20px, 1080px);
@@ -351,7 +288,7 @@
             }
 
             .signup-brand {
-                font-size: 23px;
+                font-size: 22px;
             }
 
             .signup-brand img {
@@ -360,21 +297,16 @@
             }
 
             .signup-copy h1 {
-                font-size: 34px;
-            }
-
-            .signup-benefits {
-                display: grid;
+                font-size: 30px;
             }
 
             .signup-card {
-                border-radius: 20px;
+                border-radius: 14px;
             }
 
-            .signup-card-head,
             .signup-form {
-                padding-left: 18px;
-                padding-right: 18px;
+                padding-left: 20px;
+                padding-right: 20px;
             }
         }
     </style>
@@ -392,25 +324,11 @@
                 <span>vendly</span>
             </a>
 
-            <span class="signup-badge">Prueba gratis {{ $trialDays }} días</span>
-            <h1>Crea tu tienda y empieza a vender por <span>WhatsApp</span>.</h1>
-            <p>Entra al panel en segundos. Tu tienda se crea automáticamente y luego completas lo esencial con una guía paso a paso.</p>
-
-            <ul class="signup-benefits">
-                <li>Sin tarjeta de crédito</li>
-                <li>Dashboard inmediato</li>
-                <li>Mensajes automáticos</li>
-            </ul>
+            <span class="signup-badge">Prueba de {{ $trialDays }} días · Sin tarjeta</span>
+            <h1>Crea tu cuenta</h1>
         </section>
 
         <section class="signup-card" aria-label="Formulario de registro">
-            <div class="signup-card-head">
-                <span>Inicio rápido</span>
-                <h2>Crear mi tienda gratis</h2>
-                <p>Solo necesitamos estos datos para crear tu cuenta y activar tu prueba.</p>
-                <p style="margin-top:10px;color:#b84a00;font-weight:800;">Preferencia después de la prueba: {{ $selectedPlanLabel }} · {{ $selectedCycleLabel }}</p>
-            </div>
-
             <form class="signup-form" method="POST" action="{{ route('trial-signup.store') }}">
                 @csrf
                 <input type="hidden" name="plan" value="{{ $selectedPlan }}">
@@ -419,28 +337,24 @@
                 <div class="field">
                     <label for="user_name">Tu nombre</label>
                     <input id="user_name" name="user_name" value="{{ old('user_name') }}" required autocomplete="name" placeholder="Ej. Juan">
-                    <small>Así te saludaremos dentro del panel.</small>
                     @error('user_name')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="field">
                     <label for="store_name">Nombre de tu tienda <span aria-hidden="true">(opcional)</span></label>
                     <input id="store_name" name="store_name" value="{{ old('store_name') }}" autocomplete="organization" placeholder="Ej. Mi tienda">
-                    <small>Si lo dejas vacío, la crearemos con tu nombre y podrás cambiarlo después.</small>
                     @error('store_name')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="field">
                     <label for="whatsapp">WhatsApp</label>
                     <input id="whatsapp" name="whatsapp" value="{{ old('whatsapp') }}" required inputmode="tel" autocomplete="tel" placeholder="Ej. 300 123 4567">
-                    <small>Lo verificaremos en el dashboard para activar seguridad y mensajes.</small>
                     @error('whatsapp')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="field">
                     <label for="user_email">Correo</label>
                     <input id="user_email" type="email" name="user_email" value="{{ old('user_email') }}" required autocomplete="email" placeholder="tu@email.com">
-                    <small>Lo usaremos para iniciar sesión y recuperar tu cuenta.</small>
                     @error('user_email')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
@@ -450,7 +364,6 @@
                         <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
                         <button class="password-toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false">Mostrar</button>
                     </div>
-                    <small>No necesitas confirmarla. Puedes verla antes de enviar.</small>
                     @error('password')<div class="error">{{ $message }}</div>@enderror
                 </div>
 
@@ -471,8 +384,8 @@
                 </label>
                 @error('whatsapp_consent')<div class="error">{{ $message }}</div>@enderror
 
-                <button class="signup-submit" type="submit" @disabled($requiresTurnstile && ! $turnstileReady)>Crear mi tienda gratis</button>
-                <p class="signup-note">Gratis {{ $trialDays }} días. Sin tarjeta. Configuras tu tienda después.</p>
+                <button class="signup-submit" type="submit" @disabled($requiresTurnstile && ! $turnstileReady)>Crear mi tienda</button>
+                <p class="signup-note">Gratis {{ $trialDays }} días. Sin tarjeta.</p>
                 <p class="signup-login">¿Ya tienes cuenta? <a href="{{ route('login') }}">Iniciar sesión</a></p>
             </form>
         </section>

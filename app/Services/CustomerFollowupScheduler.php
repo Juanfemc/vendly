@@ -22,8 +22,20 @@ class CustomerFollowupScheduler
         }
 
         $startsAt = $store->trial_starts_at ?: $store->created_at ?: now();
+        $supportPhone = $this->supportPhone();
 
         return collect([
+            $this->schedule(
+                $store,
+                CustomerFollowup::TYPE_TWO_HOURS_SETUP,
+                (string) config('services.whatsapp.followup_two_hours_setup_template', 'seguimiento_2_horas_configuracion'),
+                [
+                    $user->name,
+                    $store->name,
+                    $supportPhone,
+                ],
+                $startsAt->copy()->addHours(2),
+            ),
             $this->schedule(
                 $store,
                 CustomerFollowup::TYPE_DAY_1_SETUP,
@@ -31,7 +43,7 @@ class CustomerFollowupScheduler
                 [
                     $user->name,
                     $store->name,
-                    route('admin.store.onboarding'),
+                    $supportPhone,
                 ],
                 $startsAt->copy()->addDay(),
             ),
@@ -42,7 +54,7 @@ class CustomerFollowupScheduler
                 [
                     $user->name,
                     $store->name,
-                    url('/'.$store->slug),
+                    $supportPhone,
                 ],
                 $startsAt->copy()->addDays(3),
             ),
@@ -53,6 +65,7 @@ class CustomerFollowupScheduler
                 [
                     $user->name,
                     $store->name,
+                    $supportPhone,
                 ],
                 $startsAt->copy()->addDays(6),
             ),
@@ -217,20 +230,30 @@ class CustomerFollowupScheduler
             return null;
         }
 
-        return CustomerFollowup::firstOrCreate(
-            [
-                'store_id' => $store->id,
-                'type' => $type,
-                'context_key' => $contextKey,
-            ],
-            [
-                'user_id' => $store->user_id,
-                'template' => $template,
-                'parameters' => $parameters,
-                'status' => CustomerFollowup::STATUS_PENDING,
-                'scheduled_for' => $scheduledFor,
-            ],
-        );
+        $followup = CustomerFollowup::firstOrNew([
+            'store_id' => $store->id,
+            'type' => $type,
+            'context_key' => $contextKey,
+        ]);
+
+        if ($followup->exists && $followup->status === CustomerFollowup::STATUS_SENT) {
+            return $followup;
+        }
+
+        $followup->fill([
+            'user_id' => $store->user_id,
+            'template' => $template,
+            'parameters' => $parameters,
+            'status' => CustomerFollowup::STATUS_PENDING,
+            'scheduled_for' => $scheduledFor,
+            'sent_at' => null,
+            'failed_at' => null,
+            'skipped_at' => null,
+            'cancelled_at' => null,
+            'error' => null,
+        ])->save();
+
+        return $followup;
     }
 
     private function scheduleOrUpdate(
@@ -301,5 +324,20 @@ class CustomerFollowupScheduler
             CustomerFollowup::TYPE_SUBSCRIPTION_1_DAY_BEFORE,
             CustomerFollowup::TYPE_SUBSCRIPTION_EXPIRED,
         ];
+    }
+
+    private function supportPhone(): string
+    {
+        $phone = preg_replace('/\D+/', '', (string) config('services.support.whatsapp')) ?: '';
+
+        if (strlen($phone) === 10 && str_starts_with($phone, '3')) {
+            $phone = '57'.$phone;
+        }
+
+        if (strlen($phone) === 12 && str_starts_with($phone, '57')) {
+            return '+57 '.substr($phone, 2, 3).' '.substr($phone, 5, 3).' '.substr($phone, 8, 4);
+        }
+
+        return $phone !== '' ? '+'.$phone : 'soporte de Vendly';
     }
 }

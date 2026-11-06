@@ -586,7 +586,7 @@ class Store extends Model
 
     public function allowsVisitStats(): bool
     {
-        return ! $this->isBasicPlan();
+        return ($this->plan ?? self::PLAN_PRO) === self::PLAN_PREMIUM;
     }
 
     public function allowsProductGallery(): bool
@@ -1125,6 +1125,11 @@ class Store extends Model
     public function visits(): HasMany
     {
         return $this->hasMany(StoreVisit::class);
+    }
+
+    public function productVisits(): HasMany
+    {
+        return $this->hasMany(ProductVisit::class);
     }
 
     public function isTechnologyStore(): bool

@@ -81,6 +81,7 @@ Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'receive'])
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/admin/metrics', [DashboardController::class, 'storeMetrics'])->name('admin.metrics');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -108,10 +109,18 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('/admin/orders', [OrderController::class, 'index']);
     Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.status');
+    Route::patch('/admin/orders/{order}/manage', [OrderController::class, 'updateOrderAndPaymentStatus'])->name('admin.orders.manage');
+    Route::patch('/admin/orders/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])->name('admin.orders.payment-status');
     Route::patch('/admin/orders/{order}/restore-stock', [OrderController::class, 'restoreStock'])->name('admin.orders.restore-stock');
     Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
-    Route::get('/admin/store-settings', [StoreController::class, 'settings']);
+    Route::get('/admin/store-settings', [StoreController::class, 'settings'])->name('admin.store-settings');
     Route::post('/admin/store-settings', [StoreController::class, 'updateSettings']);
+    Route::get('/admin/configuration', [StoreController::class, 'configuration'])->name('admin.configuration');
+    Route::post('/admin/configuration', [StoreController::class, 'updateConfiguration'])->name('admin.configuration.update');
+    Route::get('/admin/integrations/meta-pixel', [StoreController::class, 'metaPixel'])->name('admin.integrations.meta-pixel');
+    Route::post('/admin/integrations/meta-pixel', [StoreController::class, 'updateMetaPixel'])->name('admin.integrations.meta-pixel.update');
+    Route::get('/admin/shipping-methods', [StoreController::class, 'shippingMethods'])->name('admin.shipping-methods');
+    Route::post('/admin/shipping-methods', [StoreController::class, 'updateShippingMethods'])->name('admin.shipping-methods.update');
     Route::get('/admin/onboarding/choice', [StoreOnboardingController::class, 'choice'])->name('admin.store.onboarding.choice');
     Route::post('/admin/onboarding/choice', [StoreOnboardingController::class, 'selectChoice'])->name('admin.store.onboarding.choice.store');
     Route::get('/admin/onboarding', [StoreOnboardingController::class, 'overview'])->name('admin.store.onboarding');

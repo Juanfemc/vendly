@@ -14,18 +14,6 @@
     $categoriesAllowed = auth()->user()->isAdmin() || ($formStore?->allowsCategories() ?? true);
     $wholesaleAllowed = $formStore?->allowsWholesalePricing() ?? false;
     $showInventory = ! ($formStore?->isReservationStore() ?? false);
-    $previewImage = $formProduct?->image ? asset('storage/' . $formProduct->image) : null;
-    $previewName = old('name', $formProduct?->name) ?: 'Nombre del producto';
-    $previewCategory = $selectedCategory ?: 'Categoria';
-    $previewPrice = (float) old('price', $formProduct?->price ?? 0);
-    $previewStock = old('stock_quantity', $formProduct?->stock_quantity);
-    $previewIsSoldOut = (bool) old('is_sold_out', $formProduct?->is_sold_out);
-    $previewHasOffer = (bool) old('has_offer', $formProduct?->has_offer);
-    $previewBadges = collect(explode(',', (string) old('custom_badges', $formProduct ? implode(', ', $formProduct->customBadges()) : '')))
-        ->map(fn ($badge) => trim($badge))
-        ->filter()
-        ->take(3)
-        ->values();
 @endphp
 
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="product-editor-form">
@@ -47,7 +35,6 @@
             </span>
             <div>
                 <h3>Datos básicos</h3>
-                <p>Información principal que verá el cliente en la tienda.</p>
             </div>
         </div>
 
@@ -68,7 +55,7 @@
         <div class="product-editor-grid">
             <div class="product-editor-field">
                 <label for="name">Nombre del producto <span>*</span></label>
-                <input id="name" type="text" name="name" value="{{ old('name', $formProduct?->name) }}" placeholder="Ej: Camiseta básica de algodón" required data-product-preview-field="name">
+                <input id="name" type="text" name="name" value="{{ old('name', $formProduct?->name) }}" placeholder="Ej: Camiseta básica de algodón" required>
                 <small>Usa un nombre claro y fácil de reconocer.</small>
             </div>
 
@@ -83,17 +70,48 @@
             <div class="product-editor-grid product-editor-grid--wide">
                 <div class="product-editor-field">
                     <label for="category_select">Categoría</label>
-                    <select name="category" id="category_select" data-product-preview-field="category">
-                        <option value="">Selecciona categoría</option>
-                        @foreach ($categoryOptions as $categoryOption)
-                            @php
-                                $categoryOptionValue = is_array($categoryOption) ? ($categoryOption['value'] ?? '') : $categoryOption;
-                                $categoryOptionLabel = is_array($categoryOption) ? ($categoryOption['label'] ?? $categoryOptionValue) : $categoryOption;
-                            @endphp
-                            <option value="{{ $categoryOptionValue }}" @selected($selectedCategory === $categoryOptionValue)>{{ $categoryOptionLabel }}</option>
-                        @endforeach
-                    </select>
-                    <small>Para crear una categoría nueva, ve a la sección Categorías.</small>
+                    <div class="product-category-select-row">
+                        <select name="category" id="category_select">
+                            <option value="">Selecciona categoría</option>
+                            @foreach ($categoryOptions as $categoryOption)
+                                @php
+                                    $categoryOptionValue = is_array($categoryOption) ? ($categoryOption['value'] ?? '') : $categoryOption;
+                                    $categoryOptionLabel = is_array($categoryOption) ? ($categoryOption['label'] ?? $categoryOptionValue) : $categoryOption;
+                                @endphp
+                                <option value="{{ $categoryOptionValue }}" @selected($selectedCategory === $categoryOptionValue)>{{ $categoryOptionLabel }}</option>
+                            @endforeach
+                        </select>
+                        <button type="button" class="product-category-create-button" data-open-category-create>
+                            <span aria-hidden="true">+</span>
+                            Crear categoría
+                        </button>
+                    </div>
+                    <small>También puedes crearla aquí sin salir del producto.</small>
+                </div>
+            </div>
+
+            <div class="product-category-modal" data-category-create-modal hidden>
+                <div class="product-category-modal__card" role="dialog" aria-modal="true" aria-labelledby="category-create-title">
+                    <div class="product-category-modal__head">
+                        <div>
+                            <span class="product-category-modal__eyebrow">Nueva categoría</span>
+                            <h4 id="category-create-title">Organiza tu producto</h4>
+                        </div>
+                        <button type="button" class="product-category-modal__close" data-close-category-create aria-label="Cerrar">&times;</button>
+                    </div>
+                    <p class="product-category-modal__description">Crea una categoría y quedará seleccionada automáticamente.</p>
+                    <div class="product-editor-field">
+                        <label for="quick_category_name">Nombre de la categoría</label>
+                        <input id="quick_category_name" type="text" maxlength="255" placeholder="Ej: Camisetas" data-category-create-name autocomplete="off">
+                    </div>
+                    @if(auth()->user()->isAdmin())
+                        <input type="hidden" data-category-create-store>
+                    @endif
+                    <p class="product-category-modal__feedback" data-category-create-feedback role="status" hidden></p>
+                    <div class="product-category-modal__actions">
+                        <button type="button" class="product-category-modal__cancel" data-close-category-create>Cancelar</button>
+                        <button type="button" class="product-category-modal__submit" data-submit-category-create>Crear categoría</button>
+                    </div>
                 </div>
             </div>
         @else
@@ -134,7 +152,6 @@
             </span>
             <div>
                 <h3>Imágenes</h3>
-                <p>La primera imagen será la principal del producto.</p>
             </div>
         </div>
 
@@ -171,7 +188,7 @@
                 </svg>
                 <strong>{{ $isEditing ? 'Subir nueva imagen principal' : 'Subir imagen principal' }}</strong>
                 <span>JPG, PNG o WebP. Máximo 2 MB.</span>
-                <input id="product_image" type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1600" data-quality="0.82" data-output="webp" data-max-size="2097152" data-product-preview-field="image">
+                    <input id="product_image" type="file" name="image" accept="image/*" data-optimize-image data-max-width="1600" data-max-height="1600" data-quality="0.82" data-output="webp" data-max-size="2097152">
             </label>
 
             @if($galleryAllowed)
@@ -209,27 +226,26 @@
             </span>
             <div>
                 <h3>Precio e inventario</h3>
-                <p>Define precio, disponibilidad y etiquetas comerciales.</p>
             </div>
         </div>
 
         <div class="product-editor-grid product-editor-grid--three">
             <div class="product-editor-field">
                 <label for="price">Precio <span>*</span></label>
-                <input id="price" type="number" step="0.01" name="price" value="{{ old('price', $formProduct?->price) }}" placeholder="0" required data-product-preview-field="price">
+                <input id="price" type="number" step="0.01" name="price" value="{{ old('price', $formProduct?->price) }}" placeholder="0" required>
             </div>
 
             @if($formStore?->allowsOfferBadges())
                 <div class="product-editor-field" data-offer-pricing>
                     <label for="offer_original_price">Precio antes</label>
-                    <input id="offer_original_price" type="number" step="0.01" name="offer_original_price" value="{{ old('offer_original_price', $formProduct?->offer_original_price) }}" placeholder="Sin descuento" data-product-preview-field="priceBefore">
+                    <input id="offer_original_price" type="number" step="0.01" name="offer_original_price" value="{{ old('offer_original_price', $formProduct?->offer_original_price) }}" placeholder="Sin descuento">
                 </div>
             @endif
 
             @if($showInventory)
                 <div class="product-editor-field">
                     <label for="stock_quantity">Stock disponible</label>
-                    <input id="stock_quantity" type="number" name="stock_quantity" min="0" step="1" value="{{ old('stock_quantity', $formProduct?->stock_quantity) }}" placeholder="Ilimitado" data-product-preview-field="stock">
+                    <input id="stock_quantity" type="number" name="stock_quantity" min="0" step="1" value="{{ old('stock_quantity', $formProduct?->stock_quantity) }}" placeholder="Ilimitado">
                 </div>
             @endif
         </div>
@@ -252,7 +268,7 @@
                         <strong>Mostrar etiqueta de oferta</strong>
                         <small>El precio actual queda como precio de oferta.</small>
                     </span>
-                    <input type="checkbox" name="has_offer" value="1" @checked(old('has_offer', $formProduct?->has_offer)) data-offer-toggle data-product-preview-field="offer">
+                    <input type="checkbox" name="has_offer" value="1" @checked(old('has_offer', $formProduct?->has_offer)) data-offer-toggle>
                     <i></i>
                 </label>
             @endif
@@ -263,7 +279,7 @@
                         <strong>Marcar como agotado</strong>
                         <small>Oculta la compra cuando no haya disponibilidad.</small>
                     </span>
-                    <input type="checkbox" name="is_sold_out" value="1" @checked(old('is_sold_out', $formProduct?->is_sold_out)) data-product-preview-field="soldout">
+                    <input type="checkbox" name="is_sold_out" value="1" @checked(old('is_sold_out', $formProduct?->is_sold_out))>
                     <i></i>
                 </label>
             @endif
@@ -290,7 +306,7 @@
         @if($formStore?->allowsCustomProductBadges())
             <div class="product-editor-field">
                 <label for="custom_badges">Etiquetas personalizadas</label>
-                <input id="custom_badges" type="text" name="custom_badges" value="{{ old('custom_badges', $formProduct ? implode(', ', $formProduct->customBadges()) : '') }}" maxlength="255" placeholder="Ej: Nuevo, Más vendido, Últimas unidades" data-product-preview-field="badges">
+                <input id="custom_badges" type="text" name="custom_badges" value="{{ old('custom_badges', $formProduct ? implode(', ', $formProduct->customBadges()) : '') }}" maxlength="255" placeholder="Ej: Nuevo, Más vendido, Últimas unidades">
                 <small>Se muestran hasta 3 etiquetas cortas, separadas por coma.</small>
             </div>
         @endif
@@ -307,7 +323,6 @@
             </span>
             <div>
                 <h3>Variantes</h3>
-                <p>Opciones simples para talla y color.</p>
             </div>
         </div>
 
@@ -339,55 +354,6 @@
     </section>
         </div>
 
-        <aside class="product-editor-preview-panel" aria-label="Vista previa del producto" data-product-preview>
-            <div class="product-editor-preview-panel__head">
-                <span>Vista previa</span>
-                <strong>Asi lo verá tu cliente</strong>
-            </div>
-
-            <article class="product-editor-preview-card">
-                <div class="product-editor-preview-media">
-                    @if($previewImage)
-                        <img src="{{ $previewImage }}" alt="{{ $previewName }}" data-product-preview-image>
-                    @else
-                        <span data-product-preview-placeholder>{{ strtoupper(mb_substr($previewName, 0, 1)) }}</span>
-                        <img src="" alt="" data-product-preview-image hidden>
-                    @endif
-
-                    <div class="product-editor-preview-badges" data-product-preview-badges @if($previewBadges->isEmpty() && ! $previewHasOffer) hidden @endif>
-                        @if($previewHasOffer)
-                            <span>Oferta</span>
-                        @endif
-                        @foreach($previewBadges as $badge)
-                            <span>{{ $badge }}</span>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="product-editor-preview-copy">
-                    <small data-product-preview-category>{{ $previewCategory }}</small>
-                    <h3 data-product-preview-name>{{ $previewName }}</h3>
-                    <div class="product-editor-preview-price">
-                        <span data-product-preview-price-before @if(! $previewHasOffer || ! old('offer_original_price', $formProduct?->offer_original_price)) hidden @endif>
-                            {{ $formStore?->formatMoney(old('offer_original_price', $formProduct?->offer_original_price)) ?? '$ 0' }}
-                        </span>
-                        <strong data-product-preview-price>{{ $formStore?->formatMoney($previewPrice) ?? '$ 0' }}</strong>
-                    </div>
-                    <p @class(['is-sold-out' => $previewIsSoldOut]) data-product-preview-stock>
-                        {{ $previewIsSoldOut ? 'Agotado' : ($previewStock !== null && $previewStock !== '' ? $previewStock . ' disponibles' : 'Disponible') }}
-                    </p>
-                </div>
-            </article>
-
-            <div class="product-editor-preview-tips">
-                <strong>Consejos rápidos</strong>
-                <ul>
-                    <li>Usa una foto clara y cuadrada.</li>
-                    <li>El nombre debe ser corto y directo.</li>
-                    <li>Revisa precio y stock antes de guardar.</li>
-                </ul>
-            </div>
-        </aside>
     </div>
 
     <div class="product-editor-actions">
@@ -400,12 +366,74 @@
 
 <style>
     .product-editor-workspace {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
-        gap: 22px;
-        align-items: start;
+        display: block;
         min-width: 0;
     }
+
+    .product-category-select-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .product-category-create-button {
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 0 13px;
+        border: 1px solid #b8d8d0;
+        border-radius: 10px;
+        background: #f0fbf8;
+        color: #006857;
+        font-size: 13px;
+        font-weight: 900;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .product-category-create-button:hover { border-color: #006857; background: #e4f7f1; }
+    .product-category-create-button span { font-size: 19px; line-height: 1; }
+
+    .product-category-modal[hidden] { display: none; }
+    .product-category-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, .48);
+    }
+
+    .product-category-modal__card {
+        width: min(440px, 100%);
+        padding: 24px;
+        border: 1px solid #dbe5e8;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+    }
+
+    .product-category-modal__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .product-category-modal__eyebrow { color: #007c68; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .product-category-modal__head h4 { margin: 4px 0 0; color: #172033; font-size: 21px; }
+    .product-category-modal__close { border: 0; background: transparent; color: #688092; font-size: 27px; line-height: 1; cursor: pointer; }
+    .product-category-modal__description { margin: 8px 0 20px; color: #688092; font-size: 14px; line-height: 1.45; }
+    .product-category-modal__feedback { margin: 10px 0 0; color: #b42318; font-size: 13px; font-weight: 700; }
+    .product-category-modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+    .product-category-modal__cancel,
+    .product-category-modal__submit { min-height: 42px; padding: 0 16px; border-radius: 10px; font-weight: 900; cursor: pointer; }
+    .product-category-modal__cancel { border: 1px solid #dbe5e8; background: #fff; color: #526575; }
+    .product-category-modal__submit { border: 1px solid #006857; background: #006857; color: #fff; }
+    .product-category-modal__submit:disabled { cursor: wait; opacity: .65; }
+
+    .product-category-create-button:focus-visible,
+    .product-category-modal__close:focus-visible,
+    .product-category-modal__cancel:focus-visible,
+    .product-category-modal__submit:focus-visible { outline: 3px solid rgba(30, 220, 167, .35); outline-offset: 2px; }
 
     .product-editor-main {
         min-width: 0;
@@ -413,197 +441,28 @@
         gap: 18px;
     }
 
-    .product-editor-preview-panel {
-        position: sticky;
-        top: 22px;
-        display: grid;
-        gap: 14px;
-        min-width: 0;
-        padding: 18px;
-        border: 1px solid #e5e7eb;
-        border-radius: 22px;
-        background: #ffffff;
-        box-shadow: 0 18px 42px rgba(17, 24, 39, .06);
-    }
-
-    .product-editor-preview-panel__head {
-        display: grid;
-        gap: 4px;
-    }
-
-    .product-editor-preview-panel__head span {
-        color: #ff6a00;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
-
-    .product-editor-preview-panel__head strong {
-        color: #111827;
-        font-size: 18px;
-    }
-
-    .product-editor-preview-card {
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        background: #ffffff;
-    }
-
-    .product-editor-preview-media {
-        position: relative;
-        display: grid;
-        place-items: center;
-        aspect-ratio: 1 / .86;
-        overflow: hidden;
-        background: linear-gradient(135deg, #f8fafc, #eef2f7);
-    }
-
-    .product-editor-preview-media img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .product-editor-preview-media > span {
-        width: 76px;
-        height: 76px;
-        display: grid;
-        place-items: center;
-        border-radius: 22px;
-        background: #ffffff;
-        color: #ff6a00;
-        font-size: 34px;
-        font-weight: 900;
-        box-shadow: 0 16px 30px rgba(17, 24, 39, .08);
-    }
-
-    .product-editor-preview-badges {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        max-width: calc(100% - 24px);
-    }
-
-    .product-editor-preview-badges span {
-        display: inline-flex;
-        align-items: center;
-        min-height: 28px;
-        padding: 0 10px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .92);
-        color: #ff6a00;
-        font-size: 12px;
-        font-weight: 900;
-        box-shadow: 0 10px 22px rgba(17, 24, 39, .08);
-    }
-
-    .product-editor-preview-copy {
-        display: grid;
-        gap: 7px;
-        padding: 16px;
-    }
-
-    .product-editor-preview-copy small {
-        color: #6b7280;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
-
-    .product-editor-preview-copy h3 {
-        margin: 0;
-        color: #111827;
-        font-size: 18px;
-        line-height: 1.18;
-        overflow-wrap: anywhere;
-    }
-
-    .product-editor-preview-price {
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .product-editor-preview-price span {
-        color: #9ca3af;
-        font-size: 13px;
-        font-weight: 800;
-        text-decoration: line-through;
-    }
-
-    .product-editor-preview-price strong {
-        color: #111827;
-        font-size: 22px;
-        line-height: 1;
-    }
-
-    .product-editor-preview-copy p {
-        margin: 0;
-        color: #16a34a;
-        font-size: 13px;
-        font-weight: 900;
-    }
-
-    .product-editor-preview-copy p.is-sold-out {
-        color: #dc2626;
-    }
-
-    .product-editor-preview-tips {
-        padding: 14px;
-        border: 1px solid #fde7d4;
-        border-radius: 16px;
-        background: #fff7ed;
-        color: #9a3412;
-    }
-
-    .product-editor-preview-tips strong {
-        display: block;
-        margin-bottom: 8px;
-        color: #111827;
-        font-size: 14px;
-    }
-
-    .product-editor-preview-tips ul {
-        display: grid;
-        gap: 6px;
-        margin: 0;
-        padding-left: 18px;
-        font-size: 13px;
-        line-height: 1.35;
-    }
-
-    @media (max-width: 1180px) {
-        .product-editor-workspace {
-            grid-template-columns: 1fr;
-        }
-
-        .product-editor-preview-panel {
-            position: static;
-            order: -1;
-        }
-
-        .product-editor-preview-card {
-            display: grid;
-            grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
-        }
-    }
-
     @media (max-width: 640px) {
-        .product-editor-preview-panel {
-            padding: 14px;
-            border-radius: 18px;
-        }
-
-        .product-editor-preview-card {
+        .product-category-select-row {
             grid-template-columns: 1fr;
         }
+
+        .product-category-create-button {
+            width: 100%;
+        }
+
+        .product-category-modal {
+            align-items: end;
+            padding: 10px;
+        }
+
+        .product-category-modal__card {
+            padding: 20px;
+            border-radius: 18px 18px 12px 12px;
+        }
+
+        .product-category-modal__actions > * {
+            flex: 1;
+        }
+
     }
 </style>

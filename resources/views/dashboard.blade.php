@@ -5,9 +5,11 @@
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}?v={{ filemtime(public_path('css/dashboard.css')) }}">
 
-<div class="header">
-    <h2>{{ auth()->user()->isAdmin() ? 'Dashboard admin' : 'Dashboard de tienda' }}</h2>
-</div>
+@if (auth()->user()->isAdmin())
+    <div class="header">
+        <h2>Dashboard admin</h2>
+    </div>
+@endif
 
 @if (!auth()->user()->isAdmin() && !empty($banners) && $banners->isNotEmpty())
     <div class="list-card dashboard-banner-card dashboard-banner-card--top">
@@ -428,14 +430,6 @@
         $dashboardCompletedSteps = $dashboardChecklist->filter(fn ($item) => (bool) ($item['complete'] ?? false))->count();
         $dashboardTotalSteps = max(1, $dashboardChecklist->count());
         $dashboardOwnerName = $dashboardStore?->name ?: auth()->user()->name;
-        $dashboardMetrics = [
-            ['label' => 'Ventas', 'value' => '$ ' . number_format($totalSales ?? 0, 0, ',', '.'), 'icon' => 'receipt'],
-            ['label' => 'Pedidos', 'value' => number_format($ordersCount ?? 0, 0, ',', '.'), 'icon' => 'orders'],
-            ['label' => 'Productos', 'value' => number_format($productsCount ?? 0, 0, ',', '.'), 'icon' => 'box'],
-            ['label' => 'Pagados', 'value' => number_format($paidOrdersCount ?? 0, 0, ',', '.'), 'icon' => 'paid'],
-            ['label' => 'Enviados', 'value' => number_format($shippedOrdersCount ?? 0, 0, ',', '.'), 'icon' => 'ship'],
-            ['label' => 'Visitas', 'value' => number_format($totalVisits ?? 0, 0, ',', '.'), 'icon' => 'visits'],
-        ];
         $dashboardQuickActions = collect([
             ['label' => 'Ver pedidos', 'href' => url('/admin/orders'), 'icon' => 'orders'],
             ['label' => 'Personalizar tienda', 'href' => url('/admin/store-settings'), 'icon' => 'edit'],
@@ -449,6 +443,7 @@
                 'paid' => '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a3 3 0 0 0-3-1.5c-1.7 0-3 .8-3 2s1.3 2 3 2 3 .8 3 2-1.3 2-3 2a3 3 0 0 1-3-1.5"/><path d="M12 6v12"/>',
                 'ship' => '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
                 'visits' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/>',
+                'store' => '<path d="M4 10h16"/><path d="M5 10l1-5h12l1 5"/><path d="M6 10v10h12V10"/><path d="M9 20v-6h6v6"/>',
                 'edit' => '<path d="M12 20h9"/><path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z"/>',
                 'share' => '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4"/><path d="m8.6 13.5 6.8 4"/>',
             ];
@@ -458,10 +453,22 @@
     @endphp
 
     <section class="vendly-home-panel">
+        <div class="vendly-home-context">
+            <span class="vendly-home-context-icon" aria-hidden="true">{!! $dashboardIcon('store') !!}</span>
+            <span>Tu panel de control · Vendly</span>
+        </div>
+
         <div class="vendly-home-head">
             <div>
-                <h2>Hola, ¡bienvenido!</h2>
-                <p>Administra tu tienda desde aquí.</p>
+                <h2>¡Hola, {{ auth()->user()->name }}!</h2>
+                <p>
+                    Tu tienda <strong>{{ $dashboardStore?->name ?: 'Vendly' }}</strong>
+                    @if(!empty($subscriptionExpired))
+                        necesita activación para volver a recibir pedidos.
+                    @else
+                        está activa y lista para recibir pedidos.
+                    @endif
+                </p>
             </div>
             <div class="vendly-home-actions">
                 <a href="{{ url('/admin/products/create') }}" class="btn vendly-home-primary">
@@ -474,14 +481,14 @@
             </div>
         </div>
 
-        <div class="vendly-home-metrics" aria-label="Indicadores de la tienda">
-            @foreach($dashboardMetrics as $metric)
-                <div class="vendly-home-metric">
-                    <span class="vendly-home-metric-icon">{!! $dashboardIcon($metric['icon']) !!}</span>
-                    <span>{{ $metric['label'] }}</span>
-                    <strong>{{ $metric['value'] }}</strong>
-                </div>
-            @endforeach
+        <div class="vendly-home-store-status">
+            <div>
+                <span class="vendly-home-status-label">Tienda virtual</span>
+                <strong>{{ $dashboardStore?->name ?: 'Configura el nombre de tu tienda' }}</strong>
+            </div>
+            <span class="vendly-home-status-pill {{ !empty($subscriptionExpired) ? 'is-warning' : '' }}">
+                {{ !empty($subscriptionExpired) ? 'Requiere activación' : 'Activa' }}
+            </span>
         </div>
 
         <div class="vendly-home-section">
@@ -520,34 +527,6 @@
             </div>
         @endif
     </section>
-
-    @if (!empty($products) && $products->isNotEmpty())
-        <section class="list-card dashboard-products-panel">
-            <div class="dashboard-users-head">
-                <div>
-                    <strong>Productos recientes</strong>
-                    <span>Vista rápida de lo que ya está publicado.</span>
-                </div>
-                <a href="{{ url('/admin/products') }}" class="btn btn-secondary">Ver todos</a>
-            </div>
-
-            <div class="grid dashboard-product-grid">
-                @foreach ($products as $product)
-                    <article class="card dashboard-product-card">
-                        @if ($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
-                        @else
-                            <div class="dashboard-product-placeholder" aria-hidden="true">{{ strtoupper(mb_substr($product->name, 0, 1)) }}</div>
-                        @endif
-                        <div>
-                            <strong>{{ $product->name }}</strong>
-                            <span>${{ number_format((float) $product->price, 0, ',', '.') }}</span>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </section>
-    @endif
 
     @if (!empty($banners) && $banners->count() > 1)
         <script src="{{ asset('js/dashboard.js') }}?v={{ filemtime(public_path('js/dashboard.js')) }}" defer></script>

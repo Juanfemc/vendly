@@ -27,6 +27,7 @@
             'chat' => '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>',
             'settings' => '<circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.8 7.8 0 0 0 0-3l2-1.5-2-3.5-2.4 1a8.2 8.2 0 0 0-2.6-1.5L13.7 2h-4l-.3 3A8.2 8.2 0 0 0 6.8 6.5l-2.4-1-2 3.5 2 1.5a7.8 7.8 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8.2 8.2 0 0 0 2.6 1.5l.3 3h4l.3-3a8.2 8.2 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5z"/>',
             'cart' => '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+            'truck' => '<path d="M3 6h11v11H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/>',
             'profile' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
             'gift' => '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M3 12h18"/><path d="M7.5 8a2.5 2.5 0 1 1 4.5-1.5V8"/><path d="M16.5 8A2.5 2.5 0 1 0 12 6.5V8"/>',
             'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
@@ -34,6 +35,7 @@
             'globe' => '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/>',
             'ticket' => '<path d="M2 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
             'book' => '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15Z"/>',
+            'plug' => '<path d="M9 7V3"/><path d="M15 7V3"/><path d="M6 7h12v3a6 6 0 0 1-12 0V7Z"/><path d="M12 16v5"/>',
         ];
 
         return '<svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($icons[$name] ?? $icons['home']) . '</svg>';
@@ -58,12 +60,6 @@
                 <span>Inicio</span>
             </a>
 
-            @if(!$sidebarUser->isAdmin() && ($sidebarStore?->allowsVisitStats() ?? false))
-                <a href="{{ route('admin.store.visits') }}" class="{{ $sidebarLinkClass('admin/store-visits*') }}">
-                    {!! $sidebarIcon('visits') !!}
-                    <span>Visitas</span>
-                </a>
-            @endif
         </div>
 
         @if ($sidebarUser->isAdmin())
@@ -137,63 +133,41 @@
             </div>
         @else
             <div class="sidebar-section">
-                <p class="sidebar-section-label">Ventas</p>
-
-                <a href="/admin/orders" class="{{ $sidebarLinkClass('admin/orders*') }}">
-                    {!! $sidebarIcon('cart') !!}
-                    <span>Pedidos</span>
+                <a href="/admin/store-settings" class="{{ $sidebarLinkClass('admin/store-settings') }}">
+                    {!! $sidebarIcon('palette') !!}
+                    <span>Configurar tienda</span>
                 </a>
-
-                @if(($sidebarStore?->allowsOnlinePayments() ?? false))
-                    <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarLinkClass('admin/payments*') }}">
-                        {!! $sidebarIcon('card') !!}
-                        <span>Pagos</span>
-                    </a>
-                @endif
-
-                <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarLinkClass('admin/coupons*') }}">
-                    {!! $sidebarIcon('ticket') !!}
-                    <span>Cupones</span>
-                    <span class="sidebar-plan-mini">Premium</span>
-                </a>
-            </div>
-
-            <div class="sidebar-section">
-                <p class="sidebar-section-label">Catálogo</p>
-
-                <details class="sidebar-menu-group" {{ request()->is('admin/products*') ? 'open' : '' }}>
-                    <summary><span>{!! $sidebarIcon('box') !!}Productos</span></summary>
-                    <div class="sidebar-submenu">
-                        <a href="/admin/products" class="{{ $sidebarSubLinkClass('admin/products') }}">Ver productos</a>
-                        <a href="/admin/products/create" class="{{ $sidebarSubLinkClass('admin/products/create') }}">Crear producto</a>
-                        <a href="{{ route('admin.products.import') }}" class="{{ $sidebarSubLinkClass('admin/products/import') }}">Importar productos</a>
-                    </div>
-                </details>
-
-                @if(($sidebarStore?->allowsCategories() ?? true))
-                    <a href="/admin/categories" class="{{ $sidebarLinkClass('admin/categories*') }}">
-                        {!! $sidebarIcon('tag') !!}
-                        <span>Categorías</span>
-                    </a>
-                @endif
-            </div>
-
-            <div class="sidebar-section">
-                <p class="sidebar-section-label">Mi tienda</p>
 
                 <a href="{{ route('admin.store.onboarding') }}" class="{{ $sidebarLinkClass('admin/onboarding') }}">
                     {!! $sidebarIcon('book') !!}
                     <span>Primeros pasos</span>
                 </a>
 
-                <a href="/admin/store-settings" class="{{ $sidebarLinkClass('admin/store-settings') }}">
-                    {!! $sidebarIcon('palette') !!}
-                    <span>Apariencia</span>
+                <a href="/admin/products" class="{{ $sidebarLinkClass('admin/products*') }}">
+                    {!! $sidebarIcon('box') !!}
+                    <span>Productos</span>
                 </a>
 
-                <a href="{{ route('admin.store-landing.edit') }}" class="{{ $sidebarLinkClass('admin/store-landing*') }}">
-                    {!! $sidebarIcon('file') !!}
-                    <span>Landing de producto</span>
+                <a href="/admin/orders" class="{{ $sidebarLinkClass('admin/orders*') }}">
+                    {!! $sidebarIcon('cart') !!}
+                    <span>Pedidos</span>
+                </a>
+
+                <a href="{{ route('admin.metrics') }}" class="{{ $sidebarLinkClass('admin/metrics') }}">
+                    {!! $sidebarIcon('visits') !!}
+                    <span>Métricas</span>
+                </a>
+
+                @if(($sidebarStore?->allowsOnlinePayments() ?? false))
+                    <a href="{{ route('admin.payments.index') }}" class="{{ $sidebarLinkClass('admin/payments*') }}">
+                        {!! $sidebarIcon('card') !!}
+                        <span>Medios de pago</span>
+                    </a>
+                @endif
+
+                <a href="{{ route('admin.shipping-methods') }}" class="{{ $sidebarLinkClass('admin/shipping-methods') }}">
+                    {!! $sidebarIcon('truck') !!}
+                    <span>Medios de envío</span>
                 </a>
 
                 @if($sidebarAllowsTemplates)
@@ -202,6 +176,28 @@
                         <span>Plantillas</span>
                     </a>
                 @endif
+
+                <a href="{{ route('admin.store-landing.edit') }}" class="{{ $sidebarLinkClass('admin/store-landing*') }}">
+                    {!! $sidebarIcon('file') !!}
+                    <span>Landing de producto</span>
+                </a>
+
+                <details class="sidebar-menu-group" {{ request()->is('admin/configuration') || request()->is('admin/coupons*') ? 'open' : '' }}>
+                    <summary><span>{!! $sidebarIcon('settings') !!}Configuración</span></summary>
+                    <div class="sidebar-submenu">
+                        <a href="{{ route('admin.configuration') }}" class="{{ $sidebarSubLinkClass('admin/configuration') }}">Conectar dominio</a>
+                        <a href="{{ route('admin.configuration') }}#checkout-fields" class="{{ $sidebarSubLinkClass('admin/configuration') }}">Campos del checkout</a>
+                        <a href="{{ route('admin.configuration') }}#legal-pages" class="{{ $sidebarSubLinkClass('admin/configuration') }}">Páginas legales</a>
+                        <a href="{{ route('admin.coupons.index') }}" class="{{ $sidebarSubLinkClass('admin/coupons*') }}">Cupones <span class="sidebar-plan-mini">Premium</span></a>
+                    </div>
+                </details>
+
+                <details class="sidebar-menu-group" {{ request()->is('admin/integrations*') ? 'open' : '' }}>
+                    <summary><span>{!! $sidebarIcon('plug') !!}Integraciones</span></summary>
+                    <div class="sidebar-submenu">
+                        <a href="{{ route('admin.integrations.meta-pixel') }}" class="{{ $sidebarSubLinkClass('admin/integrations/meta-pixel') }}">Meta Pixel <span class="sidebar-plan-mini">Premium</span></a>
+                    </div>
+                </details>
             </div>
         @endif
 

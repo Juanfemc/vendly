@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\TrialPhoneHashConfigurationException;
 use App\Http\Requests\StoreOnboardingRequest;
+use App\Models\CustomerFollowup;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\TrialSignupClaim;
 use App\Services\AdminUpdateService;
+use App\Services\CustomerFollowupScheduler;
 use App\Services\ProductContentService;
 use App\Services\ProductFileService;
 use App\Services\StoreFileService;
@@ -33,6 +35,7 @@ class StoreOnboardingController extends Controller
         private ProductContentService $productContentService,
         private StorefrontUrlService $storefrontUrls,
         private AdminUpdateService $adminUpdateService,
+        private CustomerFollowupScheduler $customerFollowups,
         private WhatsAppPhoneVerificationService $phoneVerification,
         private TrialPhoneHashService $trialPhoneHashes,
     ) {
@@ -236,6 +239,8 @@ class StoreOnboardingController extends Controller
                     'onboarding_last_step' => null,
                 ])->save();
             }
+
+            $this->cancelSetupFollowup($store->refresh());
 
             $metaEvents = [];
 
@@ -575,9 +580,23 @@ class StoreOnboardingController extends Controller
             'onboarding_last_step' => null,
         ])->save();
 
+        $this->cancelSetupFollowup($store->refresh());
+
         session()->flash('onboarding_completed_now', true);
 
         return true;
+    }
+
+    private function cancelSetupFollowup(Store $store): void
+    {
+        $this->customerFollowups->cancelPendingForStore(
+            $store,
+            'La configuración inicial ya fue completada.',
+            [
+                CustomerFollowup::TYPE_TWO_HOURS_SETUP,
+                CustomerFollowup::TYPE_DAY_1_SETUP,
+            ],
+        );
     }
 
     private function supportWhatsappUrl(Store $store): string

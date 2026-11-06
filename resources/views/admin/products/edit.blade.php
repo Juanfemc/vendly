@@ -47,7 +47,6 @@
                 <div>
                     <span class="product-review-panel__eyebrow">Moderacion</span>
                     <h3>Resenas del producto</h3>
-                    <p>Aprueba las reseñas antes de que aparezcan en la tienda.</p>
                 </div>
                 <div class="product-review-panel__summary">
                     <strong>{{ ($productReviews ?? collect())->where('is_approved', false)->count() }}</strong>
@@ -97,7 +96,6 @@
             @empty
                 <div class="panel-empty" style="margin:0;">
                     <h3>No hay reseñas todavía</h3>
-                    <p>Cuando un cliente escriba una reseña, aparecerá aquí para aprobarla.</p>
                 </div>
             @endforelse
             </div>

@@ -209,6 +209,7 @@ class CheckoutService
             Order::PAYMENT_STATUS_REJECTED,
             Order::PAYMENT_STATUS_CANCELLED,
             Order::PAYMENT_STATUS_EXPIRED,
+            Order::PAYMENT_STATUS_REFUNDED,
         ], true)) {
             return false;
         }
@@ -227,6 +228,7 @@ class CheckoutService
                     Order::PAYMENT_STATUS_REJECTED,
                     Order::PAYMENT_STATUS_CANCELLED,
                     Order::PAYMENT_STATUS_EXPIRED,
+                    Order::PAYMENT_STATUS_REFUNDED,
                 ], true)
                 || $order->status !== 'pendiente'
                 || (Order::supportsPaymentExpirationColumn() && $order->payment_expires_at === null)

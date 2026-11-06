@@ -28,10 +28,30 @@
         <label class="field-label" for="orderStatusFilter">Filtrar por estado</label>
         <select id="orderStatusFilter" name="status" onchange="this.form.submit()">
             <option value="">Todos los estados</option>
-            @foreach($statusOptions as $value => $label)
+            @foreach($statusFilterOptions as $value => $label)
                 <option value="{{ $value }}" @selected(($selectedStatus ?? null) === $value)>{{ $label }}</option>
             @endforeach
         </select>
+        <input type="hidden" name="payment_status" value="{{ $selectedPaymentStatus ?? '' }}">
+        <details class="orders-payment-filter" @if($selectedPaymentStatus) open @endif>
+            <summary>
+                <span>Pago:</span>
+                <strong>{{ $selectedPaymentStatus ? $paymentStatusOptions[$selectedPaymentStatus]['label'] : 'Todos' }}</strong>
+                <span class="orders-payment-filter__chevron" aria-hidden="true">⌃</span>
+            </summary>
+            <div class="orders-payment-filter__menu">
+                <a href="{{ request()->fullUrlWithQuery(['payment_status' => null, 'page' => null]) }}" class="orders-payment-option {{ ! $selectedPaymentStatus ? 'is-selected' : '' }}">
+                    <span class="orders-payment-option__check" aria-hidden="true">✓</span>
+                    <span><strong>Todos</strong><small>Mostrar todos los pedidos</small></span>
+                </a>
+                @foreach($paymentStatusOptions as $value => $option)
+                    <a href="{{ request()->fullUrlWithQuery(['payment_status' => $value, 'page' => null]) }}" class="orders-payment-option {{ $selectedPaymentStatus === $value ? 'is-selected' : '' }}">
+                        <span class="orders-payment-option__check" aria-hidden="true">✓</span>
+                        <span><strong>{{ $option['label'] }}</strong><small>{{ $option['description'] }}</small></span>
+                    </a>
+                @endforeach
+            </div>
+        </details>
         <div class="order-filter-count">
             Mostrando {{ $orders->count() }} de {{ $totalOrders ?? $orders->count() }} pedidos
         </div>
@@ -39,7 +59,7 @@
 
     @if ($orders->isEmpty())
         <div class="list-card">
-            No hay pedidos con ese estado.
+            No hay pedidos con los filtros seleccionados.
         </div>
     @endif
 @endif
@@ -90,16 +110,28 @@
                                 <details class="vendly-order-actions">
                                     <summary>Gestionar</summary>
                                     <div>
-                                        <form method="POST" action="{{ route('admin.orders.status', $order) }}">
+                                        <form method="POST" action="{{ route('admin.orders.manage', $order) }}" data-confirm-delete data-confirm-message="¿Confirmar los cambios del pedido y del pago?" data-confirm-submit-label="Guardar cambios">
                                             @csrf
                                             @method('PATCH')
-                                            <label class="field-label" for="status-{{ $order->id }}">Estado</label>
-                                            <select name="status" id="status-{{ $order->id }}">
-                                                @foreach($statusOptions as $value => $label)
-                                                    <option value="{{ $value }}" @selected($order->status === $value)>{{ $label }}</option>
+                                            @if($order->status === 'pagado')
+                                                <span class="orders-managed-state">El estado del pedido se ajusta según el pago.</span>
+                                                <input type="hidden" name="status" value="pagado">
+                                            @else
+                                                <label class="field-label" for="status-{{ $order->id }}">Estado</label>
+                                                <select name="status" id="status-{{ $order->id }}">
+                                                    @foreach($statusFilterOptions as $value => $label)
+                                                        <option value="{{ $value }}" @selected($order->status === $value)>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @endif
+                                            <label class="field-label" for="payment-status-{{ $order->id }}">Estado del pago</label>
+                                            <select name="payment_status" id="payment-status-{{ $order->id }}">
+                                                @foreach($paymentManagementOptions as $value => $label)
+                                                    <option value="{{ $value }}" @selected(($value === 'failed' && in_array($order->payment_status, ['rejected', 'cancelled', 'expired'], true)) || ($value !== 'failed' && $order->payment_status === $value))>{{ $label }}</option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="btn">Guardar estado</button>
+                                            <span class="orders-payment-note">El pedido se actualiza según el pago.</span>
+                                            <button type="submit" class="btn">Guardar cambios</button>
                                         </form>
 
                                         @if($order->canRestoreStockManually())

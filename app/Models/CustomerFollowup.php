@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerFollowup extends Model
 {
+    public const TYPE_TWO_HOURS_SETUP = 'two_hours_setup';
     public const TYPE_DAY_1_SETUP = 'day_1_setup';
     public const TYPE_DAY_3_PRODUCTS_OR_SHARE = 'day_3_products_or_share';
     public const TYPE_DAY_6_TRIAL_ENDING = 'day_6_trial_ending';

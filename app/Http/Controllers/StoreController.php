@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRequest;
+use App\Http\Requests\StoreConfigurationRequest;
+use App\Http\Requests\StoreMetaPixelRequest;
 use App\Http\Requests\StoreSettingsRequest;
 use App\Http\Requests\StoreWithUserRequest;
 use App\Models\ColombiaLocation;
@@ -337,6 +339,194 @@ class StoreController extends Controller
         return redirect('/admin/store-settings')
             ->with('meta_pixel_events', $metaEvents)
             ->with('success', 'Configuración de tienda actualizada.');
+    }
+
+    public function shippingMethods()
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        return view('admin.stores.shipping-methods', [
+            'store' => $store,
+            'colombiaLocations' => ColombiaLocation::citiesForSelect(),
+            'shippingMethods' => old('shipping_methods', $store->shipping_methods ?? []),
+            'showFashionDeliveryTimes' => (bool) old('show_fashion_delivery_times', $store->showsFashionDeliveryTimes()),
+        ]);
+    }
+
+    public function updateShippingMethods(Request $request): RedirectResponse
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        if (! $store->allowsShippingMethods()) {
+            return back()->with('error', 'Actualiza tu plan para configurar métodos de envío.');
+        }
+
+        $validated = $request->validate([
+            'shipping_methods' => ['nullable', 'array', 'max:5'],
+            'shipping_methods.*.name' => ['nullable', 'string', 'max:80'],
+            'shipping_methods.*.cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'shipping_methods.*.delivery_time' => ['nullable', 'string', 'max:80'],
+            'local_delivery_area' => ['nullable', 'string', 'max:120'],
+            'local_delivery_city_code' => ['nullable', 'string', 'max:12'],
+            'local_delivery_cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'outside_delivery_cost' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'show_shipping_options_at_checkout_start' => ['nullable', 'boolean'],
+            'show_fashion_delivery_times' => ['nullable', 'boolean'],
+        ]);
+
+        $shippingMethods = collect($validated['shipping_methods'] ?? [])
+            ->map(function (array $method): ?array {
+                $name = trim((string) ($method['name'] ?? ''));
+
+                return $name === '' ? null : [
+                    'name' => $name,
+                    'cost' => max(0, (float) ($method['cost'] ?? 0)),
+                    'delivery_time' => trim((string) ($method['delivery_time'] ?? '')),
+                ];
+            })
+            ->filter()
+            ->take(5)
+            ->values()
+            ->all();
+
+        $data = ['shipping_methods' => $shippingMethods];
+
+        if (Store::supportsLocalDeliveryColumns()) {
+            $city = null;
+            if (Store::supportsLocalDeliveryCityCodeColumn() && filled($validated['local_delivery_city_code'] ?? null)) {
+                $city = ColombiaLocation::query()
+                    ->where('city_code', $validated['local_delivery_city_code'])
+                    ->first();
+            }
+
+            $data['local_delivery_area'] = $city?->city_name ?: (trim((string) ($validated['local_delivery_area'] ?? '')) ?: null);
+            $data['local_delivery_cost'] = array_key_exists('local_delivery_cost', $validated) ? (float) $validated['local_delivery_cost'] : null;
+            $data['outside_delivery_cost'] = array_key_exists('outside_delivery_cost', $validated) ? (float) $validated['outside_delivery_cost'] : null;
+
+            if (Store::supportsLocalDeliveryCityCodeColumn()) {
+                $data['local_delivery_city_code'] = $city?->city_code;
+            }
+        }
+
+        if (Store::supportsCheckoutShippingOptionsCardColumn()) {
+            $data['show_shipping_options_at_checkout_start'] = $request->boolean('show_shipping_options_at_checkout_start');
+        }
+
+        if (Store::supportsFashionDeliveryTimesColumn()) {
+            $data['show_fashion_delivery_times'] = $request->boolean('show_fashion_delivery_times');
+        }
+
+        $store->update($data);
+
+        $this->adminUpdateService->record(
+            'Métodos de envío actualizados',
+            $store->name,
+            'tienda',
+            route('admin.shipping-methods')
+        );
+
+        return redirect()->route('admin.shipping-methods')->with('success', 'Métodos de envío actualizados.');
+    }
+
+    public function configuration()
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        return view('admin.stores.configuration', [
+            'store' => $store,
+            'storeUrl' => $this->storefrontUrls->publicHome($store),
+            'storefrontHost' => parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost(),
+            'checkoutFieldDefinitions' => Store::supportsCheckoutFieldsColumn() ? Store::checkoutFieldDefinitions() : [],
+        ]);
+    }
+
+    public function updateConfiguration(StoreConfigurationRequest $request): RedirectResponse
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        $data = [];
+
+        if (Store::supportsSubdomainColumn()) {
+            $data['subdomain'] = $store->allowsSubdomain()
+                ? Store::normalizeSubdomain($request->input('subdomain'))
+                : null;
+        }
+
+        if (Store::supportsCustomDomainColumns()) {
+            $customDomain = $store->allowsCustomDomain()
+                ? Store::normalizeCustomDomain($request->input('custom_domain'))
+                : null;
+            $previousDomain = Store::normalizeCustomDomain($store->custom_domain);
+
+            $data['custom_domain'] = $customDomain;
+            if ($customDomain !== $previousDomain) {
+                $data['custom_domain_status'] = Store::CUSTOM_DOMAIN_PENDING;
+                $data['custom_domain_verified_at'] = null;
+            }
+        }
+
+        if (Store::supportsCheckoutFieldsColumn()) {
+            $data['checkout_fields'] = Store::normalizeCheckoutFields($request->input('checkout_fields', []));
+        }
+
+        if (Store::supportsTermsAcceptanceColumns()) {
+            $data['require_terms_acceptance'] = $request->boolean('require_terms_acceptance');
+            $data['terms_title'] = trim((string) $request->input('terms_title', '')) ?: null;
+            $data['terms_content'] = trim((string) $request->input('terms_content', '')) ?: null;
+            $data['terms_url'] = trim((string) $request->input('terms_url', '')) ?: null;
+            $data['terms_version'] = trim((string) $request->input('terms_version', '')) ?: null;
+        }
+
+        $store->update($data);
+
+        $this->adminUpdateService->record(
+            'Configuración actualizada',
+            $store->name,
+            'tienda',
+            route('admin.configuration')
+        );
+
+        return redirect()->route('admin.configuration')->with('success', 'Configuración actualizada.');
+    }
+
+    public function metaPixel()
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        return view('admin.stores.meta-pixel', compact('store'));
+    }
+
+    public function updateMetaPixel(StoreMetaPixelRequest $request): RedirectResponse
+    {
+        $store = auth()->user()?->store ?? auth()->user()?->stores()->first();
+
+        abort_if(! $store, 404);
+        $this->authorize('update', $store);
+
+        if (! Store::supportsMetaPixelColumn()) {
+            return back()->withErrors(['meta_pixel_id' => 'Esta función aún no está disponible en la base de datos.']);
+        }
+
+        $store->update([
+            'meta_pixel_id' => $store->allowsMetaPixel() ? $request->input('meta_pixel_id') : null,
+        ]);
+
+        return redirect()->route('admin.integrations.meta-pixel')->with('success', 'Meta Pixel actualizado.');
     }
 
     private function enforcePlanLimits(Store $store): void

@@ -14,8 +14,7 @@
 }
 
 .dashboard-welcome-card,
-.dashboard-progress-card,
-.dashboard-products-panel {
+.dashboard-progress-card {
     border: 1px solid #e5e7eb;
     border-radius: 24px;
     background: #ffffff;
@@ -780,69 +779,6 @@
     background: #4f46e5;
 }
 
-.dashboard-product-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 10px;
-    margin-bottom: 12px;
-}
-
-.dashboard-products-panel {
-    display: grid;
-    gap: 18px;
-    padding: 20px;
-}
-
-.dashboard-product-grid {
-    gap: 14px;
-}
-
-.dashboard-product-card {
-    display: grid;
-    gap: 12px;
-    padding: 14px;
-}
-
-.dashboard-product-card img,
-.dashboard-product-placeholder {
-    width: 100%;
-    height: 180px;
-    border-radius: 16px;
-}
-
-.dashboard-product-card img {
-    object-fit: cover;
-    margin-bottom: 0;
-}
-
-.dashboard-product-placeholder {
-    display: grid;
-    place-items: center;
-    background: #fff7ed;
-    color: #ff6a00;
-    font-size: 42px;
-    font-weight: 900;
-}
-
-.dashboard-product-card strong,
-.dashboard-product-card span {
-    display: block;
-}
-
-.dashboard-product-card strong {
-    color: #111827;
-    font-size: 15px;
-    line-height: 1.25;
-}
-
-.dashboard-product-card span {
-    margin-top: 4px;
-    color: #ff6a00;
-    font-size: 14px;
-    font-weight: 900;
-}
-
 @media (max-width: 900px) {
     .dashboard-store-overview {
         grid-template-columns: 1fr;
@@ -875,9 +811,6 @@
         line-height: 1.5;
     }
 
-    .dashboard-product-card img {
-        height: 210px;
-    }
 }
 
 @media (max-width: 720px) {
@@ -967,9 +900,6 @@
         padding: 12px;
     }
 
-    .dashboard-product-card img {
-        height: 180px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -978,8 +908,7 @@
     }
 
     .dashboard-welcome-card,
-    .dashboard-progress-card,
-    .dashboard-products-panel {
+    .dashboard-progress-card {
         border-radius: 18px;
     }
 
@@ -1016,16 +945,508 @@
         font-size: 12px;
     }
 
-    .dashboard-product-card img {
-        height: 160px;
-        border-radius: 8px;
-    }
 }
 
 .vendly-home-panel {
     display: grid;
     gap: 24px;
     max-width: 980px;
+}
+
+.metrics-page {
+    display: grid;
+    gap: 20px;
+    max-width: 980px;
+}
+
+.metrics-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.metrics-month-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid #d5deea;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #007c68;
+    box-shadow: 0 6px 16px rgba(7, 20, 47, .04);
+}
+
+.metrics-month-picker select {
+    min-width: 155px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #07142f;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.metrics-tabs {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    min-height: 46px;
+    border-bottom: 1px solid #dfe7ef;
+}
+
+.metrics-tabs a,
+.metrics-tab-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: stretch;
+    padding: 0 2px;
+    border-bottom: 2px solid transparent;
+    color: #6b8099;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.metrics-tabs a.is-active {
+    border-color: #007c68;
+    color: #07142f;
+}
+
+.metrics-tab-locked small {
+    padding: 3px 6px;
+    border-radius: 6px;
+    background: #ebeaff;
+    color: #6158d7;
+    font-size: 9px;
+    font-weight: 900;
+}
+
+.metrics-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.metrics-data-card {
+    display: grid;
+    gap: 17px;
+    min-height: 170px;
+    padding: 18px 16px 14px;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(7, 20, 47, .045);
+}
+
+.metrics-data-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.metrics-data-card-head h3 {
+    margin: 0;
+    color: #07142f;
+    font-size: 16px;
+}
+
+.metrics-data-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    color: #007c68;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.metrics-help {
+    display: inline-grid;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    margin-left: auto;
+    border-radius: 999px;
+    background: #a8b1bd;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    cursor: help;
+}
+
+.metrics-data-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.metrics-data-main--single {
+    justify-content: flex-start;
+}
+
+.metrics-data-main > strong {
+    color: #07142f;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.metrics-breakdown {
+    display: grid;
+    gap: 7px;
+    min-width: 145px;
+}
+
+.metrics-breakdown span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b8099;
+    font-size: 12px;
+}
+
+.metrics-breakdown b {
+    margin-left: auto;
+    color: #07142f;
+    font-weight: 800;
+}
+
+.metrics-breakdown i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #16d69a;
+}
+
+.metrics-breakdown i.is-pending {
+    background: #f59e0b;
+}
+
+.metrics-breakdown i.is-cancelled {
+    background: #fb7185;
+}
+
+.metrics-data-card > p {
+    margin: auto 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #dfe7ef;
+    color: #79a3af;
+    font-size: 12px;
+    text-align: center;
+}
+
+.metrics-visits-summary {
+    margin-bottom: 24px;
+}
+
+.metrics-visits-chart {
+    min-height: 250px;
+}
+
+.metrics-visits-bars {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+    min-height: 175px;
+    padding: 24px 8px 0;
+    overflow-x: auto;
+    border-top: 1px solid #edf1f5;
+}
+
+.metrics-visits-bar-item {
+    display: flex;
+    flex: 1 0 24px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: end;
+    gap: 5px;
+    min-height: 155px;
+}
+
+.metrics-visits-bar {
+    width: 100%;
+    min-height: 8px;
+    border-radius: 6px 6px 2px 2px;
+    background: linear-gradient(180deg, #00a878, #72d7b5);
+}
+
+.metrics-visits-bar-value {
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.metrics-visits-bar-item small {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.metrics-visits-empty {
+    margin: 30px 0 8px;
+    color: #64748b;
+}
+
+.metrics-top-products {
+    margin-top: 24px;
+}
+
+.metrics-top-products-list {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid #edf1f5;
+}
+
+.metrics-top-product {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 48px;
+    border-bottom: 1px solid #edf1f5;
+}
+
+.metrics-top-product-rank {
+    color: #008f68;
+    font-weight: 800;
+}
+
+.metrics-top-product-name {
+    overflow: hidden;
+    color: #1f2937;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.metrics-top-product strong {
+    color: #334155;
+}
+
+.metrics-page-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(7, 20, 47, .055);
+}
+
+.metrics-page-intro > div {
+    min-width: 0;
+}
+
+.metrics-page-kicker {
+    color: #ff6b00;
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.metrics-page-intro h3 {
+    margin: 7px 0 6px;
+    color: #07142f;
+    font-size: clamp(24px, 3vw, 32px);
+    line-height: 1.05;
+}
+
+.metrics-page-intro p {
+    margin: 0;
+    color: #61708a;
+    line-height: 1.5;
+}
+
+.metrics-page-note {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a4b08;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.metrics-monthly-section {
+    display: grid;
+    gap: 16px;
+    padding: 24px;
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(7, 20, 47, .055);
+}
+
+.metrics-monthly-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.metrics-monthly-head h3 {
+    margin: 7px 0 0;
+    color: #07142f;
+    font-size: 24px;
+}
+
+.metrics-monthly-head > span {
+    color: #61708a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.metrics-monthly-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #dfe7ef;
+    border-radius: 10px;
+}
+
+.metrics-monthly-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+}
+
+.metrics-monthly-table th,
+.metrics-monthly-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #edf1f5;
+    color: #33415c;
+    font-size: 14px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.metrics-monthly-table thead th {
+    background: #f7f9fc;
+    color: #61708a;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.metrics-monthly-table th:first-child,
+.metrics-monthly-table td:first-child {
+    text-align: left;
+}
+
+.metrics-monthly-table tbody th {
+    color: #07142f;
+    font-weight: 800;
+}
+
+.metrics-monthly-table tbody tr:last-child th,
+.metrics-monthly-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.metrics-page-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid #dfe7ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(7, 20, 47, .055);
+}
+
+.metrics-page-grid .vendly-home-metric:nth-child(3n) {
+    border-right: 0;
+}
+
+@media (max-width: 640px) {
+    .metrics-page-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .metrics-month-picker {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .metrics-month-picker select {
+        flex: 1;
+    }
+
+    .metrics-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-page-intro {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .metrics-page-intro .btn {
+        width: 100%;
+    }
+
+    .metrics-monthly-section {
+        padding: 18px;
+    }
+
+    .metrics-monthly-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .metrics-page-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .metrics-page-grid .vendly-home-metric:nth-child(3n) {
+        border-right: 1px solid #dfe7ef;
+    }
+
+    .metrics-page-grid .vendly-home-metric:nth-child(2n) {
+        border-right: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .metrics-page-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-page-grid .vendly-home-metric,
+    .metrics-page-grid .vendly-home-metric:nth-child(3n),
+    .metrics-page-grid .vendly-home-metric:nth-child(2n) {
+        border-right: 0;
+        border-bottom: 1px solid #dfe7ef;
+    }
+
+    .metrics-page-grid .vendly-home-metric:last-child {
+        border-bottom: 0;
+    }
+}
+
+.vendly-home-context {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #74829a;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.vendly-home-context-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    color: #ff6b00;
+}
+
+.vendly-home-context-icon svg {
+    width: 21px;
+    height: 21px;
 }
 
 .vendly-home-head {
@@ -1051,6 +1472,10 @@
     font-size: 18px;
 }
 
+.vendly-home-head p strong {
+    color: #07142f;
+}
+
 .vendly-home-actions {
     display: grid;
     justify-items: end;
@@ -1073,6 +1498,51 @@
     font-size: 14px;
     font-weight: 800;
     text-decoration: none;
+}
+
+.vendly-home-store-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 74px;
+    padding: 16px 18px;
+    border: 1px solid #dfe7ef;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.vendly-home-store-status > div {
+    display: grid;
+    gap: 4px;
+}
+
+.vendly-home-status-label {
+    color: #74829a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.vendly-home-store-status strong {
+    color: #07142f;
+    font-size: 17px;
+}
+
+.vendly-home-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #e7f8f0;
+    color: #07834d;
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.vendly-home-status-pill.is-warning {
+    background: #fff4e6;
+    color: #b45309;
 }
 
 .vendly-home-metrics {
@@ -1267,6 +1737,16 @@
 
     .vendly-home-head p {
         font-size: 14px;
+    }
+
+    .vendly-home-context {
+        font-size: 13px;
+    }
+
+    .vendly-home-store-status {
+        align-items: flex-start;
+        min-height: 68px;
+        padding: 14px;
     }
 
     .vendly-home-actions {
