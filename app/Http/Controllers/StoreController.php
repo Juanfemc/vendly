@@ -16,6 +16,7 @@ use App\Services\AiCreditService;
 use App\Services\CustomerFollowupScheduler;
 use App\Services\StoreFileService;
 use App\Services\StorefrontUrlService;
+use App\Services\VendlyMeasurementService;
 use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -334,6 +335,7 @@ class StoreController extends Controller
 
         if (VendlyMetaPixelEvents::shouldTrackForUser(auth()->user(), $store)) {
             $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, []);
+            app(VendlyMeasurementService::class)->highIntent($store);
         }
 
         return redirect('/admin/store-settings')

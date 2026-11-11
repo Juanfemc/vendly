@@ -450,11 +450,17 @@
             ? 'Preparando WhatsApp...'
             : 'Redirigiendo al pago...';
 
-        if (selected?.value === 'whatsapp' && typeof window.vendlyMetaPixelTrack === 'function') {
-            window.vendlyMetaPixelTrack('Lead', Object.assign({}, window.vendlyCheckoutMetaPixelPayload || {}, {
-                content_name: 'Checkout por WhatsApp',
-                content_category: 'whatsapp_checkout',
-            }));
+        if (typeof window.vendlyMetaPixelTrack === 'function') {
+            const checkoutPayload = Object.assign({}, window.vendlyCheckoutMetaPixelPayload || {}, {
+                content_name: selected?.value === 'whatsapp' ? 'Checkout por WhatsApp' : 'Checkout iniciado',
+                content_category: selected?.value === 'whatsapp' ? 'whatsapp_checkout' : 'online_checkout',
+                payment_method: selected?.value || 'unknown',
+            });
+
+            window.vendlyMetaPixelTrack(
+                selected?.value === 'whatsapp' ? 'Contact' : 'PaymentIntent',
+                checkoutPayload,
+            );
         }
 
         paymentSubmitButtons.forEach((button) => {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\VendlyMeasurementEvent;
+use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -20,6 +21,18 @@ class DeliverVendlyMeasurement
             // Keep historical receipts locally; never change their date to look like new acquisitions.
             if ($event->occurred_at->lt(now()->subDays(6))) {
                 $event->update(['discarded_at' => now(), 'last_error' => 'Histórico: fuera de la ventana conservadora de envío de 6 días.']);
+
+                return;
+            }
+
+            $eventPlan = (string) ($event->store_payload['plan'] ?? '');
+            if (! in_array($eventPlan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)
+                && $event->event_name !== 'StoreConfigured') {
+                $event->update([
+                    'discarded_at' => now(),
+                    'last_error' => 'plan_not_supported',
+                    'attempts' => $event->attempts + 1,
+                ]);
 
                 return;
             }

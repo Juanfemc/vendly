@@ -13,6 +13,7 @@ use App\Services\ProductFileService;
 use App\Services\StoreSubdomainService;
 use App\Services\StorefrontUrlService;
 use App\Services\StoreVisitService;
+use App\Services\VendlyMeasurementService;
 use App\Support\VendlyMetaPixelEvents;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -230,6 +231,7 @@ class ProductController extends Controller
             }
 
             $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
+            app(VendlyMeasurementService::class)->highIntent($store);
         }
 
         return redirect('/admin/products')

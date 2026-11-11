@@ -16,6 +16,7 @@ use App\Services\ProductFileService;
 use App\Services\StoreFileService;
 use App\Services\StorefrontUrlService;
 use App\Services\TrialPhoneHashService;
+use App\Services\VendlyMeasurementService;
 use App\Services\WhatsAppPhoneVerificationService;
 use App\Support\StoreOnboardingSteps;
 use App\Support\VendlyMetaPixelEvents;
@@ -250,6 +251,7 @@ class StoreOnboardingController extends Controller
                 }
 
                 $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
+                app(VendlyMeasurementService::class)->highIntent($store);
             }
 
             return redirect()
@@ -270,6 +272,7 @@ class StoreOnboardingController extends Controller
             }
 
             $metaEvents = VendlyMetaPixelEvents::eventsWithHighIntent($store, $metaEvents);
+            app(VendlyMeasurementService::class)->highIntent($store);
         }
 
         return redirect()

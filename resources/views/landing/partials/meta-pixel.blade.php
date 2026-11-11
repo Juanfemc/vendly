@@ -58,10 +58,6 @@
                 if (eventName) {
                     trackVendlyEvent(eventName);
 
-                    if (eventName === 'Contact' && (href.indexOf('wa.me') !== -1 || href.indexOf('whatsapp') !== -1 || label.indexOf('whatsapp') !== -1)) {
-                        trackVendlyEvent('PaymentIntent', { source: 'whatsapp' });
-                    }
-
                     if (
                         target.tagName === 'A'
                         && target.href

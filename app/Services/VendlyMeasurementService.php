@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Store;
 use App\Models\VendlyMeasurementEvent;
+use App\Support\VendlyMetaPixelEvents;
 
 class VendlyMeasurementService
 {
@@ -50,6 +51,26 @@ class VendlyMeasurementService
 
         $this->capture($store, 'StoreConfigured', 'store-configured-v2-'.$store->id, [
             'activation_definition' => 'available_store_whatsapp_product_photo_price',
+        ]);
+    }
+
+    public function highIntent(Store $store): void
+    {
+        if (! in_array((string) $store->plan, [Store::PLAN_PRO, Store::PLAN_PREMIUM], true)) {
+            return;
+        }
+
+        $productCount = (int) $store->products()->count();
+        $progress = (int) $store->onboardingProgress();
+
+        if ($productCount < VendlyMetaPixelEvents::HIGH_INTENT_MIN_PRODUCTS
+            || $progress < VendlyMetaPixelEvents::HIGH_INTENT_MIN_PROGRESS) {
+            return;
+        }
+
+        $this->capture($store, 'HighIntent', 'high-intent-'.$store->id, [
+            'product_count' => $productCount,
+            'onboarding_progress' => $progress,
         ]);
     }
 }
