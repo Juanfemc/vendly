@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\DiscountCoupon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,7 @@ class CheckoutService
             $order->loadMissing(['items.product', 'store']);
 
             $this->releaseStock($order);
+            $this->releaseCouponReservation($order);
 
             $order->delete();
         });
@@ -176,12 +178,19 @@ class CheckoutService
                 }
 
                 $this->releaseStock($order);
+                $this->releaseCouponReservation($order);
 
-                $order->update([
+                $updates = [
                     'status' => 'pendiente',
                     'payment_status' => Order::PAYMENT_STATUS_EXPIRED,
                     'paid_at' => null,
-                ]);
+                ];
+
+                if (Order::supportsPaymentExpirationColumn()) {
+                    $updates['payment_expires_at'] = null;
+                }
+
+                $order->update($updates);
 
                 return true;
             });
@@ -237,6 +246,7 @@ class CheckoutService
             }
 
             $this->releaseStock($order);
+            $this->releaseCouponReservation($order);
 
             if (Order::supportsPaymentExpirationColumn()) {
                 $order->update([
@@ -246,6 +256,25 @@ class CheckoutService
 
             return true;
         });
+    }
+
+    private function releaseCouponReservation(Order $order): void
+    {
+        if (! Order::supportsDiscountColumns()
+            || ! in_array($order->payment_method, [Order::PAYMENT_METHOD_MERCADOPAGO, Order::PAYMENT_METHOD_WOMPI], true)
+            || ! $order->discount_coupon_id
+            || (float) $order->discount_amount <= 0
+        ) {
+            return;
+        }
+
+        $coupon = DiscountCoupon::whereKey($order->discount_coupon_id)
+            ->lockForUpdate()
+            ->first();
+
+        if ($coupon && $coupon->used_count > 0) {
+            $coupon->decrement('used_count');
+        }
     }
 
     private function mercadoPagoOrderCanExpire(Order $order): bool

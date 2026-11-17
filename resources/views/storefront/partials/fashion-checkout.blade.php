@@ -340,7 +340,7 @@
                     <h2>Cupón de descuento</h2>
                     <div class="checkout-coupon">
                         <div class="checkout-coupon-row">
-                            <input type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Ingresa el código" data-discount-code>
+                            <input type="text" name="discount_code" value="{{ old('discount_code', $discount['code'] ?? '') }}" placeholder="Ingresa el código" maxlength="60" pattern="^[A-Za-z0-9_-]{1,60}$" title="El cupón solo puede tener letras, números, guion o guion bajo." data-discount-code>
                             <button type="button" data-discount-apply>Aplicar</button>
                         </div>
                         <p class="checkout-coupon-message" data-discount-message>{{ $discountAmount > 0 ? 'Descuento aplicado.' : '' }}</p>

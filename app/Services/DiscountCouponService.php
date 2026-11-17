@@ -18,7 +18,7 @@ class DiscountCouponService
 
         $coupon = $this->findValidCoupon($store, $code, $subtotal);
 
-        return $this->couponPayload($coupon, $subtotal, $shippingCost);
+        return $this->couponPayload($store, $coupon, $subtotal, $shippingCost);
     }
 
     public function redeem(Store $store, ?string $code, float $subtotal, float $shippingCost = 0): array
@@ -30,7 +30,7 @@ class DiscountCouponService
         }
 
         $coupon = $this->findValidCoupon($store, $code, $subtotal, lock: true);
-        $payload = $this->couponPayload($coupon, $subtotal, $shippingCost);
+        $payload = $this->couponPayload($store, $coupon, $subtotal, $shippingCost);
 
         $coupon->increment('used_count');
 
@@ -92,7 +92,7 @@ class DiscountCouponService
         return $coupon;
     }
 
-    private function couponPayload(DiscountCoupon $coupon, float $subtotal, float $shippingCost): array
+    private function couponPayload(Store $store, DiscountCoupon $coupon, float $subtotal, float $shippingCost): array
     {
         if ($coupon->appliesTo() === DiscountCoupon::APPLIES_TO_SHIPPING && $shippingCost <= 0) {
             throw ValidationException::withMessages([
@@ -122,7 +122,10 @@ class DiscountCouponService
             ? $base * ((float) $coupon->value / 100)
             : (float) $coupon->value;
 
-        if ($coupon->max_discount_amount !== null && (float) $coupon->max_discount_amount > 0) {
+        if ($coupon->type === DiscountCoupon::TYPE_PERCENT
+            && $coupon->max_discount_amount !== null
+            && (float) $coupon->max_discount_amount > 0
+        ) {
             $amount = min($amount, (float) $coupon->max_discount_amount);
         }
 

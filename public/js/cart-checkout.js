@@ -46,6 +46,7 @@
     let discountAmount = Number(page.dataset.cartDiscount || 0);
     let feedbackTimer;
     let discountRefreshTimer;
+    let discountRequestSequence = 0;
     let lastTermsTrigger = null;
     let summaryWasToggled = false;
 
@@ -359,6 +360,7 @@
         }
 
         const code = discountCodeInput.value.trim();
+        const requestSequence = ++discountRequestSequence;
 
         try {
             discountApplyButton.disabled = true;
@@ -367,8 +369,14 @@
             const data = await sendCartRequest(couponPreviewUrl, 'POST', JSON.stringify({
                 store: storeSlug,
                 discount_code: code,
-                shipping_cost: shippingCost(),
+                shipping_method: selectedShippingOption()?.value || '',
+                city: selectedCityName(),
+                city_code: selectedCityCode(),
             }));
+
+            if (requestSequence !== discountRequestSequence) {
+                return;
+            }
 
             discountAmount = Number(data.discount_amount || 0);
             page.dataset.cartDiscount = String(discountAmount);
@@ -380,6 +388,10 @@
             setDiscountMessage(data.message || (discountAmount > 0 ? 'Cupon aplicado.' : 'Cupon removido.'));
             updateSummary();
         } catch (error) {
+            if (requestSequence !== discountRequestSequence) {
+                return;
+            }
+
             discountAmount = 0;
             page.dataset.cartDiscount = '0';
 
@@ -390,7 +402,9 @@
             setDiscountMessage(error.message || 'No se pudo aplicar el cupon.', true);
             updateSummary();
         } finally {
-            discountApplyButton.disabled = false;
+            if (requestSequence === discountRequestSequence) {
+                discountApplyButton.disabled = false;
+            }
         }
     };
 

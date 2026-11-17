@@ -71,7 +71,7 @@ class CheckoutRequest extends FormRequest
             'region' => ['nullable', 'string', 'max:80', "regex:/^[\\pL .'\\-]+$/u"],
             'document' => [$checkoutFieldPresence('document'), 'string', 'min:5', 'max:20', 'regex:/^[0-9A-Za-z.-]+$/'],
             'shipping_method' => ['nullable', 'string', 'max:20'],
-            'discount_code' => ['nullable', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'discount_code' => ['nullable', 'string', 'max:60', 'regex:/^[A-Za-z0-9_-]+$/'],
             ...self::reservationRules($isReservationStore),
             'notes' => [$checkoutFieldPresence('notes'), 'string', 'max:500'],
             'terms_acceptance' => [$requiresTermsAcceptance ? 'accepted' : 'nullable'],

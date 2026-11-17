@@ -138,7 +138,9 @@ class CartController extends Controller
         $validated = $request->validate([
             'store' => ['nullable', 'string', 'max:255'],
             'discount_code' => ['nullable', 'string', 'max:60'],
-            'shipping_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'shipping_method' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:80'],
+            'city_code' => ['nullable', 'string', 'max:12'],
         ]);
 
         $store = $this->cartService->storeForRequest($request);
@@ -155,7 +157,8 @@ class CartController extends Controller
         }
 
         try {
-            $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal, (float) ($validated['shipping_cost'] ?? 0));
+            $shippingCost = $this->couponPreviewShippingCost($store, $validated, $subtotal);
+            $discount = $this->discountCouponService->preview($store, $validated['discount_code'] ?? null, $subtotal, $shippingCost);
         } catch (ValidationException $exception) {
             return response()->json([
                 'message' => collect($exception->errors())->flatten()->first() ?: 'No se pudo aplicar el cupon.',
@@ -735,6 +738,29 @@ class CartController extends Controller
         } catch (ValidationException) {
             return ['code' => null, 'amount' => 0];
         }
+    }
+
+    private function couponPreviewShippingCost(Store $store, array $validated, float $subtotal): float
+    {
+        if ($store->isReservationStore()) {
+            return 0;
+        }
+
+        if ($store->localDeliveryEnabled()) {
+            if (blank($validated['city'] ?? null) && blank($validated['city_code'] ?? null)) {
+                return 0;
+            }
+
+            return (float) ($store->deliveryByCity(
+                $validated['city'] ?? null,
+                $subtotal,
+                $validated['city_code'] ?? null,
+            )['cost'] ?? 0);
+        }
+
+        $method = $store->shippingMethodByKey($validated['shipping_method'] ?? null);
+
+        return $method ? $store->shippingCostForSubtotal($method, $subtotal) : 0;
     }
 
     private function isSingleProductLandingCheckout(?Store $store): bool
