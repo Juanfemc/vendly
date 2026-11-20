@@ -467,15 +467,18 @@ class StoreController extends Controller
         }
 
         if (Store::supportsCustomDomainColumns()) {
-            $customDomain = $store->allowsCustomDomain()
-                ? Store::normalizeCustomDomain($request->input('custom_domain'))
-                : null;
-            $previousDomain = Store::normalizeCustomDomain($store->custom_domain);
+            // Do not clear a configured domain when an unrelated form omits it.
+            if ($request->exists('custom_domain')) {
+                $customDomain = $store->allowsCustomDomain()
+                    ? Store::normalizeCustomDomain($request->input('custom_domain'))
+                    : null;
+                $previousDomain = Store::normalizeCustomDomain($store->custom_domain);
 
-            $data['custom_domain'] = $customDomain;
-            if ($customDomain !== $previousDomain) {
-                $data['custom_domain_status'] = Store::CUSTOM_DOMAIN_PENDING;
-                $data['custom_domain_verified_at'] = null;
+                $data['custom_domain'] = $customDomain;
+                if ($customDomain !== $previousDomain) {
+                    $data['custom_domain_status'] = Store::CUSTOM_DOMAIN_PENDING;
+                    $data['custom_domain_verified_at'] = null;
+                }
             }
         }
 

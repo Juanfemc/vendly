@@ -17,10 +17,15 @@ class StoreConfigurationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $normalized = [
             'subdomain' => Store::normalizeSubdomain($this->input('subdomain')),
-            'custom_domain' => Store::normalizeCustomDomain($this->input('custom_domain')),
-        ]);
+        ];
+
+        if ($this->exists('custom_domain')) {
+            $normalized['custom_domain'] = Store::normalizeCustomDomain($this->input('custom_domain'));
+        }
+
+        $this->merge($normalized);
     }
 
     public function rules(): array

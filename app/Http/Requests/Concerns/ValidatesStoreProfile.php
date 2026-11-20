@@ -197,8 +197,14 @@ trait ValidatesStoreProfile
         }
 
         if (Store::supportsCustomDomainColumns()) {
-            $data['custom_domain'] = Store::normalizeCustomDomain($data['custom_domain'] ?? null);
-            $this->applyCustomDomainState($data, $effectivePlan);
+            // A profile form may not include the domain field. Preserve the
+            // existing domain and verification state when it is omitted.
+            if (array_key_exists('custom_domain', $data)) {
+                $data['custom_domain'] = Store::normalizeCustomDomain($data['custom_domain']);
+                $this->applyCustomDomainState($data, $effectivePlan);
+            } else {
+                unset($data['custom_domain_status'], $data['custom_domain_verified_at']);
+            }
         } else {
             unset($data['custom_domain'], $data['custom_domain_status'], $data['custom_domain_verified_at']);
         }

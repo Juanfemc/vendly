@@ -983,6 +983,44 @@ test('non premium plans cannot keep custom domains from crafted requests', funct
         ->and($store->custom_domain_verified_at)->toBeNull();
 });
 
+test('saving store settings without the domain field preserves a verified custom domain', function () {
+    config(['app.url' => 'https://vendlysuite.com']);
+
+    $storeUser = User::factory()->create([
+        'active_starts_at' => now()->subDay(),
+        'active_ends_at' => now()->addDay(),
+    ]);
+    $store = Store::create([
+        'user_id' => $storeUser->id,
+        'name' => 'Tienda Dominio Persistente',
+        'slug' => 'tienda-dominio-persistente',
+        'whatsapp' => '573001112233',
+        'plan' => Store::PLAN_PREMIUM,
+        'custom_domain' => 'www.persistente.com',
+        'custom_domain_status' => Store::CUSTOM_DOMAIN_VERIFIED,
+        'custom_domain_verified_at' => now(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($storeUser)
+        ->post('/admin/store-settings', [
+            'name' => 'Nombre actualizado',
+            'business_type' => 'store',
+            'subdomain' => 'persistente',
+            'whatsapp' => $store->whatsapp,
+            'brand_color' => '#111111',
+            'background_color' => '#ffffff',
+            'font_family' => 'system',
+            'responsive_product_columns' => 2,
+            'show_hero_products_action' => 0,
+        ])
+        ->assertRedirect('/admin/store-settings');
+
+    expect($store->refresh()->custom_domain)->toBe('www.persistente.com')
+        ->and($store->custom_domain_status)->toBe(Store::CUSTOM_DOMAIN_VERIFIED)
+        ->and($store->custom_domain_verified_at)->not->toBeNull();
+});
+
 test('premium stores can save and render meta pixel id', function () {
     $storeUser = User::factory()->create([
         'active_starts_at' => now()->subDay(),
